@@ -1,0 +1,17 @@
+# IDE (Eclipse, STS)
+.metadata/
+.recommenders/
+.settings/
+.project
+.classpath
+
+# Frontend (Node, React)
+**/node_modules/
+**/build/
+.eslintcache
+
+# Backend (Gradle, Maven)
+**/bin/
+**/target/
+.gradle/
+build/
