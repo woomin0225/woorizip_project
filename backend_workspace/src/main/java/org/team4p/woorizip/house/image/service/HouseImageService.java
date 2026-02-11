@@ -1,8 +1,12 @@
 package org.team4p.woorizip.house.image.service;
 
-import org.springframework.stereotype.Service;
+import java.util.List;
 
-@Service
-public class HouseImageService {
+import org.team4p.woorizip.house.image.dto.HouseImageDto;
 
+public interface HouseImageService {
+	List<HouseImageDto> selectHouseImages(String houseNo);
+	HouseImageDto insertHouseImage(HouseImageDto houseImageDto);
+	int deleteHouseImageByHouseImageNo(int deleteImageNo);
+	int deleteHouseImagesAll(String houseNo);
 }

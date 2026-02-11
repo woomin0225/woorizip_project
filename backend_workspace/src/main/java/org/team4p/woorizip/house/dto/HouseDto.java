@@ -37,7 +37,7 @@ public class HouseDto {
 	
 	private Boolean housePetYn;
 	
-	private String houseFemaleLimit;
+	private Boolean houseFemaleLimit;
 	
 	private Integer houseParkingMax;
 	

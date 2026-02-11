@@ -8,6 +8,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import lombok.Builder;
 import lombok.Data;
@@ -59,7 +60,7 @@ public class HouseEntity {
 	private Boolean housePetYn;
 	
 	@Column(name="house_female_limit")
-	private String houseFemaleLimit;
+	private Boolean houseFemaleLimit;
 	
 	@Column(name="house_parking_max")
 	private Integer houseParkingMax;
@@ -87,8 +88,12 @@ public class HouseEntity {
 		if (houseNo == null)
 			houseNo = java.util.UUID.randomUUID().toString();
 		
-		// houseCreatedAt은 Patch에선 없어도 되므로 작성 안함
-		
+		if (houseCreatedAt == null)
+			houseCreatedAt = LocalDateTime.now();
+	}
+	
+	@PreUpdate
+	public void preUpdated() {
 		if (houseUpdatedAt == null)
 			houseUpdatedAt = LocalDateTime.now();
 	}

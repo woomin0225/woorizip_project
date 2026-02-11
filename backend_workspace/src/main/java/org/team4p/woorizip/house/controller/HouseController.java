@@ -1,9 +1,9 @@
 package org.team4p.woorizip.house.controller;
 
+import java.io.File;
 import java.util.List;
 import java.util.UUID;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,8 +14,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.team4p.woorizip.common.api.ApiResponse;
+import org.team4p.woorizip.common.config.UploadProperties;
 import org.team4p.woorizip.house.dto.HouseDto;
 import org.team4p.woorizip.house.dto.response.HouseMarkerResponse;
+import org.team4p.woorizip.house.image.dto.HouseImageDto;
+import org.team4p.woorizip.house.image.service.HouseImageService;
 import org.team4p.woorizip.house.service.HouseService;
 import org.team4p.woorizip.room.dto.RoomDto;
 import org.team4p.woorizip.room.dto.request.RoomSearchCondition;
@@ -27,6 +30,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class HouseController {
 	private final HouseService houseService;
+	private final HouseImageService houseImageService;
+	private final UploadProperties uploadProperties;
 	
 	
 	@GetMapping("/search")
@@ -67,33 +72,51 @@ public class HouseController {
 	@PostMapping
 	public ResponseEntity<ApiResponse<Void>> createHouse(@ModelAttribute HouseDto houseDto, List<MultipartFile> newImages){
 		// 건물 등록
-		if (houseService.insertHouse(houseDto) != null) {
-			// 등록 성공한 경우
+		// 위도 경도 가져오기
+		
+		HouseDto savedHouseDto =houseService.insertHouse(houseDto); 
+		if (savedHouseDto != null) {	// 건물 등록 성공한 경우
 			// 사진 첨부 있는지 확인
-			if (!newImages.isEmpty()) {	// 사진 있으면
+			if (!newImages.isEmpty() && newImages != null) {	// 사진 있으면
 				for (MultipartFile newImage : newImages) {
 					String originalImageName = newImage.getOriginalFilename();
 					// 파일이름변환
 					if (originalImageName == null || originalImageName.isBlank()) {
 			            throw new IllegalArgumentException("원본 파일명이 없습니다.");
 			        }
-					
 					int index = originalImageName.lastIndexOf(".");
 					String extension = originalImageName.substring(index);
 					String storedImageName = UUID.randomUUID().toString() + extension;
 					
 					// 파일저장소에 저장
-				
-					// HouseImageDto만들어서 DB에 저장
-				
+					File saveDir = uploadProperties.houseImageDir().toFile();
+		            if (!saveDir.exists()) saveDir.mkdirs();
+
+		            try {
+		                newImage.transferTo(new File(saveDir, storedImageName));
+		            } catch (Exception e) {
+//		                log.error("첨부파일 저장 실패", e);
+		                return ResponseEntity.status(500).body(ApiResponse.fail("첨부파일 저장 실패", null));
+		            }
+
+		            // HouseImageDto만들어서 DB에 저장
+		            HouseImageDto houseImageDto = HouseImageDto.builder().houseNo(savedHouseDto.getHouseNo()).houseOriginalImageName(originalImageName).houseStoredImageName(storedImageName).build();
+		            
+					HouseImageDto savedImageDto = houseImageService.insertHouseImage(houseImageDto);
+					
 					// ok 받아서 201 created 반환
-				}
-			}
+					if (savedImageDto != null) {
+						return ResponseEntity.status(201).body(ApiResponse.ok("건물 등록 성공", null));
+					}else {
+						return ResponseEntity.status(400).body(ApiResponse.ok("건물 등록 실패", null));
+					}
+				
+				}	//for
+			}	//if
 			
-			return ResponseEntity.status(201).body(ApiResponse.ok("건물 등록 성공", null));
-		}else {
-			return ResponseEntity.status(400).body(ApiResponse.ok("건물 등록 성공", null));
 		}
+		// 사진 없으면
+		return ResponseEntity.status(201).body(ApiResponse.ok("건물 등록 성공", null));
 	}
 
 	@PutMapping("/{houseNo}")

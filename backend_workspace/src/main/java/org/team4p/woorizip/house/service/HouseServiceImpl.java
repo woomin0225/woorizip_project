@@ -42,12 +42,9 @@ public class HouseServiceImpl implements HouseService {
 
 	@Override
 	public HouseDto insertHouse(HouseDto houseDto) {
-		HouseEntity savedEntity = houseRepository.save(houseDto.toEntity());
-		if (savedEntity != null) {
-			return savedEntity.toDto();
-		}else {
-			return null;
-		}
+		// 건물 등록
+		return houseRepository.save(houseDto.toEntity()).toDto();
+		
 	}
 
 	@Override

@@ -17,7 +17,7 @@ public class HouseImageDto {
 		return HouseImageEntity.builder()
 								.houseImageNo(houseImageNo)
 								.houseNo(houseNo)
-								.houseImageNo(houseImageNo)
+								.houseOriginalImageName(houseOriginalImageName)
 								.houseStoredImageName(houseStoredImageName)
 								.build();
 							
