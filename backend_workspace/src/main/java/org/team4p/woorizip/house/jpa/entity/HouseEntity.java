@@ -2,6 +2,8 @@ package org.team4p.woorizip.house.jpa.entity;
 
 import java.time.LocalDateTime;
 
+import org.team4p.woorizip.house.dto.HouseDto;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -46,7 +48,7 @@ public class HouseEntity {
 	private Integer houseFloors;
 	
 	@Column(name="house_house_holds")
-	private Integer houseHouseholds;
+	private Integer houseHouseHolds;
 	
 	@Column(name="house_elevator_yn")
 	private Boolean houseElevatorYn;
@@ -76,7 +78,7 @@ public class HouseEntity {
 	private Boolean deleted;
 	
 	@Column(name="deleted_at")
-	private LocalDateTime deleted_at;
+	private LocalDateTime deletedAt;
 
 	@PrePersist
 	public void prePersist() {
@@ -87,5 +89,30 @@ public class HouseEntity {
 		
 		if (houseUpdatedAt == null)
 			houseUpdatedAt = LocalDateTime.now();
+	}
+	
+	public HouseDto toDto() {
+		return HouseDto.builder()
+							.houseNo(houseNo)
+							.houseName(houseName)
+							.userNo(userNo)
+							.houseCreatedAt(houseCreatedAt)
+							.houseZip(houseZip)
+							.houseAddress(houseAddress)
+							.houseAddressDetail(houseAddressDetail)
+							.houseCompletionYear(houseCompletionYear)
+							.houseFloors(houseFloors)
+							.houseHouseHolds(houseHouseHolds)
+							.houseElevatorYn(houseElevatorYn)
+							.housePetYn(housePetYn)
+							.houseFemaleLimit(houseFemaleLimit)
+							.houseParkingMax(houseParkingMax)
+							.houseAbstract(houseAbstract)
+							.houseImageCount(houseImageCount)
+							.houseLat(houseLat)
+							.houseLng(houseLng)
+							.deleted(deleted)
+							.deletedAt(deletedAt)
+							.build();
 	}
 }
