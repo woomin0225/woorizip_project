@@ -1,15 +1,19 @@
 package org.team4p.woorizip.facility.dto;
 
-import java.util.List;
-
 import org.team4p.woorizip.facility.jpa.entity.FacilityEntity;
+import lombok.*;
 
+@Getter
+@Setter
+@Builder
 public class FacilityListResponseDTO {
-
-	public FacilityListResponseDTO from(List<FacilityEntity> entity) {
-		
-		return 1;
-		
+	private String facilityNo;
+	private String facilityName;
+	
+	public static FacilityListResponseDTO from(FacilityEntity entity) {
+	    return FacilityListResponseDTO.builder()
+	            .facilityNo(entity.getFacilityNo())
+	            .facilityName(entity.getFacilityName())
+	            .build();
 	}
-
 }

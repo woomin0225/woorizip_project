@@ -5,8 +5,11 @@ import java.time.*;
 import org.hibernate.annotations.*;
 import org.team4p.woorizip.facility.enums.FacilityStatus;
 import jakarta.persistence.*;
+import lombok.*;
 
 @Entity
+@Getter
+@Setter
 public class FacilityEntity {
 	@Id
 	private String facilityNo;
