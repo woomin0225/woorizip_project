@@ -1,5 +1,7 @@
 package org.team4p.woorizip.house.image.dto;
 
+import org.team4p.woorizip.house.image.jpa.entity.HouseImageEntity;
+
 import lombok.Builder;
 import lombok.Data;
 
@@ -10,4 +12,14 @@ public class HouseImageDto {
 	private String houseNo;
 	private String houseOriginalImageName;
 	private String houseStoredImageName;
+	
+	public HouseImageEntity toEntity() {
+		return HouseImageEntity.builder()
+								.houseImageNo(houseImageNo)
+								.houseNo(houseNo)
+								.houseImageNo(houseImageNo)
+								.houseStoredImageName(houseStoredImageName)
+								.build();
+							
+	}
 }
