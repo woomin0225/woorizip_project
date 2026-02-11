@@ -10,7 +10,9 @@ import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import lombok.Builder;
+import lombok.Data;
 
+@Data
 @Builder
 @Table(name = "tb_houses")
 @Entity

@@ -5,7 +5,9 @@ import java.time.LocalDateTime;
 import org.team4p.woorizip.house.jpa.entity.HouseEntity;
 
 import lombok.Builder;
+import lombok.Data;
 
+@Data
 @Builder
 public class HouseDto {
 	
