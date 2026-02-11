@@ -27,29 +27,29 @@ public class HouseDto {
 	
 	private String houseAddressDetail;
 	
-	private Integer houseCompletionYear;
+	private int houseCompletionYear;
 	
-	private Integer houseFloors;
+	private int houseFloors;
 	
-	private Integer houseHouseHolds;
+	private int houseHouseHolds;
 	
-	private Boolean houseElevatorYn;
+	private boolean houseElevatorYn;
 	
-	private Boolean housePetYn;
+	private boolean housePetYn;
 	
-	private Boolean houseFemaleLimit;
+	private boolean houseFemaleLimit;
 	
-	private Integer houseParkingMax;
+	private int houseParkingMax;
 	
 	private String houseAbstract;
 	
-	private Integer houseImageCount;
+	private int houseImageCount;
 	
-	private Double houseLat;
+	private double houseLat;
 	
-	private Double houseLng;
+	private double houseLng;
 	
-	private Boolean deleted;
+	private boolean deleted;
 	
 	private LocalDateTime deletedAt;
 		
@@ -59,6 +59,7 @@ public class HouseDto {
 							.houseName(houseName)
 							.userNo(userNo)
 							.houseCreatedAt(houseCreatedAt)
+							.houseUpdatedAt(houseUpdatedAt)
 							.houseZip(houseZip)
 							.houseAddress(houseAddress)
 							.houseAddressDetail(houseAddressDetail)

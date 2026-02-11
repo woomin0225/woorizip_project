@@ -104,6 +104,7 @@ public class HouseEntity {
 							.houseName(houseName)
 							.userNo(userNo)
 							.houseCreatedAt(houseCreatedAt)
+							.houseUpdatedAt(houseUpdatedAt)
 							.houseZip(houseZip)
 							.houseAddress(houseAddress)
 							.houseAddressDetail(houseAddressDetail)
