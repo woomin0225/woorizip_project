@@ -1,6 +1,7 @@
 package org.team4p.woorizip.house.controller;
 
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -73,8 +74,18 @@ public class HouseController {
 				for (MultipartFile newImage : newImages) {
 					String originalImageName = newImage.getOriginalFilename();
 					// 파일이름변환
+					if (originalImageName == null || originalImageName.isBlank()) {
+			            throw new IllegalArgumentException("원본 파일명이 없습니다.");
+			        }
+					
+					int index = originalImageName.lastIndexOf(".");
+					String extension = originalImageName.substring(index);
+					String storedImageName = UUID.randomUUID().toString() + extension;
+					
 					// 파일저장소에 저장
+				
 					// HouseImageDto만들어서 DB에 저장
+				
 					// ok 받아서 201 created 반환
 				}
 			}
