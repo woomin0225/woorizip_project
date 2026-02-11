@@ -5,10 +5,14 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.team4p.woorizip.house.dto.HouseDto;
 import org.team4p.woorizip.house.dto.response.HouseMarkerResponse;
+import org.team4p.woorizip.house.jpa.entity.HouseEntity;
 import org.team4p.woorizip.house.jpa.repository.HouseRepository;
 import org.team4p.woorizip.room.dto.request.RoomSearchCondition;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
+@RequiredArgsConstructor
 public class HouseServiceImpl implements HouseService {
 	private final HouseRepository houseRepository;
 
@@ -38,8 +42,12 @@ public class HouseServiceImpl implements HouseService {
 
 	@Override
 	public HouseDto insertHouse(HouseDto houseDto) {
-		// 건물 등록
-		return null;
+		HouseEntity savedEntity = houseRepository.save(houseDto.toEntity());
+		if (savedEntity != null) {
+			return savedEntity.toDto();
+		}else {
+			return null;
+		}
 	}
 
 	@Override

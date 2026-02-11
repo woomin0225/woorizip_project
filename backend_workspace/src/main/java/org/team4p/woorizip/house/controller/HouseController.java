@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -14,12 +15,18 @@ import org.springframework.web.multipart.MultipartFile;
 import org.team4p.woorizip.common.api.ApiResponse;
 import org.team4p.woorizip.house.dto.HouseDto;
 import org.team4p.woorizip.house.dto.response.HouseMarkerResponse;
+import org.team4p.woorizip.house.service.HouseService;
 import org.team4p.woorizip.room.dto.RoomDto;
 import org.team4p.woorizip.room.dto.request.RoomSearchCondition;
 
+import lombok.RequiredArgsConstructor;
+
 @RestController
 @RequestMapping("/houses")
+@RequiredArgsConstructor
 public class HouseController {
+	private final HouseService houseService;
+	
 	
 	@GetMapping("/search")
 	public ResponseEntity<ApiResponse<HouseDto>> searchHouses(RoomSearchCondition roomSearchCondition){
@@ -57,10 +64,25 @@ public class HouseController {
 	}
 	
 	@PostMapping
-	public ResponseEntity<ApiResponse<Void>> createHouse(HouseDto houseDto, List<MultipartFile> newImages){
+	public ResponseEntity<ApiResponse<Void>> createHouse(@ModelAttribute HouseDto houseDto, List<MultipartFile> newImages){
 		// 건물 등록
-		
-		return ResponseEntity.status(201).body(ApiResponse.ok("건물 등록 성공", null));
+		if (houseService.insertHouse(houseDto) != null) {
+			// 등록 성공한 경우
+			// 사진 첨부 있는지 확인
+			if (!newImages.isEmpty()) {	// 사진 있으면
+				for (MultipartFile newImage : newImages) {
+					String originalImageName = newImage.getOriginalFilename();
+					// 파일이름변환
+					// 파일저장소에 저장
+					// HouseImageDto만들어서 DB에 저장
+					// ok 받아서 201 created 반환
+				}
+			}
+			
+			return ResponseEntity.status(201).body(ApiResponse.ok("건물 등록 성공", null));
+		}else {
+			return ResponseEntity.status(400).body(ApiResponse.ok("건물 등록 성공", null));
+		}
 	}
 
 	@PutMapping("/{houseNo}")
