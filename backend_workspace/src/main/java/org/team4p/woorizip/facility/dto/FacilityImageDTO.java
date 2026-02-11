@@ -12,8 +12,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class FacilityImageDTO {
-	private int facilityImageNo;
-	private String facilityNo;
+	private Integer facilityImageNo;
 	private String facilityOriginalImageName;
 	private String facilityStoredImageName;
 }
