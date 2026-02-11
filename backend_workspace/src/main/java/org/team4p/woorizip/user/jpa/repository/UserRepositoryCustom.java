@@ -1,23 +1,22 @@
 package org.team4p.woorizip.user.jpa.repository;
 
 import org.team4p.woorizip.user.jpa.entity.UserEntity;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import java.util.Date;
+
 import java.util.List;
 
+/**
+ * queryDSL 은 sql 구문을 위한 코드 작성용 메소드를 추가하기 위해 인터페이스를 만듦
+ * jpa 가 제공하지 않는 기능에 대한 메소드 추가를 위해 작성함
+ * */
 public interface UserRepositoryCustom {
-    UserEntity findByEmailId(String emailId); // userId 대신 emailId 사용
+    UserEntity findByEmailId(String email_id);
 
-    int updateDeletedYn(String userNo, int deletedYn); // 탈퇴 처리 (loginOk 대신 deletedYn)
-
-    // 관리자용 검색 관련 (기술서 컬럼 기준)
+    //관리자용 검색 관련
     long countSearchEmailId(String keyword);
-    long countSearchName(String keyword);
-    long countSearchType(String type); // USER 또는 LESSOR
-    long countSearchCreatedAt(Date begin, Date end);
+    long countSearchAge(int age);
 
     List<UserEntity> findBySearchEmailId(String keyword, Pageable pageable);
-    List<UserEntity> findBySearchName(String keyword, Pageable pageable);
-    List<UserEntity> findBySearchType(String type, Pageable pageable);
-    List<UserEntity> findBySearchCreatedAt(Date begin, Date end, Pageable pageable);
+    List<UserEntity> findBySearchAge(int age, Pageable pageable);
 }
