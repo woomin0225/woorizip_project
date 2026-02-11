@@ -2,12 +2,15 @@ package org.team4p.woorizip.facility.controller;
 
 import java.util.List;
 
-import org.springframework.http.*;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 import org.team4p.woorizip.facility.dto.FacilityListResponseDTO;
 import org.team4p.woorizip.facility.service.FacilityService;
 
-import lombok.*;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequiredArgsConstructor
@@ -26,6 +29,10 @@ public class FacilityController {
 		
 		List<FacilityListResponseDTO> response = fs.getFacilityList(houseNo);
         return ResponseEntity.ok(response);
-
+	}
+	
+	@PostMapping
+	public void createFacility() {
+		
 	}
 }

@@ -14,11 +14,18 @@ public class FacilityServiceImpl implements FacilityService {
 	
 	private final FacilityRepository fr;
 	
+	// 시설 목록 조회
 	@Override
 	public List<FacilityListResponseDTO> getFacilityList(String houseNo) {
 		List<FacilityEntity> entity = fr.findByHouseNoAndFacilityDeletedAtIsNull(houseNo);
 		return entity.stream()
 				.map(FacilityListResponseDTO::from)
 				.toList();
+	}
+	
+	// 시설 신규 등록
+	public void List<FacilityCreateRequestDTO> createFacility(String houseNo) {
+		List<FacilityEntity> entity;
+		return null;
 	}
 }
