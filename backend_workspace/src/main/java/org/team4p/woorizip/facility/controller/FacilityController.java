@@ -5,14 +5,17 @@ import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.team4p.woorizip.facility.dto.FacilityCreateRequestDTO;
+import org.team4p.woorizip.facility.dto.FacilityDetailResponseDTO;
 import org.team4p.woorizip.facility.dto.FacilityListResponseDTO;
 import org.team4p.woorizip.facility.service.FacilityService;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -37,8 +40,15 @@ public class FacilityController {
 	
 	// 시설 신규 등록
 	@PostMapping
-	public ResponseEntity<String> registerFacility(@RequestBody FacilityCreateRequestDTO dto) {
+	public ResponseEntity<String> registerFacility(@Valid @RequestBody FacilityCreateRequestDTO dto) {
 	    facilityService.createFacility(dto);
 	    return ResponseEntity.status(HttpStatus.CREATED).body("success");
-	    }
+	}
+	
+	// 시설 상세 조회
+	@GetMapping("/{facilityNo}")
+	public ResponseEntity<FacilityDetailResponseDTO> getFacilityDetails(@PathVariable String facilityNo) {
+		FacilityDetailResponseDTO response = facilityService.getFacilityDetails(facilityNo);
+        return ResponseEntity.ok(response);
+	}
 }

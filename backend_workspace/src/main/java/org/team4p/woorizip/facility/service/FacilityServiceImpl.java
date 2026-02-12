@@ -7,6 +7,7 @@ import java.util.Map;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.team4p.woorizip.facility.dto.FacilityCreateRequestDTO;
+import org.team4p.woorizip.facility.dto.FacilityDetailResponseDTO;
 import org.team4p.woorizip.facility.dto.FacilityImageDTO;
 import org.team4p.woorizip.facility.dto.FacilityListResponseDTO;
 import org.team4p.woorizip.facility.jpa.entity.FacilityCategoryEntity;
@@ -43,7 +44,7 @@ public class FacilityServiceImpl implements FacilityService {
 		
 		// 기본값 + 입력값
 		String finalName = 
-				dto.getFacilityName() != null && !(dto.getFacilityName().isEmpty())
+				(dto.getFacilityName() != null) && (!(dto.getFacilityName().isEmpty()))
 			    ? dto.getFacilityName() 
 			    : facilityCategory.getFacilityType();
 		
@@ -81,5 +82,12 @@ public class FacilityServiceImpl implements FacilityService {
 	    
 	    facilityRepository.save(facility);
 		return;
+	}
+	
+	// 시설 상세 조회
+	public FacilityDetailResponseDTO getFacilityDetails(String facilityNo) {
+		return facilityRepository.findByFacilityNoAndFacilityDeletedAtIsNull(facilityNo)
+	            .map(FacilityDetailResponseDTO::from)
+	            .orElseThrow(() -> new RuntimeException("no facility data exists"));
 	}
 }
