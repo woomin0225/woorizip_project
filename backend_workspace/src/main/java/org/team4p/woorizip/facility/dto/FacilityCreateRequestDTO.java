@@ -13,6 +13,7 @@ import lombok.Getter;
 @Builder
 public class FacilityCreateRequestDTO {
 	private String facilityNo;
+	private int facilityCode;
 	private String facilityName;
 	private Map<String, Boolean> facilityOptionInfo;
 	private int facilityLocation;

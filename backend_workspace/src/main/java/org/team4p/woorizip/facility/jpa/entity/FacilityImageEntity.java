@@ -10,6 +10,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -17,6 +18,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
+@Table(name = "tb_fm_images")
 @Getter
 @Setter
 @Builder
@@ -37,7 +39,7 @@ public class FacilityImageEntity {
 	@Column(name = "facility_stored_image_name")
 	private String facilityStoredImageName;
 	
-	public FacilityImageDTO toDto() {
+	public FacilityImageDTO entityToDto() {
 		return FacilityImageDTO.builder()
 				.facilityImageNo(facilityImageNo)
 				.facilityOriginalImageName(facilityOriginalImageName)
