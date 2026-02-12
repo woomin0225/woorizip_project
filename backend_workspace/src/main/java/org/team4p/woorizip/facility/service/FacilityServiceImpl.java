@@ -10,6 +10,7 @@ import org.team4p.woorizip.facility.dto.FacilityCreateRequestDTO;
 import org.team4p.woorizip.facility.dto.FacilityDetailResponseDTO;
 import org.team4p.woorizip.facility.dto.FacilityImageDTO;
 import org.team4p.woorizip.facility.dto.FacilityListResponseDTO;
+import org.team4p.woorizip.facility.dto.FacilityModifyRequestDTO;
 import org.team4p.woorizip.facility.jpa.entity.FacilityCategoryEntity;
 import org.team4p.woorizip.facility.jpa.entity.FacilityEntity;
 import org.team4p.woorizip.facility.jpa.entity.FacilityImageEntity;
@@ -88,6 +89,14 @@ public class FacilityServiceImpl implements FacilityService {
 	public FacilityDetailResponseDTO getFacilityDetails(String facilityNo) {
 		return facilityRepository.findByFacilityNoAndFacilityDeletedAtIsNull(facilityNo)
 	            .map(FacilityDetailResponseDTO::from)
-	            .orElseThrow(() -> new RuntimeException("no facility data exists"));
+	            .orElseThrow(() -> new RuntimeException("no facility exists"));
+	}
+	
+	// 시설 정보 수정
+	@Transactional
+	public void modifyFacility(String facilityNo, FacilityModifyRequestDTO dto) {
+		FacilityEntity entity = facilityRepository.findById(facilityNo)
+		        .orElseThrow(() -> new RuntimeException("no facility exists"));
+		entity.updateFacility(dto);
 	}
 }

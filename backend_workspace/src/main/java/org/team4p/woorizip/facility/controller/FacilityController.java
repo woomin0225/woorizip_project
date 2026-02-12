@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.team4p.woorizip.facility.dto.FacilityCreateRequestDTO;
 import org.team4p.woorizip.facility.dto.FacilityDetailResponseDTO;
 import org.team4p.woorizip.facility.dto.FacilityListResponseDTO;
+import org.team4p.woorizip.facility.dto.FacilityModifyRequestDTO;
 import org.team4p.woorizip.facility.service.FacilityService;
 
 import jakarta.validation.Valid;
@@ -40,9 +41,9 @@ public class FacilityController {
 	
 	// 시설 신규 등록
 	@PostMapping
-	public ResponseEntity<String> registerFacility(@Valid @RequestBody FacilityCreateRequestDTO dto) {
+	public ResponseEntity<String> createFacility(@Valid @RequestBody FacilityCreateRequestDTO dto) {
 	    facilityService.createFacility(dto);
-	    return ResponseEntity.status(HttpStatus.CREATED).body("success");
+	    return ResponseEntity.status(HttpStatus.CREATED).body("createSuccess");
 	}
 	
 	// 시설 상세 조회
@@ -50,5 +51,12 @@ public class FacilityController {
 	public ResponseEntity<FacilityDetailResponseDTO> getFacilityDetails(@PathVariable String facilityNo) {
 		FacilityDetailResponseDTO response = facilityService.getFacilityDetails(facilityNo);
         return ResponseEntity.ok(response);
+	}
+	
+	// 시설 정보 수정
+	@PostMapping
+	public ResponseEntity<String> modifyFacility(@RequestBody FacilityModifyRequestDTO dto){
+		// TODO : facilityService.modifyFacility(dto)
+		return ResponseEntity.status(HttpStatus.NO_CONTENT).body("modifySuccess");
 	}
 }
