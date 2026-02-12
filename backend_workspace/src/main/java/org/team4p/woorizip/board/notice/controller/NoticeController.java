@@ -200,28 +200,30 @@ public class NoticeController {
 			}
 		}
 		
+		List<FileEntity> deleteFiles = new ArrayList<>();
+
+		if(deleteFileNo != null && !deleteFileNo.isEmpty()) {
+		    for(Integer fileNo : deleteFileNo) {
+		        fileRepository.findById(fileNo)
+		            .ifPresent(deleteFiles::add);
+		    }
+		}
+		
 		postDto.setFiles(newFiles);
 		
 		int result = noticeService.updateNotice(postDto, deleteFileNo);
 		
 		if(result > 0) {
-			if(deleteFileNo != null && !deleteFileNo.isEmpty()) {
-				for(Integer fileNo : deleteFileNo) {
-					
-					FileEntity fileEntity = fileRepository.findById(fileNo).orElse(null);
-					if(fileEntity != null) {
-						
-						File physical = uploadProperties.noticeDir()
-								.resolve(fileEntity.getUpdatedFileName())
-								.toFile();
-						
-						if (physical.exists() && !physical.delete()) {
-		                    log.warn("파일 삭제 실패: {}", physical.getAbsolutePath());
-		                }
-					}
-				}
-			}
-			
+			 for(FileEntity fileEntity : deleteFiles) {
+			        File physical = uploadProperties.noticeDir()
+			                .resolve(fileEntity.getUpdatedFileName())
+			                .toFile();
+
+			        if (physical.exists() && !physical.delete()) {
+			            log.warn("파일 삭제 실패: {}", physical.getAbsolutePath());
+			        }
+			    }
+
 			return ResponseEntity.ok(ApiResponse.ok("수정 성공", null));
 		}
 			

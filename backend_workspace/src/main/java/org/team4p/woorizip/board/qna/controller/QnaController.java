@@ -70,14 +70,14 @@ public class QnaController {
 	@GetMapping("/{postNo}")
 	public ResponseEntity<ApiResponse<PostDto>> detail(@PathVariable int postNo) {
 		
-		PostDto dto = 	qnaService.selectQna(postNo);
+		qnaService.updateAddReadCount(postNo);
+		
+		PostDto dto = qnaService.selectQna(postNo);
 		
 		if(dto == null) {
 			return ResponseEntity.status(404)
 					.body(ApiResponse.fail("해당 QnA가 없습니다", null));
 		}
-		
-		qnaService.updateAddReadCount(postNo);
 		
 		return ResponseEntity.ok(ApiResponse.ok("QnA 상세 조회 성공", dto));
 	}
@@ -176,7 +176,7 @@ public class QnaController {
 		if(files != null) {
 			for(MultipartFile file : files) {
 				
-				if(files.isEmpty())
+				if(file.isEmpty())
 					continue;
 				
 				String original = file.getOriginalFilename();

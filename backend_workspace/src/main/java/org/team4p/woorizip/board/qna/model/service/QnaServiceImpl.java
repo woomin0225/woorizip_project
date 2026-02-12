@@ -4,12 +4,17 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.team4p.woorizip.board.comment.jpa.entity.CommentEntity;
+import org.team4p.woorizip.board.comment.jpa.repository.CommentRepository;
+import org.team4p.woorizip.board.comment.model.dto.CommentDto;
 import org.team4p.woorizip.board.file.jpa.entity.FileEntity;
 import org.team4p.woorizip.board.file.jpa.repository.FileRepository;
 import org.team4p.woorizip.board.file.model.dto.FileDto;
@@ -28,6 +33,7 @@ public class QnaServiceImpl implements QnaService {
 	
 	private final PostRepository postRepository;
 	private final FileRepository fileRepository;
+	private final CommentRepository commentRepository;
 	
 	private static final String BOARD_TYPE_NO = "Q1";
 	
@@ -80,14 +86,29 @@ public class QnaServiceImpl implements QnaService {
 	
 	@Override
 	public PostDto selectQna(int postNo) {
-		return postRepository.findById(postNo)
-				.filter(entity -> BOARD_TYPE_NO.equals(entity.getBoardTypeNo()))
-				.map(entity -> {
-					PostDto dto = PostDto.fromEntity(entity);
-					dto.setFiles(getFiles(entity.getPostNo()));
-					return dto;
-				})
+		
+		PostEntity entity = postRepository.findById(postNo)
+				.filter(e -> BOARD_TYPE_NO.equals(e.getBoardTypeNo()))
 				.orElse(null);
+		
+		if(entity == null) return null;
+		
+		PostDto dto = PostDto.fromEntity(entity);
+		dto.setFiles(getFiles(entity.getPostNo()));
+		
+		//댓글 전체 조회 
+		List<CommentEntity> commentEntities = 
+				commentRepository.findCommentList(postNo);
+		
+		List<CommentDto> flatList = new ArrayList<>(); 
+		
+		for(CommentEntity ce : commentEntities) {
+			flatList.add(CommentDto.fromEntity(ce));
+		}
+		
+		dto.setComments(buildCommentTree(flatList));
+		
+		return dto;
 	}
 	
 	@Override
@@ -225,5 +246,29 @@ public class QnaServiceImpl implements QnaService {
 				postRepository
 					.findByBoardTypeNoAndPostCreatedAtBetweenOrderByPostNoDesc(
 							BOARD_TYPE_NO, start, finish, pageable));
+	}
+	
+	//댓글 트리 변환 메소드 ===================================
+	private List<CommentDto> buildCommentTree(List<CommentDto> flatList) {
+		Map<Integer, CommentDto> map = new LinkedHashMap<>();
+		List<CommentDto> roots = new ArrayList<>();
+		
+		for(CommentDto dto : flatList) {
+			dto.setChildren(new ArrayList<>());
+			map.put(dto.getCommentNo(), dto);
+		}
+		
+		for(CommentDto dto : flatList) {
+			if(dto.getParentCommentNo() == null) {
+				roots.add(dto);
+			} else {
+				CommentDto parent = map.get(dto.getParentCommentNo());
+				if(parent != null) {
+					parent.getChildren().add(dto);
+				}
+			}
+		}
+		
+		return roots;
 	}
 }
