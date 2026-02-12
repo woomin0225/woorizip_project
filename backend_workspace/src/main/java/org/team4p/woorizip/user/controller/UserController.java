@@ -18,7 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/user") // 설계서에 따른 기본 경로
+@RequestMapping("/api/user")
 @RequiredArgsConstructor
 public class UserController {
 
@@ -40,7 +40,9 @@ public class UserController {
      */
     @GetMapping("/{email_id}")
     public ResponseEntity<ApiResponse<UserDto>> selectUser(@PathVariable("email_id") String emailId) {
-        UserDto user = userService.selectUser(emailId);
+        UserDto params = UserDto.builder().emailId(emailId).build();
+        
+        UserDto user = userService.selectUser(params);
         if (user == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                                  .body(ApiResponse.fail("회원을 찾을 수 없습니다.", null));
@@ -67,7 +69,7 @@ public class UserController {
     public ResponseEntity<ApiResponse<Void>> updateUser(
             @PathVariable("email") String email,
             @RequestBody UserDto userDto) {
-        userDto.setEmailId(email); // 경로변수로 받은 이메일을 DTO에 세팅
+        userDto.setEmailId(email);
         int result = userService.updateUser(userDto);
         return result > 0 ? ResponseEntity.ok(ApiResponse.ok("회원 정보 수정 성공", null))
                           : ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
@@ -92,17 +94,17 @@ public class UserController {
     }
 
     /**
-     * 회원 검색 (아이디 검색 예시)
-     * GET /user/search?keyword=...
+     * 회원 검색
+     * GET /user/search
      */
     @GetMapping("/search")
     public ResponseEntity<ApiResponse<List<UserDto>>> selectSearchUser(
-            @RequestParam(name = "keyword") String keyword,
+            @ModelAttribute UserDto userDto,
             @RequestParam(name = "page", defaultValue = "1") int page,
             @RequestParam(name = "size", defaultValue = "10") int size
     ) {
         Pageable pageable = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        List<UserDto> list = userService.selectSearchEmailId(keyword, pageable);
+        List<UserDto> list = userService.selectSearchList(userDto, pageable);
         return ResponseEntity.ok(ApiResponse.ok("회원 검색 결과 조회 성공", list));
     }
 }

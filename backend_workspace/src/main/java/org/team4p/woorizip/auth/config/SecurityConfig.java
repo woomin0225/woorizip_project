@@ -70,9 +70,10 @@ public class SecurityConfig {
 
                 // PUBLIC GET
                 .requestMatchers(HttpMethod.GET, EndpointPolicy.PUBLIC_GET).permitAll()
+	
+	             // signup/check-id
+                .requestMatchers("/api/user/signup").permitAll()
 
-                // signup/check-id
-                .requestMatchers(HttpMethod.POST, EndpointPolicy.PUBLIC_POST).permitAll()
 
                 // notices write: ADMIN only
                 .requestMatchers(HttpMethod.POST, EndpointPolicy.NOTICE_ADMIN).hasRole("ADMIN")
