@@ -26,4 +26,9 @@ public record UploadProperties(
     public Path photoDir() {
         return Path.of(uploadDir, "photo");  // C:/upload_files/photo
     }
+    
+    /** 건물 사진 업로드 경로 */
+    public Path houseImageDir() {
+    		return Path.of(uploadDir, "houseImage");
+    }
 }
