@@ -13,7 +13,7 @@ public interface HouseService {
 	List<HouseDto> selectHousesByOwnerNo(String userNo);
 	HouseDto selectHouse(String houseNo);
 	HouseDto insertHouse(HouseDto houseDto);
-	HouseDto updateHouse(HouseDto houseDto);
+	HouseDto updateHouse(HouseDto houseDto, String currentUserNo);
 	void deleteHouse(String houseNo, String currentUserNo);
 	
 }

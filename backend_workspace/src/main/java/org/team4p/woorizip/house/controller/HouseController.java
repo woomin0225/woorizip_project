@@ -3,6 +3,7 @@ package org.team4p.woorizip.house.controller;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.UUID;
 
@@ -28,8 +29,10 @@ import org.team4p.woorizip.house.image.service.HouseImageService;
 import org.team4p.woorizip.house.service.HouseService;
 import org.team4p.woorizip.room.dto.RoomDto;
 import org.team4p.woorizip.room.dto.request.RoomSearchCondition;
+import org.team4p.woorizip.user.controller.UserController;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @RestController
 @RequestMapping("/houses")
@@ -141,9 +144,81 @@ public class HouseController {
 	}
 
 	@PutMapping("/{houseNo}")
-	public ResponseEntity<ApiResponse<Void>> modifyHouse(HouseDto houseDto, List<Integer> deleteImageNos, List<MultipartFile> newImages){
+	public ResponseEntity<ApiResponse<Void>> modifyHouse(
+			@PathVariable("houseNo") String houseNo,
+			@ModelAttribute HouseDto houseDto,
+			@RequestParam(value="deleteImageNos", required=false) List<Integer> deleteImageNos,
+			@RequestParam(value="newImages", required=false) List<MultipartFile> newImages,
+			@RequestHeader("currentUserNo") String currentUserNo/*임시*/
+	){
 		// 건물 정보 수정
+		houseDto.setHouseNo(houseNo);
+		houseService.updateHouse(houseDto, currentUserNo);
 		
+		// 삭제 사진 처리 : DB삭제 -> 저장소 삭제
+		if(deleteImageNos != null && deleteImageNos.size() > 0) {
+			for (int deleteImageNo: deleteImageNos) {
+				// DB에서 삭제
+				HouseImageDto ImageDto;
+				try {
+					ImageDto = houseImageService.deleteHouseImageByHouseImageNo(deleteImageNo, houseNo);
+				} catch (Exception e) {continue;}
+				// Dto로부터 사진 경로 구성
+				File targetFile = new File(uploadProperties.houseImageDir().toFile(), ImageDto.getHouseStoredImageName());
+				
+				// 파일저장소에서 삭제
+				try {
+					Files.deleteIfExists(targetFile.toPath());
+				} catch (IOException e) {continue;}
+			}
+		}
+		
+		// 추가 사진 처리 : 저장소 저장 -> DB저장
+		if(newImages != null && newImages.size() > 0) {
+			for (MultipartFile newImage : newImages) {
+				String originalImageName = newImage.getOriginalFilename();
+				// 파일이름변환
+				if (originalImageName == null || originalImageName.isBlank()) {
+//		            throw new IllegalArgumentException("원본 파일명이 없습니다.");
+					continue;	//남은 파일 목록들을 계속 저장 시도하기 위해 에러발생없이 진행
+		        }
+				
+				int index = originalImageName.lastIndexOf(".");
+				if (index < 0) {
+//					throw new IllegalArgumentException("확장자가 없는 파일입니다: " + originalImageName);
+					continue;
+				}
+				String extension = originalImageName.substring(index);
+				
+				String storedImageName = UUID.randomUUID().toString() + extension;
+				
+				// 파일저장소에 저장
+				File saveDir = uploadProperties.houseImageDir().toFile();
+	            if (!saveDir.exists()) saveDir.mkdirs();
+	            File saveFile = new File(saveDir, storedImageName);
+	            try {
+	                newImage.transferTo(saveFile);
+	            } catch (Exception e) {
+	                continue;
+	            }
+
+	            // HouseImageDto만들어서 DB에 저장
+	            HouseImageDto houseImageDto = HouseImageDto.builder()
+											            		.houseNo(houseNo)
+											            		.houseOriginalImageName(originalImageName)
+											            		.houseStoredImageName(storedImageName)
+											            		.build();
+	            try {
+	            		houseImageService.insertHouseImage(houseImageDto);
+	            } catch(Exception e) {
+	            		// DB에 사진이름 저장 실패하면 저장소에서 파일 삭제
+	            		try {
+						Files.deleteIfExists(saveFile.toPath());
+					} catch (IOException e2) {}
+	            		continue;
+	            }
+			}
+		}
 		return ResponseEntity.status(200).body(ApiResponse.ok("건물 정보 수정 성공", null));
 	}
 	

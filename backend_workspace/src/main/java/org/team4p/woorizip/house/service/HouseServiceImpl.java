@@ -79,9 +79,13 @@ public class HouseServiceImpl implements HouseService {
 	}
 
 	@Override
-	public HouseDto updateHouse(HouseDto houseDto) {
+	public HouseDto updateHouse(HouseDto houseDto, String currentUserNo) {
 		// 건물 정보 수정
-		return null;
+		
+		String userNo = houseRepository.findUserNoById(houseDto.getHouseNo());
+		if (!userNo.equals(currentUserNo)) throw new ForbiddenException("수정 권한이 없습니다.");
+		
+		return houseRepository.save(houseDto.toEntity()).toDto();
 	}
 
 	@Override
