@@ -1,13 +1,5 @@
 package org.team4p.woorizip.auth.config;
 
-import org.team4p.woorizip.auth.security.authorization.EndpointPolicy;
-import org.team4p.woorizip.auth.security.filter.JwtAuthenticationFilter;
-import org.team4p.woorizip.auth.security.filter.JwtExceptionFilter;
-import org.team4p.woorizip.auth.security.handler.CustomLogoutSuccessHandler;
-import org.team4p.woorizip.auth.security.handler.RestAccessDeniedHandler;
-import org.team4p.woorizip.auth.security.handler.RestAuthenticationEntryPoint;
-import org.team4p.woorizip.auth.token.jwt.JwtProperties;
-import org.team4p.woorizip.auth.token.jwt.JwtTokenProvider;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,6 +13,14 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.team4p.woorizip.auth.security.authorization.EndpointPolicy;
+import org.team4p.woorizip.auth.security.filter.JwtAuthenticationFilter;
+import org.team4p.woorizip.auth.security.filter.JwtExceptionFilter;
+import org.team4p.woorizip.auth.security.handler.CustomLogoutSuccessHandler;
+import org.team4p.woorizip.auth.security.handler.RestAccessDeniedHandler;
+import org.team4p.woorizip.auth.security.handler.RestAuthenticationEntryPoint;
+import org.team4p.woorizip.auth.token.jwt.JwtProperties;
+import org.team4p.woorizip.auth.token.jwt.JwtTokenProvider;
 
 @Configuration
 @EnableWebSecurity
@@ -71,9 +71,11 @@ public class SecurityConfig {
                 // PUBLIC GET
                 .requestMatchers(HttpMethod.GET, EndpointPolicy.PUBLIC_GET).permitAll()
 	
-	             // signup/check-id
-                .requestMatchers("/api/user/signup").permitAll()
-
+                
+        	    .requestMatchers("/api/user/signup", "/api/user/check-email").permitAll() // 기존 설정
+        	    .requestMatchers(HttpMethod.GET, "/api/user/**").permitAll()             // [추가] GET 조회 모두 허용
+        	    .requestMatchers(HttpMethod.PUT, "/api/user/**").permitAll()             // [추가] PUT 수정 모두 허용
+                	
 
                 // notices write: ADMIN only
                 .requestMatchers(HttpMethod.POST, EndpointPolicy.NOTICE_ADMIN).hasRole("ADMIN")
