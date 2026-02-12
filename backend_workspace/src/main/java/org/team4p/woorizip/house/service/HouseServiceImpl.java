@@ -1,16 +1,22 @@
 package org.team4p.woorizip.house.service;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
+import org.team4p.woorizip.common.exception.ForbiddenException;
+import org.team4p.woorizip.common.exception.NotFoundException;
 import org.team4p.woorizip.house.dto.HouseDto;
 import org.team4p.woorizip.house.dto.response.HouseMarkerResponse;
+import org.team4p.woorizip.house.jpa.entity.HouseEntity;
 import org.team4p.woorizip.house.jpa.repository.HouseRepository;
 import org.team4p.woorizip.house.kakaoAPI.KakaoGeocodingResponse;
 import org.team4p.woorizip.room.dto.request.RoomSearchCondition;
+import org.team4p.woorizip.room.jpa.repository.RoomRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -19,6 +25,7 @@ import lombok.RequiredArgsConstructor;
 public class HouseServiceImpl implements HouseService {
 	private final HouseRepository houseRepository;
 	private final @Qualifier("houseRestTemplate") RestTemplate houseRestTemplate;
+	private final RoomRepository roomRepository;
 
 	@Override
 	public HouseDto selectHouses(RoomSearchCondition cond) {
@@ -78,9 +85,26 @@ public class HouseServiceImpl implements HouseService {
 	}
 
 	@Override
-	public int deleteHouse(String houseNo) {
+	@Transactional
+	public void deleteHouse(String houseNo, String currentUserNo) {
 		// 건물 정보 삭제
-		return 0;
+		
+		// 건물 있는지 검사
+		Optional<HouseEntity> gettedHouse = houseRepository.findById(houseNo);
+		if(!gettedHouse.isPresent()) throw new NotFoundException("해당 건물이 없습니다.");
+		
+		// 건물 있으면 소유권 검사 
+		// 로그인한 유저와 gettedOwner 비교
+		if(!gettedHouse.get().getUserNo().equals(currentUserNo)) {
+			throw new ForbiddenException("삭제 권한이 없습니다.");
+		}
+		
+		// 소유권 검사 통과하면 건물 소프트삭제 수행
+		long houseResult = houseRepository.softDeleteByHouseNo(houseNo);
+		if (houseResult != 1L) throw new IllegalStateException("건물 정보 삭제 실패");
+		
+		// 건물 삭제 통과하면 방 소프트 삭제 수행
+		roomRepository.softDeleteByHouseNo(houseNo);
 	}
 	
 	

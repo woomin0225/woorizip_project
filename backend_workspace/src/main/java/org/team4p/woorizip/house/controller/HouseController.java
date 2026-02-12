@@ -3,8 +3,6 @@ package org.team4p.woorizip.house.controller;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.UUID;
 
@@ -13,8 +11,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -95,7 +95,7 @@ public class HouseController {
 					// 파일이름변환
 					if (originalImageName == null || originalImageName.isBlank()) {
 //			            throw new IllegalArgumentException("원본 파일명이 없습니다.");
-						continue;
+						continue;	//남은 파일 목록들을 계속 저장 시도하기 위해 에러발생없이 진행
 			        }
 					
 					int index = originalImageName.lastIndexOf(".");
@@ -133,10 +133,9 @@ public class HouseController {
 		            		continue;
 		            }
 				}	//for
-				return ResponseEntity.status(201).body(ApiResponse.ok("건물 등록 성공", null));
-			}	//if
+			}	//if 사진 있는 경우
 			return ResponseEntity.status(201).body(ApiResponse.ok("건물 등록 성공", null));
-		}
+		}	//if 건물 등록 성공한 경우
 		// 사진 없으면
 		return ResponseEntity.status(201).body(ApiResponse.ok("건물 등록 성공", null));
 	}
@@ -149,10 +148,12 @@ public class HouseController {
 	}
 	
 	@DeleteMapping("/{houseNo}")
-	public ResponseEntity<ApiResponse<Void>> deleteHouse(String houseNo){
-		// 건물 삭제
+	public ResponseEntity<ApiResponse<Void>> deleteHouse(@PathVariable("houseNo") String houseNo, @RequestHeader("currentUserNo") String currentUserNo/*임시*/){
+		// 건물 소프트 삭제
 		
-		return null;
+		houseService.deleteHouse(houseNo, currentUserNo);
+		
+		return ResponseEntity.status(200).body(ApiResponse.ok("건물 정보 삭제 성공", null));
 	}
 	
 	@GetMapping("/{houseNo}/images")

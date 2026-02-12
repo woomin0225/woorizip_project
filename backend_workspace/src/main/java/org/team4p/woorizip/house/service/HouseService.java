@@ -14,6 +14,6 @@ public interface HouseService {
 	HouseDto selectHouse(String houseNo);
 	HouseDto insertHouse(HouseDto houseDto);
 	HouseDto updateHouse(HouseDto houseDto);
-	int deleteHouse(String houseNo);
+	void deleteHouse(String houseNo, String currentUserNo);
 	
 }
