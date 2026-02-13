@@ -4,6 +4,7 @@ import java.io.File;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -14,6 +15,7 @@ import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -118,8 +120,16 @@ public class QnaController {
 	// ================= 등록 =================
 	@PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	public ResponseEntity<ApiResponse<Void>> create(
-			@Valid @ModelAttribute PostDto postDto,
+			@Validated(PostDto.Create.class) @ModelAttribute PostDto postDto,
+			BindingResult bindingResult,
 			@RequestParam(name = "files", required = false) List<MultipartFile> files) {
+		
+		if(bindingResult.hasErrors()) {
+			String message = bindingResult.getFieldError().getDefaultMessage();
+			return ResponseEntity.badRequest()
+					.body(ApiResponse.fail(message, null));
+		}
+		
 		List<FileDto> fileDtoList = new ArrayList<>();
 		
 		if(files != null) {
@@ -165,9 +175,16 @@ public class QnaController {
 	@PutMapping(value = "/{postNo}/update", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	public ResponseEntity<ApiResponse<Void>> update(
 			@PathVariable int postNo,
-			@Valid @ModelAttribute PostDto postDto,
+			@Validated(PostDto.Update.class) @ModelAttribute PostDto postDto,
+			BindingResult bindingResult,
 			@RequestParam(name = "deleteFileNo", required = false) List<Integer> deleteFileNo,
 			@RequestParam(name = "files", required = false) List<MultipartFile> files) {
+		
+		if(bindingResult.hasErrors()) {
+			String message = bindingResult.getFieldError().getDefaultMessage();
+			return ResponseEntity.badRequest()
+					.body(ApiResponse.fail(message, null));
+		}
 		
 		postDto.setPostNo(postNo);
 		
@@ -258,4 +275,50 @@ public class QnaController {
 		 return ResponseEntity.status(500)
 				 .body(ApiResponse.fail("QnA 삭제 실패", null));
 	 }
+	 
+	// ================= 검색 =================
+	 @GetMapping("search")
+		public ResponseEntity<ApiResponse<PageResponse<PostDto>>> search(
+				@ModelAttribute @Valid SearchRequest req) {
+			
+			if(!req.hasSearchCondition())
+				return ResponseEntity.badRequest().body(ApiResponse.fail("검색 조건 오류", null));
+			
+			Pageable pageable = req.toPageable();
+			
+			long total;
+			ArrayList<PostDto> list;
+			
+			switch (req.type()) {
+				case "title" -> {
+					total = qnaService.selectSearchTitleCount(req.keyword());
+					list = qnaService.selectSearchTitle(req.keyword(), pageable);
+				}
+				case "content" -> {
+					total = qnaService.selectSearchContentCount(req.keyword());
+					list = qnaService.selectSearchContent(req.keyword(), pageable);
+				}
+				case "date" -> {
+					LocalDate b = req.beginDateOrNull();
+					LocalDate e = req.endDateOrNull();
+					
+					if(b == null || e == null) {
+						return ResponseEntity.badRequest()
+								.body(ApiResponse.fail("날짜 범위가 필요합니다.", null));
+					}
+					total = qnaService.selectSearchDateCount(b, e);
+					list = qnaService.selectSearchDate(b, e, pageable);
+				}
+				default -> {
+					return ResponseEntity.badRequest()
+							.body(ApiResponse.fail("type 오류", null));
+				}
+			}
+			
+			int totalPages = (int) Math.ceil((double) total / req.size());
+			
+			return ResponseEntity.ok(
+					ApiResponse.ok("검색 성공", 
+							new PageResponse<>(list, req.page(), req.size(), total, totalPages)));
+		}
 }
