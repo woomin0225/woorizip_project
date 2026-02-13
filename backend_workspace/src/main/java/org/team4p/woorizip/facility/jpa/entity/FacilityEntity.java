@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.hibernate.annotations.CreationTimestamp;
+import org.team4p.woorizip.facility.dto.FacilityModifyRequestDTO;
 import org.team4p.woorizip.facility.enums.FacilityStatus;
 
 import jakarta.persistence.CascadeType;
@@ -22,6 +23,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -29,6 +31,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
+@Table(name = "tb_fm_list")
 @Getter
 @Setter
 @Builder
@@ -51,7 +54,7 @@ public class FacilityEntity {
 	private Map<String, Boolean> facilityOptionInfo;
 	
 	@Column(name = "facility_location")
-	private int facilityLocation;
+	private Integer facilityLocation;
 	
 	@Column(name = "facility_open_time")
 	private LocalTime facilityOpenTime;
@@ -67,7 +70,7 @@ public class FacilityEntity {
 	private Boolean facilityRsvnRequiredYn;
 	
 	@Column(name = "facility_capacity")
-	private int facilityCapacity;
+	private Integer facilityCapacity;
 	
 	@Column(name = "facility_created_at")
 	@CreationTimestamp
@@ -91,4 +94,24 @@ public class FacilityEntity {
 	@Builder.Default
 	@OneToMany(mappedBy = "facility", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<FacilityImageEntity> images = new ArrayList<>();
+
+	public void updateFacility(FacilityModifyRequestDTO dto) {
+		 if (dto.getFacilityName() != null && !dto.getFacilityName().isBlank()) this.facilityName = dto.getFacilityName();
+		 if (dto.getFacilityOptionInfo() != null) this.facilityOptionInfo = dto.getFacilityOptionInfo() ;
+		 if (dto.getFacilityLocation() != null) this.facilityLocation = dto.getFacilityLocation();
+		 if (dto.getFacilityOpenTime() != null) this.facilityOpenTime = dto.getFacilityOpenTime();
+		 if (dto.getFacilityCloseTime() != null) this.facilityCloseTime = dto.getFacilityCloseTime();
+		 if (dto.getFacilityStatus() != null) {
+			 this.facilityStatus = dto.getFacilityStatus();
+			 if (this.facilityStatus == FacilityStatus.DELETED) this.facilityDeletedAt = LocalDateTime.now();
+			 else this.facilityDeletedAt = null;
+		 	}
+		 if (dto.getFacilityRsvnRequiredYn() != null) this.facilityRsvnRequiredYn = dto.getFacilityRsvnRequiredYn();
+		 if (dto.getFacilityCapacity() != null) this.facilityCapacity = dto.getFacilityCapacity();
+		 if (dto.getMaxRsvnPerDay() != null) this.maxRsvnPerDay = dto.getMaxRsvnPerDay();
+		 if (dto.getFacilityRsvnUnitMinutes() != null) this.facilityRsvnUnitMinutes = dto.getFacilityRsvnUnitMinutes();
+		 if (dto.getFacilityMaxDurationMinutes() != null) this.facilityMaxDurationMinutes = dto.getFacilityMaxDurationMinutes();
+		 // 이미지 변동 추가
+		 this.facilityUpdatedAt = LocalDateTime.now();
+	}
 }
