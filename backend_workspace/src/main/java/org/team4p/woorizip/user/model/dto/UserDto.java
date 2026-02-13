@@ -1,7 +1,9 @@
 package org.team4p.woorizip.user.model.dto;
 
 import java.util.Date;
+
 import org.team4p.woorizip.user.jpa.entity.UserEntity;
+
 import com.fasterxml.jackson.annotation.JsonFormat;
 
 import jakarta.validation.constraints.Email;
@@ -46,6 +48,8 @@ public class UserDto {
 
     @JsonFormat(pattern = "yyyy-MM-dd")
     private Date birthDate; // Entity 타입에 맞춰 Date로 변경
+    
+    private Integer age;
 
     private String socialId;
     private String provider;
@@ -59,7 +63,7 @@ public class UserDto {
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private Date updatedAt;
 
-    private int deletedYn;
+    private String deletedYn;
 
     /**
      * DTO -> Entity 변환
