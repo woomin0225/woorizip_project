@@ -3,6 +3,7 @@ package org.team4p.woorizip.board.post.model.dto;
 import java.sql.Timestamp;
 import java.util.List;
 
+import org.team4p.woorizip.board.bannerimage.model.dto.BannerImageDto;
 import org.team4p.woorizip.board.comment.model.dto.CommentDto;
 import org.team4p.woorizip.board.file.model.dto.FileDto;
 import org.team4p.woorizip.board.post.jpa.entity.PostEntity;
@@ -39,10 +40,10 @@ public class PostDto {
   private String boardTypeNo;
   @NotBlank(groups = {Create.class, Update.class})
   private String userNo;
-  @NotBlank(groups = {Create.class, Update.class})
+  @NotBlank(message = "제목을 작성해야 합니다", groups = {Create.class, Update.class})
   @Size(max = 255)
   private String postTitle;
-  @NotBlank(groups = {Create.class, Update.class})
+  @NotBlank(message = "내용을 작성해야 합니다.", groups = {Create.class, Update.class})
   private String postContent;
   private int postViewCount;
   @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Asia/Seoul")
@@ -51,6 +52,8 @@ public class PostDto {
   private Timestamp postUpdatedAt;
   private Boolean postCommentYn;
   private Boolean postFileYn;
+  
+  private BannerImageDto bannerImage;
 
   //dto -> entity
   public PostEntity toEntity() {
