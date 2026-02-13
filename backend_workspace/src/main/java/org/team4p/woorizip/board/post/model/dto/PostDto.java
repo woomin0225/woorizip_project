@@ -3,6 +3,7 @@ package org.team4p.woorizip.board.post.model.dto;
 import java.sql.Timestamp;
 import java.util.List;
 
+import org.team4p.woorizip.board.comment.model.dto.CommentDto;
 import org.team4p.woorizip.board.file.model.dto.FileDto;
 import org.team4p.woorizip.board.post.jpa.entity.PostEntity;
 
@@ -29,6 +30,7 @@ public class PostDto {
   public interface Update {}
   
   private List<FileDto> files;
+  private List<CommentDto> comments;
 
   @NotNull(groups = Update.class)
   @Min(value = 1, groups = Update.class)

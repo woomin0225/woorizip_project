@@ -1,30 +1,35 @@
 package org.team4p.woorizip.facility.jpa.entity;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.persistence.AttributeConverter;
-import jakarta.persistence.Converter;
+import java.util.HashMap;
 import java.util.Map;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import jakarta.persistence.AttributeConverter;
+import jakarta.persistence.Converter;
+
 @Converter
-public class MapToJsonConverter implements AttributeConverter<Map<String, Object>, String> {
+public class MapToJsonConverter implements AttributeConverter<Map<String, Boolean>, String> {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
-    public String convertToDatabaseColumn(Map<String, Object> attribute) {
+    public String convertToDatabaseColumn(Map<String, Boolean> attribute) {
         try {
-            return objectMapper.writeValueAsString(attribute); // Map을 JSON 글자로!
+            return objectMapper.writeValueAsString(attribute);
         } catch (JsonProcessingException e) {
-            return null;
+            throw new RuntimeException("JSON writing error", e);
         }
     }
 
     @Override
-    public Map<String, Object> convertToEntityAttribute(String dbData) {
+    public Map<String, Boolean> convertToEntityAttribute(String dbData) {
+    	if (dbData == null || dbData.isEmpty()) return new HashMap<>(); 
         try {
-            return objectMapper.readValue(dbData, Map.class); // JSON 글자를 Map으로!
+            return objectMapper.readValue(dbData, new TypeReference<Map<String, Boolean>>() {});
         } catch (JsonProcessingException e) {
-            return null;
+        	throw new RuntimeException("JSON reading error", e);
         }
     }
 }

@@ -53,7 +53,6 @@ public class UserEntity {
     @Column(name = "updated_at")
     private Date updatedAt;
 
-    // [수정] DB 타입이 char(1)이고 기본값이 'N'입니다.
     @Column(name = "deleted_yn", nullable = false, columnDefinition = "char(1)")
     private String deletedYn;
 

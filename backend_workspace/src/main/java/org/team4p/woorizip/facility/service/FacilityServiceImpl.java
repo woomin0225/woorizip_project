@@ -1,14 +1,20 @@
 package org.team4p.woorizip.facility.service;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.team4p.woorizip.facility.dto.FacilityCreateRequestDTO;
+import org.team4p.woorizip.facility.dto.FacilityDetailResponseDTO;
 import org.team4p.woorizip.facility.dto.FacilityImageDTO;
 import org.team4p.woorizip.facility.dto.FacilityListResponseDTO;
+import org.team4p.woorizip.facility.dto.FacilityModifyRequestDTO;
+import org.team4p.woorizip.facility.jpa.entity.FacilityCategoryEntity;
 import org.team4p.woorizip.facility.jpa.entity.FacilityEntity;
 import org.team4p.woorizip.facility.jpa.entity.FacilityImageEntity;
+import org.team4p.woorizip.facility.jpa.repository.FacilityCategoryRepository;
 import org.team4p.woorizip.facility.jpa.repository.FacilityRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -18,6 +24,7 @@ import lombok.RequiredArgsConstructor;
 public class FacilityServiceImpl implements FacilityService {
 	
 	private final FacilityRepository facilityRepository;
+	private final FacilityCategoryRepository categoryRepository;
 	
 	// 시설 목록 조회
 	@Override
@@ -32,12 +39,25 @@ public class FacilityServiceImpl implements FacilityService {
 	@Override
 	@Transactional
 	public void createFacility(FacilityCreateRequestDTO dto) {
+		// 카테고리 선택에 따른 옵션 기본값 가져오기
+		FacilityCategoryEntity facilityCategory = categoryRepository.findById(dto.getFacilityCode())
+				.orElseThrow(() -> new RuntimeException("no category data exists"));
+		
+		// 기본값 + 입력값
+		String finalName = 
+				(dto.getFacilityName() != null) && (!(dto.getFacilityName().isEmpty()))
+			    ? dto.getFacilityName() 
+			    : facilityCategory.getFacilityType();
+		
+		Map<String, Boolean> finalOptions = new HashMap<>(facilityCategory.getFacilityOptions());
+		if(dto.getFacilityOptionInfo() != null) finalOptions.putAll(dto.getFacilityOptionInfo());
+		
 		// 시설 정보 입력
 		FacilityEntity facility = FacilityEntity.builder()
-	            .facilityName(dto.getFacilityName())
+	            .facilityName(finalName)
 	            .facilityLocation(dto.getFacilityLocation())
 	            .facilityStatus(dto.getFacilityStatus())
-	            .facilityOptionInfo(dto.getFacilityOptionInfo())
+	            .facilityOptionInfo(finalOptions)
 	            .facilityLocation(dto.getFacilityLocation())
 	            .facilityStatus(dto.getFacilityStatus())
 	            .facilityCapacity(dto.getFacilityCapacity())
@@ -63,5 +83,20 @@ public class FacilityServiceImpl implements FacilityService {
 	    
 	    facilityRepository.save(facility);
 		return;
+	}
+	
+	// 시설 상세 조회
+	public FacilityDetailResponseDTO getFacilityDetails(String facilityNo) {
+		return facilityRepository.findByFacilityNoAndFacilityDeletedAtIsNull(facilityNo)
+	            .map(FacilityDetailResponseDTO::from)
+	            .orElseThrow(() -> new RuntimeException("no facility exists"));
+	}
+	
+	// 시설 정보 수정
+	@Transactional
+	public void modifyFacility(String facilityNo, FacilityModifyRequestDTO dto) {
+		FacilityEntity entity = facilityRepository.findById(facilityNo)
+		        .orElseThrow(() -> new RuntimeException("no facility exists"));
+		entity.updateFacility(dto);
 	}
 }

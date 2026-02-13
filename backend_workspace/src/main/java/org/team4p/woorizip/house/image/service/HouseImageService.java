@@ -7,6 +7,6 @@ import org.team4p.woorizip.house.image.dto.HouseImageDto;
 public interface HouseImageService {
 	List<HouseImageDto> selectHouseImages(String houseNo);
 	HouseImageDto insertHouseImage(HouseImageDto houseImageDto);
-	int deleteHouseImageByHouseImageNo(int deleteImageNo);
+	HouseImageDto deleteHouseImageByHouseImageNo(int deleteImageNo, String currentHouseNo);
 	int deleteHouseImagesAll(String houseNo);
 }
