@@ -46,6 +46,4 @@ public class FacilityImageEntity {
 				.facilityStoredImageName(facilityStoredImageName)
 				.build();
 	}
-	
-	// 이미지 데이터 변동 추가
 }

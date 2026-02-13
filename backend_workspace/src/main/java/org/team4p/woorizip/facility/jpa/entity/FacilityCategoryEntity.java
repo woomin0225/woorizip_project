@@ -25,7 +25,7 @@ import lombok.Setter;
 public class FacilityCategoryEntity {
 	@Id
 	@GeneratedValue(strategy=GenerationType.IDENTITY)
-	private int facilityCode;
+	private Integer facilityCode;
 	
 	@Column(name = "facility_type")
 	private String facilityType;

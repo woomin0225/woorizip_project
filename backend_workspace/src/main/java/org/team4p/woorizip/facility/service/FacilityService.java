@@ -5,6 +5,7 @@ import org.team4p.woorizip.facility.dto.*;
 
 public interface FacilityService {
 	List<FacilityListResponseDTO> getFacilityList(String houseNo);
-	void createFacility(FacilityCreateRequestDTO dto);
+	void createFacility(FacilityCreateRequestDTO dto, String currentUserNo);
 	FacilityDetailResponseDTO getFacilityDetails(String facilityNo);
+	void modifyFacility(String facilityNo, FacilityModifyRequestDTO dto);
 }

@@ -3,6 +3,7 @@ package org.team4p.woorizip.facility.service;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +26,7 @@ public class FacilityServiceImpl implements FacilityService {
 	
 	private final FacilityRepository facilityRepository;
 	private final FacilityCategoryRepository categoryRepository;
+	private final HouseEntity houseEntity;
 	
 	// 시설 목록 조회
 	@Override
@@ -38,25 +40,40 @@ public class FacilityServiceImpl implements FacilityService {
 	// 시설 신규 등록
 	@Override
 	@Transactional
-	public void createFacility(FacilityCreateRequestDTO dto) {
-		// 카테고리 선택에 따른 옵션 기본값 가져오기
-		FacilityCategoryEntity facilityCategory = categoryRepository.findById(dto.getFacilityCode())
-				.orElseThrow(() -> new RuntimeException("no category data exists"));
+	public void createFacility(FacilityCreateRequestDTO dto, String userNo) {
+		// userNo로 houseNo 추출
+		HouseEntity house = houseRepository.findByUserNo(userNo)
+	            .orElseThrow(() -> new RuntimeException("no houseNo in userNo"));
+		String houseNo = house.getHouseNo();
 		
-		// 기본값 + 입력값
-		String finalName = 
-				(dto.getFacilityName() != null) && (!(dto.getFacilityName().isEmpty()))
-			    ? dto.getFacilityName() 
-			    : facilityCategory.getFacilityType();
+		// 카테고리 선택에 따른 옵션 기본값 가져오기 : 미선택 시 기본값 미적용
+		FacilityCategoryEntity facilityCategory = null;
+	    if (dto.getFacilityCode() != null) {
+	        facilityCategory = categoryRepository.findById(dto.getFacilityCode()).orElse(null);
+	    }
+	    
+	    // 이름 덮어쓰기
+	    String finalName = "공용시설";
+	    if (dto.getFacilityName() != null && !dto.getFacilityName().isEmpty()) {
+	        finalName = dto.getFacilityName();
+	    } else if (facilityCategory != null) {
+	        finalName = facilityCategory.getFacilityType();
+	    }
 		
-		Map<String, Boolean> finalOptions = new HashMap<>(facilityCategory.getFacilityOptions());
-		if(dto.getFacilityOptionInfo() != null) finalOptions.putAll(dto.getFacilityOptionInfo());
+	    // 옵션 덮어쓰기
+		Map<String, Boolean> finalOptions = new HashMap<>();
+	    if (facilityCategory != null && facilityCategory.getFacilityOptions() != null) {
+	        finalOptions.putAll(facilityCategory.getFacilityOptions());
+	    }
+	    if (dto.getFacilityOptionInfo() != null) {
+	        finalOptions.putAll(dto.getFacilityOptionInfo());
+	    }
 		
 		// 시설 정보 입력
 		FacilityEntity facility = FacilityEntity.builder()
+				.facilityNo(UUID.randomUUID().toString())
+				.houseNo(houseNo)
 	            .facilityName(finalName)
-	            .facilityLocation(dto.getFacilityLocation())
-	            .facilityStatus(dto.getFacilityStatus())
 	            .facilityOptionInfo(finalOptions)
 	            .facilityLocation(dto.getFacilityLocation())
 	            .facilityStatus(dto.getFacilityStatus())
