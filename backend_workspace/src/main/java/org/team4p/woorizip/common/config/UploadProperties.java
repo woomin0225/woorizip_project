@@ -17,9 +17,9 @@ public record UploadProperties(
         return Path.of(uploadDir, "notice");  // C:/upload_files/notice
     }
 
-    /** 게시판 업로드 경로 */
-    public Path boardDir() {
-        return Path.of(uploadDir, "board");  // C:/upload_files/board
+    /** qna 업로드 경로 */
+    public Path qnaDir() {
+        return Path.of(uploadDir, "qna");  // C:/upload_files/qna
     }
 
     /** 회원 사진 업로드 경로 */

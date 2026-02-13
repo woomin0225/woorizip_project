@@ -28,7 +28,7 @@ public class UserController {
      * 아이디 중복 체크
      * POST /user/check-email
      */
-    @PostMapping("/check-email")
+    @PostMapping("/check-id")
     public ResponseEntity<ApiResponse<String>> checkEmail(@RequestParam("email_id") String emailId) {
         int result = userService.selectCheckEmailId(emailId);
         return ResponseEntity.ok(ApiResponse.ok("아이디 중복 체크 결과", (result == 0) ? "ok" : "dup"));
