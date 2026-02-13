@@ -15,6 +15,7 @@ import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -118,8 +119,15 @@ public class NoticeController {
 	//==============등록===================
 	@PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	public ResponseEntity<ApiResponse<Void>> create(
-			@Valid @ModelAttribute PostDto postDto,
+			@Validated(PostDto.Create.class) @ModelAttribute PostDto postDto,
+			BindingResult bindingResult,
 			@RequestParam(name = "files", required = false) List<MultipartFile> files) {
+		
+		if(bindingResult.hasErrors()) {
+			String message = bindingResult.getFieldError().getDefaultMessage();
+			return ResponseEntity.badRequest()
+					.body(ApiResponse.fail(message, null));
+		}
 		
 		List<FileDto> fileDtoList = new ArrayList<>();
 		
@@ -165,9 +173,16 @@ public class NoticeController {
 	@PutMapping	(value = "/{postNo}/update", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	public ResponseEntity<ApiResponse<Void>> update(
 			@PathVariable int postNo,
-			@Valid @ModelAttribute PostDto postDto,
+			@Validated(PostDto.Update.class) @ModelAttribute PostDto postDto,
+			BindingResult bindingResult,
 			@RequestParam(name = "deleteFileNo", required = false) List<Integer> deleteFileNo,
 			@RequestParam(name = "files", required = false) List<MultipartFile> files) {
+		
+		if(bindingResult.hasErrors()) {
+			String message = bindingResult.getFieldError().getDefaultMessage();
+			return ResponseEntity.badRequest()
+					.body(ApiResponse.fail(message, null));
+		}
 		
 		postDto.setPostNo(postNo);
 		
