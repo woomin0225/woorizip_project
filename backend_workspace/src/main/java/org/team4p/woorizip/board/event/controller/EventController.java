@@ -15,9 +15,13 @@ import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.team4p.woorizip.board.bannerimage.jpa.entity.BannerImageEntity;
+import org.team4p.woorizip.board.bannerimage.jpa.repository.BannerImageRepository;
+import org.team4p.woorizip.board.bannerimage.model.dto.BannerImageDto;
 import org.team4p.woorizip.board.event.model.service.EventService;
 import org.team4p.woorizip.board.file.jpa.entity.FileEntity;
 import org.team4p.woorizip.board.file.jpa.repository.FileRepository;
@@ -43,6 +47,7 @@ public class EventController {
 	private final EventService eventService;
 	private final UploadProperties uploadProperties;
 	private final FileRepository fileRepository;
+	private final BannerImageRepository bannerImageRepository;
 	
 	//==============Top3===================
 	@GetMapping("/top3")
@@ -92,7 +97,7 @@ public class EventController {
 		if(fileEntity == null || !fileEntity.getPostNo().equals(postNo))
 			return ResponseEntity.notFound().build();
 		
-		Path path = uploadProperties.noticeDir()
+		Path path = uploadProperties.eventDir()
 				.resolve(fileEntity.getUpdatedFileName());
 		
 		File file = path.toFile();		
@@ -118,9 +123,44 @@ public class EventController {
 	//==============등록===================
 	@PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	public ResponseEntity<ApiResponse<Void>> create(
-			@Valid @ModelAttribute PostDto postDto,
+			@Validated(PostDto.Create.class) @ModelAttribute PostDto postDto,
+			BindingResult bindingResult,
+			@RequestParam(name = "bannerFile") MultipartFile bannerFile,
 			@RequestParam(name = "files", required = false) List<MultipartFile> files) {
 		
+		if(bindingResult.hasErrors()) {
+			String message = bindingResult.getFieldError().getDefaultMessage();
+			return ResponseEntity.badRequest()
+					.body(ApiResponse.fail(message, null));
+		}
+		
+		//배너 필수 처리 ======================
+		if(bannerFile == null || bannerFile.isEmpty()) {
+			return ResponseEntity.badRequest()
+					.body(ApiResponse.fail("배너 이미지는 필수 입니다.", null));
+		}
+		
+		String bannerOriginal = bannerFile.getOriginalFilename();
+		String bannerRename = FileNameChange.change(bannerOriginal);
+		
+		File bannerDir = uploadProperties.eventBannerDir().toFile();
+		if(!bannerDir.exists())
+			bannerDir.mkdirs();
+		
+		try {
+			bannerFile.transferTo(new File(bannerDir, bannerRename));
+		} catch (Exception e) {
+			log.error("배너 업로드 실패", e);
+			return ResponseEntity.status(500)
+					.body(ApiResponse.fail("배너 업로드 실패", null));
+		}
+		
+		BannerImageDto bannerDto = BannerImageDto.builder()
+				.originalFileName(bannerOriginal)
+				.updatedFileName(bannerRename)
+				.build();
+		
+		//일반 첨부파일 처리 ======================
 		List<FileDto> fileDtoList = new ArrayList<>();
 		
 		if(files != null) {
@@ -132,7 +172,7 @@ public class EventController {
 				String original = file.getOriginalFilename();
 				String rename = FileNameChange.change(original);
 				
-				File saveDir = uploadProperties.noticeDir().toFile();
+				File saveDir = uploadProperties.eventDir().toFile();
 				if(!saveDir.exists())
 					saveDir.mkdirs();
 				
@@ -140,37 +180,79 @@ public class EventController {
 					file.transferTo(new File(saveDir, rename));
 				} catch (Exception e) {
 					log.error("파일 업로드 실패", e);
-					return ResponseEntity.status(500).body(ApiResponse.fail("파일 업로드 실패", null));
+					return ResponseEntity.status(500)
+							.body(ApiResponse.fail("파일 업로드 실패", null));
 				}
 				
 				fileDtoList.add(
 						FileDto.builder()
-						.originalFileName(original)
-						.updatedFileName(rename)
-						.build());
+							.originalFileName(original)
+							.updatedFileName(rename)
+							.build());
 			}
 		}
 		
 		postDto.setFiles(fileDtoList);
 		
-		int result = eventService.insertEvent(postDto);
+		//서비스 호출 ======================
+		int result = eventService.insertEvent(postDto, bannerDto);
 		
 		if(result > 0)
-			return ResponseEntity.status(201).body(ApiResponse.ok("공지 등록 성공", null));
+			return ResponseEntity.status(201)
+					.body(ApiResponse.ok("이벤트 게시글 등록 성공", null));
 		
-		return ResponseEntity.status(500).body(ApiResponse.fail("공지 등록 실패", null));
+		return ResponseEntity.status(500)
+				.body(ApiResponse.fail("이벤트 게시글 등록 실패", null));
 	}
 	
 	//==============수정===================
 	@PutMapping	(value = "/{postNo}/update", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	public ResponseEntity<ApiResponse<Void>> update(
 			@PathVariable int postNo,
-			@Valid @ModelAttribute PostDto postDto,
+			@Validated(PostDto.Update.class) @ModelAttribute PostDto postDto,
+			BindingResult bindingResult,
+			@RequestParam(name = "bannerFile", required = false) MultipartFile bannerFile,
 			@RequestParam(name = "deleteFileNo", required = false) List<Integer> deleteFileNo,
 			@RequestParam(name = "files", required = false) List<MultipartFile> files) {
 		
+		if(bindingResult.hasErrors()) {
+			String message = bindingResult.getFieldError().getDefaultMessage();
+			return ResponseEntity.badRequest()
+					.body(ApiResponse.fail(message, null));
+		}
+		
 		postDto.setPostNo(postNo);
 		
+		// 배너 처리=======
+		BannerImageDto bannerDto = null;
+		BannerImageEntity oldBanner = null;
+		
+		if(bannerFile != null && !bannerFile.isEmpty()) {
+			//기존 배너 조회 
+			oldBanner = bannerImageRepository.findByPostNo(postNo).orElse(null);
+			
+			String bannerOriginal = bannerFile.getOriginalFilename();
+			String bannerRename = FileNameChange.change(bannerOriginal);
+			
+			File bannerDir = uploadProperties.eventBannerDir().toFile();
+			if(!bannerDir.exists())
+				bannerDir.mkdirs();
+			
+			try {
+				bannerFile.transferTo(new File(bannerDir, bannerRename));
+			} catch (Exception e) {
+				log.error("배너 업로드 실패", e);
+				return ResponseEntity.status(500)
+						.body(ApiResponse.fail("배너 업로드 실패", null));
+			}
+			
+			bannerDto = BannerImageDto.builder()
+					.originalFileName(bannerOriginal)
+					.updatedFileName(bannerRename)
+					.build();
+		}
+		
+		//파일 등록 처리 =================
 		List<FileDto> newFiles = new ArrayList<>();
 		
 		if(files != null) {
@@ -182,7 +264,7 @@ public class EventController {
 				String original = file.getOriginalFilename();
 				String rename = FileNameChange.change(original);
 				
-				File saveDir = uploadProperties.noticeDir().toFile();
+				File saveDir = uploadProperties.eventDir().toFile();
 				if(!saveDir.exists())
 					saveDir.mkdirs();
 				
@@ -190,7 +272,8 @@ public class EventController {
 					file.transferTo(new File(saveDir, rename));
 				} catch (Exception e) {
 					log.error("파일 업로드 실패", e);
-					return ResponseEntity.status(500).body(ApiResponse.fail("파일 업로드 실패", null));
+					return ResponseEntity.status(500)
+							.body(ApiResponse.fail("파일 업로드 실패", null));
 				}
 				
 				newFiles.add(FileDto.builder()
@@ -200,8 +283,10 @@ public class EventController {
 			}
 		}
 		
+		postDto.setFiles(newFiles);
+		
+		//기존 파일 삭제 처리 ======================
 		List<FileEntity> deleteFiles = new ArrayList<>();
-
 		if(deleteFileNo != null && !deleteFileNo.isEmpty()) {
 		    for(Integer fileNo : deleteFileNo) {
 		        fileRepository.findById(fileNo)
@@ -209,20 +294,31 @@ public class EventController {
 		    }
 		}
 		
-		postDto.setFiles(newFiles);
-		
-		int result = eventService.updateEvent(postDto, deleteFileNo);
+		//서비스 호출 ===============================
+		int result = eventService.updateEvent(postDto, deleteFileNo, bannerDto);
 		
 		if(result > 0) {
-			 for(FileEntity fileEntity : deleteFiles) {
-			        File physical = uploadProperties.noticeDir()
-			                .resolve(fileEntity.getUpdatedFileName())
-			                .toFile();
+			//등록된 파일 삭제 ==========================
+			for (FileEntity fileEntity : deleteFiles) {
+				File physical = uploadProperties.eventDir()
+						.resolve(fileEntity.getUpdatedFileName())
+						.toFile();
 
-			        if (physical.exists() && !physical.delete()) {
-			            log.warn("파일 삭제 실패: {}", physical.getAbsolutePath());
-			        }
-			    }
+				if (physical.exists() && !physical.delete()) {
+					log.warn("파일 삭제 실패: {}", physical.getAbsolutePath());
+				}
+			}
+			 
+			 //기존 배너 이미지 삭제 =========================
+			if(oldBanner != null) {
+				File oldPhysical = uploadProperties.eventBannerDir()
+						.resolve(oldBanner.getUpdatedFileName())
+						.toFile();
+				
+				if(oldPhysical.exists() && !oldPhysical.delete()) {
+					log.warn("배너 이미지 파일 삭제 실패: {}", oldPhysical.getAbsolutePath());
+				}
+			}
 
 			return ResponseEntity.ok(ApiResponse.ok("수정 성공", null));
 		}
@@ -240,21 +336,32 @@ public class EventController {
 	    int result = eventService.deleteEvent(postNo);
 
 	    if(result > 0) {
+	    	
+			// DB 삭제 성공 후 파일 삭제
+			if (dto != null && dto.getFiles() != null) {
+				for (FileDto file : dto.getFiles()) {
+					File physical = uploadProperties.eventDir()
+							.resolve(file.getUpdatedFileName())
+							.toFile();
 
-	        // DB 삭제 성공 후 파일 삭제
-	        if(dto != null && dto.getFiles() != null) {
-	            for(FileDto file : dto.getFiles()) {
-	                File physical = uploadProperties.noticeDir()
-	                        .resolve(file.getUpdatedFileName())
-	                        .toFile();
+					if (physical.exists() && !physical.delete()) {
+						log.warn("파일 삭제 실패: {}", physical.getAbsolutePath());
+					}
+				}
+			}
+			
+			//배너 이미지 삭제 
+			if(dto != null && dto.getBannerImage() != null) {
+	    	    File bannerFile = uploadProperties.eventBannerDir()
+	    	            .resolve(dto.getBannerImage().getUpdatedFileName())
+	    	            .toFile();
 
-	                if (physical.exists() && !physical.delete()) {
-	                    log.warn("파일 삭제 실패: {}", physical.getAbsolutePath());
-	                }
-	            }
-	        }
+	    	    if (bannerFile.exists() && !bannerFile.delete()) {
+	    	        log.warn("배너 이미지 파일 삭제 실패: {}", bannerFile.getAbsolutePath());
+	    	    }
+	    	}
 
-	        return ResponseEntity.ok(ApiResponse.ok("삭제 성공", null));
+			return ResponseEntity.ok(ApiResponse.ok("삭제 성공", null));
 	    }
 
 	    return ResponseEntity.status(500)
