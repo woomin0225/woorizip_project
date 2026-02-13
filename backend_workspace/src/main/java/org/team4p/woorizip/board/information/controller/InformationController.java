@@ -15,6 +15,7 @@ import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -100,7 +101,7 @@ public class InformationController {
 		if(fileEntity == null || !fileEntity.getPostNo().equals(postNo))
 			return ResponseEntity.notFound().build();
 		
-		Path path = uploadProperties.noticeDir()
+		Path path = uploadProperties.informationDir()
 				.resolve(fileEntity.getUpdatedFileName());
 		
 		File file = path.toFile();		
@@ -126,8 +127,15 @@ public class InformationController {
 	//==============등록===================
 	@PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	public ResponseEntity<ApiResponse<Void>> create(
-			@Valid @ModelAttribute PostDto postDto,
+			@Validated(PostDto.Create.class) @ModelAttribute PostDto postDto,
+			BindingResult bindingResult,
 			@RequestParam(name = "files", required = false) List<MultipartFile> files) {
+		
+		if(bindingResult.hasErrors()) {
+			String message = bindingResult.getFieldError().getDefaultMessage();
+			return ResponseEntity.badRequest()
+					.body(ApiResponse.fail(message, null));
+		}
 		
 		List<FileDto> fileDtoList = new ArrayList<>();
 		
@@ -140,7 +148,7 @@ public class InformationController {
 				String original = file.getOriginalFilename();
 				String rename = FileNameChange.change(original);
 				
-				File saveDir = uploadProperties.noticeDir().toFile();
+				File saveDir = uploadProperties.informationDir().toFile();
 				if(!saveDir.exists())
 					saveDir.mkdirs();
 				
@@ -173,9 +181,16 @@ public class InformationController {
 	@PutMapping	(value = "/{postNo}/update", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	public ResponseEntity<ApiResponse<Void>> update(
 			@PathVariable int postNo,
-			@Valid @ModelAttribute PostDto postDto,
+			@Validated(PostDto.Update.class) @ModelAttribute PostDto postDto,
+			BindingResult bindingResult,
 			@RequestParam(name = "deleteFileNo", required = false) List<Integer> deleteFileNo,
 			@RequestParam(name = "files", required = false) List<MultipartFile> files) {
+		
+		if(bindingResult.hasErrors()) {
+			String message = bindingResult.getFieldError().getDefaultMessage();
+			return ResponseEntity.badRequest()
+					.body(ApiResponse.fail(message, null));
+		}
 		
 		postDto.setPostNo(postNo);
 		
@@ -190,7 +205,7 @@ public class InformationController {
 				String original = file.getOriginalFilename();
 				String rename = FileNameChange.change(original);
 				
-				File saveDir = uploadProperties.noticeDir().toFile();
+				File saveDir = uploadProperties.informationDir().toFile();
 				if(!saveDir.exists())
 					saveDir.mkdirs();
 				
@@ -223,7 +238,7 @@ public class InformationController {
 		
 		if(result > 0) {
 			 for(FileEntity fileEntity : deleteFiles) {
-			        File physical = uploadProperties.noticeDir()
+			        File physical = uploadProperties.informationDir()
 			                .resolve(fileEntity.getUpdatedFileName())
 			                .toFile();
 
@@ -252,7 +267,7 @@ public class InformationController {
 	        // DB 삭제 성공 후 파일 삭제
 	        if(dto != null && dto.getFiles() != null) {
 	            for(FileDto file : dto.getFiles()) {
-	                File physical = uploadProperties.noticeDir()
+	                File physical = uploadProperties.informationDir()
 	                        .resolve(file.getUpdatedFileName())
 	                        .toFile();
 
