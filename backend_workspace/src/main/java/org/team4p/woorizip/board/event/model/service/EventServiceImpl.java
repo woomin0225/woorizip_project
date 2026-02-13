@@ -10,6 +10,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.team4p.woorizip.board.bannerimage.jpa.repository.BannerImageRepository;
+import org.team4p.woorizip.board.bannerimage.model.dto.BannerImageDto;
 import org.team4p.woorizip.board.file.jpa.entity.FileEntity;
 import org.team4p.woorizip.board.file.jpa.repository.FileRepository;
 import org.team4p.woorizip.board.file.model.dto.FileDto;
@@ -28,19 +30,32 @@ public class EventServiceImpl implements EventService {
 
 	private final PostRepository postRepository;
 	private final FileRepository fileRepository;
+	private final BannerImageRepository bannerImageRepository;
 
 	// 공지사항 타입 고정
 	private static final String BOARD_TYPE_NO = "E1";
 
 	// ================Page -> List 변환 공통 메소드==============
 	private ArrayList<PostDto> toList(Page<PostEntity> page) {
-		ArrayList<PostDto> list = new ArrayList<>();
-		for (PostEntity entity : page) {
-			PostDto dto = PostDto.fromEntity(entity);
-			dto.setFiles(getFiles(entity.getPostNo()));
-			list.add(dto);
-		}
-		return list;
+	    ArrayList<PostDto> list = new ArrayList<>();
+
+	    for (PostEntity entity : page) {
+	        PostDto dto = PostDto.fromEntity(entity);
+
+	        // 일반 첨부파일
+	        dto.setFiles(getFiles(entity.getPostNo()));
+
+	        // 배너 이미지 추가
+	        bannerImageRepository.findByPostNo(entity.getPostNo())
+	                .ifPresent(banner ->
+	                        dto.setBannerImage(
+	                                BannerImageDto.fromEntity(banner)
+	                        ));
+
+	        list.add(dto);
+	    }
+
+	    return list;
 	}
 
 	private List<FileDto> getFiles(Integer postNo) {
@@ -69,12 +84,16 @@ public class EventServiceImpl implements EventService {
 
 	@Override
 	public int selectListCount() {
-		return (int) postRepository.countByBoardTypeNoAndPostTitleContainingIgnoreCase(BOARD_TYPE_NO, "");
+		return (int) postRepository
+				.countByBoardTypeNoAndPostTitleContainingIgnoreCase(BOARD_TYPE_NO, "");
 	}
 
+	//목록 조회 ====================
 	@Override
 	public ArrayList<PostDto> selectList(Pageable pageable) {
-		return toList(postRepository.findByBoardTypeNoOrderByPostNoDesc(BOARD_TYPE_NO, pageable));
+	    return toList(
+	        postRepository.findByBoardTypeNoOrderByPostNoDesc(BOARD_TYPE_NO, pageable)
+	    );
 	}
 
 	@Override
@@ -84,6 +103,13 @@ public class EventServiceImpl implements EventService {
 				.map(entity -> {
 					PostDto dto = PostDto.fromEntity(entity);
 					dto.setFiles(getFiles(entity.getPostNo()));
+					
+					bannerImageRepository.findByPostNo(postNo)
+						.ifPresent(banner ->
+								dto.setBannerImage(
+										BannerImageDto.fromEntity(banner)
+											));
+					
 					return dto;
 				})
 				.orElse(null);
@@ -112,36 +138,49 @@ public class EventServiceImpl implements EventService {
 	//========================등록======================
 	@Override
 	@Transactional
-	public int insertEvent(PostDto postDto) {
+	public int insertEvent(PostDto postDto, BannerImageDto bannerDto) {
 		try {
+			//배너 필수 체크 
+			if(bannerDto == null) {
+				log.warn("배너 이미지는 필수입니다.");
+				return 0;
+			}
+			
 			postDto.setBoardTypeNo(BOARD_TYPE_NO);
 			postDto.setPostNo(null);
-
+			
+			//이벤트 게시글 저장 
 			PostEntity saved = postRepository.save(postDto.toEntity());
 
 			if (saved.getPostNo() == null)
 				return 0;
+			
+			Integer postNo = saved.getPostNo();
 
-			// 파일 저장
+			//일반 첨부 파일 저장
 			if (postDto.getFiles() != null) {
 				for (FileDto fileDto : postDto.getFiles()) {
-					fileDto.setPostNo(saved.getPostNo());
+					fileDto.setPostNo(postNo);
 					fileRepository.save(fileDto.toEntity());
 				}
 			}
-
+			
+			//배너 이미지 저장 
+			bannerDto.setPostNo(postNo);
+			bannerImageRepository.save(bannerDto.toEntity());
+			
 			return 1;
+
 		} catch (Exception e) {
 			log.error("insertEvent error : {}", e.getMessage());
 			return 0;
 		}
-
 	}
 
 	//========================수정======================
 	@Override
 	@Transactional
-	public int updateEvent(PostDto postDto, List<Integer> deleteFileNo) {
+	public int updateEvent(PostDto postDto, List<Integer> deleteFileNo, BannerImageDto bannerDto) {
 		
 		if(postDto.getPostNo() == null || 
 				!postRepository.existsById(postDto.getPostNo())) {
@@ -151,7 +190,7 @@ public class EventServiceImpl implements EventService {
 		postDto.setBoardTypeNo(BOARD_TYPE_NO);
 		postRepository.save(postDto.toEntity());
 		
-		//선택 삭제 파일 제거
+		//기존 파일 삭제
 		if(deleteFileNo != null && !deleteFileNo.isEmpty()) {
 			for(Integer fileNo : deleteFileNo) {
 				fileRepository.deleteById(fileNo);
@@ -164,6 +203,20 @@ public class EventServiceImpl implements EventService {
 				fileDto.setPostNo(postDto.getPostNo());
 				fileRepository.save(fileDto.toEntity());
 			}
+		}
+		
+		//기존 배너 이미지 존재 여부 확인 
+		if (bannerDto != null &&
+		        bannerDto.getOriginalFileName() != null &&
+		        bannerDto.getUpdatedFileName() != null) {
+			
+			// 기존 배너 삭제
+			bannerImageRepository.findByPostNo(postDto.getPostNo())
+					.ifPresent(banner -> bannerImageRepository.delete(banner));
+
+			// 새 배너 저장
+			bannerDto.setPostNo(postDto.getPostNo());
+			bannerImageRepository.save(bannerDto.toEntity());
 		}
 		
 		return 1;
