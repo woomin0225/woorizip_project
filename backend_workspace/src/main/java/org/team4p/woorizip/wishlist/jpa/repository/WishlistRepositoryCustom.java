@@ -1,8 +1,9 @@
 package org.team4p.woorizip.wishlist.jpa.repository;
 
 import java.util.List;
+
 import org.springframework.data.domain.Pageable;
-import org.team4p.woorizip.wishlist.jpa.entity.WishlistEntity;
+import org.team4p.woorizip.wishlist.model.dto.WishlistDto;
 
 public interface WishlistRepositoryCustom {
     
@@ -10,5 +11,5 @@ public interface WishlistRepositoryCustom {
     long countMyWishlist(String userNo);
 
     // 내 찜 목록 조회 (페이징)
-    List<WishlistEntity> findMyWishlist(String userNo, Pageable pageable);
+    List<WishlistDto> findMyWishlist(String userNo, Pageable pageable);
 }
