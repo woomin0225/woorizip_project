@@ -92,7 +92,7 @@ public class FacilityEntity {
 	private Integer facilityMaxDurationMinutes;
 	
 	@Builder.Default
-	@OneToMany(mappedBy = "facility", cascade = CascadeType.ALL, orphanRemoval = true)
+	@OneToMany(mappedBy = "facilityNo", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<FacilityImageEntity> images = new ArrayList<>();
 
 	public void updateFacility(FacilityModifyRequestDTO dto) {
@@ -111,7 +111,6 @@ public class FacilityEntity {
 		 if (dto.getMaxRsvnPerDay() != null) this.maxRsvnPerDay = dto.getMaxRsvnPerDay();
 		 if (dto.getFacilityRsvnUnitMinutes() != null) this.facilityRsvnUnitMinutes = dto.getFacilityRsvnUnitMinutes();
 		 if (dto.getFacilityMaxDurationMinutes() != null) this.facilityMaxDurationMinutes = dto.getFacilityMaxDurationMinutes();
-		 // 이미지 변동 추가
 		 this.facilityUpdatedAt = LocalDateTime.now();
 	}
 }

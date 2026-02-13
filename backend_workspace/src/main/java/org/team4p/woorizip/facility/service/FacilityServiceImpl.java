@@ -7,6 +7,7 @@ import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.team4p.woorizip.facility.dto.FacilityCategoryDTO;
 import org.team4p.woorizip.facility.dto.FacilityCreateRequestDTO;
 import org.team4p.woorizip.facility.dto.FacilityDetailResponseDTO;
 import org.team4p.woorizip.facility.dto.FacilityImageDTO;
@@ -17,6 +18,8 @@ import org.team4p.woorizip.facility.jpa.entity.FacilityEntity;
 import org.team4p.woorizip.facility.jpa.entity.FacilityImageEntity;
 import org.team4p.woorizip.facility.jpa.repository.FacilityCategoryRepository;
 import org.team4p.woorizip.facility.jpa.repository.FacilityRepository;
+import org.team4p.woorizip.house.jpa.entity.HouseEntity;
+import org.team4p.woorizip.house.jpa.repository.HouseRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -26,7 +29,7 @@ public class FacilityServiceImpl implements FacilityService {
 	
 	private final FacilityRepository facilityRepository;
 	private final FacilityCategoryRepository categoryRepository;
-	private final HouseEntity houseEntity;
+	private final HouseRepository houseRepository;
 	
 	// 시설 목록 조회
 	@Override
@@ -36,6 +39,17 @@ public class FacilityServiceImpl implements FacilityService {
 				.map(FacilityListResponseDTO::from)
 				.toList();
 	}
+	
+	// 시설 카테고리 등록
+	@Override
+	@Transactional
+    public void createCategory(FacilityCategoryDTO dto) {
+        FacilityCategoryEntity category = FacilityCategoryEntity.builder()
+                .facilityType(dto.getFacilityType())
+                .facilityOptions(dto.getFacilityOptions())
+                .build();
+        categoryRepository.save(category);
+    }
 	
 	// 시설 신규 등록
 	@Override
@@ -99,10 +113,10 @@ public class FacilityServiceImpl implements FacilityService {
 	    }
 	    
 	    facilityRepository.save(facility);
-		return;
 	}
 	
 	// 시설 상세 조회
+	@Override
 	public FacilityDetailResponseDTO getFacilityDetails(String facilityNo) {
 		return facilityRepository.findByFacilityNoAndFacilityDeletedAtIsNull(facilityNo)
 	            .map(FacilityDetailResponseDTO::from)
@@ -110,10 +124,27 @@ public class FacilityServiceImpl implements FacilityService {
 	}
 	
 	// 시설 정보 수정
+	@Override
 	@Transactional
 	public void modifyFacility(String facilityNo, FacilityModifyRequestDTO dto) {
+		// 시설번호 찾기
 		FacilityEntity entity = facilityRepository.findById(facilityNo)
 		        .orElseThrow(() -> new RuntimeException("no facility exists"));
+		
+		// 이미지 삭제 후 재업로드
+		if (dto.getImages() != null) {
+	        entity.getImages().clear();
+	        for (FacilityImageDTO imageDto : dto.getImages()) {
+	            FacilityImageEntity imageEntity = FacilityImageEntity.builder()
+	                    .facilityOriginalImageName(imageDto.getFacilityOriginalImageName())
+	                    .facilityStoredImageName(imageDto.getFacilityStoredImageName())
+	                    .facilityNo(entity)
+	                    .build();
+	            entity.getImages().add(imageEntity);
+	        }
+	    }
+		
+		// dto 업데이트
 		entity.updateFacility(dto);
 	}
 }

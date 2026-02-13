@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.team4p.woorizip.common.api.ApiResponse;
+import org.team4p.woorizip.facility.dto.FacilityCategoryDTO;
 import org.team4p.woorizip.facility.dto.FacilityCreateRequestDTO;
 import org.team4p.woorizip.facility.dto.FacilityDetailResponseDTO;
 import org.team4p.woorizip.facility.dto.FacilityListResponseDTO;
@@ -38,6 +40,15 @@ public class FacilityController {
 		return ResponseEntity.ok(facilityService.getFacilityList(currentUserNo));
 	}
 	
+	// 시설 카테고리 등록
+	@PostMapping("/categories")
+	@PreAuthorize("hasRole('ADMIN')")
+	public ResponseEntity<ApiResponse<String>> createCategory(@RequestBody FacilityCategoryDTO dto) {
+	    facilityService.createCategory(dto);
+	    return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.ok("시설 카테고리 등록 성공", "facilityCategoryCreateSuccess"));
+	}
+	
 	// 시설 신규 등록
 	@PostMapping
 	public ResponseEntity<ApiResponse<String>> createFacility(
@@ -46,7 +57,7 @@ public class FacilityController {
 		try {
 			facilityService.createFacility(dto, currentUserNo);
 	        return ResponseEntity.status(HttpStatus.CREATED)
-	                             .body(ApiResponse.ok("시설 정보 등록 성공", "createSuccess"));
+	                             .body(ApiResponse.ok("시설 정보 등록 성공", "facilityCreateSuccess"));
 	    } catch (Exception e) {
 	        log.error("[createFacility Error] facilityName: {}, Error: {}", dto.getFacilityName(), e.getMessage(), e);
 	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -68,11 +79,11 @@ public class FacilityController {
 		    @RequestBody FacilityModifyRequestDTO dto) {
 	    try {
 	        facilityService.modifyFacility(facilityNo, dto);
-	        return ResponseEntity.ok(ApiResponse.ok("시설 정보 수정 성공", "modifySuccess"));
+	        return ResponseEntity.ok(ApiResponse.ok("시설 정보 수정 성공", "facilityModifySuccess"));
 	    } catch (Exception e) {
 	        log.error("Facility Modify Error FacilityName: {}, Error: {}", dto.getFacilityName(), e.getMessage(), e);
 	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-	                             .body(ApiResponse.fail("시설 수정 실패", "modifyFail"));
+	                             .body(ApiResponse.fail("시설 수정 실패", "facilityModifyFail"));
 	    }
 	}
 }
