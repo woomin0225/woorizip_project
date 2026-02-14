@@ -1,5 +1,26 @@
 package org.team4p.woorizip.room.image.service;
 
-public class RoomImageServiceImpl implements RoomImageService {
+import java.util.List;
+import java.util.stream.Collectors;
 
+import org.springframework.stereotype.Service;
+import org.team4p.woorizip.room.image.dto.RoomImageDto;
+import org.team4p.woorizip.room.image.jpa.entity.RoomImageEntity;
+import org.team4p.woorizip.room.image.jpa.repository.RoomImageRepository;
+
+import lombok.RequiredArgsConstructor;
+
+@Service
+@RequiredArgsConstructor
+public class RoomImageServiceImpl implements RoomImageService {
+	private final RoomImageRepository roomImageRepository;
+	
+	@Override
+	public List<RoomImageDto> selectRoomImages(String roomNo) {
+		// 방에 해당하는 사진 리스트 조회
+		List<RoomImageEntity> rows = roomImageRepository.findTop10AllByRoomNoOrderByRoomImageNo(roomNo);
+		
+		return rows.stream().map(entity->entity.toDto()).collect(Collectors.toList());
+	}
+	
 }

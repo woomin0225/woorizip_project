@@ -4,9 +4,9 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.SliceImpl;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.StringUtils;
 import org.team4p.woorizip.house.jpa.entity.QHouseEntity;
@@ -45,7 +45,7 @@ public class RoomRepositoryCustomImpl implements RoomRepositoryCustom {
 	}
 
 	@Override
-	public Page<RoomEntity> search(RoomSearchCondition cond, Pageable pageable, SearchCriterion criterion) {
+	public Slice<RoomEntity> search(RoomSearchCondition cond, Pageable pageable, SearchCriterion criterion) {
 		// 방 검색
 		
 		// 조건 생성 시작
@@ -53,7 +53,7 @@ public class RoomRepositoryCustomImpl implements RoomRepositoryCustom {
 		
 		// 키워드 단어를 방 또는 건물 이름이 포함하는지
 		if(StringUtils.hasText(cond.getKeyword())) {
-			where.and(qroomEntity.roomName.contains(cond.getKeyword())).or(qhouseEntity.houseName.contains(cond.getKeyword()));
+			where.and(qroomEntity.roomName.contains(cond.getKeyword()).or(qhouseEntity.houseName.contains(cond.getKeyword())));
 		}
 		
 		// 전/월세 적용, 월세면 세액 범위 지정, 전세면 보증금 범위 지정
@@ -64,15 +64,17 @@ public class RoomRepositoryCustomImpl implements RoomRepositoryCustom {
 				case RoomType.M:	
 					if(cond.getMinTax() != null) where.and(qroomEntity.roomMonthly.goe(cond.getMinTax()));
 					if(cond.getMaxTax() != null) where.and(qroomEntity.roomMonthly.loe(cond.getMaxTax()));
+					break;
 				case RoomType.L:
 					if(cond.getMinDeposit() != null) where.and(qroomEntity.roomDeposit.goe(cond.getMinDeposit()));
 					if(cond.getMaxDeposit() != null) where.and(qroomEntity.roomDeposit.loe(cond.getMaxDeposit()));
+					break;
 			}
 		}
 		
 		// 방 옵션들 조건
 		Set<String> options = cond.getOptions();
-		if(cond.getOptions() != null && cond.getOptions().size() >= 0) {
+		if(cond.getOptions() != null && cond.getOptions().size() > 0) {
 			for(String option : options) {
 				option = option.trim();
 				if(StringUtils.hasText(option)) where.and(qroomEntity.roomOptions.contains(option));
@@ -87,31 +89,31 @@ public class RoomRepositoryCustomImpl implements RoomRepositoryCustom {
 		// 방 노출 상태 ACTIVE만 검색 결과 출력
 		where.and(qroomEntity.roomStatus.eq("ACTIVE"));
 		
-		// bbox 좌표 크기순서 보증
-		cond.adjustment();
 		// 위도 범위 조건
 		if(cond.getSwLat() != null && cond.getNeLat() != null) {
 			where.and(qhouseEntity.houseLat.between(cond.getSwLat(), cond.getNeLat()));
 		}else {
-			throw new RuntimeException();
+			throw new IllegalArgumentException("잘못된 bbox 요청");
 		}
 		// 경도 범위 조건
 		if(cond.getSwLng() != null && cond.getNeLng() != null) {
 			where.and(qhouseEntity.houseLng.between(cond.getSwLng(), cond.getNeLng()));
+		}else {
+			throw new IllegalArgumentException("잘못된 bbox 요청");
 		}
 		
 		// 승강기 유무 조건
-		if(cond.getHouseElevatorYn() != null && cond.getHouseElevatorYn() == true) {
-			where.and(qhouseEntity.houseElevatorYn.isTrue());
+		if(cond.getHouseElevatorYn() != null) {
+			where.and(qhouseEntity.houseElevatorYn.eq(cond.getHouseElevatorYn()));
 		}
 		
 		// 애완동물 가능 여부
-		if(cond.getHousePetYn() != null && cond.getHousePetYn() == true) {
-			where.and(qhouseEntity.housePetYn.isTrue());
+		if(cond.getHousePetYn() != null) {
+			where.and(qhouseEntity.housePetYn.eq(cond.getHousePetYn()));
 		}
 		// 여성전용 여부
-		if(cond.getHouseFemaleLimit() != null && cond.getHouseFemaleLimit() == true) {
-			where.and(qhouseEntity.houseFemaleLimit.isTrue());
+		if(cond.getHouseFemaleLimit() != null) {
+			where.and(qhouseEntity.houseFemaleLimit.eq(cond.getHouseFemaleLimit()));
 		}
 		
 		// 주차가능 여부
@@ -122,25 +124,32 @@ public class RoomRepositoryCustomImpl implements RoomRepositoryCustom {
 		// 정렬 기준 추출
 		OrderSpecifier<?> order = getOrder(criterion, qroomEntity); 
 		
-		List<RoomEntity> entityPage = queryFactory
+		List<RoomEntity> rows = queryFactory
 										.selectFrom(qroomEntity)
 										.join(qhouseEntity).on(qroomEntity.houseNo.eq(qhouseEntity.houseNo))
 										.where(where)
 										.offset(pageable.getOffset()) // 몇 번째 페이지부터 시작할 것 인지.
-						                .limit(pageable.getPageSize()) // 페이지당 몇개의 데이터를 보여줄껀지
-										.orderBy(order)
+						                .limit(pageable.getPageSize()+1) // 페이지당 몇개의 데이터를 보여줄껀지, Slice는 +1개 조회로 다음 존재 여부확인
+										.orderBy(order, qroomEntity.roomNo.asc())
 										.fetch();
-		// 최대 갯수 계산
-		Long totalCount = queryFactory
-							.select(qroomEntity.count())
-							.from(qroomEntity)
-							.join(qhouseEntity).on(qroomEntity.houseNo.eq(qhouseEntity.houseNo))
-							.where(where)
-							.fetchOne();
+//		// 최대 갯수 계산
+//		Long totalCount = queryFactory
+//							.select(qroomEntity.count())
+//							.from(qroomEntity)
+//							.join(qhouseEntity).on(qroomEntity.houseNo.eq(qhouseEntity.houseNo))
+//							.where(where)
+//							.fetchOne();
 		
-		return new PageImpl<>(entityPage, pageable, totalCount);
+//		return new PageImpl<>(rows, pageable, totalCount);
+		
+		// (Slice)
+		boolean hasNext = rows.size() > pageable.getPageSize();
+		if(hasNext) rows.removeLast();
+		
+		return new SliceImpl<>(rows, pageable, hasNext);
 	}
 	
+	// 정렬기준 설정 메소
 	private OrderSpecifier<?> getOrder(SearchCriterion criterion, QRoomEntity qroomEntity){
 		switch (criterion) {
 		case LATEST: return qroomEntity.roomUpdatedAt.desc();
