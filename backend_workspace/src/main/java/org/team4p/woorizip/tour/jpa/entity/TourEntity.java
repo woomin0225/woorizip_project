@@ -33,11 +33,11 @@ public class TourEntity {
     @Column(name = "message", columnDefinition = "TEXT")
     private String message;
 
-    @Column(name = "tour_status", nullable = false, length = 20)
+    @Column(name = "status", nullable = false, length = 20)
     private String tourStatus;
 
     @Temporal(TemporalType.TIMESTAMP)
-    @Column(name = "tour_canceled_at")
+    @Column(name = "canceled_at")
     private Date tourCanceledAt;
 
     @Column(name = "canceled_reason", columnDefinition = "TEXT")

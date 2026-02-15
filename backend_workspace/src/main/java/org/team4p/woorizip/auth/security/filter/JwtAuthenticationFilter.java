@@ -83,7 +83,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             throw AuthException.unauthorized("TOKEN_TYPE_INVALID", "AccessToken이 아닙니다.");
         }
 
-        String userId = jwt.getUserId(token);
+        String userId = jwt.getEmailId(token);
         String role = jwt.getRole(token); // ROLE_USER / ROLE_ADMIN
 
         var authentication = new UsernamePasswordAuthenticationToken(

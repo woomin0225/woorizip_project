@@ -16,11 +16,11 @@ public class RefreshTokenService {
     private final RefreshTokenRepository repo;
 
     @Transactional
-    public RefreshTokenEntity upsert(String userId, String tokenValue, LocalDateTime issuedAt, LocalDateTime expiresAt) {
-        RefreshTokenEntity entity = repo.findByUserId(userId)
+    public RefreshTokenEntity upsert(String emailId, String tokenValue, LocalDateTime issuedAt, LocalDateTime expiresAt) {
+        RefreshTokenEntity entity = repo.findByEmailId(emailId)
                 .orElseGet(() -> RefreshTokenEntity.builder()
                         .id(UUID.randomUUID().toString())
-                        .userId(userId)
+                        .emailId(emailId)
                         .build());
 
         entity.setTokenValue(tokenValue);
@@ -32,12 +32,12 @@ public class RefreshTokenService {
     }
 
     @Transactional(readOnly = true)
-    public boolean matches(String userId, String tokenValue) {
-        return repo.findByUserIdAndTokenValue(userId, tokenValue).isPresent();
+    public boolean matches(String emailId, String tokenValue) {
+        return repo.findByEmailIdAndTokenValue(emailId, tokenValue).isPresent();
     }
 
     @Transactional
     public void deleteByUserId(String userId) {
-        repo.deleteByUserId(userId);
+        repo.deleteByEmailId(userId);
     }
 }
