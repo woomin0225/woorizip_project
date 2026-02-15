@@ -29,7 +29,7 @@ public class RoomServiceImpl implements RoomService {
 		cond.adjustment();
 		
 		// 방 검색 결과 조회 -> 응답객체에 저장
-		Slice<RoomSearchResponse> slice = roomRepository.search(cond, pageable, criterion)
+		Slice<RoomSearchResponse> slice = roomRepository.searchRooms(cond, pageable, criterion)
 				.map((entity)->RoomSearchResponse.builder()
 								.roomNo(entity.getRoomNo())
 								.roomName(entity.getRoomName())

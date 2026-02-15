@@ -45,7 +45,7 @@ public class RoomRepositoryCustomImpl implements RoomRepositoryCustom {
 	}
 
 	@Override
-	public Slice<RoomEntity> search(RoomSearchCondition cond, Pageable pageable, SearchCriterion criterion) {
+	public Slice<RoomEntity> searchRooms(RoomSearchCondition cond, Pageable pageable, SearchCriterion criterion) {
 		// 방 검색
 		
 		// 조건 생성 시작
