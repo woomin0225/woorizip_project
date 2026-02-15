@@ -29,6 +29,11 @@ public record UploadProperties(
     
     /** 건물 사진 업로드 경로 */
     public Path houseImageDir() {
-    		return Path.of(uploadDir, "houseImage");
+    		return Path.of(uploadDir, "house_image");
+    }
+    
+    /** 방 사진 업로드 경로 */
+    public Path roomImageDir() {
+    		return Path.of(uploadDir, "room_image");
     }
 }

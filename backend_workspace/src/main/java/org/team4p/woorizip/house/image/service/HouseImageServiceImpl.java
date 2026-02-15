@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.team4p.woorizip.common.exception.NotFoundException;
 import org.team4p.woorizip.house.image.dto.HouseImageDto;
 import org.team4p.woorizip.house.image.jpa.entity.HouseImageEntity;
@@ -23,6 +24,7 @@ public class HouseImageServiceImpl implements HouseImageService {
 	}
 
 	@Override
+	@Transactional
 	public HouseImageDto insertHouseImage(HouseImageDto houseImageDto) {
 		// 건물 사진 등록
 		return houseImageRepository.save(houseImageDto.toEntity()).toDto();

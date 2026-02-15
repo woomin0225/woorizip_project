@@ -6,6 +6,8 @@ import java.util.List;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.team4p.woorizip.room.dto.RoomDto;
 import org.team4p.woorizip.room.dto.request.RoomSearchCondition;
 import org.team4p.woorizip.room.dto.response.RoomSearchResponse;
 import org.team4p.woorizip.room.image.dto.RoomImageDto;
@@ -58,6 +60,13 @@ public class RoomServiceImpl implements RoomService {
 		}
 		
 		return slice;
+	}
+
+	@Override
+	@Transactional
+	public RoomDto insertRoom(RoomDto roomDto) {
+		// 방 등록
+		return roomRepository.save(roomDto.toEntity()).toDto();
 	}
 
 }

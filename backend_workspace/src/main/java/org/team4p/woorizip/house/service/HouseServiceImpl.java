@@ -67,6 +67,7 @@ public class HouseServiceImpl implements HouseService {
 	}
 
 	@Override
+	@Transactional
 	public HouseDto insertHouse(HouseDto houseDto) {
 		// 건물 등록
 		
@@ -94,6 +95,7 @@ public class HouseServiceImpl implements HouseService {
 	}
 
 	@Override
+	@Transactional
 	public HouseDto updateHouse(HouseDto houseDto, String currentUserNo) {
 		// 건물 정보 수정
 		
