@@ -10,8 +10,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -89,7 +91,7 @@ public class RoomController {
 		                continue;
 		            }
 
-		            // HouseImageDto만들어서 DB에 저장
+		            // RoomImageDto만들어서 DB에 저장
 		            RoomImageDto roomImageDto = RoomImageDto.builder()
 												            		.roomNo(savedRoomDto.getRoomNo())
 												            		.roomOriginalImageName(originalImageName)
@@ -106,9 +108,18 @@ public class RoomController {
 		            }
 				}	//for
 			}	//if 사진 있는 경우
-			return ResponseEntity.status(201).body(ApiResponse.ok("건물 등록 성공", null));
+			return ResponseEntity.status(201).body(ApiResponse.ok("방 등록 성공", null));
 		}	//if 건물 등록 성공한 경우
 		// 사진 없으면
-		return ResponseEntity.status(201).body(ApiResponse.ok("건물 등록 성공", null));
+		return ResponseEntity.status(201).body(ApiResponse.ok("방 등록 성공", null));
+	}
+	
+	@DeleteMapping("/{roomNo}")
+	public ResponseEntity<ApiResponse<Void>> deleteRoom(@PathVariable("roomNo") String roomNo, @RequestHeader("currentUserNo") String currentUserNo/*임시*/){
+		// 방 소프트 삭제
+		
+		roomService.deleteRoom(roomNo, currentUserNo);
+		
+		return ResponseEntity.status(200).body(ApiResponse.ok("방 정보 삭제 성공", null));
 	}
 }

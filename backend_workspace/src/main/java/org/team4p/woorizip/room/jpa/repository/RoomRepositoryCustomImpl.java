@@ -158,4 +158,15 @@ public class RoomRepositoryCustomImpl implements RoomRepositoryCustom {
 		}
 		// MOST_LIKED 추가 예정(QWishlistEntity 필요)
 	}
+	
+	public long softDeleteByRoomNo(String roomNo) {
+		// 방 정보 소프트 삭제
+		long rows = queryFactory.update(qroomEntity)
+						.set(qroomEntity.deleted, true)
+						.set(qroomEntity.deletedAt, LocalDateTime.now())
+						.where(qroomEntity.houseNo.eq(roomNo))
+						.execute();
+		
+		return rows;
+	}
 }
