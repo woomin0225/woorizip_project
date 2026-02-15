@@ -9,5 +9,5 @@ import org.team4p.woorizip.room.type.SearchCriterion;
 
 public interface RoomService {
 	Slice<RoomSearchResponse> selectRoomSearch(RoomSearchCondition cond, Pageable pageable, SearchCriterion criterion);
-	RoomDto insertRoom(RoomDto roomDto);
+	RoomDto insertRoom(RoomDto roomDto, String currentUserNo);
 }

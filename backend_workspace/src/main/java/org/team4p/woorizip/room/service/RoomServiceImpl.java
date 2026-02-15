@@ -7,6 +7,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.team4p.woorizip.common.exception.ForbiddenException;
+import org.team4p.woorizip.house.jpa.repository.HouseRepository;
 import org.team4p.woorizip.room.dto.RoomDto;
 import org.team4p.woorizip.room.dto.request.RoomSearchCondition;
 import org.team4p.woorizip.room.dto.response.RoomSearchResponse;
@@ -22,6 +24,7 @@ import lombok.RequiredArgsConstructor;
 public class RoomServiceImpl implements RoomService {
 	private final RoomRepository roomRepository;
 	private final RoomImageService roomImageService;
+	private final HouseRepository houseRepository;
 	
 	@Override
 	public Slice<RoomSearchResponse> selectRoomSearch(RoomSearchCondition cond, Pageable pageable, SearchCriterion criterion) {
@@ -64,8 +67,15 @@ public class RoomServiceImpl implements RoomService {
 
 	@Override
 	@Transactional
-	public RoomDto insertRoom(RoomDto roomDto) {
+	public RoomDto insertRoom(RoomDto roomDto, String currentUserNo) {
 		// 방 등록
+		
+		// 등록하려는 건물이 실제로 있는지 검사
+		if(houseRepository.existsById(roomDto.getHouseNo()) == false) throw new IllegalArgumentException("건물을 조회할 수 없습니다.");
+		
+		// 해당 유저의 건물 소유권이 있는지 확인
+		if(!houseRepository.findUserNoById(roomDto.getHouseNo()).equals(currentUserNo)) throw new ForbiddenException("해당 건물에 대한 등록 권한이 없습니다.");
+		
 		return roomRepository.save(roomDto.toEntity()).toDto();
 	}
 

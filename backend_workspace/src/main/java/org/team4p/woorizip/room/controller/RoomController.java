@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -50,10 +51,12 @@ public class RoomController {
 	@PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	public ResponseEntity<ApiResponse<Void>> createRoom(
 			@ModelAttribute RoomDto roomDto,
-			@RequestParam(value="newImages", required=false) List<MultipartFile> newImages) {
+			@RequestParam(value="newImages", required=false) List<MultipartFile> newImages,
+			@RequestHeader("currentUserNo") String currentUserNo/*임시*/
+			) {
 		// 방 등록
 		
-		RoomDto savedRoomDto = roomService.insertRoom(roomDto); 
+		RoomDto savedRoomDto = roomService.insertRoom(roomDto, currentUserNo); 
 		
 		// 이미지 등록 : 이미지 파일 저장 실패하면 DB에도 등록 안됨. DB에 저장 실패하면 파일저장소에서 삭제됨
 		if (savedRoomDto != null) {	// 건물 등록 성공한 경우
