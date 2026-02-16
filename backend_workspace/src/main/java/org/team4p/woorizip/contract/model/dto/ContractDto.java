@@ -24,13 +24,13 @@ import lombok.Setter;
 @Builder
 public class ContractDto {
 
-    private String contract_no; // String (UUID)
+    private String contractNo; // String (UUID)
 
     @NotBlank(message = "사용자 번호는 필수입니다.")
-    private String user_no;
+    private String userNo;
 
     @NotBlank(message = "방 번호는 필수입니다.")
-    private String room_no;
+    private String roomNo;
 
     @NotNull(message = "입주 날짜는 필수입니다.")
     @JsonFormat(pattern = "yyyy-MM-dd")
@@ -39,9 +39,9 @@ public class ContractDto {
     @NotNull(message = "계약 기간은 필수입니다.")
     private int term_months;
 
-    private String contract_status;
+    private String status;
     
-    private String contract_url;
+    private String contractUrl;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private Timestamp payment_date;
@@ -51,13 +51,13 @@ public class ContractDto {
      */
     public ContractEntity toEntity() {
         return ContractEntity.builder()
-                .contractNo(contract_no)
-                .userNo(user_no)
-                .roomNo(room_no)
+                .contractNo(contractNo)
+                .userNo(userNo)
+                .roomNo(roomNo)
                 .moveInDate(move_in_date)
                 .termMonths(term_months)
-                .contractStatus(contract_status)
-                .contractUrl(contract_url)
+                .status(status)
+                .contractUrl(contractUrl)
                 .paymentDate(payment_date)
                 .build();
     }
@@ -69,13 +69,13 @@ public class ContractDto {
         if (entity == null) return null;
 
         return ContractDto.builder()
-                .contract_no(entity.getContractNo())
-                .user_no(entity.getUserNo())
-                .room_no(entity.getRoomNo())
+                .contractNo(entity.getContractNo())
+                .userNo(entity.getUserNo())
+                .roomNo(entity.getRoomNo())
                 .move_in_date(entity.getMoveInDate())
                 .term_months(entity.getTermMonths())
-                .contract_status(entity.getContractStatus())
-                .contract_url(entity.getContractUrl())
+                .status(entity.getStatus())
+                .contractUrl(entity.getContractUrl())
                 .payment_date(entity.getPaymentDate())
                 .build();
     }

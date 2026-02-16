@@ -24,7 +24,7 @@ public class AuthService {
 
     public TokenResponse login(LoginRequest req) {
         Authentication auth = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(req.userId(), req.userPwd())
+                new UsernamePasswordAuthenticationToken(req.emailId(), req.password())
         );
 
         String userId = auth.getName();

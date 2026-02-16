@@ -33,12 +33,12 @@ public class TourEntity {
     @Column(name = "message", columnDefinition = "TEXT")
     private String message;
 
-    @Column(name = "tour_status", nullable = false, length = 20)
-    private String tourStatus;
+    @Column(name = "status", nullable = false, length = 20)
+    private String status;
 
     @Temporal(TemporalType.TIMESTAMP)
-    @Column(name = "tour_canceled_at")
-    private Date tourCanceledAt;
+    @Column(name = "canceled_at")
+    private Date canceledAt;
 
     @Column(name = "canceled_reason", columnDefinition = "TEXT")
     private String canceledReason;
@@ -51,8 +51,8 @@ public class TourEntity {
         }
         
         // 2. 기본 상태값 설정 (요청 시 기본값을 'PENDING'으로 가정)
-        if (this.tourStatus == null) {
-            this.tourStatus = "PENDING";
+        if (this.status == null) {
+            this.status = "PENDING";
         }
     }
 }

@@ -21,14 +21,14 @@ public class TourServiceImpl implements TourService {
     private final TourRepository tourRepository;
 
     @Override
-    public TourDto selectTour(Long tour_no) {
+    public TourDto selectTour(String tourNo) {
         // tour_no가 String(UUID)으로 저장되어 있으므로 변환하여 조회
-        TourEntity entity = tourRepository.findById(String.valueOf(tour_no)).orElse(null);
+        TourEntity entity = tourRepository.findById(String.valueOf(tourNo)).orElse(null);
         return entity != null ? TourDto.fromEntity(entity) : null;
     }
 
     @Override
-    public List<TourDto> selectListTour(Long userNo) {
+    public List<TourDto> selectListTour(String userNo) {
         // user_no 컬럼을 기준으로 목록 조회 (TourRepository에 해당 메서드 필요)
         List<TourEntity> list = tourRepository.findByUserNo(String.valueOf(userNo));
         return toList(list);

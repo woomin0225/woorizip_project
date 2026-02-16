@@ -14,7 +14,7 @@ import lombok.Data;
 @Data
 @Builder
 @Table(name="tb_houses_images")
-@Entity
+//@Entity
 public class HouseImageEntity {
 	@Id
 	@GeneratedValue(strategy=GenerationType.IDENTITY)

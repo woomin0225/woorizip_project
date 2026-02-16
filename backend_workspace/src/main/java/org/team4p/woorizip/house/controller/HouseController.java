@@ -34,7 +34,7 @@ import org.team4p.woorizip.user.controller.UserController;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-@RestController
+//@RestController
 @RequestMapping("/houses")
 @RequiredArgsConstructor
 public class HouseController {

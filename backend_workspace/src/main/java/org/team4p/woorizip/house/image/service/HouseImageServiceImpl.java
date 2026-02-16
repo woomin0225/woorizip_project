@@ -11,7 +11,7 @@ import org.team4p.woorizip.house.image.jpa.repository.HouseImageRepository;
 
 import lombok.RequiredArgsConstructor;
 
-@Service
+//@Service
 @RequiredArgsConstructor
 public class HouseImageServiceImpl implements HouseImageService {
 	private final HouseImageRepository houseImageRepository;

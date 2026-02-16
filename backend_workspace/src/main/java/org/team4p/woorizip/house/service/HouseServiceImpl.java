@@ -20,7 +20,7 @@ import org.team4p.woorizip.room.jpa.repository.RoomRepository;
 
 import lombok.RequiredArgsConstructor;
 
-@Service
+//@Service
 @RequiredArgsConstructor
 public class HouseServiceImpl implements HouseService {
 	private final HouseRepository houseRepository;

@@ -26,8 +26,8 @@ public class TourController {
      * GET /tour/{tour_no}
      */
     @GetMapping("/{tour_no}")
-    public ResponseEntity<ApiResponse<TourDto>> selectTour(@PathVariable("tour_no") Long tour_no) {
-        TourDto tour = tourService.selectTour(tour_no);
+    public ResponseEntity<ApiResponse<TourDto>> selectTour(@PathVariable("tour_no") String tourNo) {
+        TourDto tour = tourService.selectTour(tourNo);
         if (tour == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                                  .body(ApiResponse.fail("투어 정보를 찾을 수 없습니다.", null));
@@ -40,20 +40,20 @@ public class TourController {
      * GET /tour/{userNo}
      */
     @GetMapping("/list/{userNo}")
-    public ResponseEntity<ApiResponse<List<TourDto>>> selectListTour(@PathVariable("userNo") Long userNo) {
+    public ResponseEntity<ApiResponse<List<TourDto>>> selectListTour(@PathVariable("userNo") String userNo) {
         List<TourDto> list = tourService.selectListTour(userNo);
         return ResponseEntity.ok(ApiResponse.ok("투어 목록 조회 성공", list));
     }
 
     /**
      * 투어 추가
-     * POST /tour/insert/{room_no}
+     * POST /tour/insert/{roomNo}
      */
-    @PostMapping("/insert/{room_no}")
+    @PostMapping("/insert/{roomNo}")
     public ResponseEntity<ApiResponse<Void>> insertTour(
-            @PathVariable("room_no") Long room_no,
+            @PathVariable("roomNo") String roomNo,
             @RequestBody @Valid TourDto tourDto) {
-        tourDto.setRoomNo(room_no);
+        tourDto.setRoomNo(roomNo);
         int result = tourService.insertTour(tourDto);
         return result > 0 ? ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok("투어 추가 성공", null))
                           : ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
@@ -61,13 +61,13 @@ public class TourController {
 
     /**
      * 투어 수정
-     * POST /tour/update/{room_no}
+     * POST /tour/update/{roomNo}
      */
-    @PostMapping("/update/{room_no}")
+    @PostMapping("/update/{tourNo}")
     public ResponseEntity<ApiResponse<Void>> updateTour(
-            @PathVariable("room_no") Long room_no,
+            @PathVariable("tourNo") String tourNo,
             @RequestBody TourDto tourDto) {
-        tourDto.setRoomNo(room_no);
+        tourDto.setTourNo(tourNo);
         int result = tourService.updateTour(tourDto);
         return result > 0 ? ResponseEntity.ok(ApiResponse.ok("투어 수정 성공", null))
                           : ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();

@@ -70,12 +70,16 @@ public class SecurityConfig {
 
                 // PUBLIC GET
                 .requestMatchers(HttpMethod.GET, EndpointPolicy.PUBLIC_GET).permitAll()
-	
                 
-        	    .requestMatchers("/api/user/signup", "/api/user/check-email").permitAll() // 기존 설정
-        	    .requestMatchers(HttpMethod.GET, "/api/user/**").permitAll()             // [추가] GET 조회 모두 허용
-        	    .requestMatchers(HttpMethod.PUT, "/api/user/**").permitAll()             // [추가] PUT 수정 모두 허용
-                	
+                
+                .requestMatchers("/api/tour/**").permitAll()
+                .requestMatchers("/api/contract/**").permitAll()
+        	    .requestMatchers("/api/user/signup", "/api/user/check-email").permitAll()
+        	    .requestMatchers(HttpMethod.GET, "/api/user/**").permitAll()
+        	    .requestMatchers(HttpMethod.PUT, "/api/user/**").permitAll()
+        	    .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
+        	    .requestMatchers(HttpMethod.POST, "/api/wishlist/add/**").permitAll()
+        	    .requestMatchers(HttpMethod.GET, "/api/wishlist/**").permitAll()
 
                 // notices write: ADMIN only
                 .requestMatchers(HttpMethod.POST, EndpointPolicy.NOTICE_ADMIN).hasRole("ADMIN")
