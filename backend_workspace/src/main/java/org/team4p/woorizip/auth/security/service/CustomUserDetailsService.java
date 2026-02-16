@@ -21,9 +21,8 @@ public class CustomUserDetailsService implements UserDetailsService {
         var user = Optional.ofNullable(userRepository.findByEmailId(emailId))
                 .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + emailId));
 
-        // Principal 생성 시 userNo(UUID)를 함께 넘겨줍니다.
         return new CustomUserPrincipal(
-                user.getUserNo(), // 추가된 부분!
+                user.getUserNo(),
                 user.getEmailId(),
                 user.getPassword(),
                 "N".equals(user.getDeletedYn()),

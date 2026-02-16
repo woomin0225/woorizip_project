@@ -16,8 +16,8 @@ public class RefreshTokenEntity {
     @Column(length = 50, nullable = false)
     private String id;
 
-    @Column(name = "USERID", length = 50, nullable = false)
-    private String userId;
+    @Column(name = "email_id", length = 255, nullable = false)
+    private String emailId;
 
     @Column(name = "token_value", length = 512, nullable = false, unique = true)
     private String tokenValue;

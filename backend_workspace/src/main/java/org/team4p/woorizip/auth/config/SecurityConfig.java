@@ -99,14 +99,14 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.DELETE, EndpointPolicy.REPLY_WRITE).hasAnyRole("USER","ADMIN")
 
                 // members me: USER or ADMIN
-                .requestMatchers(HttpMethod.GET, EndpointPolicy.MEMBER_ME).hasAnyRole("USER","ADMIN")
-                .requestMatchers(HttpMethod.PUT, EndpointPolicy.MEMBER_ME).hasAnyRole("USER","ADMIN")
-                .requestMatchers(HttpMethod.DELETE, EndpointPolicy.MEMBER_ME).hasAnyRole("USER","ADMIN")
+                .requestMatchers(HttpMethod.GET, EndpointPolicy.USER_ME).hasAnyRole("USER","ADMIN")
+                .requestMatchers(HttpMethod.PUT, EndpointPolicy.USER_ME).hasAnyRole("USER","ADMIN")
+                .requestMatchers(HttpMethod.DELETE, EndpointPolicy.USER_ME).hasAnyRole("USER","ADMIN")
 
                 // members list/search: ADMIN only
-                .requestMatchers(HttpMethod.GET, EndpointPolicy.MEMBER_ADMIN_LIST).hasRole("ADMIN")
-                .requestMatchers(HttpMethod.GET, EndpointPolicy.MEMBER_ADMIN_PATCH).hasRole("ADMIN")
-                .requestMatchers(HttpMethod.PATCH, EndpointPolicy.MEMBER_ADMIN_PATCH).hasRole("ADMIN")
+                .requestMatchers(HttpMethod.GET, EndpointPolicy.USER_ADMIN_LIST).hasRole("ADMIN")
+                .requestMatchers(HttpMethod.GET, EndpointPolicy.USER_ADMIN_PATCH).hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PATCH, EndpointPolicy.USER_ADMIN_PATCH).hasRole("ADMIN")
 
                 .anyRequest().authenticated()
             )            
