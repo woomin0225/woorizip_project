@@ -12,18 +12,18 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.Setter;
 
 @Getter
+@Setter
 @Builder
-@ToString
 @NoArgsConstructor
 @AllArgsConstructor
 public class FacilityCreateRequestDTO {
 	
 	private Integer facilityCode;
 	
-	@NotBlank(message="FacilityName needed")
+	@NotBlank(message="facilityName needed")
 	private String facilityName;
 	
 	@NotNull(message="facilityOptionInfo needed")

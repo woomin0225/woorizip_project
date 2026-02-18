@@ -47,6 +47,9 @@ public class FacilityEntity {
 	@Column(name = "facility_name")
 	private String facilityName;
 	
+	@Column(name = "facility_sequence")
+	private Integer facilitySequence;
+	
 	@Column(name = "facility_option_info", columnDefinition = "TEXT")
 	@Convert(converter = MapToJsonConverter.class)
 	private Map<String, Boolean> facilityOptionInfo;

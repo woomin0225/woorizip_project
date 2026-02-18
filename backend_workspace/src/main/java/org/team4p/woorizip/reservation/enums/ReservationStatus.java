@@ -1,5 +1,6 @@
 package org.team4p.woorizip.reservation.enums;
 
-public class ReservationStatus {
-
+public enum ReservationStatus {
+	APPROVED,
+	CANCELED;
 }

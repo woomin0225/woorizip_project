@@ -3,6 +3,7 @@ package org.team4p.woorizip.facility.service;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -70,10 +71,26 @@ public class FacilityServiceImpl implements FacilityService {
 		if (dto.getFacilityOptionInfo() != null) {
 			finalOptions.putAll(dto.getFacilityOptionInfo());
 		}
+		
+		// 동일 카테고리의 시설이 있는지 확인
+		Optional<FacilityEntity> lastSequence = facilityRepository
+		        .findFirstByHouseNoAndCategoryOrderByFacilitySequenceDesc(house, dto.getFacilityCode());
+		
+		// 동일 카테고리 시설 순서 배정
+		Integer nextSequence;
+	    if (lastSequence.isPresent()) {
+	        nextSequence = lastSequence.get().getFacilitySequence() + 1;
+	    } else {
+	        nextSequence = 1;
+	    }
 
 		// 시설 정보 입력
-		FacilityEntity facility = FacilityEntity.builder().facilityNo(UUID.randomUUID().toString()).houseNo(house)
+		FacilityEntity facility = FacilityEntity
+				.builder()
+				.facilityNo(UUID.randomUUID().toString())
+				.houseNo(house)
 				.facilityName(finalName)
+				.facilitySequence(nextSequence)
 				.facilityOptionInfo(finalOptions)
 				.facilityLocation(dto.getFacilityLocation())
 				.facilityStatus(dto.getFacilityStatus())
@@ -89,7 +106,8 @@ public class FacilityServiceImpl implements FacilityService {
 		// 이미지 입력
 		if (dto.getImages() != null) {
 			for (FacilityImageDTO imageDto : dto.getImages()) {
-				FacilityImageEntity imageEntity = FacilityImageEntity.builder()
+				FacilityImageEntity imageEntity = FacilityImageEntity
+						.builder()
 						.facilityOriginalImageName(imageDto.getFacilityOriginalImageName())
 						.facilityStoredImageName(imageDto.getFacilityStoredImageName())
 						.facilityNo(facility)
@@ -139,7 +157,7 @@ public class FacilityServiceImpl implements FacilityService {
 	public FacilityDetailResponseDTO getFacilityDetails(String facilityNo) {
 		return facilityRepository.findByFacilityNoAndFacilityDeletedAtIsNull(facilityNo)
 				.map(FacilityDetailResponseDTO::from)
-				.orElseThrow(() -> new RuntimeException("no facility exists"));
+				.orElseThrow(() -> new RuntimeException("no facility data exists"));
 	}
 
 	// 시설 정보 수정
@@ -148,7 +166,7 @@ public class FacilityServiceImpl implements FacilityService {
 	public void modifyFacility(String facilityNo, FacilityModifyRequestDTO dto) {
 		// 시설 번호 찾기
 		FacilityEntity entity = facilityRepository.findById(facilityNo)
-				.orElseThrow(() -> new RuntimeException("no facility exists"));
+				.orElseThrow(() -> new RuntimeException("no facility data exists"));
 
 		// 이미지 삭제 후 재업로드
 		if (dto.getImages() != null) {

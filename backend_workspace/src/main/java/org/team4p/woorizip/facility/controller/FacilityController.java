@@ -83,7 +83,7 @@ public class FacilityController {
 	        facilityService.modifyFacilityCategory(facilityCode, dto);
 	        return ResponseEntity.ok(ApiResponse.ok("시설 카테고리 수정 성공", "facilityCategoryModifySuccess"));
 	    } catch (Exception e) {
-	        log.error("Facility Category Modify Error FacilityCode: {}, Error: {}", dto.getFacilityCode(), e.getMessage(), e);
+	        log.error("[modifyFacilityCategory Error] FacilityCode: {}, Error: {}", dto.getFacilityCode(), e.getMessage(), e);
 	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
 	                             .body(ApiResponse.fail("시설 카테고리 수정 실패", "facilityCategoryModifyFail"));
 	    }
@@ -105,7 +105,7 @@ public class FacilityController {
 	        facilityService.modifyFacility(facilityNo, dto);
 	        return ResponseEntity.ok(ApiResponse.ok("시설 정보 수정 성공", "facilityModifySuccess"));
 	    } catch (Exception e) {
-	        log.error("Facility Modify Error FacilityName: {}, Error: {}", dto.getFacilityName(), e.getMessage(), e);
+	        log.error("[modifyFacility Error] FacilityName: {}, Error: {}", dto.getFacilityName(), e.getMessage(), e);
 	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
 	                             .body(ApiResponse.fail("시설 수정 실패", "facilityModifyFail"));
 	    }
