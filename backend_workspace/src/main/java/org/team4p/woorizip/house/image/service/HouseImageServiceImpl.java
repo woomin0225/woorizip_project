@@ -1,5 +1,6 @@
 package org.team4p.woorizip.house.image.service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -19,8 +20,11 @@ public class HouseImageServiceImpl implements HouseImageService {
 	
 	@Override
 	public List<HouseImageDto> selectHouseImages(String houseNo) {
-		// TODO Auto-generated method stub
-		return null;
+		// 건물 이미지 목록 조회
+		List<HouseImageEntity> rows = houseImageRepository.findAllByHouseNo(houseNo);
+		List<HouseImageDto> list = new ArrayList<>();
+		rows.stream().map(entity->list.add(entity.toDto()));
+		return list;
 	}
 
 	@Override

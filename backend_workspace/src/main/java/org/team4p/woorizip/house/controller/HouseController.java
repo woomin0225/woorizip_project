@@ -232,10 +232,10 @@ public class HouseController {
 	}
 	
 	@GetMapping("/{houseNo}/images")
-	public ResponseEntity<ApiResponse<Void>> getHouseImages(String houseNo){
+	public ResponseEntity<ApiResponse<List<HouseImageDto>>> getHouseImages(String houseNo){
 		// 건물 이미지 목록 조회
-		
-		return null;
+		List<HouseImageDto> imageList = houseImageService.selectHouseImages(houseNo);
+		return ResponseEntity.status(200).body(ApiResponse.ok("건물 이미지 목록 조회 성공", imageList));
 	}
 	
 	
