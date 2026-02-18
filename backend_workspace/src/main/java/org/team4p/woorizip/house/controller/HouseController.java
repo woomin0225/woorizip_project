@@ -28,6 +28,7 @@ import org.team4p.woorizip.house.image.service.HouseImageService;
 import org.team4p.woorizip.house.service.HouseService;
 import org.team4p.woorizip.room.dto.RoomDto;
 import org.team4p.woorizip.room.dto.request.RoomSearchCondition;
+import org.team4p.woorizip.room.service.RoomService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -38,6 +39,7 @@ public class HouseController {
 	private final HouseService houseService;
 	private final HouseImageService houseImageService;
 	private final UploadProperties uploadProperties;
+	private final RoomService roomService;
 	
 	
 	@GetMapping("/search")
@@ -65,8 +67,8 @@ public class HouseController {
 	@GetMapping("/{houseNo}/rooms")
 	public ResponseEntity<ApiResponse<List<RoomDto>>> getRoomByHouseNo(String houseNo){
 		// 건물 내 방 목록 조회
-		
-		return null;
+		List<RoomDto> roomList = roomService.selectRoomsByHouseNo(houseNo);
+		return ResponseEntity.status(200).body(ApiResponse.ok("건물 내 방 목록 조회 성공", roomList));
 	}
 	
 	@GetMapping("/{houseNo}")

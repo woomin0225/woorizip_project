@@ -113,4 +113,13 @@ public class RoomServiceImpl implements RoomService {
 		return roomDto;
 	}
 
+	@Override
+	public List<RoomDto> selectRoomsByHouseNo(String houseNo) {
+		// 건물 내 방 목록 조회
+		List<RoomEntity> rows = roomRepository.findAllByHouseNo(houseNo);
+		List<RoomDto> list = new ArrayList<>();
+		rows.stream().map(entity->list.add(entity.toDto()));
+		return list;
+	}
+
 }

@@ -1,5 +1,7 @@
 package org.team4p.woorizip.room.service;
 
+import java.util.List;
+
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.team4p.woorizip.room.dto.RoomDto;
@@ -12,4 +14,5 @@ public interface RoomService {
 	RoomDto insertRoom(RoomDto roomDto, String currentUserNo);
 	void deleteRoom(String roomNo, String currentUserNo);
 	RoomDto selectRoom(String roomNo);
+	List<RoomDto> selectRoomsByHouseNo(String houseNo);
 }
