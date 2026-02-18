@@ -6,6 +6,7 @@ import java.nio.file.Files;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.http.MediaType;
@@ -27,6 +28,8 @@ import org.team4p.woorizip.room.dto.request.RoomSearchCondition;
 import org.team4p.woorizip.room.dto.response.RoomSearchResponse;
 import org.team4p.woorizip.room.image.dto.RoomImageDto;
 import org.team4p.woorizip.room.image.service.RoomImageService;
+import org.team4p.woorizip.room.review.dto.ReviewDto;
+import org.team4p.woorizip.room.review.service.ReviewService;
 import org.team4p.woorizip.room.service.RoomService;
 import org.team4p.woorizip.room.type.SearchCriterion;
 
@@ -39,6 +42,7 @@ public class RoomController {
 	private final RoomService roomService;
 	private final RoomImageService roomImageService;
 	private final UploadProperties uploadProperties;
+	private final ReviewService reviewService;
 	
 	@GetMapping("/search")
 	public ResponseEntity<ApiResponse<Slice<RoomSearchResponse>>> searchRooms(@ModelAttribute RoomSearchCondition cond, Pageable pageable, @RequestParam SearchCriterion criterion) {
@@ -129,9 +133,16 @@ public class RoomController {
 	}
 	
 	@GetMapping("/{roomNo}/images")
-	public ResponseEntity<ApiResponse<List<RoomImageDto>>>getRoomImages(String roomNo) {
+	public ResponseEntity<ApiResponse<List<RoomImageDto>>> getRoomImages(String roomNo) {
 		// 방 상세 이미지 조회
 		List<RoomImageDto> imageList = roomImageService.selectRoomImages(roomNo); 
 		return ResponseEntity.status(200).body(ApiResponse.ok("방 사진 목록 조회 성공", imageList));
+	}
+	
+	@GetMapping("/{roomNo}/reviews")
+	public ResponseEntity<ApiResponse<Page<ReviewDto>>> getRoomReviews(String roomNo, Pageable pageable){
+		// 방 상세 리뷰 조회 (페이징 처리)
+		Page<ReviewDto> reviewPage = reviewService.selectRoomReviews(roomNo, pageable);
+		return ResponseEntity.status(200).body(ApiResponse.ok("방 리뷰 목록 조회 성공", reviewPage));
 	}
 }
