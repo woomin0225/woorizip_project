@@ -19,7 +19,7 @@ public class RoomImageServiceImpl implements RoomImageService {
 	@Override
 	public List<RoomImageDto> selectRoomImages(String roomNo) {
 		// 방에 해당하는 사진 리스트 조회
-		List<RoomImageEntity> rows = roomImageRepository.findTop10AllByRoomNoOrderByRoomImageNo(roomNo);
+		List<RoomImageEntity> rows = roomImageRepository.findAllByRoomNoOrderByRoomImageNo(roomNo);
 		
 		return rows.stream().map(entity->entity.toDto()).collect(Collectors.toList());
 	}
