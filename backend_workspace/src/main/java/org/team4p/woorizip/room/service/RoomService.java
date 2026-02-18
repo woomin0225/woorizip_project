@@ -11,4 +11,5 @@ public interface RoomService {
 	Slice<RoomSearchResponse> selectRoomSearch(RoomSearchCondition cond, Pageable pageable, SearchCriterion criterion);
 	RoomDto insertRoom(RoomDto roomDto, String currentUserNo);
 	void deleteRoom(String roomNo, String currentUserNo);
+	RoomDto selectRoom(String roomNo);
 }

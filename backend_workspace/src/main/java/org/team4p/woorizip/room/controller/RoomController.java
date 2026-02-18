@@ -22,8 +22,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.team4p.woorizip.common.api.ApiResponse;
 import org.team4p.woorizip.common.config.UploadProperties;
-import org.team4p.woorizip.house.dto.HouseDto;
-import org.team4p.woorizip.house.image.dto.HouseImageDto;
 import org.team4p.woorizip.room.dto.RoomDto;
 import org.team4p.woorizip.room.dto.request.RoomSearchCondition;
 import org.team4p.woorizip.room.dto.response.RoomSearchResponse;
@@ -121,5 +119,19 @@ public class RoomController {
 		roomService.deleteRoom(roomNo, currentUserNo);
 		
 		return ResponseEntity.status(200).body(ApiResponse.ok("방 정보 삭제 성공", null));
+	}
+	
+	@GetMapping("/{roomNo}")
+	public ResponseEntity<ApiResponse<RoomDto>> getRoom(String roomNo){
+		// 방 상세 조회
+		RoomDto room = roomService.selectRoom(roomNo);
+		return ResponseEntity.status(200).body(ApiResponse.ok("방 목록 조회 성공", room));
+	}
+	
+	@GetMapping("/{roomNo}/images")
+	public ResponseEntity<ApiResponse<List<RoomImageDto>>>getRoomImages(String roomNo) {
+		// 방 상세 이미지 조회
+		List<RoomImageDto> imageList = roomImageService.selectRoomImages(roomNo); 
+		return ResponseEntity.status(200).body(ApiResponse.ok("방 사진 목록 조회 성공", imageList));
 	}
 }
