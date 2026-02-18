@@ -28,6 +28,7 @@ import org.team4p.woorizip.common.api.ApiResponse;
 import org.team4p.woorizip.common.api.PageResponse;
 import org.team4p.woorizip.common.api.SearchRequest;
 import org.team4p.woorizip.common.config.UploadProperties;
+import org.team4p.woorizip.common.exception.NotFoundException;
 import org.team4p.woorizip.common.util.FileNameChange;
 
 import jakarta.validation.Valid;
@@ -73,12 +74,8 @@ public class NoticeController {
 	public ResponseEntity<ApiResponse<PostDto>> detail(@PathVariable int postNo) {
 		
 		PostDto dto = noticeService.selectNotice(postNo);
-		if(dto == null) {
-			return ResponseEntity.status(404)
-					.body(ApiResponse.fail("해당 공지가 없습니다.", null));
-		}
-		
 		noticeService.updateAddReadCount(postNo);
+		
 		return ResponseEntity.ok(ApiResponse.ok("상세 조회 성공", dto));
 	}
 	
@@ -88,17 +85,19 @@ public class NoticeController {
 			@PathVariable Integer postNo,
 			@PathVariable Integer fileNo) throws Exception {
 		
-		FileEntity fileEntity = fileRepository.findById(fileNo).orElse(null);
+		FileEntity fileEntity = fileRepository.findById(fileNo)
+				.orElseThrow(() -> new NotFoundException("파일이 존재하지 않습니다."));
 		
-		if(fileEntity == null || !fileEntity.getPostNo().equals(postNo))
-			return ResponseEntity.notFound().build();
+		if(!fileEntity.getPostNo().equals(postNo)) {
+			throw new NotFoundException("해당 게시글의 파일이 아닙니다.");
+		}
 		
 		Path path = uploadProperties.noticeDir()
 				.resolve(fileEntity.getUpdatedFileName());
 		
 		File file = path.toFile();		
 		if(!file.exists())
-			return ResponseEntity.notFound().build();
+			throw new NotFoundException("파일이 존재하지 않습니다.");
 		
 		String encoded = URLEncoder.encode(
 				fileEntity.getOriginalFileName(), StandardCharsets.UTF_8);
@@ -148,7 +147,7 @@ public class NoticeController {
 					file.transferTo(new File(saveDir, rename));
 				} catch (Exception e) {
 					log.error("파일 업로드 실패", e);
-					return ResponseEntity.status(500).body(ApiResponse.fail("파일 업로드 실패", null));
+					throw new IllegalStateException("파일 업로드 실패");
 				}
 				
 				fileDtoList.add(
@@ -161,12 +160,8 @@ public class NoticeController {
 		
 		postDto.setFiles(fileDtoList);
 		
-		int result = noticeService.insertNotice(postDto);
-		
-		if(result > 0)
-			return ResponseEntity.status(201).body(ApiResponse.ok("공지 등록 성공", null));
-		
-		return ResponseEntity.status(500).body(ApiResponse.fail("공지 등록 실패", null));
+		noticeService.insertNotice(postDto);
+		return ResponseEntity.status(201).body(ApiResponse.ok("공지 등록 성공", null));
 	}
 	
 	//==============수정===================
@@ -205,7 +200,7 @@ public class NoticeController {
 					file.transferTo(new File(saveDir, rename));
 				} catch (Exception e) {
 					log.error("파일 업로드 실패", e);
-					return ResponseEntity.status(500).body(ApiResponse.fail("파일 업로드 실패", null));
+					throw new IllegalStateException("파일 업로드 실패");
 				}
 				
 				newFiles.add(FileDto.builder()
@@ -226,24 +221,19 @@ public class NoticeController {
 		
 		postDto.setFiles(newFiles);
 		
-		int result = noticeService.updateNotice(postDto, deleteFileNo);
+		noticeService.updateNotice(postDto, deleteFileNo);
 		
-		if(result > 0) {
-			 for(FileEntity fileEntity : deleteFiles) {
-			        File physical = uploadProperties.noticeDir()
-			                .resolve(fileEntity.getUpdatedFileName())
-			                .toFile();
-
-			        if (physical.exists() && !physical.delete()) {
-			            log.warn("파일 삭제 실패: {}", physical.getAbsolutePath());
-			        }
-			    }
-
-			return ResponseEntity.ok(ApiResponse.ok("수정 성공", null));
-		}
+		for(FileEntity fileEntity : deleteFiles) {
+			File physical = uploadProperties.noticeDir()
+					.resolve(fileEntity.getUpdatedFileName())
+					.toFile();
 			
-		return ResponseEntity.status(500)
-				.body(ApiResponse.fail("수정 실패", null));
+			if(physical.exists() && !physical.delete()) {
+				log.warn("파일 삭제 실패: {}", physical.getAbsolutePath());
+			}
+		}
+		
+		return ResponseEntity.ok(ApiResponse.ok("수정 성공", null));
 	}
 	
 	//==============삭제===================
@@ -252,28 +242,21 @@ public class NoticeController {
 
 	    PostDto dto = noticeService.selectNotice(postNo);
 
-	    int result = noticeService.deleteNotice(postNo);
-
-	    if(result > 0) {
-
-	        // DB 삭제 성공 후 파일 삭제
-	        if(dto != null && dto.getFiles() != null) {
-	            for(FileDto file : dto.getFiles()) {
-	                File physical = uploadProperties.noticeDir()
-	                        .resolve(file.getUpdatedFileName())
-	                        .toFile();
-
-	                if (physical.exists() && !physical.delete()) {
-	                    log.warn("파일 삭제 실패: {}", physical.getAbsolutePath());
-	                }
-	            }
-	        }
-
-	        return ResponseEntity.ok(ApiResponse.ok("삭제 성공", null));
+	    noticeService.deleteNotice(postNo);
+	    
+	    if(dto.getFiles() != null) {
+	    		for(FileDto file : dto.getFiles()) {
+	    			File physical = uploadProperties.noticeDir()
+	    					.resolve(file.getUpdatedFileName())
+	    					.toFile();
+	    			
+	    			if(physical.exists() && !physical.delete()) {
+	    				log.warn("파일 삭제 실패: {}", physical.getAbsolutePath());
+	    			}
+	    		}
 	    }
-
-	    return ResponseEntity.status(500)
-	            .body(ApiResponse.fail("삭제 실패", null));
+	    
+	    return ResponseEntity.ok(ApiResponse.ok("삭제 성공", null));
 	}
 
 	
