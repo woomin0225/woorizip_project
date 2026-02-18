@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.team4p.woorizip.common.exception.ForbiddenException;
 import org.team4p.woorizip.common.exception.NotFoundException;
+import org.team4p.woorizip.house.dto.HouseDto;
 import org.team4p.woorizip.house.jpa.repository.HouseRepository;
 import org.team4p.woorizip.room.dto.RoomDto;
 import org.team4p.woorizip.room.dto.request.RoomSearchCondition;
@@ -120,6 +121,16 @@ public class RoomServiceImpl implements RoomService {
 		List<RoomDto> list = new ArrayList<>();
 		rows.stream().map(entity->list.add(entity.toDto()));
 		return list;
+	}
+
+	@Override
+	public RoomDto updateRoom(RoomDto roomDto, String currentUserNo) {
+		// 방 정보 수정
+		
+		String userNo = roomRepository.findUserNoById(roomDto.getHouseNo());
+		if (!userNo.equals(currentUserNo)) throw new ForbiddenException("수정 권한이 없습니다.");
+		
+		return roomRepository.save(roomDto.toEntity()).toDto();
 	}
 
 }

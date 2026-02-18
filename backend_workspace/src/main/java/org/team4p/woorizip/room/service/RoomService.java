@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
+import org.team4p.woorizip.house.dto.HouseDto;
 import org.team4p.woorizip.room.dto.RoomDto;
 import org.team4p.woorizip.room.dto.request.RoomSearchCondition;
 import org.team4p.woorizip.room.dto.response.RoomSearchResponse;
@@ -15,4 +16,5 @@ public interface RoomService {
 	void deleteRoom(String roomNo, String currentUserNo);
 	RoomDto selectRoom(String roomNo);
 	List<RoomDto> selectRoomsByHouseNo(String houseNo);
+	RoomDto updateRoom(RoomDto roomDto, String currentUserNo);
 }

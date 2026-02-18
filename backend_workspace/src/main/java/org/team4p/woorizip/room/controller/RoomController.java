@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -144,5 +145,85 @@ public class RoomController {
 		// 방 상세 리뷰 조회 (페이징 처리)
 		Page<ReviewDto> reviewPage = reviewService.selectRoomReviews(roomNo, pageable);
 		return ResponseEntity.status(200).body(ApiResponse.ok("방 리뷰 목록 조회 성공", reviewPage));
+	}
+	
+	@PutMapping("/{roomNo}")
+	public ResponseEntity<ApiResponse<Void>> modifyRoom(
+			@PathVariable("roomNo") String roomNo,
+			@ModelAttribute RoomDto roomDto,
+			@RequestParam(value="deleteImageNos", required=false) List<Integer> deleteImageNos,
+			@RequestParam(value="newImages", required=false) List<MultipartFile> newImages,
+			@RequestHeader("currentUserNo") String currentUserNo/*임시*/
+			){
+		
+		// 방 정보 수정
+		roomDto.setRoomNo(roomNo);
+		roomService.updateRoom(roomDto, currentUserNo);
+		
+		// 삭제 사진 처리 : DB삭제 -> 저장소 삭제
+		if(deleteImageNos != null && deleteImageNos.size() > 0) {
+			for (int deleteImageNo: deleteImageNos) {
+				// DB에서 삭제
+				RoomImageDto ImageDto;
+				try {
+					ImageDto = roomImageService.deleteRoomImageByRoomImageNo(deleteImageNo, roomNo);
+				} catch (Exception e) {continue;}
+				// Dto로부터 사진 경로 구성
+				File targetFile = new File(uploadProperties.roomImageDir().toFile(), ImageDto.getRoomStoredImageName());
+				
+				// 파일저장소에서 삭제
+				try {
+					Files.deleteIfExists(targetFile.toPath());
+				} catch (IOException e) {continue;}
+			}
+		}
+		
+		// 추가 사진 처리 : 저장소 저장 -> DB저장
+		if(newImages != null && newImages.size() > 0) {
+			for (MultipartFile newImage : newImages) {
+				String originalImageName = newImage.getOriginalFilename();
+				// 파일이름변환
+				if (originalImageName == null || originalImageName.isBlank()) {
+//		            throw new IllegalArgumentException("원본 파일명이 없습니다.");
+					continue;	//남은 파일 목록들을 계속 저장 시도하기 위해 에러발생없이 진행
+		        }
+				
+				int index = originalImageName.lastIndexOf(".");
+				if (index < 0) {
+//					throw new IllegalArgumentException("확장자가 없는 파일입니다: " + originalImageName);
+					continue;
+				}
+				String extension = originalImageName.substring(index);
+				
+				String storedImageName = UUID.randomUUID().toString() + extension;
+				
+				// 파일저장소에 저장
+				File saveDir = uploadProperties.roomImageDir().toFile();
+	            if (!saveDir.exists()) saveDir.mkdirs();
+	            File saveFile = new File(saveDir, storedImageName);
+	            try {
+	                newImage.transferTo(saveFile);
+	            } catch (Exception e) {
+	                continue;
+	            }
+
+	            // RoomImageDto만들어서 DB에 저장
+	            RoomImageDto roomImageDto = RoomImageDto.builder()
+											            		.roomNo(roomNo)
+											            		.roomOriginalImageName(originalImageName)
+											            		.roomStoredImageName(storedImageName)
+											            		.build();
+	            try {
+	            		roomImageService.insertRoomImage(roomImageDto);
+	            } catch(Exception e) {
+	            		// DB에 사진이름 저장 실패하면 저장소에서 파일 삭제
+	            		try {
+						Files.deleteIfExists(saveFile.toPath());
+					} catch (IOException e2) {}
+	            		continue;
+	            }
+			}
+		}
+		return ResponseEntity.status(200).body(ApiResponse.ok("방 정보 수정 성공", null));
 	}
 }
