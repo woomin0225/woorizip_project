@@ -25,8 +25,7 @@ public class CustomUserDetailsService implements UserDetailsService {
 
         String password = user.getPassword(); 
 
-        // 0일 때만 enabled가 true가 되도록 설정.
-        boolean enabled = (user.getDeletedYn() == 0);
+        boolean enabled = "N".equals(user.getDeletedYn());
 
         // UserEntity의 권한 필드명은 'role'이며 기본값은 'USER' 또는 'ADMIN'.
         // Security 관례에 따라 "ROLE_" 접두사를 붙여줌.
