@@ -9,5 +9,5 @@ import org.team4p.woorizip.house.jpa.entity.HouseEntity;
 @Repository
 public interface HouseRepository extends JpaRepository<HouseEntity, String>, HouseRepositoryCustom {
 	String findUserNoById(String houseId);
-	Optional<HouseEntity> findByUserNo(String userNo); // method for FacilityService_Seoyoon
+	Optional<HouseEntity> findByUserNo(String userNo); // method for FacilityService - 서윤
 }

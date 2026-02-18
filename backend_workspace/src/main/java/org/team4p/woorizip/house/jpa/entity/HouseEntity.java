@@ -35,7 +35,8 @@ public class HouseEntity {
 	@Column(name = "house_updated_at")
 	private LocalDateTime houseUpdatedAt;
 
-	@Column(name = "house_updated_at")
+	@Column(name = "house_zip")
+	// house_updated_at으로 설정되어있어 컬럼명 오류인 거 같아 수정했습니다 - 서윤
 	private String houseZip;
 	
 	@Column(name="house_address")

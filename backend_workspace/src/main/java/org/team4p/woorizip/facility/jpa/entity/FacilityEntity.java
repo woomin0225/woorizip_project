@@ -9,6 +9,7 @@ import java.util.Map;
 import org.hibernate.annotations.CreationTimestamp;
 import org.team4p.woorizip.facility.dto.FacilityModifyRequestDTO;
 import org.team4p.woorizip.facility.enums.FacilityStatus;
+import org.team4p.woorizip.house.jpa.entity.HouseEntity;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -41,7 +42,7 @@ public class FacilityEntity {
 	
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "house_no")
-	private String houseNo;
+	private HouseEntity houseNo;
 	
 	@Column(name = "facility_name")
 	private String facilityName;

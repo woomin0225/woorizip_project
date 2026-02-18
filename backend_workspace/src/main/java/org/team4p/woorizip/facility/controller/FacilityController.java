@@ -40,15 +40,6 @@ public class FacilityController {
 		return ResponseEntity.ok(facilityService.getFacilityList(currentUserNo));
 	}
 	
-	// 시설 카테고리 등록
-	@PostMapping("/categories")
-	@PreAuthorize("hasRole('ADMIN')")
-	public ResponseEntity<ApiResponse<String>> createCategory(@RequestBody FacilityCategoryDTO dto) {
-	    facilityService.createCategory(dto);
-	    return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.ok("시설 카테고리 등록 성공", "facilityCategoryCreateSuccess"));
-	}
-	
 	// 시설 신규 등록
 	@PostMapping
 	public ResponseEntity<ApiResponse<String>> createFacility(
@@ -62,6 +53,39 @@ public class FacilityController {
 	        log.error("[createFacility Error] facilityName: {}, Error: {}", dto.getFacilityName(), e.getMessage(), e);
 	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
 	                             .body(ApiResponse.fail("시설 등록 실패", "facilityCreateFail"));
+	    }
+	}
+	
+	// 시설 카테고리 등록
+	@PostMapping("/categories")
+	@PreAuthorize("hasRole('ADMIN')")
+	public ResponseEntity<ApiResponse<String>> createFacilityCategory(@RequestBody FacilityCategoryDTO dto) {
+		facilityService.createCategory(dto);
+		return ResponseEntity.status(HttpStatus.CREATED)
+				.body(ApiResponse.ok("시설 카테고리 등록 성공", "facilityCategoryCreateSuccess"));
+		}
+		
+	// 시설 카테고리 조회
+	@GetMapping("/categories")
+	@PreAuthorize("hasRole('ADMIN')")
+	public ResponseEntity<List<FacilityCategoryDTO>> getFacilityCategory() {
+		List<FacilityCategoryDTO> category = facilityService.getFacilityCategory();
+		return ResponseEntity.ok(category);
+	}
+		
+	// 시설 카테고리 수정
+	@PatchMapping("/categories/{facilityCode}")
+	@PreAuthorize("hasRole('ADMIN')")
+	public ResponseEntity<ApiResponse<String>> modifyFacilityCategory(
+			@PathVariable Integer facilityCode,
+			@RequestBody FacilityCategoryDTO dto) {
+		try {
+	        facilityService.modifyFacilityCategory(facilityCode, dto);
+	        return ResponseEntity.ok(ApiResponse.ok("시설 카테고리 수정 성공", "facilityCategoryModifySuccess"));
+	    } catch (Exception e) {
+	        log.error("Facility Category Modify Error FacilityCode: {}, Error: {}", dto.getFacilityCode(), e.getMessage(), e);
+	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+	                             .body(ApiResponse.fail("시설 카테고리 수정 실패", "facilityCategoryModifyFail"));
 	    }
 	}
 	
