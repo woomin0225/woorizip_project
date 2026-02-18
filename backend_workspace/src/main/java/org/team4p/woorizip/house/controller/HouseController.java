@@ -74,8 +74,8 @@ public class HouseController {
 	@GetMapping("/{houseNo}")
 	public ResponseEntity<ApiResponse<HouseDto>> getHouse(String houseNo){
 		// 건물 상세 조회
-		
-		return null;
+		HouseDto house = houseService.selectHouse(houseNo);
+		return ResponseEntity.status(200).body(ApiResponse.ok("건물 상세 조회 성공", house));
 	}
 	
 	@PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

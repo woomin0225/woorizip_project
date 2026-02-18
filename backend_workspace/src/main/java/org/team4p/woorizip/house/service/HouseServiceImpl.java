@@ -48,7 +48,7 @@ public class HouseServiceImpl implements HouseService {
 		Integer minMonthly = map.get("minMonthly");
 		Integer maxMonthly = map.get("maxMonthly");
 		
-		List<HouseMarkerResponse> list = new ArrayList();
+		List<HouseMarkerResponse> list = new ArrayList<>();
 		rows.stream().map(entity->list.add(new HouseMarkerResponse(entity, minDeposit, maxDeposit, minMonthly, maxMonthly)));
 		
 		return list;
@@ -63,7 +63,11 @@ public class HouseServiceImpl implements HouseService {
 	@Override
 	public HouseDto selectHouse(String houseNo) {
 		// 건물 상세 조회
-		return null;
+		Optional<HouseEntity> row = houseRepository.findById(houseNo);
+		if(!row.isPresent()) throw new NotFoundException("해당 건물을 조회할 수 없습니다.");
+		HouseEntity houseEntity = row.get();
+		if(houseEntity == null) throw new NotFoundException("해당 건물을 조회할 수 없습니다.");
+		return houseEntity.toDto();
 	}
 
 	@Override
