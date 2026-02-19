@@ -11,16 +11,10 @@ import jakarta.persistence.Table;
 import lombok.Builder;
 import lombok.Data;
 
-<<<<<<< Updated upstream
 @Builder
 @Data
 @Table(name="tb_rooms_images")
 @Entity
-=======
-//@Builder
-//@Table(name="tb_rooms_images")
-//@Entity
->>>>>>> Stashed changes
 public class RoomImageEntity {
 	@Id
 	@GeneratedValue(strategy=GenerationType.IDENTITY)

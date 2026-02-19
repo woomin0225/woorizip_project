@@ -1,6 +1,5 @@
 package org.team4p.woorizip.room.review.jpa.entity;
 
-<<<<<<< Updated upstream
 import java.time.LocalDateTime;
 
 import org.team4p.woorizip.room.review.dto.ReviewDto;
@@ -58,19 +57,3 @@ public class ReviewEntity {
 							.build();
 	}
 }
-=======
-import jakarta.persistence.*;
-import lombok.*;
-
-//@Entity
-@Table(name = "tb_reviews") // 테이블 이름 확인
-@Getter @Setter @NoArgsConstructor
-public class ReviewEntity {
-
-    @Id // 반드시 필요!
-    @GeneratedValue(strategy = GenerationType.IDENTITY) // MySQL의 Auto Increment 사용 시
-    private Long reviewNo; 
-
-    // ... 나머지 필드
-}
->>>>>>> Stashed changes
