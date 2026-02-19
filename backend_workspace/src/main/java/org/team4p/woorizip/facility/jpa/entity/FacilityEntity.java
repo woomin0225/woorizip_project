@@ -42,7 +42,7 @@ public class FacilityEntity {
 	
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "house_no")
-	private HouseEntity houseNo;
+	private HouseEntity house;
 	
 	@Column(name = "facility_name")
 	private String facilityName;

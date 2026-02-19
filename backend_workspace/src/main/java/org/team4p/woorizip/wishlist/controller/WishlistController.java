@@ -1,21 +1,26 @@
 package org.team4p.woorizip.wishlist.controller;
 
-import java.time.LocalDate;
 import java.util.ArrayList;
-
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-
-import org.team4p.woorizip.common.api.ApiResponse;
-import org.team4p.woorizip.common.api.PageResponse;
-import org.team4p.woorizip.wishlist.model.dto.WishlistDto;
-import org.team4p.woorizip.wishlist.model.service.WishlistService;
 
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.team4p.woorizip.common.api.ApiResponse;
+import org.team4p.woorizip.common.api.PageResponse;
+import org.team4p.woorizip.wishlist.model.dto.WishlistDto;
+import org.team4p.woorizip.wishlist.model.service.WishlistService;
+import org.team4p.woorizip.auth.security.principal.CustomUserPrincipal;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RestController
@@ -30,13 +35,20 @@ public class WishlistController {
      * POST /api/wishlist/add/{roomNo}
      */
     @PostMapping("/add/{roomNo}")
-    public ResponseEntity<ApiResponse<Void>> create(@RequestBody @Valid WishlistDto wishlistDto) {
-        // roomNo를 경로로 받지만 DTO에도 세팅이 필요한 경우 처리 로직 필요 (현재는 DTO 그대로 전달)
-        int result = wishlistService.insertWishlist(wishlistDto);
-        if (result > 0) {
-            return ResponseEntity.status(201).body(ApiResponse.ok("찜 등록 성공", null));
-        }
-        return ResponseEntity.status(409).body(ApiResponse.fail("이미 찜한 항목이거나 등록 실패", null));
+    public ResponseEntity<ApiResponse<Void>> create(
+        @PathVariable("roomNo") String roomNo,
+        @AuthenticationPrincipal CustomUserPrincipal userPrincipal
+    ) {
+        String userNo = userPrincipal.getUserNo(); 
+        
+        WishlistDto wishlistDto = WishlistDto.builder()
+                .userNo(userNo)
+                .roomNo(roomNo)
+                .build();
+                
+        wishlistService.insertWishlist(wishlistDto);
+        
+        return ResponseEntity.ok(ApiResponse.ok("찜 등록 성공", null));
     }
 
     /**

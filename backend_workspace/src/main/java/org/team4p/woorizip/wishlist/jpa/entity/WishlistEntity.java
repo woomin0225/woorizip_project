@@ -18,21 +18,21 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Table(name = "TB_WISHLIST")
+@Table(name = "tb_wishlist")
 @Entity
 public class WishlistEntity {
 
     @Id
-    @Column(name = "WISHNO", nullable = false, unique = true, length = 50)
+    @Column(name = "wish_no", nullable = false, unique = true, length = 50)
     private String wishNo; // UUID
 
-    @Column(name = "USERNO", nullable = false, length = 50)
+    @Column(name = "user_no", nullable = false, length = 50)
     private String userNo; // MemberEntity의 userNo와 매핑 (FK)
 
-    @Column(name = "ROOMNO", nullable = false, length = 50)
+    @Column(name = "room_no", nullable = false, length = 50)
     private String roomNo; // 찜한 대상의 NO (예: 매물 번호, 상품 번호)
 
-    @Column(name = "CREATEDAT", nullable = false)
+    @Column(name = "created_at", nullable = false)
     private Date createdAt;
 
     /**

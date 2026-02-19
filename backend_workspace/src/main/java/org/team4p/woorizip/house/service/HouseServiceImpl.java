@@ -1,6 +1,8 @@
 package org.team4p.woorizip.house.service;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -20,7 +22,7 @@ import org.team4p.woorizip.room.jpa.repository.RoomRepository;
 
 import lombok.RequiredArgsConstructor;
 
-@Service
+//@Service
 @RequiredArgsConstructor
 public class HouseServiceImpl implements HouseService {
 	private final HouseRepository houseRepository;
@@ -34,9 +36,22 @@ public class HouseServiceImpl implements HouseService {
 	}
 
 	@Override
-	public HouseMarkerResponse selectHouseMarkers(RoomSearchCondition cond) {
+	public List<HouseMarkerResponse> selectHouseMarkers(RoomSearchCondition cond) {
 		// 지도 내 건물 마커용 검색 결과 조회
-		return null;
+		
+		cond.adjustment();
+		
+		List<HouseEntity> rows = houseRepository.searchHouses(cond);
+		Map<String, Integer> map= houseRepository.searchPriceOfHouses(cond);
+		Integer minDeposit = map.get("minDeposit");
+		Integer maxDeposit = map.get("maxDeposit");
+		Integer minMonthly = map.get("minMonthly");
+		Integer maxMonthly = map.get("maxMonthly");
+		
+		List<HouseMarkerResponse> list = new ArrayList<>();
+		rows.stream().map(entity->list.add(new HouseMarkerResponse(entity, minDeposit, maxDeposit, minMonthly, maxMonthly)));
+		
+		return list;
 	}
 
 	@Override
@@ -48,10 +63,15 @@ public class HouseServiceImpl implements HouseService {
 	@Override
 	public HouseDto selectHouse(String houseNo) {
 		// 건물 상세 조회
-		return null;
+		Optional<HouseEntity> row = houseRepository.findById(houseNo);
+		if(!row.isPresent()) throw new NotFoundException("해당 건물을 조회할 수 없습니다.");
+		HouseEntity houseEntity = row.get();
+		if(houseEntity == null) throw new NotFoundException("해당 건물을 조회할 수 없습니다.");
+		return houseEntity.toDto();
 	}
 
 	@Override
+	@Transactional
 	public HouseDto insertHouse(HouseDto houseDto) {
 		// 건물 등록
 		
@@ -79,6 +99,7 @@ public class HouseServiceImpl implements HouseService {
 	}
 
 	@Override
+	@Transactional
 	public HouseDto updateHouse(HouseDto houseDto, String currentUserNo) {
 		// 건물 정보 수정
 		

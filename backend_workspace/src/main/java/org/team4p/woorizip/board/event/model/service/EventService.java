@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.data.domain.Pageable;
+import org.team4p.woorizip.board.bannerimage.model.dto.BannerImageDto;
 import org.team4p.woorizip.board.post.model.dto.PostDto;
 
 public interface EventService {
@@ -20,8 +21,8 @@ public interface EventService {
 	  void updateAddReadCount(int postNo);
 
 	  //DML
-	  int insertEvent(PostDto post);
-	  int updateEvent(PostDto post, List<Integer> deleteFileNo);
+	  int insertEvent(PostDto post, BannerImageDto bannerDto);
+	  int updateEvent(PostDto post, List<Integer> deleteFileNo, BannerImageDto bannerDto);
 	  int deleteEvent(int postNo);
 
 	  //검색 

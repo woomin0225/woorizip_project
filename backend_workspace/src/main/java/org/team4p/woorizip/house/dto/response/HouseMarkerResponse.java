@@ -7,18 +7,24 @@ import lombok.Data;
 @Data
 public class HouseMarkerResponse {
 	private String houseNo;
+	private String houseName;
 	private double houseLat;
 	private double houseLng;
-	private int minPrice;
-	private int maxPrice;
+	private int minMonthly;
+	private int maxMonthly;
+	private int minDeposit;
+	private int maxDeposit;
 	
-	public HouseMarkerResponse(HouseEntity houseEntity, int minPrice, int maxPrice) {
+	public HouseMarkerResponse(HouseEntity houseEntity, int minDeposit, int maxDeposit, int minMonthly, int maxMonthly) {
 		super();
 		this.houseNo = houseEntity.getHouseNo();
+		this.houseName = houseEntity.getHouseName();
 		this.houseLat = houseEntity.getHouseLat();
 		this.houseLng = houseEntity.getHouseLng();
-		this.minPrice = minPrice;
-		this.maxPrice = maxPrice;
+		this.minDeposit = minDeposit;
+		this.maxDeposit = maxDeposit;
+		this.minMonthly = minMonthly;
+		this.maxMonthly = maxMonthly;		
 	}
 	
 	

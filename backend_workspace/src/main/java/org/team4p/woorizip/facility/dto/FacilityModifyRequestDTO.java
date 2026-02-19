@@ -19,7 +19,7 @@ import lombok.Setter;
 @AllArgsConstructor
 public class FacilityModifyRequestDTO {
 	private String facilityNo;
-	private int facilityCode;
+	private Integer facilityCode;
 	private String facilityName;
 	private Map<String, Boolean> facilityOptionInfo;
 	private Integer facilityLocation;

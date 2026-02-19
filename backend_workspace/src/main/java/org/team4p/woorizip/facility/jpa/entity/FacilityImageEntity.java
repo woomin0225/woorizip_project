@@ -4,7 +4,6 @@ import org.team4p.woorizip.facility.dto.FacilityImageDTO;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -29,9 +28,9 @@ public class FacilityImageEntity {
 	@GeneratedValue(strategy=GenerationType.IDENTITY)
 	private int facilityImageNo;
 	
-	@ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "facility_no")
-	private FacilityEntity facilityNo;
+	@ManyToOne
+	@JoinColumn(name = "facility_no") 
+	private FacilityEntity facility;
 	
 	@Column(name = "facility_original_image_name")
 	private String facilityOriginalImageName;

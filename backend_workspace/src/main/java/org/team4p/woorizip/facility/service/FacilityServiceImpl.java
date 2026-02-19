@@ -89,7 +89,7 @@ public class FacilityServiceImpl implements FacilityService {
 		FacilityEntity facility = FacilityEntity
 				.builder()
 				.facilityNo(UUID.randomUUID().toString())
-				.houseNo(house)
+				.house(house)
 				.facilityName(finalName)
 				.facilitySequence(nextSequence)
 				.facilityOptionInfo(finalOptions)
@@ -111,7 +111,7 @@ public class FacilityServiceImpl implements FacilityService {
 						.builder()
 						.facilityOriginalImageName(imageDto.getFacilityOriginalImageName())
 						.facilityStoredImageName(imageDto.getFacilityStoredImageName())
-						.facilityNo(facility)
+						.facility(facility)
 						.build();
 				facility.getImages().add(imageEntity);
 			}
@@ -152,6 +152,7 @@ public class FacilityServiceImpl implements FacilityService {
 		
 		// dto 업데이트
 		category.updateCategory(dto);
+		return;
 	}
 	
 	// 시설 상세 조회
@@ -175,9 +176,12 @@ public class FacilityServiceImpl implements FacilityService {
 		if (dto.getImages() != null) {
 			entity.getImages().clear();
 			for (FacilityImageDTO imageDto : dto.getImages()) {
-				FacilityImageEntity imageEntity = FacilityImageEntity.builder()
+				FacilityImageEntity imageEntity = FacilityImageEntity
+						.builder()
 						.facilityOriginalImageName(imageDto.getFacilityOriginalImageName())
-						.facilityStoredImageName(imageDto.getFacilityStoredImageName()).facilityNo(entity).build();
+						.facilityStoredImageName(imageDto.getFacilityStoredImageName())
+						.facility(entity)
+						.build();
 				entity.getImages().add(imageEntity);
 			}
 		}

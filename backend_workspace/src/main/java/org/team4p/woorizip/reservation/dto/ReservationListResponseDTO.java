@@ -31,8 +31,8 @@ public class ReservationListResponseDTO {
 	    return ReservationListResponseDTO
 	    		.builder()
 	    		.reservationNo(entity.getReservationNo())
-	    		.facilityNo(entity.getFacilityNo().getFacilityNo())
-	    		.facilityName(entity.getFacilityNo().getFacilityName())
+	    		.facilityNo(entity.getFacility().getFacilityNo())
+	    		.facilityName(entity.getFacility().getFacilityName())
 	    		.reservationDate(entity.getReservationDate())
 	    		.reservationStartTime(entity.getReservationStartTime())
 	    		.reservationEndTime(entity.getReservationEndTime())

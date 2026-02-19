@@ -34,14 +34,14 @@ public class ReservationDetailResponseDTO {
 	public static ReservationDetailResponseDTO from(ReservationEntity entity) {
 	    return ReservationDetailResponseDTO.builder()
 	            .reservationNo(entity.getReservationNo())
-	            .facilityNo(entity.getFacilityNo().getFacilityNo())
+	            .facilityNo(entity.getFacility().getFacilityNo())
 	            .reservationName(entity.getReservationName())
 	            .reservationPhone(entity.getReservationPhone())
 	            .reservationDate(entity.getReservationDate())
 	            .reservationStartTime(entity.getReservationStartTime())
 	            .reservationEndTime(entity.getReservationEndTime())
 	            .reservationStatus(entity.getReservationStatus())
-	            .facilityImages(entity.getFacilityNo().getImages().stream()
+	            .facilityImages(entity.getFacility().getImages().stream()
 	                    .map(FacilityImageDTO::from)
 	                    .collect(Collectors.toList()))
 	            .build();

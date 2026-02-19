@@ -21,6 +21,21 @@ public record UploadProperties(
     public Path qnaDir() {
         return Path.of(uploadDir, "qna");  // C:/upload_files/qna
     }
+    
+    /** event 업로드 경로 */
+    public Path eventDir() {
+        return Path.of(uploadDir, "event");  // C:/upload_files/event
+    }
+    
+    /** event banner 업로드 경로 */
+    public Path eventBannerDir() {
+        return Path.of(uploadDir, "event", "banner");  // C:/upload_files/event/banner
+    }
+    
+    /** information 업로드 경로 */
+    public Path informationDir() {
+        return Path.of(uploadDir, "information");  // C:/upload_files/information
+    }
 
     /** 회원 사진 업로드 경로 */
     public Path photoDir() {
@@ -29,6 +44,11 @@ public record UploadProperties(
     
     /** 건물 사진 업로드 경로 */
     public Path houseImageDir() {
-    		return Path.of(uploadDir, "houseImage");
+    		return Path.of(uploadDir, "house_image");
+    }
+    
+    /** 방 사진 업로드 경로 */
+    public Path roomImageDir() {
+    		return Path.of(uploadDir, "room_image");
     }
 }

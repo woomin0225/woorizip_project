@@ -39,7 +39,7 @@ public class ReservationEntity {
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "facility_no")
-	private FacilityEntity facilityNo;
+	private FacilityEntity facility;
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "user_no")
