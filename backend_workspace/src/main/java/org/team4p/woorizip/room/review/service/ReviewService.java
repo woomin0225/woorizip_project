@@ -8,4 +8,5 @@ public interface ReviewService {
 	Page<ReviewDto> selectRoomReviews(String roomNo, Pageable pageable);
 	ReviewDto insertRoomReview(ReviewDto reviewDto);
 	void deleteRoomReview(int ReviewNo, String userNo);
+	ReviewDto updateRoomReview(ReviewDto reviewDto, String userNo);
 }

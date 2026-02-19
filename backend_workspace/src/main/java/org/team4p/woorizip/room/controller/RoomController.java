@@ -248,4 +248,20 @@ public class RoomController {
 		reviewService.deleteRoomReview(reviewNo, userNo);
 		return ResponseEntity.status(200).body(ApiResponse.ok("리뷰 삭제 성공", null));
 	}
+	
+	@PutMapping("/{roomNo}/reviews/{reviewNo}")
+	public ResponseEntity<ApiResponse<Void>> ModifyRoomReview(
+			@PathVariable("roomNo") String roomNo,
+			@PathVariable("reviewNo") int reviewNo,
+			@RequestBody ReviewDto reviewDto,
+			String userNo/*임시*/
+			){
+		// 방 리뷰 수정
+		
+		reviewDto.setReviewNo(reviewNo);
+		reviewDto.setRoomNo(roomNo);
+		reviewService.updateRoomReview(reviewDto, roomNo);
+		
+		return ResponseEntity.status(200).body(ApiResponse.ok("리뷰 수정 성공", null));
+	}
 }
