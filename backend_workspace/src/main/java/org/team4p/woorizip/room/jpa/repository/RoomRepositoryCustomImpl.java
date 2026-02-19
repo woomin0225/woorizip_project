@@ -94,7 +94,7 @@ public class RoomRepositoryCustomImpl implements RoomRepositoryCustom {
 		long rows = queryFactory.update(qroomEntity)
 						.set(qroomEntity.deleted, true)
 						.set(qroomEntity.deletedAt, LocalDateTime.now())
-						.where(qroomEntity.houseNo.eq(roomNo))
+						.where(qroomEntity.roomNo.eq(roomNo))
 						.execute();
 		
 		return rows;

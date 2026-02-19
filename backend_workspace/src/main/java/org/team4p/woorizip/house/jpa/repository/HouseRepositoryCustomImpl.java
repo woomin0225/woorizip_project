@@ -214,13 +214,14 @@ public class HouseRepositoryCustomImpl implements HouseRepositoryCustom {
 					.join(qhouseEntity).on(qroomEntity.houseNo.eq(qhouseEntity.houseNo))
 					.where(where)
 					.fetch();
-			min = deposit.get(0).get(qroomEntity.roomMonthly.min());
-			max = deposit.get(0).get(qroomEntity.roomMonthly.max());
+			min = deposit.get(0).get(qroomEntity.roomDeposit.min());
+			max = deposit.get(0).get(qroomEntity.roomDeposit.max());
 			map.put("minDeposit", min);
 			map.put("maxDeposit", max);
 			if(cond.getRoomType() == RoomType.M) {
 				List<Tuple> monthly = queryFactory
 						.select(qroomEntity.roomMonthly.min(), qroomEntity.roomMonthly.max())
+						.from(qroomEntity)
 						.join(qhouseEntity).on(qroomEntity.houseNo.eq(qhouseEntity.houseNo))
 						.where(where)
 						.fetch();

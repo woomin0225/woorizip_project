@@ -13,7 +13,7 @@ import org.team4p.woorizip.house.image.jpa.repository.HouseImageRepository;
 
 import lombok.RequiredArgsConstructor;
 
-//@Service
+@Service
 @RequiredArgsConstructor
 public class HouseImageServiceImpl implements HouseImageService {
 	private final HouseImageRepository houseImageRepository;
@@ -23,7 +23,7 @@ public class HouseImageServiceImpl implements HouseImageService {
 		// 건물 이미지 목록 조회
 		List<HouseImageEntity> rows = houseImageRepository.findAllByHouseNo(houseNo);
 		List<HouseImageDto> list = new ArrayList<>();
-		rows.stream().map(entity->list.add(entity.toDto()));
+		rows.forEach(entity->list.add(entity.toDto()));
 		return list;
 	}
 
