@@ -4,6 +4,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.team4p.woorizip.common.exception.ForbiddenException;
 import org.team4p.woorizip.common.exception.NotFoundException;
 import org.team4p.woorizip.room.jpa.repository.RoomRepository;
 import org.team4p.woorizip.room.review.dto.ReviewDto;
@@ -34,6 +35,18 @@ public class ReviewServiceImpl implements ReviewService {
 		if(roomRepository.existsById(reviewDto.getRoomNo())) throw new NotFoundException("리뷰를 등록하려는 방이 존재하지 않습니다.");
 		// DB에 저장
 		return reviewRepository.save(reviewDto.toEntity()).toDto();
+	}
+
+	@Override
+	public void deleteRoomReview(int reviewNo, String userNo) {
+		// 방 리뷰 삭제
+		
+		// 리뷰가 DB에 있는지 검사
+		if(!reviewRepository.existsById(reviewNo)) throw new NotFoundException("해당 리뷰가 존재하지 않습니다."); 
+		// 리뷰 소유권 검사
+		if(reviewRepository.findUserNoById(reviewNo).equals(userNo)) throw new ForbiddenException("해당 리뷰의 삭제 권한이 없습니다.");
+		
+		reviewRepository.deleteById(reviewNo);
 	}
 
 }

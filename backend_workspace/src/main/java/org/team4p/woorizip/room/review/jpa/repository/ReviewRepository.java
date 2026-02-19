@@ -7,4 +7,5 @@ import org.team4p.woorizip.room.review.jpa.entity.ReviewEntity;
 
 public interface ReviewRepository extends JpaRepository<ReviewEntity, Integer>, ReviewRepositoryCustom {
 	Page<ReviewEntity> findByRoomNo(String RoomNo, Pageable pageable);
+	String findUserNoById(int reviewNo);
 }
