@@ -11,6 +11,8 @@ import org.team4p.woorizip.board.comment.jpa.repository.CommentRepository;
 import org.team4p.woorizip.board.comment.model.dto.CommentDto;
 import org.team4p.woorizip.board.post.jpa.entity.PostEntity;
 import org.team4p.woorizip.board.post.jpa.repository.PostRepository;
+import org.team4p.woorizip.common.exception.ForbiddenException;
+import org.team4p.woorizip.common.exception.NotFoundException;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,10 +30,10 @@ public class CommentServiceImpl implements CommentService {
 	
 	private void validateQnaPost(Integer postNo) {
 		
-		PostEntity post = postRepository.findById(postNo).orElseThrow(() -> new IllegalArgumentException("게시글이 존재하지 않습니다."));
+		PostEntity post = postRepository.findById(postNo).orElseThrow(() -> new NotFoundException("게시글이 존재하지 않습니다."));
 		
 		if(!BOARD_TYPE_NO.equals(post.getBoardTypeNo())) {
-			throw new IllegalArgumentException("Q&A 게시글에만 댓글 작성이 가능합니다.");
+			throw new ForbiddenException("Q&A 게시글에만 댓글 작성이 가능합니다.");
 		}
 	}
 
@@ -67,7 +69,7 @@ public class CommentServiceImpl implements CommentService {
 		
 		return commentRepository.findById(commentNo)
 				.map(CommentDto::fromEntity)
-				.orElse(null);
+				.orElseThrow(() -> new NotFoundException("댓글이 존재하지 않습니다."));
 	}
 	
 	//댓글 등록 ==================================
@@ -87,14 +89,14 @@ public class CommentServiceImpl implements CommentService {
 		}
 
 		CommentEntity parent = commentRepository.findById(dto.getParentCommentNo())
-				.orElseThrow(() -> new IllegalArgumentException("부모 댓글이 존재하지 않습니다."));
+				.orElseThrow(() -> new NotFoundException("부모 댓글이 존재하지 않습니다."));
 
 		if (!parent.getPostNo().equals(dto.getPostNo())) {
-			throw new IllegalArgumentException("잘못된 부모 댓글입니다.");
+			throw new ForbiddenException("잘못된 부모 댓글입니다.");
 		}
 
 		if (parent.getCommentLev() != 1) {
-			throw new IllegalArgumentException("대댓글은 1단계 댓글에만 작성할 수 있습니다.");
+			throw new ForbiddenException("대댓글은 1단계 댓글에만 작성할 수 있습니다.");
 		}
 
 		// 대댓글
@@ -115,7 +117,7 @@ public class CommentServiceImpl implements CommentService {
 	public int updateComment(CommentDto dto) {
 		
 		CommentEntity origin = commentRepository.findById(dto.getCommentNo())
-				.orElseThrow(() -> new IllegalArgumentException("댓글이 존재하지 않습니다."));
+				.orElseThrow(() -> new NotFoundException("댓글이 존재하지 않습니다."));
 		
 		origin.setCommentContent(dto.getCommentContent());
 		commentRepository.save(origin);
@@ -129,7 +131,7 @@ public class CommentServiceImpl implements CommentService {
 	public int deleteComment(Integer commentNo) {
 		
 		if (!commentRepository.existsById(commentNo)) {
-	        return 0;
+	        throw new NotFoundException("삭제할 댓글이 존재하지 않습니다.");
 	    }
 		
 		commentRepository.deleteById(commentNo);
