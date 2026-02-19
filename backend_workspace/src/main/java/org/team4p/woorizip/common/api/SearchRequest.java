@@ -37,7 +37,7 @@ public record SearchRequest(
         if (page == null || page < 1) page = 1;
         if (size == null || size < 1) size = 10;
 
-        if (sort == null || sort.isBlank()) sort = sort.trim();
+        if (sort == null || sort.isBlank()) sort = "postNo";
         if (direct == null || direct.isBlank()) direct = "DESC";
 
         // age가 null이면 0으로 강제하지 말고 그대로 null 유지 
