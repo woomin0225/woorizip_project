@@ -4,9 +4,15 @@ import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 import org.team4p.woorizip.common.api.ApiResponse;
 import org.team4p.woorizip.contract.model.dto.ContractDto;
+import org.team4p.woorizip.contract.model.dto.request.ContractDecideRequest;
 import org.team4p.woorizip.contract.model.service.ContractService;
 
 import jakarta.validation.Valid;
@@ -65,21 +71,42 @@ public class ContractController {
     }
 
     /**
-     * 계약 수정
-     * POST /contract/update/{roomNo}
+     * 계약 수정 요청 (임차인용)
+     * POST /api/contract/amendment/request/{originalContractNo}
      */
-    @PostMapping("/update/{roomNo}")
-    public ResponseEntity<ApiResponse<Void>> updateContract(
-            @PathVariable("roomNo") String roomNo,
-            @RequestBody ContractDto contractDto) {
+    @PostMapping("/amendment/request/{originalContractNo}")
+    public ResponseEntity<ApiResponse<Void>> requestAmendment(
+            @PathVariable("originalContractNo") String originalNo,
+            @RequestBody @Valid ContractDto amendmentDto) {
         
-        // 경로 변수로 받은 roomNo를 DTO에 세팅하여 서비스로 전달
-        contractDto.setRoomNo(roomNo);
+        // 원본 번호를 바탕으로 새로운 수정 요청 로우 생성
+        int result = contractService.requestAmendment(originalNo, amendmentDto);
         
-        // 서비스 메서드 호출 (인자 타입을 ContractDto 하나로 일치시킴)
-        int result = contractService.updateContract(contractDto);
+        if (result == -1) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(ApiResponse.fail("이미 진행 중인 수정 요청이 존재합니다.", null));
+        }
         
-        return result > 0 ? ResponseEntity.ok(ApiResponse.ok("계약 수정 성공", null))
+        return result > 0 ? ResponseEntity.ok(ApiResponse.ok("수정 요청이 완료되었습니다.", null))
                           : ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+    }
+
+    /**
+     * 계약 수정 승인/거절 결정 (임대인용)
+     * POST /api/contract/amendment/decide/{amendmentNo}
+     */
+    @PostMapping("/amendment/decide/{amendmentNo}")
+    public ResponseEntity<ApiResponse<Void>> decideAmendment(
+            @PathVariable("amendmentNo") String amendmentNo,
+            @RequestBody ContractDecideRequest decideRequest) {
+        
+        int result = contractService.decideAmendment(
+            amendmentNo, 
+            decideRequest.isApproved(), 
+            decideRequest.getReason()
+        );
+        
+        return result > 0 ? ResponseEntity.ok(ApiResponse.ok("처리가 완료되었습니다.", null))
+                          : ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
     }
 }

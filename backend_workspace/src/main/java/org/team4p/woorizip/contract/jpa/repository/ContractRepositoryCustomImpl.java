@@ -3,8 +3,13 @@ package org.team4p.woorizip.contract.jpa.repository;
 import static org.team4p.woorizip.contract.jpa.entity.QContractEntity.contractEntity;
 
 import java.util.List;
+
 import org.springframework.stereotype.Repository;
 import org.team4p.woorizip.contract.jpa.entity.ContractEntity;
+import org.team4p.woorizip.contract.jpa.entity.QContractEntity;
+import org.team4p.woorizip.user.jpa.entity.QUserEntity;
+import org.team4p.woorizip.room.jpa.entity.QRoomEntity;
+
 import com.querydsl.core.types.dsl.Wildcard;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 
@@ -15,6 +20,9 @@ import lombok.RequiredArgsConstructor;
 public class ContractRepositoryCustomImpl implements ContractRepositoryCustom {
 
     private final JPAQueryFactory queryFactory;
+    private final QContractEntity contract = QContractEntity.contractEntity;
+    private final QRoomEntity room = QRoomEntity.roomEntity;
+    private final QUserEntity user = QUserEntity.userEntity;
 
     /**
      * 계약 상세 정보 조회
@@ -35,7 +43,7 @@ public class ContractRepositoryCustomImpl implements ContractRepositoryCustom {
         return queryFactory
                 .selectFrom(contractEntity)
                 .where(contractEntity.userNo.eq(userNo))
-                .orderBy(contractEntity.moveInDate.desc()) // 최근 입주 예정일 순
+                .orderBy(contractEntity.moveInDate.desc())
                 .fetch();
     }
 

@@ -14,17 +14,16 @@ import lombok.*;
 @Table(name = "tb_contracts") // 기술서에 따른 테이블명
 public class ContractEntity {
 
-    @Id
-    @Column(name = "contractNo", length = 36)
+	@Id
+    @Column(name = "contract_no", length = 36) // DB 스키마와 일치 (snake_case)
     private String contractNo;
 
-    @Column(name = "userNo", nullable = false, length = 36)
+    @Column(name = "user_no", nullable = false, length = 36)
     private String userNo;
 
-    @Column(name = "roomNo", nullable = false, length = 36)
+    @Column(name = "room_no", nullable = false, length = 36)
     private String roomNo;
 
-    @Temporal(TemporalType.DATE)
     @Column(name = "move_in_date", nullable = false)
     private Date moveInDate;
 
@@ -40,16 +39,28 @@ public class ContractEntity {
     @Column(name = "payment_date")
     private Timestamp paymentDate;
 
+    // --- 추가된 필드 ---
+    @Column(name = "parent_contract_no", length = 36)
+    private String parentContractNo;
+
+    @Column(name = "rejection_reason")
+    private String rejectionReason;
+
     @PrePersist
     public void prePersist() {
-        // 1. PK 자동 생성 (UUID)
         if (this.contractNo == null) {
             this.contractNo = java.util.UUID.randomUUID().toString();
         }
-        
-        // 2. 기본 상태값 설정
         if (this.status == null) {
-            this.status = "PENDING"; // 신청 대기 상태 등 기본값
+            this.status = "APPLIED"; // 스키마의 ENUM 첫 번째 값인 APPLIED로 맞춤
         }
     }
+
+    // --- 데이터 병합을 위한 편의 메서드 ---
+    public void updateFromAmendment(ContractEntity amendment) {
+        this.moveInDate = amendment.getMoveInDate();
+        this.termMonths = amendment.getTermMonths();
+        this.contractUrl = amendment.getContractUrl();
+    }
+
 }

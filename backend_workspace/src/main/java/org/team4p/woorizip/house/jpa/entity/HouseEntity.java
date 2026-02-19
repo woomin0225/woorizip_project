@@ -35,7 +35,10 @@ public class HouseEntity {
 	@Column(name = "house_updated_at")
 	private LocalDateTime houseUpdatedAt;
 
+<<<<<<< HEAD
 	// @Column(name = "house_updated_at")
+=======
+>>>>>>> cd348746a74fe8a1a6b314acc5275eed776e59bd
 	@Column(name = "house_zip")
 	private String houseZip;
 	

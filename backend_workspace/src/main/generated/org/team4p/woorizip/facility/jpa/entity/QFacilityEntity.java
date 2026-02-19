@@ -18,6 +18,8 @@ public class QFacilityEntity extends EntityPathBase<FacilityEntity> {
 
     private static final long serialVersionUID = -1254125629L;
 
+    private static final PathInits INITS = PathInits.DIRECT2;
+
     public static final QFacilityEntity facilityEntity = new QFacilityEntity("facilityEntity");
 
     public final NumberPath<Integer> facilityCapacity = createNumber("facilityCapacity", Integer.class);
@@ -44,26 +46,37 @@ public class QFacilityEntity extends EntityPathBase<FacilityEntity> {
 
     public final NumberPath<Integer> facilityRsvnUnitMinutes = createNumber("facilityRsvnUnitMinutes", Integer.class);
 
+    public final NumberPath<Integer> facilitySequence = createNumber("facilitySequence", Integer.class);
+
     public final EnumPath<org.team4p.woorizip.facility.enums.FacilityStatus> facilityStatus = createEnum("facilityStatus", org.team4p.woorizip.facility.enums.FacilityStatus.class);
 
     public final DateTimePath<java.time.LocalDateTime> facilityUpdatedAt = createDateTime("facilityUpdatedAt", java.time.LocalDateTime.class);
 
-    public final StringPath houseNo = createString("houseNo");
+    public final org.team4p.woorizip.house.jpa.entity.QHouseEntity house;
 
     public final ListPath<FacilityImageEntity, QFacilityImageEntity> images = this.<FacilityImageEntity, QFacilityImageEntity>createList("images", FacilityImageEntity.class, QFacilityImageEntity.class, PathInits.DIRECT2);
 
     public final NumberPath<Integer> maxRsvnPerDay = createNumber("maxRsvnPerDay", Integer.class);
 
     public QFacilityEntity(String variable) {
-        super(FacilityEntity.class, forVariable(variable));
+        this(FacilityEntity.class, forVariable(variable), INITS);
     }
 
     public QFacilityEntity(Path<? extends FacilityEntity> path) {
-        super(path.getType(), path.getMetadata());
+        this(path.getType(), path.getMetadata(), PathInits.getFor(path.getMetadata(), INITS));
     }
 
     public QFacilityEntity(PathMetadata metadata) {
-        super(FacilityEntity.class, metadata);
+        this(metadata, PathInits.getFor(metadata, INITS));
+    }
+
+    public QFacilityEntity(PathMetadata metadata, PathInits inits) {
+        this(FacilityEntity.class, metadata, inits);
+    }
+
+    public QFacilityEntity(Class<? extends FacilityEntity> type, PathMetadata metadata, PathInits inits) {
+        super(type, metadata, inits);
+        this.house = inits.isInitialized("house") ? new org.team4p.woorizip.house.jpa.entity.QHouseEntity(forProperty("house")) : null;
     }
 
 }

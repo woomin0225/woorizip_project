@@ -22,9 +22,9 @@ public class QFacilityImageEntity extends EntityPathBase<FacilityImageEntity> {
 
     public static final QFacilityImageEntity facilityImageEntity = new QFacilityImageEntity("facilityImageEntity");
 
-    public final NumberPath<Integer> facilityImageNo = createNumber("facilityImageNo", Integer.class);
+    public final QFacilityEntity facility;
 
-    public final QFacilityEntity facilityNo;
+    public final NumberPath<Integer> facilityImageNo = createNumber("facilityImageNo", Integer.class);
 
     public final StringPath facilityOriginalImageName = createString("facilityOriginalImageName");
 
@@ -48,7 +48,7 @@ public class QFacilityImageEntity extends EntityPathBase<FacilityImageEntity> {
 
     public QFacilityImageEntity(Class<? extends FacilityImageEntity> type, PathMetadata metadata, PathInits inits) {
         super(type, metadata, inits);
-        this.facilityNo = inits.isInitialized("facilityNo") ? new QFacilityEntity(forProperty("facilityNo")) : null;
+        this.facility = inits.isInitialized("facility") ? new QFacilityEntity(forProperty("facility"), inits.get("facility")) : null;
     }
 
 }

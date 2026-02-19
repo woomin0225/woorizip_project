@@ -4,6 +4,7 @@ import org.team4p.woorizip.contract.jpa.entity.ContractEntity;
 import java.util.List;
 
 public interface ContractRepositoryCustom {
+	
     
     /**
      * 특정 계약 번호로 단건 조회

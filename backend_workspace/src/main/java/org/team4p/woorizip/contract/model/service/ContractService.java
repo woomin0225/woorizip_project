@@ -23,5 +23,9 @@ public interface ContractService {
     /**
      * 계약 정보 수정
      */
-    int updateContract(ContractDto contractDto);
+    
+    int requestAmendment(String originalNo, ContractDto amendmentDto);
+    
+    int decideAmendment(String amendmentNo, boolean approved, String reason);
+    
 }

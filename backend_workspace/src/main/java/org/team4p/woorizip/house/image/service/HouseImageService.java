@@ -8,5 +8,5 @@ public interface HouseImageService {
 	List<HouseImageDto> selectHouseImages(String houseNo);
 	HouseImageDto insertHouseImage(HouseImageDto houseImageDto);
 	HouseImageDto deleteHouseImageByHouseImageNo(int deleteImageNo, String currentHouseNo);
-	int deleteHouseImagesAll(String houseNo);
+	void deleteHouseImagesAll(String houseNo);
 }
