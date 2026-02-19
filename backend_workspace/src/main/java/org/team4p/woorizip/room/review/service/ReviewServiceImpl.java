@@ -10,6 +10,7 @@ import org.team4p.woorizip.room.jpa.repository.RoomRepository;
 import org.team4p.woorizip.room.review.dto.ReviewDto;
 import org.team4p.woorizip.room.review.jpa.entity.ReviewEntity;
 import org.team4p.woorizip.room.review.jpa.repository.ReviewRepository;
+import org.team4p.woorizip.user.jpa.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -18,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 public class ReviewServiceImpl implements ReviewService {
 	private final ReviewRepository reviewRepository;
 	private final RoomRepository roomRepository;
+	private final UserRepository userRepository;
 	
 	@Override
 	public Page<ReviewDto> selectRoomReviews(String roomNo, Pageable pageable) {
@@ -38,25 +40,25 @@ public class ReviewServiceImpl implements ReviewService {
 	}
 
 	@Override
-	public void deleteRoomReview(int reviewNo, String userNo) {
+	public void deleteRoomReview(int reviewNo, String currentUser) {
 		// 방 리뷰 삭제
 		
 		// 리뷰가 DB에 있는지 검사
 		if(!reviewRepository.existsById(reviewNo)) throw new NotFoundException("해당 리뷰가 존재하지 않습니다."); 
 		// 리뷰 소유권 검사
-		if(reviewRepository.findUserNoById(reviewNo).equals(userNo)) throw new ForbiddenException("해당 리뷰의 삭제 권한이 없습니다.");
+		if(reviewRepository.findUserNoById(reviewNo).equals(userRepository.findUserNoByEmailId(currentUser))) throw new ForbiddenException("해당 리뷰의 삭제 권한이 없습니다.");
 		
 		reviewRepository.deleteById(reviewNo);
 	}
 
 	@Override
-	public ReviewDto updateRoomReview(ReviewDto reviewDto, String userNo) {
+	public ReviewDto updateRoomReview(ReviewDto reviewDto, String currentUser) {
 		// 방 리뷰 수정
 		
 		// 리뷰가 DB에 있는지 검사
 		if(!reviewRepository.existsById(reviewDto.getReviewNo())) throw new NotFoundException("해당 리뷰가 존재하지 않습니다."); 
 		// 리뷰 소유권 검사
-		if(reviewRepository.findUserNoById(reviewDto.getReviewNo()).equals(userNo)) throw new ForbiddenException("해당 리뷰의 수정 권한이 없습니다.");
+		if(reviewRepository.findUserNoById(reviewDto.getReviewNo()).equals(userRepository.findUserNoByEmailId(currentUser))) throw new ForbiddenException("해당 리뷰의 수정 권한이 없습니다.");
 		
 		ReviewEntity rows = reviewRepository.save(reviewDto.toEntity());
 		return rows.toDto();
