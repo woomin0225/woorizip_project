@@ -3,6 +3,7 @@ package org.team4p.woorizip.room.controller;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -14,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -263,5 +265,14 @@ public class RoomController {
 		reviewService.updateRoomReview(reviewDto, roomNo);
 		
 		return ResponseEntity.status(200).body(ApiResponse.ok("리뷰 수정 성공", null));
+	}
+	
+	@PatchMapping("/rooms/{room_no}/availability")
+	public ResponseEntity<ApiResponse<Void>> modifyRoomAvailability(@PathVariable String roomNo,@RequestBody LocalDateTime date, String userNo/*임시*/){
+		// 방 입주 가능 일자 변경
+		
+		roomService.updateRoomAvailability(roomNo, date, userNo);
+		
+		return ResponseEntity.status(200).body(ApiResponse.ok("입주일자 변경 완료", null));
 	}
 }

@@ -1,5 +1,6 @@
 package org.team4p.woorizip.room.service;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -131,6 +132,24 @@ public class RoomServiceImpl implements RoomService {
 		if (!userNo.equals(currentUserNo)) throw new ForbiddenException("수정 권한이 없습니다.");
 		
 		return roomRepository.save(roomDto.toEntity()).toDto();
+	}
+
+	@Override
+	public RoomDto updateRoomAvailability(String roomNo, LocalDateTime date, String userNo) {
+		// 방 입주가능 일자 변경
+		
+		// 해당 방 조회
+		Optional<RoomEntity> optional = roomRepository.findById(roomNo);
+		if(!optional.isPresent()) throw new NotFoundException("존재하지 않는 방입니다.");
+		
+		RoomEntity roomEntity = optional.get();
+		
+		roomEntity.setRoomAvailableDate(date);
+		
+		// 소유권 검사
+		if(!roomEntity.getUserNo().equals(userNo)) throw new ForbiddenException("입주일자 변경 가능 권한이 없습니다.");
+		
+		return roomRepository.save(roomEntity).toDto();
 	}
 
 }
