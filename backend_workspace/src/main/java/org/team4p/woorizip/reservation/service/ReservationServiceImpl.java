@@ -90,14 +90,14 @@ public class ReservationServiceImpl implements ReservationService {
 	public List<ReservationListResponseDTO> getReservationList(String userNo, String facilityNo) {
 		// 임차인
 	    if (facilityNo == null) {
-	        return reservationRepository.findByUserNo_UserNo(userNo)
+	        return reservationRepository.findByUser_UserNo(userNo)
 	        		.stream()
 	                .map(ReservationListResponseDTO::from)
 	                .collect(Collectors.toList());
 	    }
 
 	    // 임대인
-	    return reservationRepository.findByFacilityNo_FacilityNo(facilityNo)
+	    return reservationRepository.findByFacility_FacilityNo(facilityNo)
 	    		.stream()
 	            .map(ReservationListResponseDTO::from)
 	            .collect(Collectors.toList());

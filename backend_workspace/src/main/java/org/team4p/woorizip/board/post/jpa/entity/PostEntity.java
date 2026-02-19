@@ -23,7 +23,7 @@ import lombok.Setter;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Builder
 @Table(name = "tb_posts")
-//@Entity
+@Entity
 public class PostEntity {
 
   @Id

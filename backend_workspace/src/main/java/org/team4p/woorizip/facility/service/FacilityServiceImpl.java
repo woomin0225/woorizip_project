@@ -40,7 +40,7 @@ public class FacilityServiceImpl implements FacilityService {
 	@Transactional(readOnly = true)
 	public List<FacilityListResponseDTO> getFacilityList(String houseNo) {
 		List<FacilityEntity> entity =
-				facilityRepository.findByHouseNoHouseNoAndFacilityDeletedAtIsNull(houseNo);
+				facilityRepository.findByHouseHouseNoAndFacilityDeletedAtIsNull(houseNo);
 		return entity.stream().map(FacilityListResponseDTO::from).toList();
 	}
 
@@ -77,7 +77,7 @@ public class FacilityServiceImpl implements FacilityService {
 		
 		// 동일 카테고리의 시설이 있는지 확인
 		Optional<FacilityEntity> lastSequence = facilityRepository
-		        .findFirstByHouseNoAndCategoryOrderByFacilitySequenceDesc(house, dto.getFacilityCode());
+		        .findFirstByHouse_HouseNoAndCategory_FacilityCodeOrderByFacilitySequenceDesc(house, dto.getFacilityCode());
 		
 		// 동일 카테고리 시설 순서 배정
 		Integer nextSequence;
