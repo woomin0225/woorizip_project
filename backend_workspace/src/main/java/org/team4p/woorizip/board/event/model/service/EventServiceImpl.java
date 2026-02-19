@@ -18,6 +18,7 @@ import org.team4p.woorizip.board.file.model.dto.FileDto;
 import org.team4p.woorizip.board.post.jpa.entity.PostEntity;
 import org.team4p.woorizip.board.post.jpa.repository.PostRepository;
 import org.team4p.woorizip.board.post.model.dto.PostDto;
+import org.team4p.woorizip.common.exception.NotFoundException;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,7 +33,7 @@ public class EventServiceImpl implements EventService {
 	private final FileRepository fileRepository;
 	private final BannerImageRepository bannerImageRepository;
 
-	// 공지사항 타입 고정
+	// 이벤트 타입 고정
 	private static final String BOARD_TYPE_NO = "E1";
 
 	// ================Page -> List 변환 공통 메소드==============
@@ -112,7 +113,8 @@ public class EventServiceImpl implements EventService {
 					
 					return dto;
 				})
-				.orElse(null);
+				.orElseThrow(() -> 
+						new NotFoundException("해당 이벤트 게시글이 없습니다."));
 	}
 
 	@Override
@@ -120,7 +122,7 @@ public class EventServiceImpl implements EventService {
 		PostEntity entity = postRepository.findTopByBoardTypeNoOrderByPostNoDesc(BOARD_TYPE_NO);
 
 		if (entity == null)
-			return null;
+			throw new NotFoundException("해당 이벤트 게시글이 없습니다.");
 
 		PostDto dto = PostDto.fromEntity(entity);
 		dto.setFiles(getFiles(entity.getPostNo()));
@@ -139,77 +141,70 @@ public class EventServiceImpl implements EventService {
 	@Override
 	@Transactional
 	public int insertEvent(PostDto postDto, BannerImageDto bannerDto) {
-		try {
-			//배너 필수 체크 
-			if(bannerDto == null) {
-				log.warn("배너 이미지는 필수입니다.");
-				return 0;
-			}
-			
-			postDto.setBoardTypeNo(BOARD_TYPE_NO);
-			postDto.setPostNo(null);
-			
-			//이벤트 게시글 저장 
-			PostEntity saved = postRepository.save(postDto.toEntity());
 
-			if (saved.getPostNo() == null)
-				return 0;
-			
-			Integer postNo = saved.getPostNo();
-
-			//일반 첨부 파일 저장
-			if (postDto.getFiles() != null) {
-				for (FileDto fileDto : postDto.getFiles()) {
-					fileDto.setPostNo(postNo);
-					fileRepository.save(fileDto.toEntity());
-				}
-			}
-			
-			//배너 이미지 저장 
-			bannerDto.setPostNo(postNo);
-			bannerImageRepository.save(bannerDto.toEntity());
-			
-			return 1;
-
-		} catch (Exception e) {
-			log.error("insertEvent error : {}", e.getMessage());
-			return 0;
+		// 배너 필수 체크
+		if (bannerDto == null) {
+			throw new IllegalStateException("배너 이미지는 필수입니다.");
 		}
+
+		postDto.setBoardTypeNo(BOARD_TYPE_NO);
+		postDto.setPostNo(null);
+
+		// 이벤트 게시글 저장
+		PostEntity saved = postRepository.save(postDto.toEntity());
+
+		if (saved.getPostNo() == null)
+			throw new IllegalStateException("이벤트 게시글 등록에 실패했습니다.");
+
+		Integer postNo = saved.getPostNo();
+
+		// 일반 첨부 파일 저장
+		if (postDto.getFiles() != null) {
+			for (FileDto fileDto : postDto.getFiles()) {
+				fileDto.setPostNo(postNo);
+				fileRepository.save(fileDto.toEntity());
+			}
+		}
+
+		// 배너 이미지 저장
+		bannerDto.setPostNo(postNo);
+		bannerImageRepository.save(bannerDto.toEntity());
+
+		return 1;
 	}
 
 	//========================수정======================
 	@Override
 	@Transactional
 	public int updateEvent(PostDto postDto, List<Integer> deleteFileNo, BannerImageDto bannerDto) {
-		
-		if(postDto.getPostNo() == null || 
+
+		if (postDto.getPostNo() == null || 
 				!postRepository.existsById(postDto.getPostNo())) {
-			return 0;
+
+			throw new NotFoundException("수정할 이벤트 게시글이 없습니다.");
 		}
-		
+
 		postDto.setBoardTypeNo(BOARD_TYPE_NO);
 		postRepository.save(postDto.toEntity());
-		
-		//기존 파일 삭제
-		if(deleteFileNo != null && !deleteFileNo.isEmpty()) {
-			for(Integer fileNo : deleteFileNo) {
+
+		// 기존 파일 삭제
+		if (deleteFileNo != null && !deleteFileNo.isEmpty()) {
+			for (Integer fileNo : deleteFileNo) {
 				fileRepository.deleteById(fileNo);
 			}
 		}
-		
-		//새 파일 추가 
-		if(postDto.getFiles() != null) {
-			for(FileDto fileDto : postDto.getFiles()) {
+
+		// 새 파일 추가
+		if (postDto.getFiles() != null) {
+			for (FileDto fileDto : postDto.getFiles()) {
 				fileDto.setPostNo(postDto.getPostNo());
 				fileRepository.save(fileDto.toEntity());
 			}
 		}
-		
-		//기존 배너 이미지 존재 여부 확인 
-		if (bannerDto != null &&
-		        bannerDto.getOriginalFileName() != null &&
-		        bannerDto.getUpdatedFileName() != null) {
-			
+
+		// 기존 배너 이미지 존재 여부 확인
+		if (bannerDto != null && bannerDto.getOriginalFileName() != null && bannerDto.getUpdatedFileName() != null) {
+
 			// 기존 배너 삭제
 			bannerImageRepository.findByPostNo(postDto.getPostNo())
 					.ifPresent(banner -> bannerImageRepository.delete(banner));
@@ -218,7 +213,7 @@ public class EventServiceImpl implements EventService {
 			bannerDto.setPostNo(postDto.getPostNo());
 			bannerImageRepository.save(bannerDto.toEntity());
 		}
-		
+
 		return 1;
 	}
 
@@ -226,14 +221,18 @@ public class EventServiceImpl implements EventService {
 	@Override
 	@Transactional
 	public int deleteEvent(int postNo) {
-		try {
-			fileRepository.deleteByPostNo(postNo);
-			postRepository.deleteById(postNo);
-			return 1;
-		} catch (Exception e) {
-			log.error("deleteNotice error: {}", e.getMessage());
-			return 0;
+		
+		if(!postRepository.existsById(postNo)) {
+			throw new NotFoundException("삭제할 이벤트 게시글이 없습니다.");
 		}
+		
+		fileRepository.deleteByPostNo(postNo);
+		bannerImageRepository.findByPostNo(postNo)
+			.ifPresent(bannerImageRepository::delete);
+		
+		postRepository.deleteById(postNo);
+		
+		return 1;
 	}
 
 	// ===============검색====================
