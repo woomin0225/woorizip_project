@@ -34,7 +34,7 @@ import org.team4p.woorizip.room.service.RoomService;
 
 import lombok.RequiredArgsConstructor;
 
-@RestController
+//@RestController
 @RequestMapping("/houses")
 @RequiredArgsConstructor
 public class HouseController {

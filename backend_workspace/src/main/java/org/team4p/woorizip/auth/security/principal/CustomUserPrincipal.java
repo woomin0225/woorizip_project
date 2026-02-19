@@ -10,16 +10,18 @@ import java.util.Collection;
 @Getter
 public class CustomUserPrincipal implements UserDetails {
 
-    // 우리 프로젝트의 식별자인 emailId를 담습니다.
+	private final String userNo;
     private final String emailId;
     private final String password;
     private final boolean enabled;
     private final Collection<? extends GrantedAuthority> authorities;
 
-    public CustomUserPrincipal(String emailId,
+    public CustomUserPrincipal(String userNo,
+    						   String emailId,
                                String password,
                                boolean enabled,
                                Collection<? extends GrantedAuthority> authorities) {
+    	this.userNo = userNo;
         this.emailId = emailId;
         this.password = password;
         this.enabled = enabled;

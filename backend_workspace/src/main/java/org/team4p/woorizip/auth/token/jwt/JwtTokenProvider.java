@@ -22,19 +22,19 @@ public class JwtTokenProvider {
         this.key = Keys.hmacShaKeyFor(props.secret().getBytes(StandardCharsets.UTF_8));
     }
 
-    public String createAccessToken(String userId, String role) {
-        return createToken(userId, role, JwtClaims.ACCESS, props.accessExp());
+    public String createAccessToken(String emailId, String role) {
+        return createToken(emailId, role, JwtClaims.ACCESS, props.accessExp());
     }
 
-    public String createRefreshToken(String userId, String role) {
-        return createToken(userId, role, JwtClaims.REFRESH, props.refreshExp());
+    public String createRefreshToken(String emailId, String role) {
+        return createToken(emailId, role, JwtClaims.REFRESH, props.refreshExp());
     }
 
-    private String createToken(String userId, String role, String type, long expMs) {
+    private String createToken(String emailId, String role, String type, long expMs) {
         long now = System.currentTimeMillis();
         
         return Jwts.builder()
-                .subject(userId)
+                .subject(emailId)
                 .claim(JwtClaims.ROLE, role)
                 .claim(JwtClaims.TYPE, type)
                 .issuedAt(new Date(now))
@@ -68,7 +68,7 @@ public class JwtTokenProvider {
         }
     }
 
-    public String getUserId(String token) {
+    public String getEmailId(String token) {
         return parse(token).getPayload().getSubject();
     }
 

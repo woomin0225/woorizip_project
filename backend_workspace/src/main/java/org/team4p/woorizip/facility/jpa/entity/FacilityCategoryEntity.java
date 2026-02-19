@@ -2,6 +2,8 @@ package org.team4p.woorizip.facility.jpa.entity;
 
 import java.util.Map;
 
+import org.team4p.woorizip.facility.dto.FacilityCategoryDTO;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
@@ -25,7 +27,7 @@ import lombok.Setter;
 public class FacilityCategoryEntity {
 	@Id
 	@GeneratedValue(strategy=GenerationType.IDENTITY)
-	private int facilityCode;
+	private Integer facilityCode;
 	
 	@Column(name = "facility_type")
 	private String facilityType;
@@ -33,4 +35,9 @@ public class FacilityCategoryEntity {
 	@Column(name = "facility_options")
 	@Convert(converter = MapToJsonConverter.class)
 	private Map<String, Boolean> facilityOptions;
+
+	public void updateCategory(FacilityCategoryDTO dto) {
+		if (dto.getFacilityType() != null && !dto.getFacilityType().isBlank()) this.facilityType = dto.getFacilityType();
+		if (dto.getFacilityOptions() != null) this.facilityOptions = dto.getFacilityOptions();
+	}
 }

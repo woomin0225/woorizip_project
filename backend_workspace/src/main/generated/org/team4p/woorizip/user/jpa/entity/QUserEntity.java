@@ -23,7 +23,7 @@ public class QUserEntity extends EntityPathBase<UserEntity> {
 
     public final DateTimePath<java.util.Date> createdAt = createDateTime("createdAt", java.util.Date.class);
 
-    public final NumberPath<Integer> deletedYn = createNumber("deletedYn", Integer.class);
+    public final StringPath deletedYn = createString("deletedYn");
 
     public final StringPath emailId = createString("emailId");
 
@@ -35,11 +35,7 @@ public class QUserEntity extends EntityPathBase<UserEntity> {
 
     public final StringPath phone = createString("phone");
 
-    public final StringPath provider = createString("provider");
-
     public final StringPath role = createString("role");
-
-    public final StringPath socialId = createString("socialId");
 
     public final StringPath type = createString("type");
 

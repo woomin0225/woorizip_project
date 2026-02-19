@@ -15,43 +15,72 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true) // 읽기 전용 기본 설정
+@Transactional(readOnly = true)
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Override
-    public int selectCheckEmailId(String emailId) { // 메서드명 인터페이스와 일치 확인
+    public int selectCheckEmailId(String emailId) {
         return userRepository.findByEmailId(emailId) != null ? 1 : 0;
     }
 
     @Override
-    public UserDto selectUser(String emailId) { // 매개변수명을 emailId로 통일
-        UserEntity entity = userRepository.findByEmailId(emailId);
-        return entity != null ? UserDto.fromEntity(entity) : null;
+    public UserDto selectUser(UserDto userDto) {
+        UserEntity user_entity = userRepository.findByEmailId(userDto.getEmailId());
+        return user_entity != null ? UserDto.fromEntity(user_entity) : null;
     }
 
     @Override
-    @Transactional // 쓰기 작업
+    @Transactional
     public int insertUser(UserDto userDto) {
         try {
-            // 비밀번호 암호화
             userDto.setPassword(passwordEncoder.encode(userDto.getPassword()));
-            UserEntity entity = userDto.toEntity();
-            return userRepository.save(entity) != null ? 1 : 0;
+            return userRepository.save(userDto.toEntity()) != null ? 1 : 0;
         } catch (Exception e) {
             log.error("회원 가입 중 오류 발생: {}", e.getMessage());
             return 0;
         }
     }
 
+    /**
+     * [수정됨] 회원 정보 수정 (Update)
+     * - 기존: DTO -> Entity 변환 후 save (덮어쓰기 위험)
+     * - 변경: 조회 -> 필드 값 변경(Dirty Checking) -> 저장
+     */
     @Override
     @Transactional
     public int updateUser(UserDto userDto) {
         try {
-            // save는 PK(userNo)가 있으면 자동으로 update 수행
-            return userRepository.save(userDto.toEntity()) != null ? 1 : 0;
+            UserEntity userEntity = userRepository.findByEmailId(userDto.getEmailId());
+            
+            if (userEntity == null) {
+                log.warn("수정할 회원을 찾을 수 없음: {}", userDto.getEmailId());
+                return 0;
+            }
+
+            if (userDto.getName() != null && !userDto.getName().isEmpty()) {
+                userEntity.setName(userDto.getName());
+            }
+            if (userDto.getPhone() != null && !userDto.getPhone().isEmpty()) {
+                userEntity.setPhone(userDto.getPhone());
+            }
+            if (userDto.getBirthDate() != null) {
+                userEntity.setBirthDate(userDto.getBirthDate());
+            }
+            
+            if (userDto.getGender() != null && !userDto.getGender().isEmpty()) {
+                String convertedGender = convert_gender(userDto.getGender());
+                userEntity.setGender(convertedGender);
+            }
+
+            if (userDto.getPassword() != null && !userDto.getPassword().isEmpty()) {
+                userEntity.setPassword(passwordEncoder.encode(userDto.getPassword()));
+            }
+
+            return userRepository.save(userEntity) != null ? 1 : 0;
+
         } catch (Exception e) {
             log.error("회원 수정 중 오류 발생: {}", e.getMessage());
             return 0;
@@ -69,26 +98,24 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public int selectSearchEmailCount(String keyword) {
-        return (int) userRepository.countSearchEmailId(keyword);
+    public int selectSearchListCount(UserDto userDto) {
+        userDto.setGender(convert_gender(userDto.getGender()));
+        return (int) userRepository.countSearchList(userDto);
     }
 
     @Override
-    public int selectSearchAgeCount(int age) {
-        return (int) userRepository.countSearchAge(age);
+    public List<UserDto> selectSearchList(UserDto userDto, Pageable pageable) {
+        userDto.setGender(convert_gender(userDto.getGender()));
+        return toList(userRepository.findBySearchList(userDto, pageable));
     }
 
-    @Override
-    public List<UserDto> selectSearchEmailId(String keyword, Pageable pageable) { // 메서드명 확인
-        return toList(userRepository.findBySearchEmailId(keyword, pageable));
+    private String convert_gender(String gender_code) {
+        if (gender_code == null) return null;
+        if (gender_code.equals("1") || gender_code.equals("3")) return "M";
+        if (gender_code.equals("2") || gender_code.equals("4")) return "F";
+        return gender_code; // 이미 M이나 F면 그대로 반환
     }
 
-    @Override
-    public List<UserDto> selectSearchAge(int age, Pageable pageable) {
-        return toList(userRepository.findBySearchAge(age, pageable));
-    }
-
-    // List 변환 로직
     private List<UserDto> toList(List<UserEntity> list) {
         List<UserDto> dtos = new ArrayList<>();
         if (list != null) {

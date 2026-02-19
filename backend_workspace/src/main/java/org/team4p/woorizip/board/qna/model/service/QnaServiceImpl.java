@@ -21,6 +21,7 @@ import org.team4p.woorizip.board.file.model.dto.FileDto;
 import org.team4p.woorizip.board.post.jpa.entity.PostEntity;
 import org.team4p.woorizip.board.post.jpa.repository.PostRepository;
 import org.team4p.woorizip.board.post.model.dto.PostDto;
+import org.team4p.woorizip.common.exception.NotFoundException;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -89,9 +90,8 @@ public class QnaServiceImpl implements QnaService {
 		
 		PostEntity entity = postRepository.findById(postNo)
 				.filter(e -> BOARD_TYPE_NO.equals(e.getBoardTypeNo()))
-				.orElse(null);
-		
-		if(entity == null) return null;
+				.orElseThrow(() -> 
+						new NotFoundException("해당 Q&A 게시글이 존재하지 않습니다."));
 		
 		PostDto dto = PostDto.fromEntity(entity);
 		dto.setFiles(getFiles(entity.getPostNo()));
@@ -113,11 +113,12 @@ public class QnaServiceImpl implements QnaService {
 	
 	@Override
 	public PostDto selectLast() {
+		
 		PostEntity entity = 
 				postRepository.findTopByBoardTypeNoOrderByPostNoDesc(BOARD_TYPE_NO);
 		
 		if(entity == null)
-			return null;
+			throw new NotFoundException("해당 Q&A 게시글이 존재하지 않습니다.");
 		
 		PostDto dto = PostDto.fromEntity(entity);
 		dto.setFiles(getFiles(entity.getPostNo()));
@@ -135,35 +136,32 @@ public class QnaServiceImpl implements QnaService {
 	@Override
 	@Transactional
 	public int insertQna(PostDto postDto) {
-		try {
-			postDto.setBoardTypeNo(BOARD_TYPE_NO);
-			postDto.setPostNo(null);
-			
-			PostEntity saved = postRepository.save(postDto.toEntity());
-			
-			if(saved.getPostNo() == null)
-				return 0;
-			
-			if(postDto.getFiles() != null) {
-				for(FileDto fileDto : postDto.getFiles()) {
-					fileDto.setPostNo(saved.getPostNo());
-					fileRepository.save(fileDto.toEntity());
-				}
+
+		postDto.setBoardTypeNo(BOARD_TYPE_NO);
+		postDto.setPostNo(null);
+
+		PostEntity saved = postRepository.save(postDto.toEntity());
+
+		if (saved.getPostNo() == null)
+			throw new IllegalStateException("Q&A 게시글 등록에 실패했습니다.");
+
+		if (postDto.getFiles() != null) {
+			for (FileDto fileDto : postDto.getFiles()) {
+				fileDto.setPostNo(saved.getPostNo());
+				fileRepository.save(fileDto.toEntity());
 			}
-			
-			return 1;
-		} catch (Exception e) {
-			log.error("insertQna error : {}", e.getMessage());
-			return 0;
 		}
+
+		return 1;
 	}
 	
 	@Override
 	@Transactional
 	public int updateQna(PostDto postDto, List<Integer> deleteFileNo) {
 		
-		if(postDto.getPostNo() == null || !postRepository.existsById(postDto.getPostNo())) {
-			return 0;
+		if(postDto.getPostNo() == null || 
+				!postRepository.existsById(postDto.getPostNo())) {
+			throw new NotFoundException("수정할 Q&A 게시글이 없습니다.");
 		}
 		
 		postDto.setBoardTypeNo(BOARD_TYPE_NO);
@@ -188,14 +186,15 @@ public class QnaServiceImpl implements QnaService {
 	@Override
 	@Transactional
 	public int deleteQna(int postNo) {
-		try {
-			fileRepository.deleteByPostNo(postNo);
-			postRepository.deleteById(postNo);
-			return 1;
-		} catch (Exception e) {
-			log.error("deleteQna error : {}", e.getMessage());
-			return 0;
+
+		if(!postRepository.existsById(postNo)) {
+			throw new NotFoundException("삭제할 Q&A 게시글이 없습니다.");
 		}
+		
+		fileRepository.deleteByPostNo(postNo);
+		postRepository.deleteById(postNo);
+		
+		return 1;
 	}
 	
 	//======================검색======================

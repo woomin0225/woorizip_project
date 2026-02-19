@@ -8,16 +8,22 @@ import org.team4p.woorizip.facility.enums.FacilityStatus;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Getter
+@Setter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class FacilityCreateRequestDTO {
 	
-	private int facilityCode;
+	private Integer facilityCode;
 	
-	@NotBlank(message="FacilityName needed")
+	@NotBlank(message="facilityName needed")
 	private String facilityName;
 	
 	@NotNull(message="facilityOptionInfo needed")

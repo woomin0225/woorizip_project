@@ -23,7 +23,7 @@ import org.team4p.woorizip.user.jpa.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 
-@Service
+//@Service
 @RequiredArgsConstructor
 public class HouseServiceImpl implements HouseService {
 	private final HouseRepository houseRepository;

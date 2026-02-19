@@ -19,7 +19,7 @@ import lombok.Setter;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Builder
 @Table(name = "tb_files")
-@Entity
+//@Entity
 public class FileEntity {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)

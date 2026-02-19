@@ -16,12 +16,13 @@ import org.team4p.woorizip.board.file.model.dto.FileDto;
 import org.team4p.woorizip.board.post.jpa.entity.PostEntity;
 import org.team4p.woorizip.board.post.jpa.repository.PostRepository;
 import org.team4p.woorizip.board.post.model.dto.PostDto;
+import org.team4p.woorizip.common.exception.NotFoundException;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-@Service
+//@Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class NoticeServiceImpl implements NoticeService {
@@ -79,22 +80,27 @@ public class NoticeServiceImpl implements NoticeService {
 
 	@Override
 	public PostDto selectNotice(int postNo) {
-		return postRepository.findById(postNo)
-				.filter(entity -> BOARD_TYPE_NO.equals(entity.getBoardTypeNo()))
-				.map(entity -> {
-					PostDto dto = PostDto.fromEntity(entity);
-					dto.setFiles(getFiles(entity.getPostNo()));
-					return dto;
-				})
-				.orElse(null);
+		
+		PostEntity entity = postRepository.findById(postNo)
+				.filter(e -> BOARD_TYPE_NO.equals(e.getBoardTypeNo()))
+				.orElseThrow(() -> 
+						new NotFoundException("해당 공지사항 게시글이 없습니다.")
+				);
+		
+		PostDto dto = PostDto.fromEntity(entity);
+		dto.setFiles(getFiles(entity.getPostNo()));
+		
+		return dto;
 	}
 
 	@Override
 	public PostDto selectLast() {
+		
 		PostEntity entity = postRepository.findTopByBoardTypeNoOrderByPostNoDesc(BOARD_TYPE_NO);
 
-		if (entity == null)
-			return null;
+		if (entity == null) {
+			throw new NotFoundException("해당 공지사항 게시글이 없습니다.");
+		}
 
 		PostDto dto = PostDto.fromEntity(entity);
 		dto.setFiles(getFiles(entity.getPostNo()));
@@ -113,29 +119,24 @@ public class NoticeServiceImpl implements NoticeService {
 	@Override
 	@Transactional
 	public int insertNotice(PostDto postDto) {
-		try {
-			postDto.setBoardTypeNo(BOARD_TYPE_NO);
-			postDto.setPostNo(null);
-
-			PostEntity saved = postRepository.save(postDto.toEntity());
-
-			if (saved.getPostNo() == null)
-				return 0;
-
-			// 파일 저장
-			if (postDto.getFiles() != null) {
-				for (FileDto fileDto : postDto.getFiles()) {
-					fileDto.setPostNo(saved.getPostNo());
-					fileRepository.save(fileDto.toEntity());
-				}
-			}
-
-			return 1;
-		} catch (Exception e) {
-			log.error("insertNoitce error : {}", e.getMessage());
-			return 0;
+		
+		postDto.setBoardTypeNo(BOARD_TYPE_NO);
+		postDto.setPostNo(null);
+		
+		PostEntity saved = postRepository.save(postDto.toEntity());
+		
+		if(saved.getPostNo() == null) {
+			throw new IllegalStateException("공지사항 게시글 등록에 실패했습니다.");
 		}
-
+		
+		if(postDto.getFiles() != null) {
+			for(FileDto fileDto : postDto.getFiles()) {
+				fileDto.setPostNo(saved.getPostNo());
+				fileRepository.save(fileDto.toEntity());
+			}
+		}
+		
+		return 1;
 	}
 
 	//========================수정======================
@@ -145,7 +146,7 @@ public class NoticeServiceImpl implements NoticeService {
 		
 		if(postDto.getPostNo() == null || 
 				!postRepository.existsById(postDto.getPostNo())) {
-			return 0;
+			throw new NotFoundException("수정할 공지사항 게시글이 없습니다.");
 		}
 		
 		postDto.setBoardTypeNo(BOARD_TYPE_NO);
@@ -173,14 +174,15 @@ public class NoticeServiceImpl implements NoticeService {
 	@Override
 	@Transactional
 	public int deleteNotice(int postNo) {
-		try {
-			fileRepository.deleteByPostNo(postNo);
-			postRepository.deleteById(postNo);
-			return 1;
-		} catch (Exception e) {
-			log.error("deleteNotice error: {}", e.getMessage());
-			return 0;
+		
+		if(!postRepository.existsById(postNo)) {
+			throw new NotFoundException("삭제할 공지사항 게시글이 없습니다.");
 		}
+		
+		fileRepository.deleteByPostNo(postNo);
+		postRepository.deleteById(postNo);
+		
+		return 1;
 	}
 
 	// ===============검색====================

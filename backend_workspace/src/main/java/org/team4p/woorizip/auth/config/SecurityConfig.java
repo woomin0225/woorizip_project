@@ -1,13 +1,5 @@
 package org.team4p.woorizip.auth.config;
 
-import org.team4p.woorizip.auth.security.authorization.EndpointPolicy;
-import org.team4p.woorizip.auth.security.filter.JwtAuthenticationFilter;
-import org.team4p.woorizip.auth.security.filter.JwtExceptionFilter;
-import org.team4p.woorizip.auth.security.handler.CustomLogoutSuccessHandler;
-import org.team4p.woorizip.auth.security.handler.RestAccessDeniedHandler;
-import org.team4p.woorizip.auth.security.handler.RestAuthenticationEntryPoint;
-import org.team4p.woorizip.auth.token.jwt.JwtProperties;
-import org.team4p.woorizip.auth.token.jwt.JwtTokenProvider;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,6 +13,14 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.team4p.woorizip.auth.security.authorization.EndpointPolicy;
+import org.team4p.woorizip.auth.security.filter.JwtAuthenticationFilter;
+import org.team4p.woorizip.auth.security.filter.JwtExceptionFilter;
+import org.team4p.woorizip.auth.security.handler.CustomLogoutSuccessHandler;
+import org.team4p.woorizip.auth.security.handler.RestAccessDeniedHandler;
+import org.team4p.woorizip.auth.security.handler.RestAuthenticationEntryPoint;
+import org.team4p.woorizip.auth.token.jwt.JwtProperties;
+import org.team4p.woorizip.auth.token.jwt.JwtTokenProvider;
 
 @Configuration
 @EnableWebSecurity
@@ -70,9 +70,16 @@ public class SecurityConfig {
 
                 // PUBLIC GET
                 .requestMatchers(HttpMethod.GET, EndpointPolicy.PUBLIC_GET).permitAll()
-
-                // signup/check-id
-                .requestMatchers(HttpMethod.POST, EndpointPolicy.PUBLIC_POST).permitAll()
+                
+                
+                .requestMatchers("/api/tour/**").permitAll()
+                .requestMatchers("/api/contract/**").permitAll()
+        	    .requestMatchers("/api/user/signup", "/api/user/check-email").permitAll()
+        	    .requestMatchers(HttpMethod.GET, "/api/user/**").permitAll()
+        	    .requestMatchers(HttpMethod.PUT, "/api/user/**").permitAll()
+        	    .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
+        	    .requestMatchers(HttpMethod.POST, "/api/wishlist/add/**").permitAll()
+        	    .requestMatchers(HttpMethod.GET, "/api/wishlist/**").permitAll()
 
                 // notices write: ADMIN only
                 .requestMatchers(HttpMethod.POST, EndpointPolicy.NOTICE_ADMIN).hasRole("ADMIN")
@@ -92,14 +99,14 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.DELETE, EndpointPolicy.REPLY_WRITE).hasAnyRole("USER","ADMIN")
 
                 // members me: USER or ADMIN
-                .requestMatchers(HttpMethod.GET, EndpointPolicy.MEMBER_ME).hasAnyRole("USER","ADMIN")
-                .requestMatchers(HttpMethod.PUT, EndpointPolicy.MEMBER_ME).hasAnyRole("USER","ADMIN")
-                .requestMatchers(HttpMethod.DELETE, EndpointPolicy.MEMBER_ME).hasAnyRole("USER","ADMIN")
+                .requestMatchers(HttpMethod.GET, EndpointPolicy.USER_ME).hasAnyRole("USER","ADMIN")
+                .requestMatchers(HttpMethod.PUT, EndpointPolicy.USER_ME).hasAnyRole("USER","ADMIN")
+                .requestMatchers(HttpMethod.DELETE, EndpointPolicy.USER_ME).hasAnyRole("USER","ADMIN")
 
                 // members list/search: ADMIN only
-                .requestMatchers(HttpMethod.GET, EndpointPolicy.MEMBER_ADMIN_LIST).hasRole("ADMIN")
-                .requestMatchers(HttpMethod.GET, EndpointPolicy.MEMBER_ADMIN_PATCH).hasRole("ADMIN")
-                .requestMatchers(HttpMethod.PATCH, EndpointPolicy.MEMBER_ADMIN_PATCH).hasRole("ADMIN")
+                .requestMatchers(HttpMethod.GET, EndpointPolicy.USER_ADMIN_LIST).hasRole("ADMIN")
+                .requestMatchers(HttpMethod.GET, EndpointPolicy.USER_ADMIN_PATCH).hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PATCH, EndpointPolicy.USER_ADMIN_PATCH).hasRole("ADMIN")
 
                 .anyRequest().authenticated()
             )            

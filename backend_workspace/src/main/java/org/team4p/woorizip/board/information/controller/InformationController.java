@@ -15,6 +15,7 @@ import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -35,6 +36,7 @@ import org.team4p.woorizip.common.api.ApiResponse;
 import org.team4p.woorizip.common.api.PageResponse;
 import org.team4p.woorizip.common.api.SearchRequest;
 import org.team4p.woorizip.common.config.UploadProperties;
+import org.team4p.woorizip.common.exception.NotFoundException;
 import org.team4p.woorizip.common.util.FileNameChange;
 
 import jakarta.validation.Valid;
@@ -80,12 +82,8 @@ public class InformationController {
 	public ResponseEntity<ApiResponse<PostDto>> detail(@PathVariable int postNo) {
 		
 		PostDto dto = informationService.selectInformation(postNo);
-		if(dto == null) {
-			return ResponseEntity.status(404)
-					.body(ApiResponse.fail("해당 공지가 없습니다.", null));
-		}
-		
 		informationService.updateAddReadCount(postNo);
+		
 		return ResponseEntity.ok(ApiResponse.ok("상세 조회 성공", dto));
 	}
 	
@@ -93,19 +91,21 @@ public class InformationController {
 	@GetMapping("/{postNo}/filedown/{fileNo}")
 	public ResponseEntity<Resource> downloadFile(
 			@PathVariable Integer postNo,
-			@PathVariable Integer fileNo) throws Exception {
+			@PathVariable Integer fileNo) {
 		
-		FileEntity fileEntity = fileRepository.findById(fileNo).orElse(null);
+		FileEntity fileEntity = fileRepository.findById(fileNo)
+				.orElseThrow(() -> new NotFoundException("파일이 존재하지 않습니다."));
 		
-		if(fileEntity == null || !fileEntity.getPostNo().equals(postNo))
-			return ResponseEntity.notFound().build();
+		if(!fileEntity.getPostNo().equals(postNo))
+			throw new NotFoundException("해당 게시글의 파일이 아닙니다.");
 		
-		Path path = uploadProperties.noticeDir()
+		Path path = uploadProperties.informationDir()
 				.resolve(fileEntity.getUpdatedFileName());
 		
 		File file = path.toFile();		
-		if(!file.exists())
-			return ResponseEntity.notFound().build();
+		if(!file.exists()) {
+			throw new NotFoundException("파일이 존재하지 않습니다.");
+		}
 		
 		String encoded = URLEncoder.encode(
 				fileEntity.getOriginalFileName(), StandardCharsets.UTF_8);
@@ -126,8 +126,15 @@ public class InformationController {
 	//==============등록===================
 	@PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	public ResponseEntity<ApiResponse<Void>> create(
-			@Valid @ModelAttribute PostDto postDto,
+			@Validated(PostDto.Create.class) @ModelAttribute PostDto postDto,
+			BindingResult bindingResult,
 			@RequestParam(name = "files", required = false) List<MultipartFile> files) {
+		
+		if(bindingResult.hasErrors()) {
+			String message = bindingResult.getFieldError().getDefaultMessage();
+			return ResponseEntity.badRequest()
+					.body(ApiResponse.fail(message, null));
+		}
 		
 		List<FileDto> fileDtoList = new ArrayList<>();
 		
@@ -140,7 +147,7 @@ public class InformationController {
 				String original = file.getOriginalFilename();
 				String rename = FileNameChange.change(original);
 				
-				File saveDir = uploadProperties.noticeDir().toFile();
+				File saveDir = uploadProperties.informationDir().toFile();
 				if(!saveDir.exists())
 					saveDir.mkdirs();
 				
@@ -148,7 +155,7 @@ public class InformationController {
 					file.transferTo(new File(saveDir, rename));
 				} catch (Exception e) {
 					log.error("파일 업로드 실패", e);
-					return ResponseEntity.status(500).body(ApiResponse.fail("파일 업로드 실패", null));
+					throw new IllegalStateException("파일 업로드 실패");
 				}
 				
 				fileDtoList.add(
@@ -161,24 +168,30 @@ public class InformationController {
 		
 		postDto.setFiles(fileDtoList);
 		
-		int result = informationService.insertInformation(postDto);
+		informationService.insertInformation(postDto);
 		
-		if(result > 0)
-			return ResponseEntity.status(201).body(ApiResponse.ok("공지 등록 성공", null));
-		
-		return ResponseEntity.status(500).body(ApiResponse.fail("공지 등록 실패", null));
+		return ResponseEntity.status(201)
+				.body(ApiResponse.ok("게시글 등록 성공", null));
 	}
 	
 	//==============수정===================
 	@PutMapping	(value = "/{postNo}/update", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	public ResponseEntity<ApiResponse<Void>> update(
 			@PathVariable int postNo,
-			@Valid @ModelAttribute PostDto postDto,
+			@Validated(PostDto.Update.class) @ModelAttribute PostDto postDto,
+			BindingResult bindingResult,
 			@RequestParam(name = "deleteFileNo", required = false) List<Integer> deleteFileNo,
 			@RequestParam(name = "files", required = false) List<MultipartFile> files) {
 		
+		if(bindingResult.hasErrors()) {
+			String message = bindingResult.getFieldError().getDefaultMessage();
+			return ResponseEntity.badRequest()
+					.body(ApiResponse.fail(message, null));
+		}
+		
 		postDto.setPostNo(postNo);
 		
+		//파일 등록처리 ===============================
 		List<FileDto> newFiles = new ArrayList<>();
 		
 		if(files != null) {
@@ -190,7 +203,7 @@ public class InformationController {
 				String original = file.getOriginalFilename();
 				String rename = FileNameChange.change(original);
 				
-				File saveDir = uploadProperties.noticeDir().toFile();
+				File saveDir = uploadProperties.informationDir().toFile();
 				if(!saveDir.exists())
 					saveDir.mkdirs();
 				
@@ -198,7 +211,7 @@ public class InformationController {
 					file.transferTo(new File(saveDir, rename));
 				} catch (Exception e) {
 					log.error("파일 업로드 실패", e);
-					return ResponseEntity.status(500).body(ApiResponse.fail("파일 업로드 실패", null));
+					throw new IllegalStateException("파일 업로드 실패");
 				}
 				
 				newFiles.add(FileDto.builder()
@@ -208,65 +221,67 @@ public class InformationController {
 			}
 		}
 		
+		//기존 파일 삭제 처리 =====================
 		List<FileEntity> deleteFiles = new ArrayList<>();
-
+		
 		if(deleteFileNo != null && !deleteFileNo.isEmpty()) {
 		    for(Integer fileNo : deleteFileNo) {
-		        fileRepository.findById(fileNo)
-		            .ifPresent(deleteFiles::add);
+		        FileEntity fileEntity = fileRepository.findById(fileNo)
+		        		.orElseThrow(() -> 
+		        				new NotFoundException("삭제할 파일이 존재하지 않습니다."));
+		        
+		        if(!fileEntity.getPostNo().equals(postNo)) {
+		        	throw new NotFoundException("해당 게시글의 파일이 아닙니다.");
+		        }
+		        
+		        deleteFiles.add(fileEntity);
 		    }
 		}
 		
 		postDto.setFiles(newFiles);
 		
-		int result = informationService.updateInformation(postDto, deleteFileNo);
+		//파일 검증 ===================================
+		List<Integer> validatedDeleteFileNo = deleteFiles.stream()
+				.map(FileEntity::getFileNo)
+				.toList();
 		
-		if(result > 0) {
-			 for(FileEntity fileEntity : deleteFiles) {
-			        File physical = uploadProperties.noticeDir()
-			                .resolve(fileEntity.getUpdatedFileName())
-			                .toFile();
+		//서비스 호출 ===================================
+		informationService.updateInformation(postDto, validatedDeleteFileNo);
 
-			        if (physical.exists() && !physical.delete()) {
-			            log.warn("파일 삭제 실패: {}", physical.getAbsolutePath());
-			        }
-			    }
+		for (FileEntity fileEntity : deleteFiles) {
+			File physical = uploadProperties.informationDir()
+					.resolve(fileEntity.getUpdatedFileName())
+					.toFile();
 
-			return ResponseEntity.ok(ApiResponse.ok("수정 성공", null));
+			if (physical.exists() && !physical.delete()) {
+				log.warn("파일 삭제 실패: {}", physical.getAbsolutePath());
+			}
 		}
-			
-		return ResponseEntity.status(500)
-				.body(ApiResponse.fail("수정 실패", null));
+
+		return ResponseEntity.ok(ApiResponse.ok("수정 성공", null));
 	}
 	
 	//==============삭제===================
 	@DeleteMapping("/{postNo}/delete")
 	public ResponseEntity<ApiResponse<Void>> delete(@PathVariable int postNo) {
 
-	    PostDto dto = informationService.selectInformation(postNo);
+		PostDto dto = informationService.selectInformation(postNo);
+		informationService.deleteInformation(postNo);
 
-	    int result = informationService.deleteInformation(postNo);
+		// DB 삭제 성공 후 파일 삭제
+		if(dto.getFiles() != null) {
+			for (FileDto file : dto.getFiles()) {
+				File physical = uploadProperties.informationDir()
+						.resolve(file.getUpdatedFileName())
+						.toFile();
 
-	    if(result > 0) {
+				if (physical.exists() && !physical.delete()) {
+					log.warn("파일 삭제 실패: {}", physical.getAbsolutePath());
+				}
+			}
+		}
 
-	        // DB 삭제 성공 후 파일 삭제
-	        if(dto != null && dto.getFiles() != null) {
-	            for(FileDto file : dto.getFiles()) {
-	                File physical = uploadProperties.noticeDir()
-	                        .resolve(file.getUpdatedFileName())
-	                        .toFile();
-
-	                if (physical.exists() && !physical.delete()) {
-	                    log.warn("파일 삭제 실패: {}", physical.getAbsolutePath());
-	                }
-	            }
-	        }
-
-	        return ResponseEntity.ok(ApiResponse.ok("삭제 성공", null));
-	    }
-
-	    return ResponseEntity.status(500)
-	            .body(ApiResponse.fail("삭제 실패", null));
+		return ResponseEntity.ok(ApiResponse.ok("삭제 성공", null));
 	}
 
 	

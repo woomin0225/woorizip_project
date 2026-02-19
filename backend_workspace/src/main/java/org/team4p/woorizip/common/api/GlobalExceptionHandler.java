@@ -7,6 +7,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
+import org.team4p.woorizip.common.exception.ForbiddenException;
+import org.team4p.woorizip.common.exception.NotFoundException;
 
 /*
  * @RestControllerAdvice 는
@@ -44,6 +46,18 @@ public class GlobalExceptionHandler {
             errors.put(fe.getField(), fe.getDefaultMessage());
         }
         return ResponseEntity.badRequest().body(ApiResponse.fail("Validation 실패", errors));
+    }
+    
+    @ExceptionHandler(NotFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleNotFound(NotFoundException e) {
+    	
+    	return ResponseEntity.status(404).body(ApiResponse.fail(e.getMessage(), null));
+    }
+    
+    @ExceptionHandler(ForbiddenException.class)
+    public ResponseEntity<ApiResponse<Void>> handleForbidden(ForbiddenException e) {
+    	
+    	return ResponseEntity.status(403).body(ApiResponse.fail(e.getMessage(), null));
     }
 
     @ExceptionHandler(Exception.class)
