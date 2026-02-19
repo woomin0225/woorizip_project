@@ -3,7 +3,6 @@ package org.team4p.woorizip.house.controller;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.List;
 import java.util.UUID;
 
@@ -29,10 +28,8 @@ import org.team4p.woorizip.house.image.service.HouseImageService;
 import org.team4p.woorizip.house.service.HouseService;
 import org.team4p.woorizip.room.dto.RoomDto;
 import org.team4p.woorizip.room.dto.request.RoomSearchCondition;
-import org.team4p.woorizip.user.controller.UserController;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
 @RestController
 @RequestMapping("/houses")
@@ -54,7 +51,8 @@ public class HouseController {
 	public ResponseEntity<ApiResponse<List<HouseMarkerResponse>>> getHouseMarkers(RoomSearchCondition roomSearchCondition){
 		// 지도 내 건물 마커용 검색 결과 조회
 		
-		return null;
+		List<HouseMarkerResponse> list = houseService.selectHouseMarkers(roomSearchCondition);
+		return ResponseEntity.status(200).body(ApiResponse.ok("건물 마커 조회 성공", list));
 	}
 	
 	@GetMapping("/owner")

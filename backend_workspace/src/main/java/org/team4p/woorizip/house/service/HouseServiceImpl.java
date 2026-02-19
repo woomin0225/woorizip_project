@@ -1,6 +1,8 @@
 package org.team4p.woorizip.house.service;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -34,9 +36,22 @@ public class HouseServiceImpl implements HouseService {
 	}
 
 	@Override
-	public HouseMarkerResponse selectHouseMarkers(RoomSearchCondition cond) {
+	public List<HouseMarkerResponse> selectHouseMarkers(RoomSearchCondition cond) {
 		// 지도 내 건물 마커용 검색 결과 조회
-		return null;
+		
+		cond.adjustment();
+		
+		List<HouseEntity> rows = houseRepository.searchHouses(cond);
+		Map<String, Integer> map= houseRepository.searchPriceOfHouses(cond);
+		Integer minDeposit = map.get("minDeposit");
+		Integer maxDeposit = map.get("maxDeposit");
+		Integer minMonthly = map.get("minMonthly");
+		Integer maxMonthly = map.get("maxMonthly");
+		
+		List<HouseMarkerResponse> list = new ArrayList();
+		rows.stream().map(entity->list.add(new HouseMarkerResponse(entity, minDeposit, maxDeposit, minMonthly, maxMonthly)));
+		
+		return list;
 	}
 
 	@Override
