@@ -17,6 +17,8 @@ import org.team4p.woorizip.reservation.dto.ReservationModifyRequestDTO;
 import org.team4p.woorizip.reservation.enums.ReservationStatus;
 import org.team4p.woorizip.reservation.jpa.entity.ReservationEntity;
 import org.team4p.woorizip.reservation.jpa.repository.ReservationRepository;
+import org.team4p.woorizip.room.jpa.entity.RoomEntity;
+import org.team4p.woorizip.room.jpa.repository.RoomRepository;
 import org.team4p.woorizip.user.jpa.entity.UserEntity;
 import org.team4p.woorizip.user.jpa.repository.UserRepository;
 
@@ -29,6 +31,7 @@ public class ReservationServiceImpl implements ReservationService {
 	private final FacilityRepository facilityRepository;
 	private final ReservationRepository reservationRepository;
 	private final UserRepository userRepository;
+	private final RoomRepository roomRepository;
 
 	// 예약 신규 등록
 	@Override
@@ -42,9 +45,20 @@ public class ReservationServiceImpl implements ReservationService {
 		UserEntity user = userRepository.findById(userNo)
 				.orElseThrow(() -> new NotFoundException("no user data exists"));
 		
-		// 권한 확인하기
-	   
-
+		// facility가 속한 house의 거주자인지 확인(권한 체크)
+		List<RoomEntity> rooms = roomRepository.findAllByHouseNo(facility.getHouse().getHouseNo());
+		
+		boolean isResident = false;
+		for (RoomEntity room : rooms) {
+		    if (room.getUserNo() != null && room.getUserNo().equals(userNo)) {
+		        isResident = true;
+		        break;
+		    }
+		}
+		if (!isResident) {
+		    throw new ForbiddenException("no permission to make reservation on this facility");
+		}
+		
 		// 예약 내용 저장하기
 		ReservationEntity reservation = ReservationEntity
 				.builder()
