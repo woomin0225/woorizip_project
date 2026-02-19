@@ -47,7 +47,8 @@ public class FacilityServiceImpl implements FacilityService {
 	// 시설 신규 등록
 	@Override
 	@Transactional
-	public void createFacility(FacilityCreateRequestDTO dto, String userNo) {
+	// public void createFacility(FacilityCreateRequestDTO dto, String userNo) {
+	public String createFacility(FacilityCreateRequestDTO dto, String userNo) {
 		// userNo로 houseList 추출
 		List<HouseEntity> houseList = houseRepository.findAllByUserNoOrderByHouseName(userNo);
 		
@@ -98,10 +99,13 @@ public class FacilityServiceImpl implements FacilityService {
 	        nextSequence = 1;
 	    }
 
+	    // 테스트용
+	    String facilityNo = UUID.randomUUID().toString();
+	    
 		// 시설 정보 입력
 		FacilityEntity facility = FacilityEntity
 				.builder()
-				.facilityNo(UUID.randomUUID().toString())
+				.facilityNo(facilityNo)
 				.house(selectedHouse)
 				.facilityName(finalName)
 				.facilitySequence(nextSequence)
@@ -131,6 +135,7 @@ public class FacilityServiceImpl implements FacilityService {
 		}
 		
 		facilityRepository.save(facility);
+		return facilityNo;
 	}
 
 	// 시설 카테고리 등록
