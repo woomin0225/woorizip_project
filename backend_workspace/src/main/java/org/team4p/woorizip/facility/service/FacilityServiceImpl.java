@@ -107,6 +107,7 @@ public class FacilityServiceImpl implements FacilityService {
 				.builder()
 				.facilityNo(facilityNo)
 				.house(selectedHouse)
+				.category(facilityCategory)
 				.facilityName(finalName)
 				.facilitySequence(nextSequence)
 				.facilityOptionInfo(finalOptions)

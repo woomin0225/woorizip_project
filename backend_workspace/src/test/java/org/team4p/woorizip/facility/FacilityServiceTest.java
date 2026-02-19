@@ -1,4 +1,4 @@
-package org.team4p.woorizip.facility.controller;
+package org.team4p.woorizip.facility;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -22,12 +22,15 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.team4p.woorizip.facility.dto.FacilityCategoryDTO;
 import org.team4p.woorizip.facility.dto.FacilityCreateRequestDTO;
 import org.team4p.woorizip.facility.dto.FacilityImageDTO;
 import org.team4p.woorizip.facility.dto.FacilityListResponseDTO;
 import org.team4p.woorizip.facility.dto.FacilityModifyRequestDTO;
 import org.team4p.woorizip.facility.enums.FacilityStatus;
+import org.team4p.woorizip.facility.jpa.entity.FacilityCategoryEntity;
 import org.team4p.woorizip.facility.jpa.entity.FacilityEntity;
+import org.team4p.woorizip.facility.jpa.repository.FacilityCategoryRepository;
 import org.team4p.woorizip.facility.jpa.repository.FacilityRepository;
 import org.team4p.woorizip.facility.service.FacilityServiceImpl;
 import org.team4p.woorizip.house.jpa.entity.HouseEntity;
@@ -41,6 +44,9 @@ class FacilityServiceTest {
 
 	@Mock
 	private HouseRepository houseRepository;
+	
+	@Mock
+    private FacilityCategoryRepository categoryRepository;
 
 	@InjectMocks
 	private FacilityServiceImpl facilityService;
@@ -52,12 +58,22 @@ class FacilityServiceTest {
 		lenient().when(mockHouse.getHouseNo()).thenReturn("HOUSE_001");
 		lenient().when(houseRepository.findAllByUserNoOrderByHouseName(anyString())).thenReturn(List.of(mockHouse));
 
+		Map<String, Boolean> options = new HashMap<>();
+		
+		FacilityCategoryDTO Cdto = new FacilityCategoryDTO();
+        Cdto.setFacilityType("회의실");
+        Cdto.setFacilityOptions(options);
+        
+        FacilityCategoryEntity mockCategory = FacilityCategoryEntity.builder()
+        		.facilityCode(1)
+        		.facilityType(Cdto.getFacilityType())
+        		.facilityOptions(Cdto.getFacilityOptions())
+        		.build();
+        
+        lenient().when(categoryRepository.findById(1)).thenReturn(Optional.of(mockCategory));
+        
 		// 시설 생성 디티오 채우기
 		FacilityCreateRequestDTO dto = new FacilityCreateRequestDTO();
-
-		Map<String, Boolean> optionInfo = new HashMap<>();
-		optionInfo.put("wifi", true);
-		optionInfo.put("parking", true);
 
 		List<FacilityImageDTO> images = new ArrayList<>();
 
@@ -67,11 +83,18 @@ class FacilityServiceTest {
 		img1.setFacilityStoredImageName("20260219_uuid_my_room.jpg");
 
 		images.add(img1);
-
+		
+		/*
+		// 옵션인포 별도 작성 시 적용되는가
+		Map<String, Boolean> optionInfo = new HashMap<>();
+		optionInfo.put("wifi", true);
+		optionInfo.put("parking", true);
+		*/
+		
 		dto.setHouseNo("HOUSE_001");
-		dto.setFacilityCode(null);
-		dto.setFacilityName("시설1");
-		dto.setFacilityOptionInfo(optionInfo);
+		dto.setFacilityCode(1);
+		//dto.setFacilityName("시설1");
+		//dto.setOptionInfo(optionInfo);
 		dto.setFacilityLocation(2);
 		dto.setFacilityStatus(FacilityStatus.AVAILABLE);
 		dto.setFacilityCapacity(5);
@@ -95,10 +118,18 @@ class FacilityServiceTest {
 		
 		lenient().when(facilityRepository.findByFacilityNoAndFacilityDeletedAtIsNull(savedNo))
         .thenReturn(Optional.of(createdFacility));
+		
 
 		// 상세조회 테스트
 		facilityService.getFacilityDetails(savedNo);
 		verify(facilityRepository, times(1)).findByFacilityNoAndFacilityDeletedAtIsNull(savedNo);
+		
+		// 옵션인포를 작성하지 않았을 때 옵션스의 값이 자동입력되는가?
+		assertEquals(options, createdFacility.getFacilityOptionInfo());
+		assertEquals("회의실", createdFacility.getFacilityName());
+		
+		// 카테고리 적용 시 순번이 매겨지는가?
+		assertEquals(1, createdFacility.getFacilitySequence());
 		
 		List<FacilityEntity> mockList = List.of(createdFacility);
 		lenient().when(facilityRepository.findByHouseHouseNoAndFacilityDeletedAtIsNull("HOUSE_001"))
