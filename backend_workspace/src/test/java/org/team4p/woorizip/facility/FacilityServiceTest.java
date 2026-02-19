@@ -119,7 +119,6 @@ class FacilityServiceTest {
 		lenient().when(facilityRepository.findByFacilityNoAndFacilityDeletedAtIsNull(savedNo))
         .thenReturn(Optional.of(createdFacility));
 		
-
 		// 상세조회 테스트
 		facilityService.getFacilityDetails(savedNo);
 		verify(facilityRepository, times(1)).findByFacilityNoAndFacilityDeletedAtIsNull(savedNo);

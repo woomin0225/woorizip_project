@@ -1,5 +1,6 @@
 package org.team4p.woorizip.reservation.service;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -45,7 +46,7 @@ public class ReservationServiceImpl implements ReservationService {
 		UserEntity user = userRepository.findById(userNo)
 				.orElseThrow(() -> new NotFoundException("no user data exists"));
 		
-		// facility가 속한 house의 거주자인지 확인(권한 체크)
+		// facility가 속한 house의 거주자인지 확인
 		List<RoomEntity> rooms = roomRepository.findAllByHouseNo(facility.getHouse().getHouseNo());
 		
 		boolean isResident = false;
@@ -59,6 +60,49 @@ public class ReservationServiceImpl implements ReservationService {
 		    throw new ForbiddenException("no permission to make reservation on this facility");
 		}
 		
+		// 시설 운영 시간 내의 예약인지 확인
+		if (dto.getReservationStartTime().isBefore(facility.getFacilityOpenTime()) || 
+				dto.getReservationEndTime().isAfter(facility.getFacilityCloseTime())) {
+			throw new ForbiddenException("no permission to make reservation on this time");
+		}
+		
+		// 예약 종료 시간이 시작 시간보다 빠른지 확인
+	    if (!dto.getReservationEndTime().isAfter(dto.getReservationStartTime())) {
+	        throw new NotFoundException("EndTime cannot be earlier than StartTime");
+	    }
+	    
+	    // 예약 단위 내의 예약인지 확인
+	    if (dto.getReservationStartTime().getMinute() % facility.getFacilityRsvnUnitMinutes() != 0) {
+	        throw new ForbiddenException("reservation must follow the time unit: " + facility.getFacilityRsvnUnitMinutes());
+	    }
+	    
+	    int duration = (int) java.time.Duration.between(dto.getReservationStartTime(), dto.getReservationEndTime()).toMinutes();
+	    
+	    // 최대 이용 시간 이내인지 확인
+	    if (duration > facility.getFacilityMaxDurationMinutes()) {
+	        throw new ForbiddenException("exceeds maximum duration");
+	    }
+	    
+	    // 이용 시간이 단위 시간의 배수인지 확인
+	    if (duration % facility.getFacilityRsvnUnitMinutes() != 0) {
+	        throw new ForbiddenException("Reservation duration must be in multiples of " 
+	                                     + facility.getFacilityRsvnUnitMinutes() + " minutes.");
+	    }
+	    
+	    // 일일 최대 예약 횟수 검증
+	    long reservationCount = reservationRepository.countByUser_UserNoAndFacility_FacilityNoAndReservationDate(
+	            userNo, facilityNo, dto.getReservationDate());
+	    if (reservationCount >= facility.getMaxRsvnPerDay()) {
+	        throw new ForbiddenException("Exceeds maximum reservations per day (" + facility.getMaxRsvnPerDay() + " times).");
+	    }
+		
+	    // 중복 예약인지 확인
+	    boolean isOverlapped = reservationRepository.existsByFacilityAndReservationDateAndReservationStartTimeBeforeAndReservationEndTimeAfter(
+	            facility, dto.getReservationDate(), dto.getReservationEndTime(), dto.getReservationStartTime());
+	    if (isOverlapped) {
+	        throw new ForbiddenException("Other reservation already exists");
+	    }
+	    
 		// 예약 내용 저장하기
 		ReservationEntity reservation = ReservationEntity
 				.builder()
@@ -110,12 +154,67 @@ public class ReservationServiceImpl implements ReservationService {
 		// 예약 번호 찾기
 		ReservationEntity entity = reservationRepository.findById(reservationNo)
 				.orElseThrow(() -> new NotFoundException("no reservation data exists"));
+		FacilityEntity facility = entity.getFacility();
 		
-		// 권한 확인하기
+		// 본인 확인
 	    if (!entity.getUser().getUserNo().equals(userNo)) {
 	        throw new ForbiddenException("no permission to modify this reservation"); 
 	    }
+	    
+	    // 과거의 예약을 수정하는 것은 아닌지 확인
+	    if (dto.getReservationDate().isBefore(LocalDate.now())) {
+	        throw new ForbiddenException("cannot modify reservation to a past date");
+	    }
+	    
+	    // 시설 운영 시간 내의 예약인지 확인
+	    if (dto.getReservationStartTime().isBefore(entity.getFacility().getFacilityOpenTime()) || 
+	    		dto.getReservationEndTime().isAfter(entity.getFacility().getFacilityCloseTime())) {
+	    	throw new ForbiddenException("no permission to make reservation on this time");
+	    }
 
+	    // 예약 종료 시간이 시작 시간보다 빠른지 확인
+	    if (!dto.getReservationEndTime().isAfter(dto.getReservationStartTime())) {
+	        throw new NotFoundException("EndTime cannot be earlier than StartTime");
+	    }
+	    
+	    // 예약 단위 내의 예약인지 확인
+	    if (dto.getReservationStartTime().getMinute() % facility.getFacilityRsvnUnitMinutes() != 0) {
+	        throw new ForbiddenException("reservation must follow the time unit: " + facility.getFacilityRsvnUnitMinutes());
+	    }
+	    
+	    int duration = (int) java.time.Duration.between(dto.getReservationStartTime(), dto.getReservationEndTime()).toMinutes();
+	    
+	    // 최대 이용 시간 이내인지 확인
+	    if (duration > facility.getFacilityMaxDurationMinutes()) {
+	        throw new ForbiddenException("exceeds maximum duration");
+	    }
+	    
+	    // 이용 시간이 단위 시간의 배수인지 확인
+	    if (duration % facility.getFacilityRsvnUnitMinutes() != 0) {
+	        throw new ForbiddenException("Reservation duration must be in multiples of " 
+	                                     + facility.getFacilityRsvnUnitMinutes() + " minutes.");
+	    }
+	    
+	    // 일일 최대 예약 횟수 검증
+	    long reservationCount = reservationRepository.countByUserAndFacilityAndReservationDateAndReservationNoNot(
+	            userNo, facility.getFacilityNo(), dto.getReservationDate(), reservationNo);
+	    if (reservationCount >= facility.getMaxRsvnPerDay()) {
+	        throw new ForbiddenException("Exceeds maximum reservations per day (" + facility.getMaxRsvnPerDay() + " times).");
+	    }
+	    
+	    // 중복 예약인지 확인
+	    boolean isOverlapped = reservationRepository.existsByFacilityAndReservationDateAndReservationStartTimeBeforeAndReservationEndTimeAfterAndReservationNoNot(
+	            entity.getFacility(), 
+	            dto.getReservationDate(), 
+	            dto.getReservationEndTime(), 
+	            dto.getReservationStartTime(),
+	            reservationNo
+	    );
+	    
+	    if (isOverlapped) {
+	        throw new ForbiddenException("Other reservation already exists");
+	    }
+	    
 		// dto 업데이트
 		entity.updateReservation(dto);
 	}
