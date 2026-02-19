@@ -35,7 +35,7 @@ public class HouseEntity {
 	@Column(name = "house_updated_at")
 	private LocalDateTime houseUpdatedAt;
 
-	@Column(name = "house_updated_at")
+	@Column(name = "house_zip")
 	private String houseZip;
 	
 	@Column(name="house_address")
