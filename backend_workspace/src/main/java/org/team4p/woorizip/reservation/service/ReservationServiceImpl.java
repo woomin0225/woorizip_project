@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.team4p.woorizip.common.exception.NotFoundException;
 import org.team4p.woorizip.facility.jpa.entity.FacilityEntity;
 import org.team4p.woorizip.facility.jpa.repository.FacilityRepository;
 import org.team4p.woorizip.reservation.dto.ReservationCreateRequestDTO;
@@ -34,11 +35,11 @@ public class ReservationServiceImpl implements ReservationService {
 	public void createReservation(ReservationCreateRequestDTO dto, String userNo, String facilityNo) {
 		// 시설 번호 가져오기
 		FacilityEntity facility = facilityRepository.findById(facilityNo)
-				.orElseThrow(() -> new RuntimeException("no facility data exists"));
+				.orElseThrow(() -> new NotFoundException("no facility data exists"));
 
 		// 유저 번호 가져오기
 		UserEntity user = userRepository.findById(userNo)
-				.orElseThrow(() -> new RuntimeException("no user data exists"));
+				.orElseThrow(() -> new NotFoundException("no user data exists"));
 
 		// 예약 내용 저장하기
 		ReservationEntity reservation = ReservationEntity
@@ -62,7 +63,7 @@ public class ReservationServiceImpl implements ReservationService {
 	public ReservationDetailResponseDTO getReservationDetails(String reservationNo) {
 		return reservationRepository.findById(reservationNo)
 				.map(ReservationDetailResponseDTO::from)
-				.orElseThrow(() -> new RuntimeException("no reservation data exists"));
+				.orElseThrow(() -> new NotFoundException("no reservation data exists"));
 	}
 
 	// 예약 목록 조회
@@ -90,7 +91,7 @@ public class ReservationServiceImpl implements ReservationService {
 	public void modifyReservation(String reservationNo, ReservationModifyRequestDTO dto) {
 		// 예약 번호 찾기
 		ReservationEntity entity = reservationRepository.findById(reservationNo)
-				.orElseThrow(() -> new RuntimeException("no reservation data exists"));
+				.orElseThrow(() -> new NotFoundException("no reservation data exists"));
 
 		// dto 업데이트
 		entity.updateReservation(dto);
