@@ -35,20 +35,17 @@ public class CommentController {
 	
 	//댓글 등록 (lev = 1) ==========================
 	@PostMapping("/{postNo}/comments")
-	public	 ResponseEntity<ApiResponse<Void>> create(
-			@PathVariable Integer postNo,
+	public ResponseEntity<ApiResponse<Void>> create(
+			@PathVariable Integer postNo, 
 			@RequestBody CommentDto dto) {
-		
+
 		dto.setPostNo(postNo);
 		dto.setParentCommentNo(null);
-		
-		int result = commentService.insertComment(dto);
-		
-		if(result > 0) {
-			return ResponseEntity.status(201).body(ApiResponse.ok("댓글 등록 성공", null));
-		}
-		
-		return ResponseEntity.status(500).body(ApiResponse.fail("댓글 등록 실패", null));
+
+		commentService.insertComment(dto);
+
+		return ResponseEntity.status(201)
+				.body(ApiResponse.ok("댓글 등록 성공", null));
 	}
 	
 	//대댓글 등록 ==========================
@@ -61,43 +58,32 @@ public class CommentController {
 		dto.setPostNo(postNo);
 		dto.setParentCommentNo(parentCommentNo);
 		
-		int result = commentService.insertComment(dto);
-		
-		if(result > 0) {
-			return ResponseEntity.status(201).body(ApiResponse.ok("대댓글 등록 성공", null));
-		}
-		
-		return ResponseEntity.status(500).body(ApiResponse.fail("대댓글 등록 실패", null));
+		commentService.insertComment(dto);
+
+		return ResponseEntity.status(201)
+				.body(ApiResponse.ok("대댓글 등록 성공", null));
 	}
 	
 	//댓글 수정 ==========================
 	@PutMapping("/comments/{commentNo}")
 	public ResponseEntity<ApiResponse<Void>> update(
-			@PathVariable Integer commentNo,
+			@PathVariable Integer commentNo, 
 			@RequestBody CommentDto dto) {
-		
+
 		dto.setCommentNo(commentNo);
 		
-		int result = commentService.updateComment(dto);
+		commentService.updateComment(dto);
 		
-		if(result > 0) {
-			return ResponseEntity.ok(ApiResponse.ok("댓글 수정 성공", null));
-		}
-		
-		return ResponseEntity.status(500).body(ApiResponse.fail("댓글 수정 실패", null));
+		return ResponseEntity.ok(ApiResponse.ok("댓글 수정 성공", null));
 	}
 	
 	//댓글 삭제 ==========================
 	@DeleteMapping("/comments/{commentNo}")
 	public ResponseEntity<ApiResponse<Void>> delete(
 			@PathVariable Integer commentNo) {
+
+		commentService.deleteComment(commentNo);
 		
-		int result = commentService.deleteComment(commentNo);
-		
-		if(result > 0) {
-			return ResponseEntity.ok(ApiResponse.ok("댓글 삭제 성공", null));
-		}
-		
-		return ResponseEntity.status(500).body(ApiResponse.fail("댓글 삭제 실패", null));
+		return ResponseEntity.ok(ApiResponse.ok("댓글 삭제 성공", null));
 	}
 }

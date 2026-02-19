@@ -16,6 +16,7 @@ import org.team4p.woorizip.board.file.model.dto.FileDto;
 import org.team4p.woorizip.board.post.jpa.entity.PostEntity;
 import org.team4p.woorizip.board.post.jpa.repository.PostRepository;
 import org.team4p.woorizip.board.post.model.dto.PostDto;
+import org.team4p.woorizip.common.exception.NotFoundException;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,7 +30,7 @@ public class InformationServiceImpl implements InformationService {
 	private final PostRepository postRepository;
 	private final FileRepository fileRepository;
 
-	// 공지사항 타입 고정
+	// 정책・정보 타입 고정
 	private static final String BOARD_TYPE_NO = "I1";
 
 	// ================Page -> List 변환 공통 메소드==============
@@ -86,7 +87,8 @@ public class InformationServiceImpl implements InformationService {
 					dto.setFiles(getFiles(entity.getPostNo()));
 					return dto;
 				})
-				.orElse(null);
+				.orElseThrow(() -> 
+						new NotFoundException("해당 정책・정보 게시글이 존재하지 않습니다."));
 	}
 
 	@Override
@@ -94,7 +96,7 @@ public class InformationServiceImpl implements InformationService {
 		PostEntity entity = postRepository.findTopByBoardTypeNoOrderByPostNoDesc(BOARD_TYPE_NO);
 
 		if (entity == null)
-			return null;
+			throw new NotFoundException("해당 정책・정보 게시글이 존재하지 않습니다.");
 
 		PostDto dto = PostDto.fromEntity(entity);
 		dto.setFiles(getFiles(entity.getPostNo()));
@@ -113,29 +115,24 @@ public class InformationServiceImpl implements InformationService {
 	@Override
 	@Transactional
 	public int insertInformation(PostDto postDto) {
-		try {
-			postDto.setBoardTypeNo(BOARD_TYPE_NO);
-			postDto.setPostNo(null);
 
-			PostEntity saved = postRepository.save(postDto.toEntity());
+		postDto.setBoardTypeNo(BOARD_TYPE_NO);
+		postDto.setPostNo(null);
 
-			if (saved.getPostNo() == null)
-				return 0;
+		PostEntity saved = postRepository.save(postDto.toEntity());
 
-			// 파일 저장
-			if (postDto.getFiles() != null) {
-				for (FileDto fileDto : postDto.getFiles()) {
-					fileDto.setPostNo(saved.getPostNo());
-					fileRepository.save(fileDto.toEntity());
-				}
+		if (saved.getPostNo() == null)
+			throw new IllegalStateException("정책・정보 게시글 등록에 실패했습니다.");
+
+		// 파일 저장
+		if (postDto.getFiles() != null) {
+			for (FileDto fileDto : postDto.getFiles()) {
+				fileDto.setPostNo(saved.getPostNo());
+				fileRepository.save(fileDto.toEntity());
 			}
-
-			return 1;
-		} catch (Exception e) {
-			log.error("insertNoitce error : {}", e.getMessage());
-			return 0;
 		}
 
+		return 1;
 	}
 
 	//========================수정======================
@@ -145,7 +142,7 @@ public class InformationServiceImpl implements InformationService {
 		
 		if(postDto.getPostNo() == null || 
 				!postRepository.existsById(postDto.getPostNo())) {
-			return 0;
+			throw new NotFoundException("수정할 정책・정보 게시글이 없습니다.");
 		}
 		
 		postDto.setBoardTypeNo(BOARD_TYPE_NO);
@@ -173,14 +170,15 @@ public class InformationServiceImpl implements InformationService {
 	@Override
 	@Transactional
 	public int deleteInformation(int postNo) {
-		try {
-			fileRepository.deleteByPostNo(postNo);
-			postRepository.deleteById(postNo);
-			return 1;
-		} catch (Exception e) {
-			log.error("deleteNotice error: {}", e.getMessage());
-			return 0;
+
+		if(!postRepository.existsById(postNo)) {
+			throw new NotFoundException("삭제할 정책・정보 게시글이 없습니다.");
 		}
+		
+		fileRepository.deleteByPostNo(postNo);
+		postRepository.deleteById(postNo);
+		
+		return 1;
 	}
 
 	// ===============검색====================
