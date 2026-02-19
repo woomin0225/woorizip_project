@@ -83,7 +83,7 @@ public class NoticeController {
 	@GetMapping("/{postNo}/filedown/{fileNo}")
 	public ResponseEntity<Resource> downloadFile(
 			@PathVariable Integer postNo,
-			@PathVariable Integer fileNo) throws Exception {
+			@PathVariable Integer fileNo) {
 		
 		FileEntity fileEntity = fileRepository.findById(fileNo)
 				.orElseThrow(() -> new NotFoundException("파일이 존재하지 않습니다."));
@@ -181,6 +181,7 @@ public class NoticeController {
 		
 		postDto.setPostNo(postNo);
 		
+		//파일 등록처리 ==============================
 		List<FileDto> newFiles = new ArrayList<>();
 		
 		if(files != null) {
@@ -210,18 +211,32 @@ public class NoticeController {
 			}
 		}
 		
+		//기존 파일 삭제 처리 ==========================
 		List<FileEntity> deleteFiles = new ArrayList<>();
 
 		if(deleteFileNo != null && !deleteFileNo.isEmpty()) {
 		    for(Integer fileNo : deleteFileNo) {
-		        fileRepository.findById(fileNo)
-		            .ifPresent(deleteFiles::add);
+		        FileEntity fileEntity = fileRepository.findById(fileNo)
+		        		.orElseThrow(() -> 
+		        				new NotFoundException("삭제할 파일이 존재하지 않습니다."));
+		        
+		        if(!fileEntity.getPostNo().equals(postNo)) {
+		        	throw new NotFoundException("해당 게시글의 파일이 아닙니다.");
+		        }
+		        
+		        deleteFiles.add(fileEntity);
 		    }
 		}
 		
 		postDto.setFiles(newFiles);
 		
-		noticeService.updateNotice(postDto, deleteFileNo);
+		//파일 검증 ==================================
+		List<Integer> validatedDeleteFileNo = deleteFiles.stream()
+				.map(FileEntity::getFileNo)
+				.toList();
+		
+		//서비스 호출 ===============================
+		noticeService.updateNotice(postDto, validatedDeleteFileNo);
 		
 		for(FileEntity fileEntity : deleteFiles) {
 			File physical = uploadProperties.noticeDir()
@@ -241,7 +256,6 @@ public class NoticeController {
 	public ResponseEntity<ApiResponse<Void>> delete(@PathVariable int postNo) {
 
 	    PostDto dto = noticeService.selectNotice(postNo);
-
 	    noticeService.deleteNotice(postNo);
 	    
 	    if(dto.getFiles() != null) {
