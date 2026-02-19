@@ -12,7 +12,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -59,14 +58,13 @@ public class RoomController {
 	
 	@PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	public ResponseEntity<ApiResponse<Void>> createRoom(
-			@RequestBody RoomDto roomDto,
+			@ModelAttribute RoomDto roomDto,
 			@RequestParam(value="newImages", required=false) List<MultipartFile> newImages,
-			Authentication auth
+			@RequestHeader("currentUserNo") String currentUserNo/*임시*/
 			) {
 		// 방 등록
 		
-		String currentUser = auth.getName().toString();
-		RoomDto savedRoomDto = roomService.insertRoom(roomDto, currentUser); 
+		RoomDto savedRoomDto = roomService.insertRoom(roomDto, currentUserNo); 
 		
 		// 이미지 등록 : 이미지 파일 저장 실패하면 DB에도 등록 안됨. DB에 저장 실패하면 파일저장소에서 삭제됨
 		if (savedRoomDto != null) {	// 건물 등록 성공한 경우
@@ -123,10 +121,10 @@ public class RoomController {
 	}
 	
 	@DeleteMapping("/{roomNo}")
-	public ResponseEntity<ApiResponse<Void>> deleteRoom(@PathVariable("roomNo") String roomNo, Authentication auth){
+	public ResponseEntity<ApiResponse<Void>> deleteRoom(@PathVariable("roomNo") String roomNo, @RequestHeader("currentUserNo") String currentUserNo/*임시*/){
 		// 방 소프트 삭제
-		String currentUser = auth.getName().toString();
-		roomService.deleteRoom(roomNo, currentUser);
+		
+		roomService.deleteRoom(roomNo, currentUserNo);
 		
 		return ResponseEntity.status(200).body(ApiResponse.ok("방 정보 삭제 성공", null));
 	}
@@ -158,13 +156,12 @@ public class RoomController {
 			@ModelAttribute RoomDto roomDto,
 			@RequestParam(value="deleteImageNos", required=false) List<Integer> deleteImageNos,
 			@RequestParam(value="newImages", required=false) List<MultipartFile> newImages,
-			Authentication auth
+			@RequestHeader("currentUserNo") String currentUserNo/*임시*/
 			){
 		
 		// 방 정보 수정
 		roomDto.setRoomNo(roomNo);
-		String currentUser = auth.getName().toString();
-		roomService.updateRoom(roomDto, currentUser);
+		roomService.updateRoom(roomDto, currentUserNo);
 		
 		// 삭제 사진 처리 : DB삭제 -> 저장소 삭제
 		if(deleteImageNos != null && deleteImageNos.size() > 0) {
@@ -246,12 +243,11 @@ public class RoomController {
 	public ResponseEntity<ApiResponse<Void>> deleteRoomReview(
 			@PathVariable("roomNo") String roomNo,
 			@PathVariable("reviewNo") int reviewNo,
-			Authentication auth
+			String userNo/*임시*/
 			){
 		// 방 리뷰 삭제
 		
-		String currentUser = auth.getName().toString();
-		reviewService.deleteRoomReview(reviewNo, currentUser);
+		reviewService.deleteRoomReview(reviewNo, userNo);
 		return ResponseEntity.status(200).body(ApiResponse.ok("리뷰 삭제 성공", null));
 	}
 	
@@ -260,24 +256,22 @@ public class RoomController {
 			@PathVariable("roomNo") String roomNo,
 			@PathVariable("reviewNo") int reviewNo,
 			@RequestBody ReviewDto reviewDto,
-			Authentication auth
+			String userNo/*임시*/
 			){
 		// 방 리뷰 수정
 		
-		String currentUser = auth.getName().toString();
 		reviewDto.setReviewNo(reviewNo);
 		reviewDto.setRoomNo(roomNo);
-		reviewService.updateRoomReview(reviewDto, currentUser);
+		reviewService.updateRoomReview(reviewDto, roomNo);
 		
 		return ResponseEntity.status(200).body(ApiResponse.ok("리뷰 수정 성공", null));
 	}
 	
 	@PatchMapping("/rooms/{room_no}/availability")
-	public ResponseEntity<ApiResponse<Void>> modifyRoomAvailability(@PathVariable String roomNo,@RequestBody LocalDateTime date, Authentication auth){
+	public ResponseEntity<ApiResponse<Void>> modifyRoomAvailability(@PathVariable String roomNo,@RequestBody LocalDateTime date, String userNo/*임시*/){
 		// 방 입주 가능 일자 변경
 		
-		String currentUser = auth.getName().toString();
-		roomService.updateRoomAvailability(roomNo, date, currentUser);
+		roomService.updateRoomAvailability(roomNo, date, userNo);
 		
 		return ResponseEntity.status(200).body(ApiResponse.ok("입주일자 변경 완료", null));
 	}

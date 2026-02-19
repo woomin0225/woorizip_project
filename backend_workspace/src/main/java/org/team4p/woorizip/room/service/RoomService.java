@@ -12,10 +12,10 @@ import org.team4p.woorizip.room.type.SearchCriterion;
 
 public interface RoomService {
 	Slice<RoomSearchResponse> selectRoomSearch(RoomSearchCondition cond, Pageable pageable, SearchCriterion criterion);
-	RoomDto insertRoom(RoomDto roomDto, String currentUser);
+	RoomDto insertRoom(RoomDto roomDto, String currentUserNo);
 	void deleteRoom(String roomNo, String currentUserNo);
 	RoomDto selectRoom(String roomNo);
 	List<RoomDto> selectRoomsByHouseNo(String houseNo);
-	RoomDto updateRoom(RoomDto roomDto, String currentUser);
+	RoomDto updateRoom(RoomDto roomDto, String currentUserNo);
 	RoomDto updateRoomAvailability(String roomNo, LocalDateTime date, String userNo);
 }
