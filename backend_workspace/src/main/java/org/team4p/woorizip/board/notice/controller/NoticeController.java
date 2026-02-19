@@ -15,6 +15,7 @@ import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -37,7 +38,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Validated
-//@RestController
+@RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/notice")
 public class NoticeController {
@@ -118,6 +119,7 @@ public class NoticeController {
 	//==============등록===================
 	@PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	public ResponseEntity<ApiResponse<Void>> create(
+			Authentication authentication,
 			@Validated(PostDto.Create.class) @ModelAttribute PostDto postDto,
 			BindingResult bindingResult,
 			@RequestParam(name = "files", required = false) List<MultipartFile> files) {
@@ -127,6 +129,9 @@ public class NoticeController {
 			return ResponseEntity.badRequest()
 					.body(ApiResponse.fail(message, null));
 		}
+		
+		String loginUserId = authentication.getName();
+		postDto.setUserNo(loginUserId);
 		
 		List<FileDto> fileDtoList = new ArrayList<>();
 		
