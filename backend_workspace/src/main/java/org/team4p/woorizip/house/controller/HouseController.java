@@ -43,14 +43,6 @@ public class HouseController {
 	private final UploadProperties uploadProperties;
 	private final RoomService roomService;
 	
-	
-	@GetMapping("/search")
-	public ResponseEntity<ApiResponse<HouseDto>> searchHouses(@RequestBody RoomSearchCondition roomSearchCondition){
-		// 건물 검색 결과 조회
-		
-		return null;
-	}
-	
 	@GetMapping("/marker")
 	public ResponseEntity<ApiResponse<List<HouseMarkerResponse>>> getHouseMarkers(@RequestBody RoomSearchCondition roomSearchCondition){
 		// 지도 내 건물 마커용 검색 결과 조회
@@ -60,10 +52,11 @@ public class HouseController {
 	}
 	
 	@GetMapping("/owner")
-	public ResponseEntity<ApiResponse<List<HouseDto>>> getMyHouses(String userNo) {
+	public ResponseEntity<ApiResponse<List<HouseDto>>> getMyHouses(Auth) {
 		// 임대인 회원 건물 목록 조회
 		
-		return null;
+		List<HouseDto> list = houseService.selectHousesByOwnerNo();
+		return ResponseEntity.status(200).body(ApiResponse.ok("회원의 건물 목록 조회 성공", list));
 	}
 	
 	@GetMapping("/{houseNo}/rooms")

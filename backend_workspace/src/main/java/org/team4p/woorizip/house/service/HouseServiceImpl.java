@@ -59,7 +59,11 @@ public class HouseServiceImpl implements HouseService {
 	@Override
 	public List<HouseDto> selectHousesByOwnerNo(String userNo) {
 		// 임대인 회원 건물 목록 조회
-		return null;
+		
+		List<HouseEntity> rows = houseRepository.findAllByUserNoOrderByHouseName(userNo);
+		List<HouseDto> list = new ArrayList<>();
+		rows.stream().map(entity->list.add(entity.toDto()));
+		return list;
 	}
 
 	@Override
