@@ -19,6 +19,8 @@ public class QRefreshTokenEntity extends EntityPathBase<RefreshTokenEntity> {
 
     public static final QRefreshTokenEntity refreshTokenEntity = new QRefreshTokenEntity("refreshTokenEntity");
 
+    public final StringPath emailId = createString("emailId");
+
     public final DateTimePath<java.time.LocalDateTime> expiresAt = createDateTime("expiresAt", java.time.LocalDateTime.class);
 
     public final StringPath id = createString("id");
@@ -28,8 +30,6 @@ public class QRefreshTokenEntity extends EntityPathBase<RefreshTokenEntity> {
     public final BooleanPath revoked = createBoolean("revoked");
 
     public final StringPath tokenValue = createString("tokenValue");
-
-    public final StringPath userId = createString("userId");
 
     public QRefreshTokenEntity(String variable) {
         super(RefreshTokenEntity.class, forVariable(variable));

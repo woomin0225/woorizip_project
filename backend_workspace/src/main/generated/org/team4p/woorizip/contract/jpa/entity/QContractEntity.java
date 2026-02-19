@@ -21,15 +21,19 @@ public class QContractEntity extends EntityPathBase<ContractEntity> {
 
     public final StringPath contractNo = createString("contractNo");
 
-    public final StringPath contractStatus = createString("contractStatus");
-
     public final StringPath contractUrl = createString("contractUrl");
 
-    public final DatePath<java.util.Date> moveInDate = createDate("moveInDate", java.util.Date.class);
+    public final DateTimePath<java.util.Date> moveInDate = createDateTime("moveInDate", java.util.Date.class);
+
+    public final StringPath parentContractNo = createString("parentContractNo");
 
     public final DateTimePath<java.sql.Timestamp> paymentDate = createDateTime("paymentDate", java.sql.Timestamp.class);
 
+    public final StringPath rejectionReason = createString("rejectionReason");
+
     public final StringPath roomNo = createString("roomNo");
+
+    public final StringPath status = createString("status");
 
     public final NumberPath<Integer> termMonths = createNumber("termMonths", Integer.class);
 

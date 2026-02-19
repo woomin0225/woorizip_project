@@ -19,17 +19,17 @@ public class QTourEntity extends EntityPathBase<TourEntity> {
 
     public static final QTourEntity tourEntity = new QTourEntity("tourEntity");
 
+    public final DateTimePath<java.util.Date> canceledAt = createDateTime("canceledAt", java.util.Date.class);
+
     public final StringPath canceledReason = createString("canceledReason");
 
     public final StringPath message = createString("message");
 
     public final StringPath roomNo = createString("roomNo");
 
-    public final DateTimePath<java.util.Date> tourCanceledAt = createDateTime("tourCanceledAt", java.util.Date.class);
+    public final StringPath status = createString("status");
 
     public final StringPath tourNo = createString("tourNo");
-
-    public final StringPath tourStatus = createString("tourStatus");
 
     public final StringPath userNo = createString("userNo");
 
