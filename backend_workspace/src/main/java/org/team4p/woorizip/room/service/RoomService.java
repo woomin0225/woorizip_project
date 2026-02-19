@@ -18,4 +18,6 @@ public interface RoomService {
 	List<RoomDto> selectRoomsByHouseNo(String houseNo);
 	RoomDto updateRoom(RoomDto roomDto, String currentUser);
 	RoomDto updateRoomAvailability(String roomNo, LocalDateTime date, String userNo);
+	
+	Slice<RoomSearchResponse> selectRoomsInHouseMarker(RoomSearchCondition cond, Pageable pageable, SearchCriterion criterion, String houseNo);
 }

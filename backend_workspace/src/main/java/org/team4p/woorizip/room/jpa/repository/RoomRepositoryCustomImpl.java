@@ -18,6 +18,7 @@ import org.team4p.woorizip.room.type.SearchCriterion;
 
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.OrderSpecifier;
+import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 
 import jakarta.persistence.EntityManager;
@@ -48,6 +49,58 @@ public class RoomRepositoryCustomImpl implements RoomRepositoryCustom {
 	public Slice<RoomEntity> searchRooms(RoomSearchCondition cond, Pageable pageable, SearchCriterion criterion) {
 		// 방 검색
 		
+		BooleanBuilder where = getWhere(cond);
+		
+		// 정렬 기준 추출
+		OrderSpecifier<?> order = getOrder(criterion, qroomEntity); 
+		
+		List<RoomEntity> rows = queryFactory
+										.selectFrom(qroomEntity)
+										.join(qhouseEntity).on(qroomEntity.houseNo.eq(qhouseEntity.houseNo))
+										.where(where)
+										.offset(pageable.getOffset()) // 몇 번째 페이지부터 시작할 것 인지.
+						                .limit(pageable.getPageSize()+1) // 페이지당 몇개의 데이터를 보여줄껀지, Slice는 +1개 조회로 다음 존재 여부확인
+										.orderBy(order, qroomEntity.roomNo.asc())
+										.fetch();
+//		// 최대 갯수 계산
+//		Long totalCount = queryFactory
+//							.select(qroomEntity.count())
+//							.from(qroomEntity)
+//							.join(qhouseEntity).on(qroomEntity.houseNo.eq(qhouseEntity.houseNo))
+//							.where(where)
+//							.fetchOne();
+		
+//		return new PageImpl<>(rows, pageable, totalCount);
+		
+		// (Slice)
+		boolean hasNext = rows.size() > pageable.getPageSize();
+		if(hasNext) rows.removeLast();
+		
+		return new SliceImpl<>(rows, pageable, hasNext);
+	}
+	
+	// 정렬기준 설정 메소드
+	private OrderSpecifier<?> getOrder(SearchCriterion criterion, QRoomEntity qroomEntity){
+		switch (criterion) {
+		case LATEST: return qroomEntity.roomUpdatedAt.desc();
+		case AREA: return qroomEntity.roomArea.desc();
+		default : return qroomEntity.roomUpdatedAt.desc();
+		}
+		// MOST_LIKED 추가 예정(QWishlistEntity 필요)
+	}
+	
+	public long softDeleteByRoomNo(String roomNo) {
+		// 방 정보 소프트 삭제
+		long rows = queryFactory.update(qroomEntity)
+						.set(qroomEntity.deleted, true)
+						.set(qroomEntity.deletedAt, LocalDateTime.now())
+						.where(qroomEntity.houseNo.eq(roomNo))
+						.execute();
+		
+		return rows;
+	}
+	
+	private BooleanBuilder getWhere(RoomSearchCondition cond) {
 		// 조건 생성 시작
 		BooleanBuilder where = new BooleanBuilder();
 		
@@ -120,6 +173,15 @@ public class RoomRepositoryCustomImpl implements RoomRepositoryCustom {
 		if(cond.getHouseParking() != null && cond.getHouseParking() == true) {
 			where.and(qhouseEntity.houseParkingMax.gt(0));
 		}
+		return where;
+	}
+	
+	@Override
+	public Slice<RoomEntity> searchRooms(RoomSearchCondition cond, Pageable pageable, SearchCriterion criterion, String houseNo) {
+		// 지도 마커 클릭시 방 목록 조회
+		
+		BooleanBuilder where = getWhere(cond);
+		where.and(qhouseEntity.houseNo.eq(houseNo));
 		
 		// 정렬 기준 추출
 		OrderSpecifier<?> order = getOrder(criterion, qroomEntity); 
@@ -132,41 +194,10 @@ public class RoomRepositoryCustomImpl implements RoomRepositoryCustom {
 						                .limit(pageable.getPageSize()+1) // 페이지당 몇개의 데이터를 보여줄껀지, Slice는 +1개 조회로 다음 존재 여부확인
 										.orderBy(order, qroomEntity.roomNo.asc())
 										.fetch();
-//		// 최대 갯수 계산
-//		Long totalCount = queryFactory
-//							.select(qroomEntity.count())
-//							.from(qroomEntity)
-//							.join(qhouseEntity).on(qroomEntity.houseNo.eq(qhouseEntity.houseNo))
-//							.where(where)
-//							.fetchOne();
-		
-//		return new PageImpl<>(rows, pageable, totalCount);
-		
-		// (Slice)
+
 		boolean hasNext = rows.size() > pageable.getPageSize();
 		if(hasNext) rows.removeLast();
 		
 		return new SliceImpl<>(rows, pageable, hasNext);
-	}
-	
-	// 정렬기준 설정 메소
-	private OrderSpecifier<?> getOrder(SearchCriterion criterion, QRoomEntity qroomEntity){
-		switch (criterion) {
-		case LATEST: return qroomEntity.roomUpdatedAt.desc();
-		case AREA: return qroomEntity.roomArea.desc();
-		default : return qroomEntity.roomUpdatedAt.desc();
-		}
-		// MOST_LIKED 추가 예정(QWishlistEntity 필요)
-	}
-	
-	public long softDeleteByRoomNo(String roomNo) {
-		// 방 정보 소프트 삭제
-		long rows = queryFactory.update(qroomEntity)
-						.set(qroomEntity.deleted, true)
-						.set(qroomEntity.deletedAt, LocalDateTime.now())
-						.where(qroomEntity.houseNo.eq(roomNo))
-						.execute();
-		
-		return rows;
 	}
 }

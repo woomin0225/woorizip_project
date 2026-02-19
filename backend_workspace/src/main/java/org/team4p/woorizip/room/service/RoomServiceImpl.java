@@ -156,4 +156,43 @@ public class RoomServiceImpl implements RoomService {
 		return roomRepository.save(roomEntity).toDto();
 	}
 
+	@Override
+	public Slice<RoomSearchResponse> selectRoomsInHouseMarker(RoomSearchCondition cond, Pageable pageable, SearchCriterion criterion, String houseNo) {
+		// 건물 마커 클릭시 리스트 조회
+		
+		// bbox 좌표 크기순서 보증
+		cond.adjustment();
+		
+		// 방 검색 결과 조회 -> 응답객체에 저장
+		Slice<RoomSearchResponse> slice = roomRepository.searchRooms(cond, pageable, criterion, houseNo)
+				.map((entity)->RoomSearchResponse.builder()
+								.roomNo(entity.getRoomNo())
+								.roomName(entity.getRoomName())
+								.roomUpdatedAt(entity.getRoomUpdatedAt())
+								.roomDeposit(entity.getRoomDeposit())
+								.roomMonthly(entity.getRoomMonthly())
+								.roomMethod(entity.getRoomMethod())
+								.roomArea(entity.getRoomArea())
+								.roomFacing(entity.getRoomFacing())
+								.roomRoomCount(entity.getRoomRoomCount())
+								.roomEmptyYn(entity.getRoomEmptyYn())
+								.roomImageCount(entity.getRoomImageCount())
+								.build()
+		);
+		
+		// 사진 조회 -> 이름 추출 -> 응답에 저장
+		for (RoomSearchResponse item : slice.getContent()) {
+			List<RoomImageDto> images = roomImageService.selectRoomImages(item.getRoomNo());
+			if(!images.isEmpty()) { 
+				List<String> names = new ArrayList<>();
+				for(RoomImageDto image : images) {
+					names.add(image.getRoomStoredImageName());
+				}
+				item.setImageNames(names);
+			}
+		}
+		
+		return slice;
+	}
+
 }

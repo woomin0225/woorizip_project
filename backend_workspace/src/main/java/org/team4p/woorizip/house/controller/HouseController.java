@@ -6,6 +6,8 @@ import java.nio.file.Files;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -27,7 +29,9 @@ import org.team4p.woorizip.house.image.service.HouseImageService;
 import org.team4p.woorizip.house.service.HouseService;
 import org.team4p.woorizip.room.dto.RoomDto;
 import org.team4p.woorizip.room.dto.request.RoomSearchCondition;
+import org.team4p.woorizip.room.dto.response.RoomSearchResponse;
 import org.team4p.woorizip.room.service.RoomService;
+import org.team4p.woorizip.room.type.SearchCriterion;
 
 import lombok.RequiredArgsConstructor;
 
@@ -233,6 +237,17 @@ public class HouseController {
 		return ResponseEntity.status(200).body(ApiResponse.ok("건물 이미지 목록 조회 성공", imageList));
 	}
 	
-	
+	@GetMapping("/{houseNo}/search")
+	public ResponseEntity<ApiResponse<Slice<RoomSearchResponse>>> getRoomsInHouseMarker(
+			@PathVariable("houseNo") String houseNo,
+			@RequestBody RoomSearchCondition cond,
+			Pageable pageable,
+			@RequestParam SearchCriterion criterion
+			) {
+		// 건물 마커 클릭시 리스트 조회
+		
+		Slice<RoomSearchResponse> slice = roomService.selectRoomsInHouseMarker(cond, pageable, criterion, houseNo);
+		return ResponseEntity.status(200).body(ApiResponse.ok("건물마커 내 방 목록 조회 성공", slice));
+	}
 	
 }
