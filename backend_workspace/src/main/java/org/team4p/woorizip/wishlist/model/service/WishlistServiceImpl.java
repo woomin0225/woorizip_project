@@ -89,16 +89,9 @@ public class WishlistServiceImpl implements WishlistService {
      */
     @Override
     public ArrayList<WishlistDto> selectMyList(String userNo, Pageable pageable) {
-        return toList(wishlistRepository.findMyWishlist(userNo, pageable));
+        List<WishlistDto> list = wishlistRepository.findMyWishlist(userNo, pageable);
+        
+        return list != null ? new ArrayList<>(list) : new ArrayList<>();
     }
 
-    private ArrayList<WishlistDto> toList(List<WishlistEntity> list) {
-        ArrayList<WishlistDto> dtoList = new ArrayList<>();
-        if (list != null) {
-            for (WishlistEntity entity : list) {
-                dtoList.add(WishlistDto.fromEntity(entity));
-            }
-        }
-        return dtoList;
-    }
-} // 클래스 끝 닫는 괄호
+}

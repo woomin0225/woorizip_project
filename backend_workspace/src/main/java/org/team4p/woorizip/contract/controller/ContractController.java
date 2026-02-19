@@ -23,10 +23,10 @@ public class ContractController {
 
     /**
      * 계약 조회
-     * GET /contract/{contract_no}
+     * GET /contract/{contractNo}
      */
-    @GetMapping("/{contract_no}")
-    public ResponseEntity<ApiResponse<ContractDto>> selectContract(@PathVariable("contract_no") String contractNo) {
+    @GetMapping("/{contractNo}")
+    public ResponseEntity<ApiResponse<ContractDto>> selectContract(@PathVariable("contractNo") String contractNo) {
         ContractDto contract = contractService.selectContract(contractNo);
         if (contract == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -47,15 +47,15 @@ public class ContractController {
 
     /**
      * 입주 신청
-     * POST /contract/insert/{room_no}
+     * POST /contract/insert/{roomNo}
      */
-    @PostMapping("/insert/{room_no}")
+    @PostMapping("/insert/{roomNo}")
     public ResponseEntity<ApiResponse<Void>> insertContract(
-            @PathVariable("room_no") String roomNo, // String 타입으로 일치
+            @PathVariable("roomNo") String roomNo, // String 타입으로 일치
             @RequestBody @Valid ContractDto contractDto) {
         
-        // 경로 변수로 받은 room_no를 DTO에 세팅 (DTO 필드명이 Snake Case이므로)
-        contractDto.setRoom_no(roomNo); 
+        // 경로 변수로 받은 roomNo를 DTO에 세팅 (DTO 필드명이 Snake Case이므로)
+        contractDto.setRoomNo(roomNo); 
         
         // 서비스 메서드 호출 (인자를 하나만 전달)
         int result = contractService.insertContract(contractDto);
@@ -66,15 +66,15 @@ public class ContractController {
 
     /**
      * 계약 수정
-     * POST /contract/update/{room_no}
+     * POST /contract/update/{roomNo}
      */
-    @PostMapping("/update/{room_no}")
+    @PostMapping("/update/{roomNo}")
     public ResponseEntity<ApiResponse<Void>> updateContract(
-            @PathVariable("room_no") String roomNo,
+            @PathVariable("roomNo") String roomNo,
             @RequestBody ContractDto contractDto) {
         
-        // 경로 변수로 받은 room_no를 DTO에 세팅하여 서비스로 전달
-        contractDto.setRoom_no(roomNo);
+        // 경로 변수로 받은 roomNo를 DTO에 세팅하여 서비스로 전달
+        contractDto.setRoomNo(roomNo);
         
         // 서비스 메서드 호출 (인자 타입을 ContractDto 하나로 일치시킴)
         int result = contractService.updateContract(contractDto);

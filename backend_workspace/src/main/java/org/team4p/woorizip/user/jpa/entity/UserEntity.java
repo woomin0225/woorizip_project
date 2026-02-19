@@ -34,8 +34,7 @@ public class UserEntity {
     @Column(name = "birth_date", nullable = false)
     private Date birthDate;
 
-    // [수정] DB 컬럼명이 user_type입니다.
-    @Column(name = "user_type", nullable = false)
+    @Column(name = "type", nullable = false)
     private String type; 
 
     @Column(name = "role", nullable = false)

@@ -1,24 +1,23 @@
 package org.team4p.woorizip.wishlist.jpa.repository;
 
-import com.querydsl.jpa.impl.JPAQueryFactory;
-import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Pageable;
-import org.team4p.woorizip.wishlist.jpa.entity.WishlistEntity;
+import static org.team4p.woorizip.wishlist.jpa.entity.QWishlistEntity.wishlistEntity;
+//import static org.team4p.woorizip.room.jpa.entity.QRoomEntity.roomEntity;
 
 import java.util.List;
 
-// Q클래스 import (QueryDSL 설정에 따라 경로가 다를 수 있음)
-import static org.team4p.woorizip.wishlist.jpa.entity.QWishlistEntity.wishlistEntity;
+import org.springframework.data.domain.Pageable;
+import org.team4p.woorizip.wishlist.model.dto.WishlistDto;
+
+import com.querydsl.core.types.Projections;
+import com.querydsl.jpa.impl.JPAQueryFactory;
+
+import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public class WishlistRepositoryCustomImpl implements WishlistRepositoryCustom {
 
     private final JPAQueryFactory queryFactory;
 
-    /**
-     * 내 찜 목록 개수 조회
-     * 조건: userNo 일치
-     */
     @Override
     public long countMyWishlist(String userNo) {
         Long count = queryFactory
@@ -30,15 +29,19 @@ public class WishlistRepositoryCustomImpl implements WishlistRepositoryCustom {
         return count != null ? count : 0L;
     }
 
-    /**
-     * 내 찜 목록 조회 (페이징 적용)
-     * 조건: userNo 일치
-     * 정렬: 최신순 (regDate 내림차순, 없다면 wishNo 내림차순 등 상황에 맞게 조정)
-     */
     @Override
-    public List<WishlistEntity> findMyWishlist(String userNo, Pageable pageable) {
+    public List<WishlistDto> findMyWishlist(String userNo, Pageable pageable) {
         return queryFactory
-                .selectFrom(wishlistEntity)
+                .select(Projections.fields(WishlistDto.class,
+                        wishlistEntity.wishNo,
+                        wishlistEntity.userNo,
+                        wishlistEntity.roomNo,
+                        wishlistEntity.createdAt
+//                        ,
+//                        roomEntity.roomName.as("targetTitle") // roomName을 targetTitle로 매핑
+                ))
+                .from(wishlistEntity)
+//                .leftJoin(roomEntity).on(wishlistEntity.roomNo.eq(roomEntity.roomNo))
                 .where(wishlistEntity.userNo.eq(userNo))
                 .orderBy(wishlistEntity.createdAt.desc())
                 .offset(pageable.getOffset())

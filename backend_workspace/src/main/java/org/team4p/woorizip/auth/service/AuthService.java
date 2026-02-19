@@ -24,17 +24,17 @@ public class AuthService {
 
     public TokenResponse login(LoginRequest req) {
         Authentication auth = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(req.userId(), req.userPwd())
+                new UsernamePasswordAuthenticationToken(req.emailId(), req.password())
         );
 
-        String userId = auth.getName();
+        String emailId = auth.getName();
         String role = auth.getAuthorities().stream().findFirst().map(a -> a.getAuthority()).orElse("ROLE_USER");
 
-        String access = jwtTokenProvider.createAccessToken(userId, role);
-        String refresh = jwtTokenProvider.createRefreshToken(userId, role);
+        String access = jwtTokenProvider.createAccessToken(emailId, role);
+        String refresh = jwtTokenProvider.createRefreshToken(emailId, role);
 
         LocalDateTime now = LocalDateTime.now();
-        refreshTokenService.upsert(userId, refresh, now, now.plusDays(1)); // refresh 1일
+        refreshTokenService.upsert(emailId, refresh, now, now.plusDays(1)); // refresh 1일
 
         return new TokenResponse(access, refresh, jwtProperties.accessExp(), jwtProperties.refreshExp());
     }
@@ -44,20 +44,20 @@ public class AuthService {
             throw new RuntimeException("refresh expired");
         }
 
-        String userId = jwtTokenProvider.getUserId(refreshToken);
+        String emailId = jwtTokenProvider.getEmailId(refreshToken);
         String role = jwtTokenProvider.getRole(refreshToken);
 
-        if (!refreshTokenService.matches(userId, refreshToken)) {
+        if (!refreshTokenService.matches(emailId, refreshToken)) {
             throw new RuntimeException("refresh not matched");
         }
 
-        String newAccess = jwtTokenProvider.createAccessToken(userId, role);
+        String newAccess = jwtTokenProvider.createAccessToken(emailId, role);
 
         String newRefresh = null;
         if (extendLogin) {
-            newRefresh = jwtTokenProvider.createRefreshToken(userId, role);
+            newRefresh = jwtTokenProvider.createRefreshToken(emailId, role);
             LocalDateTime now = LocalDateTime.now();
-            refreshTokenService.upsert(userId, newRefresh, now, now.plusDays(1));
+            refreshTokenService.upsert(emailId, newRefresh, now, now.plusDays(1));
         }
 
         return new TokenResponse(newAccess, newRefresh, jwtProperties.accessExp(), jwtProperties.refreshExp());
@@ -69,7 +69,7 @@ public class AuthService {
         String token = accessToken.substring("Bearer ".length()).trim();
         if (!jwtTokenProvider.validate(token)) return;
 
-        String userId = jwtTokenProvider.getUserId(token);
-        refreshTokenService.deleteByUserId(userId);
+        String emailId = jwtTokenProvider.getEmailId(token);
+        refreshTokenService.deleteByUserId(emailId);
     }
 }

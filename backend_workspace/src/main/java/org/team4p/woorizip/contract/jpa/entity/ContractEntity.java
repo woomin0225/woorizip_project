@@ -15,13 +15,13 @@ import lombok.*;
 public class ContractEntity {
 
     @Id
-    @Column(name = "contract_no", length = 36)
+    @Column(name = "contractNo", length = 36)
     private String contractNo;
 
-    @Column(name = "user_no", nullable = false, length = 36)
+    @Column(name = "userNo", nullable = false, length = 36)
     private String userNo;
 
-    @Column(name = "room_no", nullable = false, length = 36)
+    @Column(name = "roomNo", nullable = false, length = 36)
     private String roomNo;
 
     @Temporal(TemporalType.DATE)
@@ -31,8 +31,8 @@ public class ContractEntity {
     @Column(name = "term_months", nullable = false)
     private int termMonths;
 
-    @Column(name = "contract_status", nullable = false, length = 20)
-    private String contractStatus;
+    @Column(name = "status", nullable = false, length = 20)
+    private String status;
 
     @Column(name = "contract_url", length = 500)
     private String contractUrl;
@@ -48,8 +48,8 @@ public class ContractEntity {
         }
         
         // 2. 기본 상태값 설정
-        if (this.contractStatus == null) {
-            this.contractStatus = "PENDING"; // 신청 대기 상태 등 기본값
+        if (this.status == null) {
+            this.status = "PENDING"; // 신청 대기 상태 등 기본값
         }
     }
 }

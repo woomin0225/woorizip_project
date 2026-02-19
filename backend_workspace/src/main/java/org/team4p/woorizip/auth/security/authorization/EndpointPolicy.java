@@ -10,8 +10,8 @@ public final class EndpointPolicy {
     };
 
     public static final String[] PUBLIC_POST = {
-            "/api/members",
-            "/api/members/check-id"
+            "/api/user",
+            "/api/user/check-id"
     };
 
     // 공지: ADMIN만 (POST/PUT/DELETE)
@@ -27,7 +27,7 @@ public final class EndpointPolicy {
     };
 
     // 회원: 내정보 USER/ADMIN, 목록/검색 ADMIN
-    public static final String[] MEMBER_ME = { "/api/members/*", "/api/members/*/photo" };
-    public static final String[] MEMBER_ADMIN_LIST = { "/api/members", "/api/members/search" };
-    public static final String[] MEMBER_ADMIN_PATCH = { "/api/members/*/login-ok" };
+    public static final String[] USER_ME = { "/api/user/*" };
+    public static final String[] USER_ADMIN_LIST = { "/api/user", "/api/user/search" };
+    public static final String[] USER_ADMIN_PATCH = { "/api/user/*/login-ok" };
 }
