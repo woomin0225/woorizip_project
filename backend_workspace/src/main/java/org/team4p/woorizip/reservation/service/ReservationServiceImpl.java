@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.team4p.woorizip.common.exception.ForbiddenException;
 import org.team4p.woorizip.common.exception.NotFoundException;
 import org.team4p.woorizip.facility.jpa.entity.FacilityEntity;
 import org.team4p.woorizip.facility.jpa.repository.FacilityRepository;
@@ -40,6 +41,9 @@ public class ReservationServiceImpl implements ReservationService {
 		// 유저 번호 가져오기
 		UserEntity user = userRepository.findById(userNo)
 				.orElseThrow(() -> new NotFoundException("no user data exists"));
+		
+		// 권한 확인하기
+	   
 
 		// 예약 내용 저장하기
 		ReservationEntity reservation = ReservationEntity
@@ -88,10 +92,15 @@ public class ReservationServiceImpl implements ReservationService {
 	// 예약 내용 수정
 	@Override
 	@Transactional
-	public void modifyReservation(String reservationNo, ReservationModifyRequestDTO dto) {
+	public void modifyReservation(String reservationNo, ReservationModifyRequestDTO dto, String userNo) {
 		// 예약 번호 찾기
 		ReservationEntity entity = reservationRepository.findById(reservationNo)
 				.orElseThrow(() -> new NotFoundException("no reservation data exists"));
+		
+		// 권한 확인하기
+	    if (!entity.getUser().getUserNo().equals(userNo)) {
+	        throw new ForbiddenException("no permission to modify this reservation"); 
+	    }
 
 		// dto 업데이트
 		entity.updateReservation(dto);

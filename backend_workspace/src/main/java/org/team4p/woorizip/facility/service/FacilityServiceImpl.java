@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.team4p.woorizip.common.exception.ForbiddenException;
 import org.team4p.woorizip.common.exception.NotFoundException;
 import org.team4p.woorizip.facility.dto.FacilityCategoryDTO;
 import org.team4p.woorizip.facility.dto.FacilityCreateRequestDTO;
@@ -168,10 +169,15 @@ public class FacilityServiceImpl implements FacilityService {
 	// 시설 정보 수정
 	@Override
 	@Transactional
-	public void modifyFacility(String facilityNo, FacilityModifyRequestDTO dto) {
+	public void modifyFacility(String facilityNo, FacilityModifyRequestDTO dto, String userNo) {
 		// 시설 번호 찾기
 		FacilityEntity entity = facilityRepository.findById(facilityNo)
 				.orElseThrow(() -> new NotFoundException("no facility data exists"));
+		
+		// 권한 확인하기
+	    if (!entity.getHouse().getUserNo().equals(userNo)) {
+	        throw new ForbiddenException("no permission to modify this facility"); 
+	    }
 
 		// 이미지 삭제 후 재업로드
 		if (dto.getImages() != null) {
