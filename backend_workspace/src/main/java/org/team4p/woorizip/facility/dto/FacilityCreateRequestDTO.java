@@ -21,6 +21,8 @@ import lombok.Setter;
 @AllArgsConstructor
 public class FacilityCreateRequestDTO {
 	
+	private String houseNo;
+	
 	private Integer facilityCode;
 	
 	@NotBlank(message="facilityName needed")

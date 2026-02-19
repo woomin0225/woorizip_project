@@ -48,9 +48,20 @@ public class FacilityServiceImpl implements FacilityService {
 	@Override
 	@Transactional
 	public void createFacility(FacilityCreateRequestDTO dto, String userNo) {
-		// userNo로 houseNo 추출
-		HouseEntity house = houseRepository.findByUserNo(userNo)
-				.orElseThrow(() -> new NotFoundException("no houseNo in userNo"));
+		// userNo로 houseList 추출
+		List<HouseEntity> houseList = houseRepository.findAllByUserNoOrderByHouseName(userNo);
+		
+		// houseNo 매칭
+		HouseEntity selectedHouse = null;
+		for (HouseEntity house : houseList) {
+	        if (house.getHouseNo().equals(dto.getHouseNo())) {
+	            selectedHouse = house;
+	            break;
+	        }
+	    }
+		if (selectedHouse == null) {
+	        throw new NotFoundException("no houseNo in userNo");
+	    }
 
 		// 카테고리 선택에 따른 옵션 기본값 가져오기 : 미선택 시 기본값 미적용
 		FacilityCategoryEntity facilityCategory = null;
@@ -77,7 +88,7 @@ public class FacilityServiceImpl implements FacilityService {
 		
 		// 동일 카테고리의 시설이 있는지 확인
 		Optional<FacilityEntity> lastSequence = facilityRepository
-		        .findFirstByHouse_HouseNoAndCategory_FacilityCodeOrderByFacilitySequenceDesc(house, dto.getFacilityCode());
+		        .findFirstByHouse_HouseNoAndCategory_FacilityCodeOrderByFacilitySequenceDesc(selectedHouse, dto.getFacilityCode());
 		
 		// 동일 카테고리 시설 순서 배정
 		Integer nextSequence;
@@ -91,7 +102,7 @@ public class FacilityServiceImpl implements FacilityService {
 		FacilityEntity facility = FacilityEntity
 				.builder()
 				.facilityNo(UUID.randomUUID().toString())
-				.house(house)
+				.house(selectedHouse)
 				.facilityName(finalName)
 				.facilitySequence(nextSequence)
 				.facilityOptionInfo(finalOptions)
