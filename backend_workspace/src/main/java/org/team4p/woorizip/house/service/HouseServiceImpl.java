@@ -19,6 +19,7 @@ import org.team4p.woorizip.house.jpa.repository.HouseRepository;
 import org.team4p.woorizip.house.kakaoAPI.KakaoGeocodingResponse;
 import org.team4p.woorizip.room.dto.request.RoomSearchCondition;
 import org.team4p.woorizip.room.jpa.repository.RoomRepository;
+import org.team4p.woorizip.user.jpa.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -28,6 +29,7 @@ public class HouseServiceImpl implements HouseService {
 	private final HouseRepository houseRepository;
 	private final @Qualifier("houseRestTemplate") RestTemplate houseRestTemplate;
 	private final RoomRepository roomRepository;
+	private final UserRepository userRepository;
 
 	@Override
 	public HouseDto selectHouses(RoomSearchCondition cond) {
@@ -100,18 +102,18 @@ public class HouseServiceImpl implements HouseService {
 
 	@Override
 	@Transactional
-	public HouseDto updateHouse(HouseDto houseDto, String currentUserNo) {
+	public HouseDto updateHouse(HouseDto houseDto, String currentUser) {
 		// 건물 정보 수정
 		
 		String userNo = houseRepository.findUserNoById(houseDto.getHouseNo());
-		if (!userNo.equals(currentUserNo)) throw new ForbiddenException("수정 권한이 없습니다.");
+		if (!userNo.equals(userRepository.findUserNoByEmailId(currentUser))) throw new ForbiddenException("수정 권한이 없습니다.");
 		
 		return houseRepository.save(houseDto.toEntity()).toDto();
 	}
 
 	@Override
 	@Transactional
-	public void deleteHouse(String houseNo, String currentUserNo) {
+	public void deleteHouse(String houseNo, String currentUser) {
 		// 건물 정보 삭제
 		
 		// 건물 있는지 검사
@@ -120,7 +122,7 @@ public class HouseServiceImpl implements HouseService {
 		
 		// 건물 있으면 소유권 검사 
 		// 로그인한 유저와 gettedOwner 비교
-		if(!gettedHouse.get().getUserNo().equals(currentUserNo)) {
+		if(!gettedHouse.get().getUserNo().equals(userRepository.findUserNoByEmailId(currentUser))) {
 			throw new ForbiddenException("삭제 권한이 없습니다.");
 		}
 		
