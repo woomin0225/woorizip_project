@@ -3,6 +3,7 @@ package org.team4p.woorizip.room.controller;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -11,9 +12,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -56,13 +59,14 @@ public class RoomController {
 	
 	@PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	public ResponseEntity<ApiResponse<Void>> createRoom(
-			@ModelAttribute RoomDto roomDto,
+			@RequestBody RoomDto roomDto,
 			@RequestParam(value="newImages", required=false) List<MultipartFile> newImages,
-			@RequestHeader("currentUserNo") String currentUserNo/*임시*/
+			Authentication auth
 			) {
 		// 방 등록
 		
-		RoomDto savedRoomDto = roomService.insertRoom(roomDto, currentUserNo); 
+		String currentUser = auth.getName().toString();
+		RoomDto savedRoomDto = roomService.insertRoom(roomDto, currentUser); 
 		
 		// 이미지 등록 : 이미지 파일 저장 실패하면 DB에도 등록 안됨. DB에 저장 실패하면 파일저장소에서 삭제됨
 		if (savedRoomDto != null) {	// 건물 등록 성공한 경우
@@ -119,30 +123,30 @@ public class RoomController {
 	}
 	
 	@DeleteMapping("/{roomNo}")
-	public ResponseEntity<ApiResponse<Void>> deleteRoom(@PathVariable("roomNo") String roomNo, @RequestHeader("currentUserNo") String currentUserNo/*임시*/){
+	public ResponseEntity<ApiResponse<Void>> deleteRoom(@PathVariable("roomNo") String roomNo, Authentication auth){
 		// 방 소프트 삭제
-		
-		roomService.deleteRoom(roomNo, currentUserNo);
+		String currentUser = auth.getName().toString();
+		roomService.deleteRoom(roomNo, currentUser);
 		
 		return ResponseEntity.status(200).body(ApiResponse.ok("방 정보 삭제 성공", null));
 	}
 	
 	@GetMapping("/{roomNo}")
-	public ResponseEntity<ApiResponse<RoomDto>> getRoom(String roomNo){
+	public ResponseEntity<ApiResponse<RoomDto>> getRoom(@PathVariable("roomNo") String roomNo){
 		// 방 상세 조회
 		RoomDto room = roomService.selectRoom(roomNo);
 		return ResponseEntity.status(200).body(ApiResponse.ok("방 목록 조회 성공", room));
 	}
 	
 	@GetMapping("/{roomNo}/images")
-	public ResponseEntity<ApiResponse<List<RoomImageDto>>> getRoomImages(String roomNo) {
+	public ResponseEntity<ApiResponse<List<RoomImageDto>>> getRoomImages(@PathVariable("roomNo") String roomNo) {
 		// 방 상세 이미지 조회
 		List<RoomImageDto> imageList = roomImageService.selectRoomImages(roomNo); 
 		return ResponseEntity.status(200).body(ApiResponse.ok("방 사진 목록 조회 성공", imageList));
 	}
 	
 	@GetMapping("/{roomNo}/reviews")
-	public ResponseEntity<ApiResponse<Page<ReviewDto>>> getRoomReviews(String roomNo, Pageable pageable){
+	public ResponseEntity<ApiResponse<Page<ReviewDto>>> getRoomReviews(@PathVariable("roomNo") String roomNo, Pageable pageable){
 		// 방 상세 리뷰 조회 (페이징 처리)
 		Page<ReviewDto> reviewPage = reviewService.selectRoomReviews(roomNo, pageable);
 		return ResponseEntity.status(200).body(ApiResponse.ok("방 리뷰 목록 조회 성공", reviewPage));
@@ -154,12 +158,13 @@ public class RoomController {
 			@ModelAttribute RoomDto roomDto,
 			@RequestParam(value="deleteImageNos", required=false) List<Integer> deleteImageNos,
 			@RequestParam(value="newImages", required=false) List<MultipartFile> newImages,
-			@RequestHeader("currentUserNo") String currentUserNo/*임시*/
+			Authentication auth
 			){
 		
 		// 방 정보 수정
 		roomDto.setRoomNo(roomNo);
-		roomService.updateRoom(roomDto, currentUserNo);
+		String currentUser = auth.getName().toString();
+		roomService.updateRoom(roomDto, currentUser);
 		
 		// 삭제 사진 처리 : DB삭제 -> 저장소 삭제
 		if(deleteImageNos != null && deleteImageNos.size() > 0) {
@@ -241,11 +246,12 @@ public class RoomController {
 	public ResponseEntity<ApiResponse<Void>> deleteRoomReview(
 			@PathVariable("roomNo") String roomNo,
 			@PathVariable("reviewNo") int reviewNo,
-			String userNo/*임시*/
+			Authentication auth
 			){
 		// 방 리뷰 삭제
 		
-		reviewService.deleteRoomReview(reviewNo, userNo);
+		String currentUser = auth.getName().toString();
+		reviewService.deleteRoomReview(reviewNo, currentUser);
 		return ResponseEntity.status(200).body(ApiResponse.ok("리뷰 삭제 성공", null));
 	}
 	
@@ -254,14 +260,25 @@ public class RoomController {
 			@PathVariable("roomNo") String roomNo,
 			@PathVariable("reviewNo") int reviewNo,
 			@RequestBody ReviewDto reviewDto,
-			String userNo/*임시*/
+			Authentication auth
 			){
 		// 방 리뷰 수정
 		
+		String currentUser = auth.getName().toString();
 		reviewDto.setReviewNo(reviewNo);
 		reviewDto.setRoomNo(roomNo);
-		reviewService.updateRoomReview(reviewDto, roomNo);
+		reviewService.updateRoomReview(reviewDto, currentUser);
 		
 		return ResponseEntity.status(200).body(ApiResponse.ok("리뷰 수정 성공", null));
+	}
+	
+	@PatchMapping("/{roomNo}/availability")
+	public ResponseEntity<ApiResponse<Void>> modifyRoomAvailability(@PathVariable String roomNo,@RequestBody LocalDateTime date, Authentication auth){
+		// 방 입주 가능 일자 변경
+		
+		String currentUser = auth.getName().toString();
+		roomService.updateRoomAvailability(roomNo, date, currentUser);
+		
+		return ResponseEntity.status(200).body(ApiResponse.ok("입주일자 변경 완료", null));
 	}
 }

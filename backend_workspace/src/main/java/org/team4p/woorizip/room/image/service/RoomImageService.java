@@ -8,4 +8,5 @@ public interface RoomImageService {
 	List<RoomImageDto> selectRoomImages(String roomNo);
 	RoomImageDto insertRoomImage(RoomImageDto roomImageDto);
 	RoomImageDto deleteRoomImageByRoomImageNo(int deleteImageNo, String roomNo);
+	void deleteRoomImagesAll(String roomNo);
 }

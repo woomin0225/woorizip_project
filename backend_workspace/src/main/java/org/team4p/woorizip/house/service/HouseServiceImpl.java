@@ -19,21 +19,17 @@ import org.team4p.woorizip.house.jpa.repository.HouseRepository;
 import org.team4p.woorizip.house.kakaoAPI.KakaoGeocodingResponse;
 import org.team4p.woorizip.room.dto.request.RoomSearchCondition;
 import org.team4p.woorizip.room.jpa.repository.RoomRepository;
+import org.team4p.woorizip.user.jpa.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 
-//@Service
+@Service
 @RequiredArgsConstructor
 public class HouseServiceImpl implements HouseService {
 	private final HouseRepository houseRepository;
 	private final @Qualifier("houseRestTemplate") RestTemplate houseRestTemplate;
 	private final RoomRepository roomRepository;
-
-	@Override
-	public HouseDto selectHouses(RoomSearchCondition cond) {
-		// 건물 검색 결과 조회
-		return null;
-	}
+	private final UserRepository userRepository;
 
 	@Override
 	public List<HouseMarkerResponse> selectHouseMarkers(RoomSearchCondition cond) {
@@ -49,15 +45,18 @@ public class HouseServiceImpl implements HouseService {
 		Integer maxMonthly = map.get("maxMonthly");
 		
 		List<HouseMarkerResponse> list = new ArrayList<>();
-		rows.stream().map(entity->list.add(new HouseMarkerResponse(entity, minDeposit, maxDeposit, minMonthly, maxMonthly)));
-		
+		rows.forEach(entity->list.add(new HouseMarkerResponse(entity, minDeposit, maxDeposit, minMonthly, maxMonthly)));
 		return list;
 	}
 
 	@Override
-	public List<HouseDto> selectHousesByOwnerNo(String userNo) {
+	public List<HouseDto> selectHousesByOwnerNo(String currentUser) {
 		// 임대인 회원 건물 목록 조회
-		return null;
+		String userNo = userRepository.findUserNoByEmailId(currentUser);
+		List<HouseEntity> rows = houseRepository.findAllByUserNoOrderByHouseName(userNo);
+		List<HouseDto> list = new ArrayList<>();
+		rows.forEach(entity->list.add(entity.toDto()));
+		return list;
 	}
 
 	@Override
@@ -100,18 +99,18 @@ public class HouseServiceImpl implements HouseService {
 
 	@Override
 	@Transactional
-	public HouseDto updateHouse(HouseDto houseDto, String currentUserNo) {
+	public HouseDto updateHouse(HouseDto houseDto, String currentUser) {
 		// 건물 정보 수정
 		
 		String userNo = houseRepository.findUserNoById(houseDto.getHouseNo());
-		if (!userNo.equals(currentUserNo)) throw new ForbiddenException("수정 권한이 없습니다.");
+		if (!userNo.equals(userRepository.findUserNoByEmailId(currentUser))) throw new ForbiddenException("수정 권한이 없습니다.");
 		
 		return houseRepository.save(houseDto.toEntity()).toDto();
 	}
 
 	@Override
 	@Transactional
-	public void deleteHouse(String houseNo, String currentUserNo) {
+	public void deleteHouse(String houseNo, String currentUser) {
 		// 건물 정보 삭제
 		
 		// 건물 있는지 검사
@@ -120,7 +119,7 @@ public class HouseServiceImpl implements HouseService {
 		
 		// 건물 있으면 소유권 검사 
 		// 로그인한 유저와 gettedOwner 비교
-		if(!gettedHouse.get().getUserNo().equals(currentUserNo)) {
+		if(!gettedHouse.get().getUserNo().equals(userRepository.findUserNoByEmailId(currentUser))) {
 			throw new ForbiddenException("삭제 권한이 없습니다.");
 		}
 		

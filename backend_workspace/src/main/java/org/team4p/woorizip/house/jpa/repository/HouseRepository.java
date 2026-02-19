@@ -1,5 +1,6 @@
 package org.team4p.woorizip.house.jpa.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -9,5 +10,6 @@ import org.team4p.woorizip.house.jpa.entity.HouseEntity;
 @Repository
 public interface HouseRepository extends JpaRepository<HouseEntity, String>, HouseRepositoryCustom {
 	String findUserNoById(String houseId);
-	Optional<HouseEntity> findByUserNo(String userNo); // method for FacilityService - 서윤
+	List<HouseEntity> findAllByUserNoOrderByHouseName(String userNo);
+	Optional<HouseEntity> findByUserNo(String userNo);
 }

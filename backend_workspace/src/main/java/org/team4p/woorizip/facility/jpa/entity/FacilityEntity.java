@@ -44,6 +44,10 @@ public class FacilityEntity {
 	@JoinColumn(name = "house_no")
 	private HouseEntity house;
 	
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "facility_code")
+	private FacilityCategoryEntity category;
+	
 	@Column(name = "facility_name")
 	private String facilityName;
 	
@@ -93,7 +97,7 @@ public class FacilityEntity {
 	private Integer facilityMaxDurationMinutes;
 	
 	@Builder.Default
-	@OneToMany(mappedBy = "facilityNo", cascade = CascadeType.ALL, orphanRemoval = true)
+	@OneToMany(mappedBy = "facility", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<FacilityImageEntity> images = new ArrayList<>();
 
 	public void updateFacility(FacilityModifyRequestDTO dto) {

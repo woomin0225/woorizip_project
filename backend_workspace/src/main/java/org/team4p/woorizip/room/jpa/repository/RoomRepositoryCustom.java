@@ -9,5 +9,6 @@ import org.team4p.woorizip.room.type.SearchCriterion;
 public interface RoomRepositoryCustom {
 	void softDeleteByHouseNo(String houseNo);
 	Slice<RoomEntity> searchRooms(RoomSearchCondition cond, Pageable pageable, SearchCriterion criterion);
+	Slice<RoomEntity> searchRooms(RoomSearchCondition cond, Pageable pageable, SearchCriterion criterion, String houseNo);
 	long softDeleteByRoomNo(String roomNo);
 }

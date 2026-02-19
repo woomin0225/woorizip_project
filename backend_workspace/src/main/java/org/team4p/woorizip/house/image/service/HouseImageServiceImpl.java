@@ -13,7 +13,7 @@ import org.team4p.woorizip.house.image.jpa.repository.HouseImageRepository;
 
 import lombok.RequiredArgsConstructor;
 
-//@Service
+@Service
 @RequiredArgsConstructor
 public class HouseImageServiceImpl implements HouseImageService {
 	private final HouseImageRepository houseImageRepository;
@@ -23,7 +23,7 @@ public class HouseImageServiceImpl implements HouseImageService {
 		// 건물 이미지 목록 조회
 		List<HouseImageEntity> rows = houseImageRepository.findAllByHouseNo(houseNo);
 		List<HouseImageDto> list = new ArrayList<>();
-		rows.stream().map(entity->list.add(entity.toDto()));
+		rows.forEach(entity->list.add(entity.toDto()));
 		return list;
 	}
 
@@ -36,7 +36,9 @@ public class HouseImageServiceImpl implements HouseImageService {
 	}
 
 	@Override
+	@Transactional
 	public HouseImageDto deleteHouseImageByHouseImageNo(int deleteImageNo, String currentHouseNo) {
+		// 건물 사진 삭제
 		// 건물사진번호로 건물사진 엔티티 반환
 		Optional<HouseImageEntity> OptionalEntity = houseImageRepository.findById(deleteImageNo);
 		if(!OptionalEntity.isPresent()) throw new NotFoundException("해당 번호의 사진을 찾을 수 없습니다.");
@@ -48,8 +50,12 @@ public class HouseImageServiceImpl implements HouseImageService {
 	}
 
 	@Override
-	public int deleteHouseImagesAll(String houseNo) {
-		// TODO Auto-generated method stub
-		return 0;
+	@Transactional
+	public void deleteHouseImagesAll(String houseNo) {
+		// 건물 이미지 전부 삭제
+		List<HouseImageEntity> rows = houseImageRepository.findAllByHouseNo(houseNo);
+		for(HouseImageEntity entity:rows) {
+			houseImageRepository.deleteById(entity.getHouseImageNo());
+		}
 	}
 }
