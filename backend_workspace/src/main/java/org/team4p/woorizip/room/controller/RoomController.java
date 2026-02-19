@@ -132,21 +132,21 @@ public class RoomController {
 	}
 	
 	@GetMapping("/{roomNo}")
-	public ResponseEntity<ApiResponse<RoomDto>> getRoom(String roomNo){
+	public ResponseEntity<ApiResponse<RoomDto>> getRoom(@PathVariable("roomNo") String roomNo){
 		// 방 상세 조회
 		RoomDto room = roomService.selectRoom(roomNo);
 		return ResponseEntity.status(200).body(ApiResponse.ok("방 목록 조회 성공", room));
 	}
 	
 	@GetMapping("/{roomNo}/images")
-	public ResponseEntity<ApiResponse<List<RoomImageDto>>> getRoomImages(String roomNo) {
+	public ResponseEntity<ApiResponse<List<RoomImageDto>>> getRoomImages(@PathVariable("roomNo") String roomNo) {
 		// 방 상세 이미지 조회
 		List<RoomImageDto> imageList = roomImageService.selectRoomImages(roomNo); 
 		return ResponseEntity.status(200).body(ApiResponse.ok("방 사진 목록 조회 성공", imageList));
 	}
 	
 	@GetMapping("/{roomNo}/reviews")
-	public ResponseEntity<ApiResponse<Page<ReviewDto>>> getRoomReviews(String roomNo, Pageable pageable){
+	public ResponseEntity<ApiResponse<Page<ReviewDto>>> getRoomReviews(@PathVariable("roomNo") String roomNo, Pageable pageable){
 		// 방 상세 리뷰 조회 (페이징 처리)
 		Page<ReviewDto> reviewPage = reviewService.selectRoomReviews(roomNo, pageable);
 		return ResponseEntity.status(200).body(ApiResponse.ok("방 리뷰 목록 조회 성공", reviewPage));
@@ -272,7 +272,7 @@ public class RoomController {
 		return ResponseEntity.status(200).body(ApiResponse.ok("리뷰 수정 성공", null));
 	}
 	
-	@PatchMapping("/rooms/{room_no}/availability")
+	@PatchMapping("/{roomNo}/availability")
 	public ResponseEntity<ApiResponse<Void>> modifyRoomAvailability(@PathVariable String roomNo,@RequestBody LocalDateTime date, Authentication auth){
 		// 방 입주 가능 일자 변경
 		

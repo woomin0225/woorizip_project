@@ -23,7 +23,7 @@ import org.team4p.woorizip.user.jpa.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 
-//@Service
+@Service
 @RequiredArgsConstructor
 public class HouseServiceImpl implements HouseService {
 	private final HouseRepository houseRepository;
@@ -45,18 +45,17 @@ public class HouseServiceImpl implements HouseService {
 		Integer maxMonthly = map.get("maxMonthly");
 		
 		List<HouseMarkerResponse> list = new ArrayList<>();
-		rows.stream().map(entity->list.add(new HouseMarkerResponse(entity, minDeposit, maxDeposit, minMonthly, maxMonthly)));
-		
+		rows.forEach(entity->list.add(new HouseMarkerResponse(entity, minDeposit, maxDeposit, minMonthly, maxMonthly)));
 		return list;
 	}
 
 	@Override
-	public List<HouseDto> selectHousesByOwnerNo(String userNo) {
+	public List<HouseDto> selectHousesByOwnerNo(String currentUser) {
 		// 임대인 회원 건물 목록 조회
-		
+		String userNo = userRepository.findUserNoByEmailId(currentUser);
 		List<HouseEntity> rows = houseRepository.findAllByUserNoOrderByHouseName(userNo);
 		List<HouseDto> list = new ArrayList<>();
-		rows.stream().map(entity->list.add(entity.toDto()));
+		rows.forEach(entity->list.add(entity.toDto()));
 		return list;
 	}
 
