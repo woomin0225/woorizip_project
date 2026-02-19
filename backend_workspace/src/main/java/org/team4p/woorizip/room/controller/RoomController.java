@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -225,5 +226,42 @@ public class RoomController {
 			}
 		}
 		return ResponseEntity.status(200).body(ApiResponse.ok("방 정보 수정 성공", null));
+	}
+	
+	@PostMapping("/{roomNo}/reviews")
+	public ResponseEntity<ApiResponse<Void>> createRoomReview(@RequestBody ReviewDto reviewDto, @PathVariable("roomNo") String roomNo){
+		// 방 리뷰 등록
+		reviewDto.setRoomNo(roomNo);
+		reviewService.insertRoomReview(reviewDto);
+		
+		return ResponseEntity.status(201).body(ApiResponse.ok("리뷰 등록 성공", null));
+	}
+	
+	@DeleteMapping("/{roomNo}/reviews/{reviewNo}")
+	public ResponseEntity<ApiResponse<Void>> deleteRoomReview(
+			@PathVariable("roomNo") String roomNo,
+			@PathVariable("reviewNo") int reviewNo,
+			String userNo/*임시*/
+			){
+		// 방 리뷰 삭제
+		
+		reviewService.deleteRoomReview(reviewNo, userNo);
+		return ResponseEntity.status(200).body(ApiResponse.ok("리뷰 삭제 성공", null));
+	}
+	
+	@PutMapping("/{roomNo}/reviews/{reviewNo}")
+	public ResponseEntity<ApiResponse<Void>> ModifyRoomReview(
+			@PathVariable("roomNo") String roomNo,
+			@PathVariable("reviewNo") int reviewNo,
+			@RequestBody ReviewDto reviewDto,
+			String userNo/*임시*/
+			){
+		// 방 리뷰 수정
+		
+		reviewDto.setReviewNo(reviewNo);
+		reviewDto.setRoomNo(roomNo);
+		reviewService.updateRoomReview(reviewDto, roomNo);
+		
+		return ResponseEntity.status(200).body(ApiResponse.ok("리뷰 수정 성공", null));
 	}
 }
