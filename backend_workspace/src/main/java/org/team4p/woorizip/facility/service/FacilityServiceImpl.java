@@ -9,6 +9,8 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.team4p.woorizip.common.exception.ForbiddenException;
+import org.team4p.woorizip.common.exception.NotFoundException;
 import org.team4p.woorizip.facility.dto.FacilityCategoryDTO;
 import org.team4p.woorizip.facility.dto.FacilityCreateRequestDTO;
 import org.team4p.woorizip.facility.dto.FacilityDetailResponseDTO;
@@ -48,7 +50,7 @@ public class FacilityServiceImpl implements FacilityService {
 	public void createFacility(FacilityCreateRequestDTO dto, String userNo) {
 		// userNo로 houseNo 추출
 		HouseEntity house = houseRepository.findByUserNo(userNo)
-				.orElseThrow(() -> new RuntimeException("no houseNo in userNo"));
+				.orElseThrow(() -> new NotFoundException("no houseNo in userNo"));
 
 		// 카테고리 선택에 따른 옵션 기본값 가져오기 : 미선택 시 기본값 미적용
 		FacilityCategoryEntity facilityCategory = null;
@@ -148,7 +150,7 @@ public class FacilityServiceImpl implements FacilityService {
 	public void modifyFacilityCategory(Integer facilityCode, FacilityCategoryDTO dto) {
 		// 시설 코드 찾기
 		FacilityCategoryEntity category = categoryRepository.findById(facilityCode)
-				.orElseThrow(() -> new IllegalArgumentException("no categoryCode exists"));
+				.orElseThrow(() -> new NotFoundException("no categoryCode exists"));
 		
 		// dto 업데이트
 		category.updateCategory(dto);
@@ -161,16 +163,21 @@ public class FacilityServiceImpl implements FacilityService {
 	public FacilityDetailResponseDTO getFacilityDetails(String facilityNo) {
 		return facilityRepository.findByFacilityNoAndFacilityDeletedAtIsNull(facilityNo)
 				.map(FacilityDetailResponseDTO::from)
-				.orElseThrow(() -> new RuntimeException("no facility data exists"));
+				.orElseThrow(() -> new NotFoundException("no facility data exists"));
 	}
 
 	// 시설 정보 수정
 	@Override
 	@Transactional
-	public void modifyFacility(String facilityNo, FacilityModifyRequestDTO dto) {
+	public void modifyFacility(String facilityNo, FacilityModifyRequestDTO dto, String userNo) {
 		// 시설 번호 찾기
 		FacilityEntity entity = facilityRepository.findById(facilityNo)
-				.orElseThrow(() -> new RuntimeException("no facility data exists"));
+				.orElseThrow(() -> new NotFoundException("no facility data exists"));
+		
+		// 권한 확인하기
+	    if (!entity.getHouse().getUserNo().equals(userNo)) {
+	        throw new ForbiddenException("no permission to modify this facility"); 
+	    }
 
 		// 이미지 삭제 후 재업로드
 		if (dto.getImages() != null) {

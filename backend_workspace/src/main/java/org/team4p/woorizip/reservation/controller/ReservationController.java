@@ -59,18 +59,19 @@ public class ReservationController {
 	// 예약 목록 조회
 	@GetMapping({"/api/reservations", "/api/facilities/{facilityNo}/reservations"})
 	public ResponseEntity<List<ReservationListResponseDTO>> getReservationList(
-			@AuthenticationPrincipal String userNo,
+			@AuthenticationPrincipal String currentUserNo,
 			@PathVariable(value = "facilityNo", required = false) String facilityNo) {
-		return ResponseEntity.ok(reservationService.getReservationList(userNo, facilityNo));
+		return ResponseEntity.ok(reservationService.getReservationList(currentUserNo, facilityNo));
 	}
 
 	// 예약 내용 수정
 	@PatchMapping("api/reservations/{reservationNo}")
 	public ResponseEntity<ApiResponse<String>> modifyReservation(
 			@PathVariable String reservationNo,
-			@RequestBody ReservationModifyRequestDTO dto) {
+			@RequestBody ReservationModifyRequestDTO dto,
+			@AuthenticationPrincipal String currentUserNo) {
 		try {
-			reservationService.modifyReservation(reservationNo, dto);
+			reservationService.modifyReservation(reservationNo, dto, currentUserNo);
 			return ResponseEntity.ok(ApiResponse.ok("예약 내용 수정 성공", "reservationModifySuccess"));
 		} catch (Exception e) {
 			log.error("[modifyReservation Error] ReservationNo: {}, Error: {}", reservationNo, e.getMessage(), e);
