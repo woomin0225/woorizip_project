@@ -9,13 +9,17 @@ import java.util.stream.Collectors;
 import org.team4p.woorizip.facility.enums.FacilityStatus;
 import org.team4p.woorizip.facility.jpa.entity.FacilityEntity;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Getter
 @Setter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class FacilityDetailResponseDTO {
 		private String facilityNo;
 		private String facilityName;
@@ -46,7 +50,9 @@ public class FacilityDetailResponseDTO {
 		            .maxRsvnPerDay(entity.getMaxRsvnPerDay())
 		            .facilityRsvnUnitMinutes(entity.getFacilityRsvnUnitMinutes())
 		            .facilityMaxDurationMinutes(entity.getFacilityMaxDurationMinutes())
-		            .images(entity.getImages().stream()
+		            .images(entity
+		            		.getImages()
+		            		.stream()
 		                    .map(FacilityImageDTO::from)
 		                    .collect(Collectors.toList()))
 		            .build();

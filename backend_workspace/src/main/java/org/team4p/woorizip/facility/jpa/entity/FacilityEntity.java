@@ -9,6 +9,7 @@ import java.util.Map;
 import org.hibernate.annotations.CreationTimestamp;
 import org.team4p.woorizip.facility.dto.FacilityModifyRequestDTO;
 import org.team4p.woorizip.facility.enums.FacilityStatus;
+import org.team4p.woorizip.house.jpa.entity.HouseEntity;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -17,8 +18,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -30,28 +29,26 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-<<<<<<< Updated upstream
 @Entity
 @Table(name = "tb_fm_list")
-=======
-//@Entity
->>>>>>> Stashed changes
 @Getter
 @Setter
 @Builder
 @AllArgsConstructor
-//@NoArgsConstructor
+@NoArgsConstructor
 public class FacilityEntity {
 	@Id
-	@GeneratedValue(strategy=GenerationType.IDENTITY)
 	private String facilityNo;
 	
-//	@ManyToOne(fetch = FetchType.LAZY)
-//	@JoinColumn(name = "house_no")
-	private String houseNo;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "house_no")
+	private HouseEntity house;
 	
 	@Column(name = "facility_name")
 	private String facilityName;
+	
+	@Column(name = "facility_sequence")
+	private Integer facilitySequence;
 	
 	@Column(name = "facility_option_info", columnDefinition = "TEXT")
 	@Convert(converter = MapToJsonConverter.class)
@@ -95,9 +92,8 @@ public class FacilityEntity {
 	@Column(name = "facility_max_duration_minutes")
 	private Integer facilityMaxDurationMinutes;
 	
-<<<<<<< Updated upstream
 	@Builder.Default
-	@OneToMany(mappedBy = "facility", cascade = CascadeType.ALL, orphanRemoval = true)
+	@OneToMany(mappedBy = "facilityNo", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<FacilityImageEntity> images = new ArrayList<>();
 
 	public void updateFacility(FacilityModifyRequestDTO dto) {
@@ -116,12 +112,6 @@ public class FacilityEntity {
 		 if (dto.getMaxRsvnPerDay() != null) this.maxRsvnPerDay = dto.getMaxRsvnPerDay();
 		 if (dto.getFacilityRsvnUnitMinutes() != null) this.facilityRsvnUnitMinutes = dto.getFacilityRsvnUnitMinutes();
 		 if (dto.getFacilityMaxDurationMinutes() != null) this.facilityMaxDurationMinutes = dto.getFacilityMaxDurationMinutes();
-		 // 이미지 변동 추가
 		 this.facilityUpdatedAt = LocalDateTime.now();
 	}
-=======
-//	@Builder.Default
-//	@OneToMany(mappedBy = "facility", cascade = CascadeType.ALL)
-	private List<FacilityImageEntity> images;
->>>>>>> Stashed changes
 }

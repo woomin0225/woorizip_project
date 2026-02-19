@@ -6,14 +6,20 @@ import java.util.Map;
 
 import org.team4p.woorizip.facility.enums.FacilityStatus;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Getter
+@Setter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class FacilityModifyRequestDTO {
 	private String facilityNo;
-	private int facilityCode;
+	private Integer facilityCode;
 	private String facilityName;
 	private Map<String, Boolean> facilityOptionInfo;
 	private Integer facilityLocation;
