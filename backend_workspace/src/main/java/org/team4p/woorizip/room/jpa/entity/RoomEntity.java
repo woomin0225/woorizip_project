@@ -1,6 +1,5 @@
 package org.team4p.woorizip.room.jpa.entity;
 
-<<<<<<< Updated upstream
 import java.time.LocalDateTime;
 
 import org.team4p.woorizip.room.dto.RoomDto;
@@ -20,16 +19,6 @@ import lombok.Data;
 @Data
 @Table(name="tb_rooms")
 @Entity
-=======
-import jakarta.persistence.*;
-import lombok.*;
-
-//@Entity
-@Table(name = "tb_rooms") // 실제 테이블 이름
-@Getter
-@Setter
-@NoArgsConstructor
->>>>>>> Stashed changes
 public class RoomEntity {
 	@Id
 	@Column(name="room_no")
@@ -39,7 +28,6 @@ public class RoomEntity {
 	@Column(name="room_name")
 	private String roomName;
 
-<<<<<<< Updated upstream
 	@Column(name="house_no")
 	private String houseNo;
 	
@@ -138,11 +126,3 @@ public class RoomEntity {
 						.build();
 	}
 }
-=======
-    @Id  // <--- 이 어노테이션이 반드시 있어야 합니다!
-    @GeneratedValue(strategy = GenerationType.IDENTITY) // DB에서 번호를 자동 생성해주는 옵션
-    private Long roomNo; // 방 번호와 같은 식별자 필드
-
-    // ... 나머지 필드들 (roomTitle, roomDesc 등)
-}
->>>>>>> Stashed changes
