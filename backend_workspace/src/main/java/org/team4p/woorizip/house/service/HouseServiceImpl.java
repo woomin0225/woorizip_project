@@ -32,12 +32,6 @@ public class HouseServiceImpl implements HouseService {
 	private final UserRepository userRepository;
 
 	@Override
-	public HouseDto selectHouses(RoomSearchCondition cond) {
-		// 건물 검색 결과 조회
-		return null;
-	}
-
-	@Override
 	public List<HouseMarkerResponse> selectHouseMarkers(RoomSearchCondition cond) {
 		// 지도 내 건물 마커용 검색 결과 조회
 		

@@ -40,6 +40,7 @@ public class ReviewServiceImpl implements ReviewService {
 	}
 
 	@Override
+	@Transactional
 	public void deleteRoomReview(int reviewNo, String currentUser) {
 		// 방 리뷰 삭제
 		
@@ -52,6 +53,7 @@ public class ReviewServiceImpl implements ReviewService {
 	}
 
 	@Override
+	@Transactional
 	public ReviewDto updateRoomReview(ReviewDto reviewDto, String currentUser) {
 		// 방 리뷰 수정
 		

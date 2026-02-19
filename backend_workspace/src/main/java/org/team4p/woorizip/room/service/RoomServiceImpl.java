@@ -126,6 +126,7 @@ public class RoomServiceImpl implements RoomService {
 	}
 
 	@Override
+	@Transactional
 	public RoomDto updateRoom(RoomDto roomDto, String currentUser) {
 		// 방 정보 수정
 		
@@ -137,6 +138,7 @@ public class RoomServiceImpl implements RoomService {
 	}
 
 	@Override
+	@Transactional
 	public RoomDto updateRoomAvailability(String roomNo, LocalDateTime date, String currentUser) {
 		// 방 입주가능 일자 변경
 		
