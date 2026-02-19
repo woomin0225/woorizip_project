@@ -28,6 +28,7 @@ import org.team4p.woorizip.house.image.service.HouseImageService;
 import org.team4p.woorizip.house.service.HouseService;
 import org.team4p.woorizip.room.dto.RoomDto;
 import org.team4p.woorizip.room.dto.request.RoomSearchCondition;
+import org.team4p.woorizip.room.service.RoomService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -38,6 +39,7 @@ public class HouseController {
 	private final HouseService houseService;
 	private final HouseImageService houseImageService;
 	private final UploadProperties uploadProperties;
+	private final RoomService roomService;
 	
 	
 	@GetMapping("/search")
@@ -65,15 +67,15 @@ public class HouseController {
 	@GetMapping("/{houseNo}/rooms")
 	public ResponseEntity<ApiResponse<List<RoomDto>>> getRoomByHouseNo(String houseNo){
 		// 건물 내 방 목록 조회
-		
-		return null;
+		List<RoomDto> roomList = roomService.selectRoomsByHouseNo(houseNo);
+		return ResponseEntity.status(200).body(ApiResponse.ok("건물 내 방 목록 조회 성공", roomList));
 	}
 	
 	@GetMapping("/{houseNo}")
 	public ResponseEntity<ApiResponse<HouseDto>> getHouse(String houseNo){
 		// 건물 상세 조회
-		
-		return null;
+		HouseDto house = houseService.selectHouse(houseNo);
+		return ResponseEntity.status(200).body(ApiResponse.ok("건물 상세 조회 성공", house));
 	}
 	
 	@PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -230,10 +232,10 @@ public class HouseController {
 	}
 	
 	@GetMapping("/{houseNo}/images")
-	public ResponseEntity<ApiResponse<Void>> getHouseImages(String houseNo){
+	public ResponseEntity<ApiResponse<List<HouseImageDto>>> getHouseImages(String houseNo){
 		// 건물 이미지 목록 조회
-		
-		return null;
+		List<HouseImageDto> imageList = houseImageService.selectHouseImages(houseNo);
+		return ResponseEntity.status(200).body(ApiResponse.ok("건물 이미지 목록 조회 성공", imageList));
 	}
 	
 	
