@@ -50,7 +50,9 @@ public class FacilityDetailResponseDTO {
 		            .maxRsvnPerDay(entity.getMaxRsvnPerDay())
 		            .facilityRsvnUnitMinutes(entity.getFacilityRsvnUnitMinutes())
 		            .facilityMaxDurationMinutes(entity.getFacilityMaxDurationMinutes())
-		            .images(entity.getImages().stream()
+		            .images(entity
+		            		.getImages()
+		            		.stream()
 		                    .map(FacilityImageDTO::from)
 		                    .collect(Collectors.toList()))
 		            .build();

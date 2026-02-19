@@ -2,6 +2,7 @@ package org.team4p.woorizip.reservation.service;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,21 +27,22 @@ public class ReservationServiceImpl implements ReservationService {
 	private final FacilityRepository facilityRepository;
 	private final ReservationRepository reservationRepository;
 	private final UserRepository userRepository;
-	
+
 	// 예약 신규 등록
 	@Override
 	@Transactional
-	public void createReservation(ReservationCreateRequestDTO dto, String userNo) {
+	public void createReservation(ReservationCreateRequestDTO dto, String userNo, String facilityNo) {
 		// 시설 번호 가져오기
-		FacilityEntity facility = facilityRepository.findById(dto.getFacilityNo())
+		FacilityEntity facility = facilityRepository.findById(facilityNo)
 				.orElseThrow(() -> new RuntimeException("no facility data exists"));
-		
+
 		// 유저 번호 가져오기
-		UserEntity user = userRepository.findById(dto.getUserNo())
+		UserEntity user = userRepository.findById(userNo)
 				.orElseThrow(() -> new RuntimeException("no user data exists"));
-		
+
 		// 예약 내용 저장하기
-		ReservationEntity reservation = ReservationEntity.builder()
+		ReservationEntity reservation = ReservationEntity
+				.builder()
 				.reservationNo(UUID.randomUUID().toString())
 				.facilityNo(facility)
 				.userNo(user)
@@ -53,23 +55,35 @@ public class ReservationServiceImpl implements ReservationService {
 				.build();
 		reservationRepository.save(reservation);
 	}
-	
+
 	// 예약 상세 조회
 	@Override
+	@Transactional(readOnly = true)
 	public ReservationDetailResponseDTO getReservationDetails(String reservationNo) {
 		return reservationRepository.findById(reservationNo)
 				.map(ReservationDetailResponseDTO::from)
 				.orElseThrow(() -> new RuntimeException("no reservation data exists"));
 	}
-	
+
 	// 예약 목록 조회
 	@Override
+	@Transactional(readOnly = true)
 	public List<ReservationListResponseDTO> getReservationList(String userNo, String facilityNo) {
-		UserEntity user = userRepository.findById(userNo)
-	            .orElseThrow(() -> new RuntimeException("no user data exists"));
-		// type 분기
+		// 임차인
+	    if (facilityNo == null) {
+	        return reservationRepository.findByUserNo_UserNo(userNo)
+	        		.stream()
+	                .map(ReservationListResponseDTO::from)
+	                .collect(Collectors.toList());
+	    }
+
+	    // 임대인
+	    return reservationRepository.findByFacilityNo_FacilityNo(facilityNo)
+	    		.stream()
+	            .map(ReservationListResponseDTO::from)
+	            .collect(Collectors.toList());
 	}
-	
+
 	// 예약 내용 수정
 	@Override
 	@Transactional
@@ -77,7 +91,7 @@ public class ReservationServiceImpl implements ReservationService {
 		// 예약 번호 찾기
 		ReservationEntity entity = reservationRepository.findById(reservationNo)
 				.orElseThrow(() -> new RuntimeException("no reservation data exists"));
-			
+
 		// dto 업데이트
 		entity.updateReservation(dto);
 	}

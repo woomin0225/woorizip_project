@@ -35,6 +35,7 @@ public class FacilityServiceImpl implements FacilityService {
 
 	// 시설 목록 조회
 	@Override
+	@Transactional(readOnly = true)
 	public List<FacilityListResponseDTO> getFacilityList(String houseNo) {
 		List<FacilityEntity> entity =
 				facilityRepository.findByHouseNoHouseNoAndFacilityDeletedAtIsNull(houseNo);
@@ -133,6 +134,7 @@ public class FacilityServiceImpl implements FacilityService {
 
 	// 시설 카테고리 조회
 	@Override
+	@Transactional(readOnly = true)
 	public List<FacilityCategoryDTO> getFacilityCategory() {
 		List<FacilityCategoryEntity> categories = categoryRepository.findAll();
 		return categories.stream()
@@ -154,6 +156,7 @@ public class FacilityServiceImpl implements FacilityService {
 	
 	// 시설 상세 조회
 	@Override
+	@Transactional(readOnly = true)
 	public FacilityDetailResponseDTO getFacilityDetails(String facilityNo) {
 		return facilityRepository.findByFacilityNoAndFacilityDeletedAtIsNull(facilityNo)
 				.map(FacilityDetailResponseDTO::from)

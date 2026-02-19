@@ -17,10 +17,6 @@ import lombok.Setter;
 @AllArgsConstructor
 public class ReservationCreateRequestDTO {
 	
-	private String facilityNo;
-	
-	private String userNo;
-	
 	@NotBlank(message="reservationName needed")
 	private String reservationName;
 	

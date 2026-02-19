@@ -17,7 +17,6 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ReservationModifyRequestDTO {
-	private String reservationNo;
 	private String reservationName;
 	private String reservationPhone;
 	private LocalDate reservationDate;
