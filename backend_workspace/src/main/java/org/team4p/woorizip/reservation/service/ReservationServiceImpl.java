@@ -45,7 +45,7 @@ public class ReservationServiceImpl implements ReservationService {
 				.builder()
 				.reservationNo(UUID.randomUUID().toString())
 				.facility(facility)
-				.userNo(user)
+				.user(user)
 				.reservationName(dto.getReservationName())
 				.reservationPhone(dto.getReservationPhone())
 				.reservationDate(dto.getReservationDate())
