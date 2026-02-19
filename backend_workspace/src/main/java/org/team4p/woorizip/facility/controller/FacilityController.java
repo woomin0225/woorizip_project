@@ -100,9 +100,10 @@ public class FacilityController {
 	@PatchMapping("/{facilityNo}")
 	public ResponseEntity<ApiResponse<String>> modifyFacility(
 			@PathVariable String facilityNo,
-		    @RequestBody FacilityModifyRequestDTO dto) {
+		    @RequestBody FacilityModifyRequestDTO dto,
+		    @AuthenticationPrincipal String currentUserNo) {
 	    try {
-	        facilityService.modifyFacility(facilityNo, dto);
+	        facilityService.modifyFacility(facilityNo, dto, currentUserNo);
 	        return ResponseEntity.ok(ApiResponse.ok("시설 정보 수정 성공", "facilityModifySuccess"));
 	    } catch (Exception e) {
 	        log.error("[modifyFacility Error] FacilityName: {}, Error: {}", dto.getFacilityName(), e.getMessage(), e);

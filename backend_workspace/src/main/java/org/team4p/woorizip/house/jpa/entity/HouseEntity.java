@@ -16,7 +16,7 @@ import lombok.Data;
 @Data
 @Builder
 @Table(name = "tb_houses")
-//@Entity
+@Entity
 public class HouseEntity {
 
 	@Id
