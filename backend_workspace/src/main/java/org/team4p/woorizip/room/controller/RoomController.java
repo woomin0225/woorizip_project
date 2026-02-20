@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.team4p.woorizip.common.api.ApiResponse;
@@ -58,8 +59,8 @@ public class RoomController {
 	
 	@PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	public ResponseEntity<ApiResponse<Void>> createRoom(
-			@Valid @RequestBody RoomDto roomDto,
-			@RequestParam(value="newImages", required=false) List<MultipartFile> newImages,
+			@Valid @ModelAttribute RoomDto roomDto,
+			@RequestPart(value="newImages", required=false) List<MultipartFile> newImages,
 			Authentication auth
 			) {
 		// 방 등록
@@ -155,8 +156,8 @@ public class RoomController {
 	public ResponseEntity<ApiResponse<Void>> modifyRoom(
 			@PathVariable("roomNo") String roomNo,
 			@Valid @ModelAttribute RoomDto roomDto,
-			@RequestParam(value="deleteImageNos", required=false) List<Integer> deleteImageNos,
-			@RequestParam(value="newImages", required=false) List<MultipartFile> newImages,
+			@RequestPart(value="deleteImageNos", required=false) List<Integer> deleteImageNos,
+			@RequestPart(value="newImages", required=false) List<MultipartFile> newImages,
 			Authentication auth
 			){
 		

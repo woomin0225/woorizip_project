@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.team4p.woorizip.common.api.ApiResponse;
@@ -79,8 +80,8 @@ public class HouseController {
 	
 	@PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	public ResponseEntity<ApiResponse<Void>> createHouse(
-			@Valid @RequestBody HouseDto houseDto,
-			@RequestParam(value="newImages", required=false) List<MultipartFile> newImages,
+			@Valid @ModelAttribute HouseDto houseDto,
+			@RequestPart(value="newImages", required=false) List<MultipartFile> newImages,
 			Authentication auth) {
 		// 건물 등록
 		
@@ -144,12 +145,12 @@ public class HouseController {
 		return ResponseEntity.status(201).body(ApiResponse.ok("건물 등록 성공", null));
 	}
 
-	@PutMapping("/{houseNo}")
+	@PutMapping(value = "/{houseNo}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	public ResponseEntity<ApiResponse<Void>> modifyHouse(
 			@PathVariable("houseNo") String houseNo,
-			@Valid @RequestBody HouseDto houseDto,
-			@RequestParam(value="deleteImageNos", required=false) List<Integer> deleteImageNos,
-			@RequestParam(value="newImages", required=false) List<MultipartFile> newImages,
+			@Valid @ModelAttribute HouseDto houseDto,
+			@RequestPart(value="deleteImageNos", required=false) List<Integer> deleteImageNos,
+			@RequestPart(value="newImages", required=false) List<MultipartFile> newImages,
 			Authentication auth
 	){
 		// 건물 정보 수정

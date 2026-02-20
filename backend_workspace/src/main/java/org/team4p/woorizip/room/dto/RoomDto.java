@@ -27,9 +27,9 @@ public class RoomDto {
 	private String houseNo;
 	@Null(message="userNo는 백엔드에서 설정")
 	private String userNo;
-	
+	@Null
 	private LocalDateTime roomCreatedAt;
-	
+	@Null
 	private LocalDateTime roomUpdatedAt;
 	@Min(value = 0)
 	private long roomDeposit;
@@ -45,9 +45,9 @@ public class RoomDto {
 	private LocalDateTime roomAvailableDate;
 	
 	private String roomAbstract;
-	@NotBlank @Min(value = 1)
+	@Min(value = 1)
 	private int roomRoomCount;
-	@NotBlank @Min(value = 0)
+	@Min(value = 0)
 	private int roomBathCount;
 	@NotNull
 	private boolean roomEmptyYn;
@@ -55,11 +55,11 @@ public class RoomDto {
 	private String roomStatus;
 	
 	private String roomOptions;
-	
+	@Null
 	private int roomImageCount;
-	
+	@Null
 	private boolean deleted;
-	
+	@Null
 	private LocalDateTime deletedAt;
 	
 	public RoomEntity toEntity() {
