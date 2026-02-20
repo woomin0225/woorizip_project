@@ -7,5 +7,5 @@ import org.team4p.woorizip.room.jpa.entity.RoomEntity;
 
 public interface RoomRepository extends JpaRepository<RoomEntity, String>, RoomRepositoryCustom {
 	List<RoomEntity> findAllByHouseNo(String houseNo);
-	String findUserNoById(String roomNo);
+	String findUserNoByRoomNo(String roomNo);
 }
