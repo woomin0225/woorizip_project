@@ -25,7 +25,7 @@ public class CustomUserDetailsService implements UserDetailsService {
                 user.getUserNo(),
                 user.getEmailId(),
                 user.getPassword(),
-                "N".equals(user.getDeletedYn()),
+                "0".equals(user.getDeletedYn()),
                 List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole()))
         );
     }

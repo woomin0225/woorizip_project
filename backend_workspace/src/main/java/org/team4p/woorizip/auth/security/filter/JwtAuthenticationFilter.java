@@ -44,7 +44,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (uri.startsWith("/auth/")) return true;
 
         // 3) permitAll API (GET) : 공지/게시글 조회/검색/다운로드
-        if (HttpMethod.GET.matches(method) && (uri.startsWith("/api/notices") || uri.startsWith("/api/boards"))) {
+        if (HttpMethod.GET.matches(method) && (uri.startsWith("/api/notice") || uri.startsWith("/api/boards"))) {
             return true;
         }
 

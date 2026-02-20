@@ -29,7 +29,7 @@ public class PostDto {
 
   public interface Create {}
   public interface Update {}
-  
+ 
   private List<FileDto> files;
   private List<CommentDto> comments;
 
@@ -38,7 +38,6 @@ public class PostDto {
   private Integer postNo;
   @NotBlank(groups = {Create.class, Update.class})
   private String boardTypeNo;
-  @NotBlank(groups = {Create.class, Update.class})
   private String userNo;
   @NotBlank(message = "제목을 작성해야 합니다", groups = {Create.class, Update.class})
   @Size(max = 255)
@@ -51,7 +50,7 @@ public class PostDto {
   @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Asia/Seoul")
   private Timestamp postUpdatedAt;
   private Boolean postCommentYn;
-  private Boolean postFileYn;
+  private Boolean postFilesYn;
   
   private BannerImageDto bannerImage;
 
@@ -67,7 +66,7 @@ public class PostDto {
         .postCreatedAt(this.postCreatedAt)
         .postUpdatedAt(this.postUpdatedAt)
         .postCommentYn(this.postCommentYn)
-        .postFileYn(this.postFileYn)
+        .postFilesYn(this.postFilesYn)
         .build();
   }
 
@@ -85,7 +84,7 @@ public class PostDto {
         .postCreatedAt(entity.getPostCreatedAt())
         .postUpdatedAt(entity.getPostUpdatedAt())
         .postCommentYn(entity.getPostCommentYn())
-        .postFileYn(entity.getPostFileYn())
+        .postFilesYn(entity.getPostFilesYn())
         .build();
   }
 }
