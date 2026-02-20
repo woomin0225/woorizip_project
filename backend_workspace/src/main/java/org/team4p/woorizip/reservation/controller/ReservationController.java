@@ -35,17 +35,10 @@ public class ReservationController {
 			@Valid @RequestBody ReservationCreateRequestDTO dto,
 			@AuthenticationPrincipal String currentUserNo,
 			@PathVariable String facilityNo) {
-		try {
-			reservationService.createReservation(dto, currentUserNo, facilityNo);
-			return ResponseEntity
-					.status(HttpStatus.CREATED)
-					.body(ApiResponse.ok("예약 등록 성공", "ReservationCreateSuccess"));
-		} catch (Exception e) {
-			log.error("[createReservation Error] facilityNo: {}, Error: {}", facilityNo, e.getMessage(), e);
-			return ResponseEntity
-					.status(HttpStatus.INTERNAL_SERVER_ERROR)
-					.body(ApiResponse.fail("예약 등록 실패", "ReservationCreateFail"));
-		}
+		reservationService.createReservation(dto, currentUserNo, facilityNo);
+		return ResponseEntity
+				.status(HttpStatus.CREATED)
+				.body(ApiResponse.ok("귀하의 예약이 정상적으로 등록되었습니다.", "ReservationCreateSuccess"));
 	}
 
 	// 예약 상세 조회
@@ -70,14 +63,7 @@ public class ReservationController {
 			@PathVariable String reservationNo,
 			@RequestBody ReservationModifyRequestDTO dto,
 			@AuthenticationPrincipal String currentUserNo) {
-		try {
-			reservationService.modifyReservation(reservationNo, dto, currentUserNo);
-			return ResponseEntity.ok(ApiResponse.ok("예약 내용 수정 성공", "reservationModifySuccess"));
-		} catch (Exception e) {
-			log.error("[modifyReservation Error] ReservationNo: {}, Error: {}", reservationNo, e.getMessage(), e);
-			return ResponseEntity
-					.status(HttpStatus.INTERNAL_SERVER_ERROR)
-					.body(ApiResponse.fail("예약 내용 수정 실패", "ReservationModifyFail"));
-		}
+		reservationService.modifyReservation(reservationNo, dto, currentUserNo);
+		return ResponseEntity.ok(ApiResponse.ok("예약 내용이 정상적으로 수정되었습니다.", "reservationModifySuccess"));
 	}
 }

@@ -1,6 +1,7 @@
 package org.team4p.woorizip.reservation.service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -58,6 +59,13 @@ public class ReservationServiceImpl implements ReservationService {
 		}
 		if (!isResident) {
 		    throw new ForbiddenException("이 시설에 대한 예약 권한이 없습니다.");
+		}
+		
+		// 예약하려는 날짜와 시간이 현재 시점 이후인지 확인
+		LocalDateTime reservationStartDateTime = LocalDateTime.of(dto.getReservationDate(), dto.getReservationStartTime());
+
+		if (reservationStartDateTime.isBefore(LocalDateTime.now())) {
+		    throw new ForbiddenException("현재 시각 이전 시간대로는 예약할 수 없습니다.");
 		}
 		
 		// 시설 운영 시간 내의 예약인지 확인
@@ -163,8 +171,22 @@ public class ReservationServiceImpl implements ReservationService {
 	    }
 	    
 	    // 과거의 예약을 수정하는 것은 아닌지 확인
-	    if (dto.getReservationDate().isBefore(LocalDate.now())) {
+	    if (entity.getReservationDate().isBefore(LocalDate.now())) {
 	        throw new ForbiddenException("이전 날짜의 예약은 수정할 수 없습니다.");
+	    }
+	    
+	    LocalDateTime reservationStartDateTime = LocalDateTime.of(dto.getReservationDate(), dto.getReservationStartTime());
+	    
+	    // 예약하려는 날짜와 시간이 현재 시점 이후인지 확인
+	    if (reservationStartDateTime.isBefore(LocalDateTime.now())) {
+	    	throw new ForbiddenException("현재 시각 이전 시간대로는 예약할 수 없습니다.");
+	    }
+	    
+	    LocalDateTime originalStart = LocalDateTime.of(entity.getReservationDate(), entity.getReservationStartTime());
+
+	    // 이미 시작된 예약을 수정하려는 것은 아닌지 확인
+	    if (originalStart.isBefore(LocalDateTime.now())) {
+	        throw new ForbiddenException("이미 시작된 예약은 수정할 수 없습니다.");
 	    }
 	    
 	    // 시설 운영 시간 내의 예약인지 확인
@@ -206,8 +228,8 @@ public class ReservationServiceImpl implements ReservationService {
 	    // 중복 예약인지 확인
 	    boolean isOverlapped = reservationRepository.existsByFacilityAndReservationDateAndReservationStartTimeBeforeAndReservationEndTimeAfterAndReservationNoNot(
 	            facility, 
-	            dto.getReservationDate(), 
-	            dto.getReservationEndTime(), 
+	            dto.getReservationDate(),  
+	            dto.getReservationEndTime(),
 	            dto.getReservationStartTime(),
 	            reservationNo
 	    );

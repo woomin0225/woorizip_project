@@ -23,8 +23,8 @@ public interface ReservationRepository  extends JpaRepository<ReservationEntity,
 	boolean existsByFacilityAndReservationDateAndReservationStartTimeBeforeAndReservationEndTimeAfter(
 			FacilityEntity facility,
 			LocalDate reservationDate,
-			LocalTime reservationStartTime,
-			LocalTime reservationEndTime);
+			LocalTime reservationEndTime,
+			LocalTime reservationStartTime);
 	// 기존 예약 수정 시 예약 횟수 검증용 메서드
 	long countByUserAndFacilityAndReservationDateAndReservationNoNot(
 			UserEntity user,
@@ -34,8 +34,8 @@ public interface ReservationRepository  extends JpaRepository<ReservationEntity,
 	// 기존 예약 수정 시 중복 예약 확인용 메서드
 	boolean existsByFacilityAndReservationDateAndReservationStartTimeBeforeAndReservationEndTimeAfterAndReservationNoNot(
 		    FacilityEntity facility, 
-		    LocalDate date, 
+		    LocalDate date,
 		    LocalTime endTime, 
-		    LocalTime startTime, 
+		    LocalTime startTime,
 		    String reservationNo);
 }

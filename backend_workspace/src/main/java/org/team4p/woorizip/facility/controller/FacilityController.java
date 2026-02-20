@@ -47,18 +47,7 @@ public class FacilityController {
 			@AuthenticationPrincipal String currentUserNo) {
 		facilityService.createFacility(dto, currentUserNo);
         return ResponseEntity.status(HttpStatus.CREATED)
-                             .body(ApiResponse.ok("시설 정보 등록 성공", "facilityCreateSuccess"));
-		/*
-		try {
-			facilityService.createFacility(dto, currentUserNo);
-	        return ResponseEntity.status(HttpStatus.CREATED)
-	                             .body(ApiResponse.ok("시설 정보 등록 성공", "facilityCreateSuccess"));
-	    } catch (Exception e) {
-	        log.error("[createFacility Error] facilityName: {}, Error: {}", dto.getFacilityName(), e.getMessage(), e);
-	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-	                             .body(ApiResponse.fail("시설 등록 실패", "facilityCreateFail"));
-	    }
-	    */
+                             .body(ApiResponse.ok("새로운 시설이 정상적으로 등록되었습니다.", "facilityCreateSuccess"));
 	}
 	
 	// 시설 카테고리 등록
@@ -67,7 +56,7 @@ public class FacilityController {
 	public ResponseEntity<ApiResponse<String>> createFacilityCategory(@RequestBody FacilityCategoryDTO dto) {
 		facilityService.createCategory(dto);
 		return ResponseEntity.status(HttpStatus.CREATED)
-				.body(ApiResponse.ok("시설 카테고리 등록 성공", "facilityCategoryCreateSuccess"));
+				.body(ApiResponse.ok("새로운 시설 카테고리가 정상적으로 등록되었습니다.", "facilityCategoryCreateSuccess"));
 		}
 		
 	// 시설 카테고리 조회
@@ -84,14 +73,8 @@ public class FacilityController {
 	public ResponseEntity<ApiResponse<String>> modifyFacilityCategory(
 			@PathVariable Integer facilityCode,
 			@RequestBody FacilityCategoryDTO dto) {
-		try {
-	        facilityService.modifyFacilityCategory(facilityCode, dto);
-	        return ResponseEntity.ok(ApiResponse.ok("시설 카테고리 수정 성공", "facilityCategoryModifySuccess"));
-	    } catch (Exception e) {
-	        log.error("[modifyFacilityCategory Error] FacilityCode: {}, Error: {}", dto.getFacilityCode(), e.getMessage(), e);
-	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-	                             .body(ApiResponse.fail("시설 카테고리 수정 실패", "facilityCategoryModifyFail"));
-	    }
+		facilityService.modifyFacilityCategory(facilityCode, dto);
+        return ResponseEntity.ok(ApiResponse.ok("시설 카테고리의 내용이 정상적으로 수정되었습니다.", "facilityCategoryModifySuccess"));
 	}
 	
 	// 시설 상세 조회
@@ -107,13 +90,7 @@ public class FacilityController {
 			@PathVariable String facilityNo,
 		    @RequestBody FacilityModifyRequestDTO dto,
 		    @AuthenticationPrincipal String currentUserNo) {
-	    try {
-	        facilityService.modifyFacility(facilityNo, dto, currentUserNo);
-	        return ResponseEntity.ok(ApiResponse.ok("시설 정보 수정 성공", "facilityModifySuccess"));
-	    } catch (Exception e) {
-	        log.error("[modifyFacility Error] FacilityName: {}, Error: {}", dto.getFacilityName(), e.getMessage(), e);
-	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-	                             .body(ApiResponse.fail("시설 수정 실패", "facilityModifyFail"));
-	    }
+		facilityService.modifyFacility(facilityNo, dto, currentUserNo);
+        return ResponseEntity.ok(ApiResponse.ok("해당 시설의 정보가 정상적으로 수정되었습니다.", "facilityModifySuccess"));
 	}
 }
