@@ -61,12 +61,12 @@ class FacilityServiceTest {
 		
 		FacilityCategoryCreateRequestDTO Cdto = new FacilityCategoryCreateRequestDTO();
         Cdto.setFacilityType("회의실");
-        Cdto.setFacilityOptions(options);
+        // Cdto.setFacilityOptions(options);
         
         FacilityCategoryEntity mockCategory = FacilityCategoryEntity.builder()
         		.facilityCode(1)
         		.facilityType(Cdto.getFacilityType())
-        		.facilityOptions(Cdto.getFacilityOptions())
+        		// .facilityOptions(Cdto.getFacilityOptions())
         		.build();
         
         lenient().when(categoryRepository.findById(1)).thenReturn(Optional.of(mockCategory));

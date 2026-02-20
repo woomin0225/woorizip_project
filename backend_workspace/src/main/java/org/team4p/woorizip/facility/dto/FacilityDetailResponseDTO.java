@@ -23,6 +23,7 @@ import lombok.Setter;
 public class FacilityDetailResponseDTO {
 		private String facilityNo;
 		private String facilityName;
+		private String facilityTitle;
 		private Map<String, Boolean> facilityOptionInfo;
 		private int facilityLocation;
 		private LocalTime facilityOpenTime;
@@ -40,6 +41,7 @@ public class FacilityDetailResponseDTO {
 		    return FacilityDetailResponseDTO.builder()
 		            .facilityNo(entity.getFacilityNo())
 		            .facilityName(entity.getFacilityName())
+		            .facilityTitle(entity.getCategory().getFacilityType()+" "+entity.getFacilitySequence())
 		            .facilityOptionInfo(entity.getFacilityOptionInfo())
 		            .facilityLocation(entity.getFacilityLocation())
 		            .facilityOpenTime(entity.getFacilityOpenTime())
