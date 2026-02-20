@@ -30,7 +30,7 @@ public class HouseDto {
 	private LocalDateTime houseCreatedAt;
 
 	private LocalDateTime houseUpdatedAt;
-	@TextOnly
+	
 	private String houseZip;
 	@NotBlank
 	private String houseAddress;

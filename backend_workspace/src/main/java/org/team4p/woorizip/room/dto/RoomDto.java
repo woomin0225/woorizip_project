@@ -31,34 +31,34 @@ public class RoomDto {
 	private LocalDateTime roomCreatedAt;
 	
 	private LocalDateTime roomUpdatedAt;
-	@Min(value = 0) @NumericOnly
-	private Integer roomDeposit;
-	@Min(value = 0) @NumericOnly
-	private Integer roomMonthly;
+	@Min(value = 0)
+	private long roomDeposit;
+	@Min(value = 0)
+	private long roomMonthly;
 	@NotBlank
 	private String roomMethod;
 	@Min(value = 0)
-	private Double roomArea;
+	private double roomArea;
 	@NotBlank @TextOnly
 	private String roomFacing;
 	@NotBlank
 	private LocalDateTime roomAvailableDate;
 	
 	private String roomAbstract;
-	@NotBlank @Min(value = 1) @NumericOnly
-	private Integer roomRoomCount;
-	@NotBlank @Min(value = 0) @NumericOnly
-	private Integer roomBathCount;
+	@NotBlank @Min(value = 1)
+	private int roomRoomCount;
+	@NotBlank @Min(value = 0)
+	private int roomBathCount;
 	@NotNull
-	private Boolean roomEmptyYn;
+	private boolean roomEmptyYn;
 	@NotNull
 	private String roomStatus;
 	
 	private String roomOptions;
 	
-	private Integer roomImageCount;
+	private int roomImageCount;
 	
-	private Boolean deleted;
+	private boolean deleted;
 	
 	private LocalDateTime deletedAt;
 	
