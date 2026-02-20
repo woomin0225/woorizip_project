@@ -34,7 +34,7 @@ import lombok.Setter;
 @NoArgsConstructor
 public class ReservationEntity {
 	@Id
-	@Column(name = "rsvn_no")
+	@Column(name = "rsvn_no", columnDefinition = "char(36)", nullable = false)
 	private String reservationNo;
 
 	@ManyToOne(fetch = FetchType.LAZY)
@@ -45,22 +45,22 @@ public class ReservationEntity {
 	@JoinColumn(name = "user_no")
 	private UserEntity user;
 
-	@Column(name = "rsvn_name")
+	@Column(name = "rsvn_name", length = 20, nullable = false)
 	private String reservationName;
 
-	@Column(name = "rsvn_phone")
+	@Column(name = "rsvn_phone", length = 10, nullable = false)
 	private String reservationPhone;
 
-	@Column(name = "rsvn_date")
+	@Column(name = "rsvn_date", nullable = false)
 	private LocalDate reservationDate;
 	
-	@Column(name = "rsvn_start_time")
+	@Column(name = "rsvn_start_time", nullable = false)
 	private LocalTime reservationStartTime;
 	
-	@Column(name = "rsvn_end_time")
+	@Column(name = "rsvn_end_time", nullable = false)
 	private LocalTime reservationEndTime;
 
-	@Column(name = "rsvn_status")
+	@Column(name = "rsvn_status", nullable = false)
 	@Enumerated(EnumType.STRING)
 	private ReservationStatus reservationStatus;
 

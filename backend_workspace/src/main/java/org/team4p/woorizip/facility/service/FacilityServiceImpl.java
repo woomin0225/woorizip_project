@@ -18,6 +18,7 @@ import org.team4p.woorizip.facility.dto.FacilityDetailResponseDTO;
 import org.team4p.woorizip.facility.dto.FacilityImageDTO;
 import org.team4p.woorizip.facility.dto.FacilityListResponseDTO;
 import org.team4p.woorizip.facility.dto.FacilityModifyRequestDTO;
+import org.team4p.woorizip.facility.enums.FacilityStatus;
 import org.team4p.woorizip.facility.jpa.entity.FacilityCategoryEntity;
 import org.team4p.woorizip.facility.jpa.entity.FacilityEntity;
 import org.team4p.woorizip.facility.jpa.entity.FacilityImageEntity;
@@ -99,6 +100,17 @@ public class FacilityServiceImpl implements FacilityService {
 	        nextSequence = 1;
 	    }
 	    
+	    // 예약이 필요없는 시설이라면 예약 관련 검증 값 null 처리
+	    Integer finalMaxRsvn = dto.getMaxRsvnPerDay();
+	    Integer finalUnitMin = dto.getFacilityRsvnUnitMinutes();
+	    Integer finalMaxDur = dto.getFacilityMaxDurationMinutes();
+
+	    if (!dto.isFacilityRsvnRequiredYn()) {
+	        finalMaxRsvn = null;
+	        finalUnitMin = null;
+	        finalMaxDur = null;
+	    }
+	    
 		// 시설 정보 입력
 		FacilityEntity facility = FacilityEntity
 				.builder()
@@ -109,14 +121,14 @@ public class FacilityServiceImpl implements FacilityService {
 				.facilitySequence(nextSequence)
 				.facilityOptionInfo(finalOptions)
 				.facilityLocation(dto.getFacilityLocation())
-				.facilityStatus(dto.getFacilityStatus())
+				.facilityStatus(FacilityStatus.AVAILABLE)
 				.facilityCapacity(dto.getFacilityCapacity())
 				.facilityOpenTime(dto.getFacilityOpenTime())
 				.facilityCloseTime(dto.getFacilityCloseTime())
 				.facilityRsvnRequiredYn(dto.isFacilityRsvnRequiredYn())
-				.maxRsvnPerDay(dto.getMaxRsvnPerDay())
-				.facilityRsvnUnitMinutes(dto.getFacilityRsvnUnitMinutes())
-				.facilityMaxDurationMinutes(dto.getFacilityMaxDurationMinutes())
+				.maxRsvnPerDay(finalMaxRsvn)
+				.facilityRsvnUnitMinutes(finalUnitMin)
+				.facilityMaxDurationMinutes(finalMaxDur)
 				.build();
 
 		// 이미지 입력

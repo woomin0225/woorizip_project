@@ -32,10 +32,10 @@ public class FacilityImageEntity {
 	@JoinColumn(name = "facility_no") 
 	private FacilityEntity facility;
 	
-	@Column(name = "facility_original_image_name")
+	@Column(name = "facility_original_image_name", nullable = false)
 	private String facilityOriginalImageName;
 	
-	@Column(name = "facility_stored_image_name")
+	@Column(name = "facility_stored_image_name", length = 255, nullable = false)
 	private String facilityStoredImageName;
 	
 	public FacilityImageDTO entityToDto() {
