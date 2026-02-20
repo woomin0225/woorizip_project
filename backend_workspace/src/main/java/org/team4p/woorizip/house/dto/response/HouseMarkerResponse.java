@@ -2,9 +2,15 @@ package org.team4p.woorizip.house.dto.response;
 
 import org.team4p.woorizip.house.jpa.entity.HouseEntity;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class HouseMarkerResponse {
 	private String houseNo;
 	private String houseName;
