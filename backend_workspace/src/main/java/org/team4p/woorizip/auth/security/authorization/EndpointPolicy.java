@@ -5,7 +5,8 @@ public final class EndpointPolicy {
 
     // 공개
     public static final String[] PUBLIC_GET = {
-            "/api/notices/**",
+            "/api/notice/**",
+            	"/api/information/**",
             "/api/boards/**"
     };
 
@@ -14,8 +15,10 @@ public final class EndpointPolicy {
             "/api/user/check-id"
     };
 
-    // 공지: ADMIN만 (POST/PUT/DELETE)
-    public static final String[] NOTICE_ADMIN = { "/api/notices/**" };
+    // 공지사항, 정책・정보 : ADMIN만 (POST/PUT/DELETE)
+    public static final String[] ADMIN_WRITE= {
+    		"/api/notice/**",
+    		"/api/information/**"};
 
     // 게시글: USER/ADMIN (POST/PUT/DELETE)
     public static final String[] BOARD_WRITE = { "/api/boards/**" };

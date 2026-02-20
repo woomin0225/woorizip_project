@@ -22,7 +22,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-//@Service
+@Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class NoticeServiceImpl implements NoticeService {
@@ -144,13 +144,14 @@ public class NoticeServiceImpl implements NoticeService {
 	@Transactional
 	public int updateNotice(PostDto postDto, List<Integer> deleteFileNo) {
 		
-		if(postDto.getPostNo() == null || 
-				!postRepository.existsById(postDto.getPostNo())) {
-			throw new NotFoundException("수정할 공지사항 게시글이 없습니다.");
-		}
+		PostEntity entity = postRepository.findById(postDto.getPostNo())
+				.filter(e -> BOARD_TYPE_NO.equals(e.getBoardTypeNo()))
+				.orElseThrow(() -> 
+						new NotFoundException("수정할 공지사항 게시글이 없습니다."));
 		
-		postDto.setBoardTypeNo(BOARD_TYPE_NO);
-		postRepository.save(postDto.toEntity());
+		entity.setPostTitle(postDto.getPostTitle());
+		entity.setPostContent(postDto.getPostContent());
+		entity.setPostUpdatedAt(postDto.getPostUpdatedAt());
 		
 		//선택 삭제 파일 제거
 		if(deleteFileNo != null && !deleteFileNo.isEmpty()) {

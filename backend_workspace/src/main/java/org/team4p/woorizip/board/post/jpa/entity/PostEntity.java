@@ -46,8 +46,8 @@ public class PostEntity {
   private Timestamp postUpdatedAt;
   @Column(name = "POST_COMMENT_YN")
   private Boolean postCommentYn;
-  @Column(name = "POST_FILE_YN")
-  private Boolean postFileYn;
+  @Column(name = "POST_FILES_YN")
+  private Boolean postFilesYn;
 
   //Insert 직전 기본값 세팅
   @PrePersist
@@ -63,8 +63,8 @@ public class PostEntity {
     if (postCommentYn == null) {
         postCommentYn = false;
     }
-    if (postFileYn == null) {
-        postFileYn = false;
+    if (postFilesYn == null) {
+        postFilesYn = false;
     }
   }
 

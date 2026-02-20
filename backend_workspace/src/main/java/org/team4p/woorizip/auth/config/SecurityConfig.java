@@ -81,11 +81,11 @@ public class SecurityConfig {
         	    .requestMatchers(HttpMethod.POST, "/api/wishlist/add/**").permitAll()
         	    .requestMatchers(HttpMethod.GET, "/api/wishlist/**").permitAll()
 
-                // notices write: ADMIN only
-                .requestMatchers(HttpMethod.POST, EndpointPolicy.NOTICE_ADMIN).hasRole("ADMIN")
-                .requestMatchers(HttpMethod.PUT, EndpointPolicy.NOTICE_ADMIN).hasRole("ADMIN")
-                .requestMatchers(HttpMethod.DELETE, EndpointPolicy.NOTICE_ADMIN).hasRole("ADMIN")
-                .requestMatchers(HttpMethod.PATCH, EndpointPolicy.NOTICE_ADMIN).hasRole("ADMIN")
+                // admin write: notice, information only
+                .requestMatchers(HttpMethod.POST, EndpointPolicy.ADMIN_WRITE).hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PUT, EndpointPolicy.ADMIN_WRITE).hasRole("ADMIN")
+                .requestMatchers(HttpMethod.DELETE, EndpointPolicy.ADMIN_WRITE).hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PATCH, EndpointPolicy.ADMIN_WRITE).hasRole("ADMIN")
 
                 // boards write: USER or ADMIN
                 .requestMatchers(HttpMethod.POST, EndpointPolicy.BOARD_WRITE).hasAnyRole("USER","ADMIN")

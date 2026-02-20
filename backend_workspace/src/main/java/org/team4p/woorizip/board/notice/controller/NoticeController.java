@@ -1,8 +1,10 @@
 package org.team4p.woorizip.board.notice.controller;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -11,12 +13,13 @@ import java.util.List;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.team4p.woorizip.board.file.jpa.entity.FileEntity;
@@ -30,6 +33,7 @@ import org.team4p.woorizip.common.api.SearchRequest;
 import org.team4p.woorizip.common.config.UploadProperties;
 import org.team4p.woorizip.common.exception.NotFoundException;
 import org.team4p.woorizip.common.util.FileNameChange;
+import org.team4p.woorizip.user.jpa.repository.UserRepository;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -37,7 +41,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Validated
-//@RestController
+@RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/notice")
 public class NoticeController {
@@ -45,6 +49,7 @@ public class NoticeController {
 	private final NoticeService noticeService;
 	private final UploadProperties uploadProperties;
 	private final FileRepository fileRepository;
+	private final UserRepository userRepository;
 	
 	//==============Top3===================
 	@GetMapping("/top3")
@@ -71,7 +76,8 @@ public class NoticeController {
 	
 	//==============상세===================
 	@GetMapping("/{postNo}")
-	public ResponseEntity<ApiResponse<PostDto>> detail(@PathVariable int postNo) {
+	public ResponseEntity<ApiResponse<PostDto>> detail(
+			@PathVariable("postNo") int postNo) {
 		
 		PostDto dto = noticeService.selectNotice(postNo);
 		noticeService.updateAddReadCount(postNo);
@@ -82,8 +88,8 @@ public class NoticeController {
 	//==============파일 다운로드===================
 	@GetMapping("/{postNo}/filedown/{fileNo}")
 	public ResponseEntity<Resource> downloadFile(
-			@PathVariable Integer postNo,
-			@PathVariable Integer fileNo) {
+			@PathVariable("postNo") Integer postNo,
+			@PathVariable("fileNo") Integer fileNo) throws IOException {
 		
 		FileEntity fileEntity = fileRepository.findById(fileNo)
 				.orElseThrow(() -> new NotFoundException("파일이 존재하지 않습니다."));
@@ -93,31 +99,36 @@ public class NoticeController {
 		}
 		
 		Path path = uploadProperties.noticeDir()
-				.resolve(fileEntity.getUpdatedFileName());
-		
+		        .resolve(fileEntity.getUpdatedFileName());
+
 		File file = path.toFile();		
 		if(!file.exists())
 			throw new NotFoundException("파일이 존재하지 않습니다.");
 		
-		String encoded = URLEncoder.encode(
-				fileEntity.getOriginalFileName(), StandardCharsets.UTF_8);
-		
+		String originalName = fileEntity.getOriginalFileName();
+		String encodedName = URLEncoder.encode(originalName, StandardCharsets.UTF_8)
+		        .replaceAll("\\+", "%20");
+
+		String contentType = Files.probeContentType(path);
+		if (contentType == null) {
+		    contentType = "application/octet-stream";
+		}
+
 		HttpHeaders headers = new HttpHeaders();
-		headers.setContentDisposition(
-				ContentDisposition.attachment()
-					.filename(encoded, StandardCharsets.UTF_8)
-					.build());
-		
-		headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
-		
+		headers.add(HttpHeaders.CONTENT_DISPOSITION,
+		        "attachment; filename=\"" + originalName + "\"; filename*=UTF-8''" + encodedName);
+
+		headers.setContentType(MediaType.parseMediaType(contentType));
+
 		return ResponseEntity.ok()
-				.headers(headers)
-				.body(new FileSystemResource(file));
+		        .headers(headers)
+		        .body(new FileSystemResource(file));
 	}
 	
 	//==============등록===================
 	@PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	public ResponseEntity<ApiResponse<Void>> create(
+			Authentication authentication,
 			@Validated(PostDto.Create.class) @ModelAttribute PostDto postDto,
 			BindingResult bindingResult,
 			@RequestParam(name = "files", required = false) List<MultipartFile> files) {
@@ -127,6 +138,12 @@ public class NoticeController {
 			return ResponseEntity.badRequest()
 					.body(ApiResponse.fail(message, null));
 		}
+		
+		String email = authentication.getName();
+		String userNo = userRepository.findByEmailId(email)
+		        .getUserNo();
+		
+		postDto.setUserNo(userNo);
 		
 		List<FileDto> fileDtoList = new ArrayList<>();
 		
@@ -167,7 +184,8 @@ public class NoticeController {
 	//==============수정===================
 	@PutMapping	(value = "/{postNo}/update", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	public ResponseEntity<ApiResponse<Void>> update(
-			@PathVariable int postNo,
+			@PathVariable("postNo") int postNo,
+			Authentication authentication,
 			@Validated(PostDto.Update.class) @ModelAttribute PostDto postDto,
 			BindingResult bindingResult,
 			@RequestParam(name = "deleteFileNo", required = false) List<Integer> deleteFileNo,
@@ -179,6 +197,11 @@ public class NoticeController {
 					.body(ApiResponse.fail(message, null));
 		}
 		
+		String email = authentication.getName();
+		String userNo = userRepository.findByEmailId(email)
+		        .getUserNo();
+		
+		postDto.setUserNo(userNo);
 		postDto.setPostNo(postNo);
 		
 		//파일 등록처리 ==============================
@@ -253,7 +276,8 @@ public class NoticeController {
 	
 	//==============삭제===================
 	@DeleteMapping("/{postNo}/delete")
-	public ResponseEntity<ApiResponse<Void>> delete(@PathVariable int postNo) {
+	public ResponseEntity<ApiResponse<Void>> delete(
+			@PathVariable("postNo") int postNo) {
 
 	    PostDto dto = noticeService.selectNotice(postNo);
 	    noticeService.deleteNotice(postNo);
@@ -319,4 +343,10 @@ public class NoticeController {
 				ApiResponse.ok("검색 성공", 
 						new PageResponse<>(list, req.page(), req.size(), total, totalPages)));
 	}
+	
+	@InitBinder
+	public void initBinder(WebDataBinder binder) {
+	    binder.setDisallowedFields("files");
+	}
+
 }

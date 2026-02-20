@@ -47,7 +47,7 @@ public class ReviewServiceImpl implements ReviewService {
 		// 리뷰가 DB에 있는지 검사
 		if(!reviewRepository.existsById(reviewNo)) throw new NotFoundException("해당 리뷰가 존재하지 않습니다."); 
 		// 리뷰 소유권 검사
-		if(!reviewRepository.findUserNoById(reviewNo).equals(userRepository.findUserNoByEmailId(currentUser))) throw new ForbiddenException("해당 리뷰의 삭제 권한이 없습니다.");
+		if(!reviewRepository.findUserNoByReviewNo(reviewNo).equals(userRepository.findUserNoByEmailId(currentUser))) throw new ForbiddenException("해당 리뷰의 삭제 권한이 없습니다.");
 		
 		reviewRepository.deleteById(reviewNo);
 	}
@@ -60,7 +60,7 @@ public class ReviewServiceImpl implements ReviewService {
 		// 리뷰가 DB에 있는지 검사
 		if(!reviewRepository.existsById(reviewDto.getReviewNo())) throw new NotFoundException("해당 리뷰가 존재하지 않습니다."); 
 		// 리뷰 소유권 검사
-		if(!reviewRepository.findUserNoById(reviewDto.getReviewNo()).equals(userRepository.findUserNoByEmailId(currentUser))) throw new ForbiddenException("해당 리뷰의 수정 권한이 없습니다.");
+		if(!reviewRepository.findUserNoByReviewNo(reviewDto.getReviewNo()).equals(userRepository.findUserNoByEmailId(currentUser))) throw new ForbiddenException("해당 리뷰의 수정 권한이 없습니다.");
 		
 		ReviewEntity rows = reviewRepository.save(reviewDto.toEntity());
 		return rows.toDto();

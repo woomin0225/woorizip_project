@@ -9,7 +9,7 @@ import org.team4p.woorizip.house.jpa.entity.HouseEntity;
 
 @Repository
 public interface HouseRepository extends JpaRepository<HouseEntity, String>, HouseRepositoryCustom {
-	String findUserNoById(String houseId);
+	String findUserNoByHouseNo(String houseId);
 	List<HouseEntity> findAllByUserNoOrderByHouseName(String userNo);
 	Optional<HouseEntity> findByUserNo(String userNo);
 }
