@@ -19,7 +19,6 @@ import org.team4p.woorizip.room.image.dto.RoomImageDto;
 import org.team4p.woorizip.room.image.service.RoomImageService;
 import org.team4p.woorizip.room.jpa.entity.RoomEntity;
 import org.team4p.woorizip.room.jpa.repository.RoomRepository;
-import org.team4p.woorizip.room.type.SearchCriterion;
 import org.team4p.woorizip.user.jpa.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -33,14 +32,14 @@ public class RoomServiceImpl implements RoomService {
 	private final UserRepository userRepository;
 	
 	@Override
-	public Slice<RoomSearchResponse> selectRoomSearch(RoomSearchCondition cond, Pageable pageable, SearchCriterion criterion) {
+	public Slice<RoomSearchResponse> selectRoomSearch(RoomSearchCondition cond, Pageable pageable) {
 		// 방 검색
 		
 		// bbox 좌표 크기순서 보증
 		cond.adjustment();
 		
 		// 방 검색 결과 조회 -> 응답객체에 저장
-		Slice<RoomSearchResponse> slice = roomRepository.searchRooms(cond, pageable, criterion)
+		Slice<RoomSearchResponse> slice = roomRepository.searchRooms(cond, pageable)
 				.map((entity)->RoomSearchResponse.builder()
 								.roomNo(entity.getRoomNo())
 								.roomName(entity.getRoomName())
@@ -166,14 +165,14 @@ public class RoomServiceImpl implements RoomService {
 	}
 
 	@Override
-	public Slice<RoomSearchResponse> selectRoomsInHouseMarker(RoomSearchCondition cond, Pageable pageable, SearchCriterion criterion, String houseNo) {
+	public Slice<RoomSearchResponse> selectRoomsInHouseMarker(RoomSearchCondition cond, Pageable pageable, String houseNo) {
 		// 건물 마커 클릭시 리스트 조회
 		
 		// bbox 좌표 크기순서 보증
 		cond.adjustment();
 		
 		// 방 검색 결과 조회 -> 응답객체에 저장
-		Slice<RoomSearchResponse> slice = roomRepository.searchRooms(cond, pageable, criterion, houseNo)
+		Slice<RoomSearchResponse> slice = roomRepository.searchRooms(cond, pageable, houseNo)
 				.map((entity)->RoomSearchResponse.builder()
 								.roomNo(entity.getRoomNo())
 								.roomName(entity.getRoomName())

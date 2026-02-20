@@ -18,7 +18,6 @@ import org.team4p.woorizip.room.type.SearchCriterion;
 
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.OrderSpecifier;
-import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 
 import jakarta.persistence.EntityManager;
@@ -46,13 +45,13 @@ public class RoomRepositoryCustomImpl implements RoomRepositoryCustom {
 	}
 
 	@Override
-	public Slice<RoomEntity> searchRooms(RoomSearchCondition cond, Pageable pageable, SearchCriterion criterion) {
+	public Slice<RoomEntity> searchRooms(RoomSearchCondition cond, Pageable pageable) {
 		// 방 검색
 		
 		BooleanBuilder where = getWhere(cond);
 		
 		// 정렬 기준 추출
-		OrderSpecifier<?> order = getOrder(criterion, qroomEntity); 
+		OrderSpecifier<?> order = getOrder(cond.getCriterion(), qroomEntity); 
 		
 		List<RoomEntity> rows = queryFactory
 										.selectFrom(qroomEntity)
@@ -177,14 +176,14 @@ public class RoomRepositoryCustomImpl implements RoomRepositoryCustom {
 	}
 	
 	@Override
-	public Slice<RoomEntity> searchRooms(RoomSearchCondition cond, Pageable pageable, SearchCriterion criterion, String houseNo) {
+	public Slice<RoomEntity> searchRooms(RoomSearchCondition cond, Pageable pageable, String houseNo) {
 		// 지도 마커 클릭시 방 목록 조회
 		
 		BooleanBuilder where = getWhere(cond);
 		where.and(qhouseEntity.houseNo.eq(houseNo));
 		
 		// 정렬 기준 추출
-		OrderSpecifier<?> order = getOrder(criterion, qroomEntity); 
+		OrderSpecifier<?> order = getOrder(cond.getCriterion(), qroomEntity); 
 		
 		List<RoomEntity> rows = queryFactory
 										.selectFrom(qroomEntity)

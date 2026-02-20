@@ -35,7 +35,6 @@ import org.team4p.woorizip.room.image.service.RoomImageService;
 import org.team4p.woorizip.room.review.dto.ReviewDto;
 import org.team4p.woorizip.room.review.service.ReviewService;
 import org.team4p.woorizip.room.service.RoomService;
-import org.team4p.woorizip.room.type.SearchCriterion;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -50,9 +49,9 @@ public class RoomController {
 	private final ReviewService reviewService;
 	
 	@GetMapping("/search")
-	public ResponseEntity<ApiResponse<Slice<RoomSearchResponse>>> searchRooms(@Valid @ModelAttribute RoomSearchCondition cond, Pageable pageable, @RequestParam SearchCriterion criterion) {
+	public ResponseEntity<ApiResponse<Slice<RoomSearchResponse>>> searchRooms(@Valid @ModelAttribute RoomSearchCondition cond, Pageable pageable) {
 		// 방 검색 결과 조회
-		Slice<RoomSearchResponse> slice = roomService.selectRoomSearch(cond, pageable, criterion);
+		Slice<RoomSearchResponse> slice = roomService.selectRoomSearch(cond, pageable);
 		
 		return ResponseEntity.status(200).body(ApiResponse.ok("검색 성공", slice));
 	}

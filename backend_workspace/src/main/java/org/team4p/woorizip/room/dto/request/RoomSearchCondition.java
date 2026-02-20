@@ -22,26 +22,26 @@ import lombok.NoArgsConstructor;
 public class RoomSearchCondition {
 	private String keyword;	// 검색 키워드
 	private RoomType roomType;	// 전세, 월세 구분
-	@Min(value = 0) @NumericOnly
-	private Integer minTax;	// 최소 월세액
-	@Min(value = 1) @NumericOnly
-	private Integer maxTax;	// 최대 월세액
-	@Min(value = 0) @NumericOnly
-	private Integer minDeposit;	// 최소 보증금
-	@Min(value = 1) @NumericOnly
-	private Integer maxDeposit;	// 최대 보증금
-	@NotEmpty
+	@Min(value = 0)
+	private Long minTax;	// 최소 월세액
+	@Min(value = 1)
+	private Long maxTax;	// 최대 월세액
+	@Min(value = 0)
+	private Long minDeposit;	// 최소 보증금
+	@Min(value = 1)
+	private Long maxDeposit;	// 최대 보증금
+	@NotNull
 	private Double swLat;	// bbox 남서 위도
-	@NotEmpty
+	@NotNull
 	private Double swLng;	// bbox 남서 경도
-	@NotEmpty
+	@NotNull
 	private Double neLat;	// bbox 북동 위도
-	@NotEmpty
+	@NotNull
 	private Double neLng;	// bbox 북동 경도
-	@TextOnly
+	
 	private Set<String> options;	// 가구옵션
-	@Min(value = 1) @NumericOnly
-	private Integer roomRoomCount;	// 방수, 수용인원
+	@Min(value = 1)
+	private Long roomRoomCount;	// 방수, 수용인원
 	@NotNull
 	private Boolean houseElevatorYn;	// 승강기 유무
 	@NotNull

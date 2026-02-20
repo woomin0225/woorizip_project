@@ -33,7 +33,6 @@ import org.team4p.woorizip.room.dto.RoomDto;
 import org.team4p.woorizip.room.dto.request.RoomSearchCondition;
 import org.team4p.woorizip.room.dto.response.RoomSearchResponse;
 import org.team4p.woorizip.room.service.RoomService;
-import org.team4p.woorizip.room.type.SearchCriterion;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -246,12 +245,11 @@ public class HouseController {
 	public ResponseEntity<ApiResponse<Slice<RoomSearchResponse>>> getRoomsInHouseMarker(
 			@PathVariable("houseNo") String houseNo,
 			@Valid @ModelAttribute RoomSearchCondition cond,
-			Pageable pageable,
-			@RequestParam SearchCriterion criterion
+			Pageable pageable
 			) {
 		// 건물 마커 클릭시 리스트 조회
 		
-		Slice<RoomSearchResponse> slice = roomService.selectRoomsInHouseMarker(cond, pageable, criterion, houseNo);
+		Slice<RoomSearchResponse> slice = roomService.selectRoomsInHouseMarker(cond, pageable, houseNo);
 		return ResponseEntity.status(200).body(ApiResponse.ok("건물마커 내 방 목록 조회 성공", slice));
 	}
 	
