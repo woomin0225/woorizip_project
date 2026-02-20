@@ -4,10 +4,14 @@ import java.util.ArrayList;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.team4p.woorizip.board.comment.model.dto.CommentDto;
 import org.team4p.woorizip.board.comment.model.service.CommentService;
 import org.team4p.woorizip.common.api.ApiResponse;
+import org.team4p.woorizip.common.exception.NotFoundException;
+import org.team4p.woorizip.user.jpa.entity.UserEntity;
+import org.team4p.woorizip.user.jpa.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,11 +23,12 @@ import lombok.extern.slf4j.Slf4j;
 public class CommentController {
 
 	private final CommentService commentService;
+	private final UserRepository userRepository;
 	
 	//게시글 댓글 목록 ==========================
 	@GetMapping("/{postNo}/comments")
 	public ResponseEntity<ApiResponse<ArrayList<CommentDto>>> list(
-			@PathVariable Integer postNo,
+			@PathVariable("postNo") Integer postNo,
 			Pageable pageable) {
 		
 		ArrayList<CommentDto> list = 
@@ -36,11 +41,21 @@ public class CommentController {
 	//댓글 등록 (lev = 1) ==========================
 	@PostMapping("/{postNo}/comments")
 	public ResponseEntity<ApiResponse<Void>> create(
-			@PathVariable Integer postNo, 
-			@RequestBody CommentDto dto) {
+			@PathVariable("postNo") Integer postNo, 
+			@RequestBody CommentDto dto,
+			Authentication authentication) {
+		
+		String email = authentication.getName();
+		
+		UserEntity user = userRepository.findByEmailId(email);
+
+		if (user == null) {
+		    throw new NotFoundException("존재하지 않는 사용자 입니다.");
+		}
 
 		dto.setPostNo(postNo);
 		dto.setParentCommentNo(null);
+		dto.setUserNo(user.getUserNo());
 
 		commentService.insertComment(dto);
 
@@ -51,12 +66,22 @@ public class CommentController {
 	//대댓글 등록 ==========================
 	@PostMapping("/{postNo}/comments/{parentCommentNo}")
 	public ResponseEntity<ApiResponse<Void>> rcommentInsertMethod(
-			@PathVariable Integer postNo,
-			@PathVariable Integer parentCommentNo,
-			@RequestBody CommentDto dto) {
+			@PathVariable("postNo") Integer postNo,
+			@PathVariable("parentCommentNo") Integer parentCommentNo,
+			@RequestBody CommentDto dto,
+			Authentication authentication) {
+		
+		String email = authentication.getName();
+
+		UserEntity user = userRepository.findByEmailId(email);
+
+		if (user == null) {
+			throw new NotFoundException("존재하지 않는 사용자 입니다.");
+		}
 		
 		dto.setPostNo(postNo);
 		dto.setParentCommentNo(parentCommentNo);
+		dto.setUserNo(user.getUserNo());
 		
 		commentService.insertComment(dto);
 
@@ -67,12 +92,21 @@ public class CommentController {
 	//댓글 수정 ==========================
 	@PutMapping("/comments/{commentNo}")
 	public ResponseEntity<ApiResponse<Void>> update(
-			@PathVariable Integer commentNo, 
-			@RequestBody CommentDto dto) {
+			@PathVariable("commentNo") Integer commentNo, 
+			@RequestBody CommentDto dto,
+			Authentication authentication) {
 
 		dto.setCommentNo(commentNo);
 		
-		commentService.updateComment(dto);
+		String email = authentication.getName();
+		UserEntity user = userRepository.findByEmailId(email);
+		if (user == null) {
+		    throw new NotFoundException("존재하지 않는 사용자 입니다.");
+		}
+		
+		String loginUserNo = user.getUserNo();
+		
+		commentService.updateComment(dto, loginUserNo);
 		
 		return ResponseEntity.ok(ApiResponse.ok("댓글 수정 성공", null));
 	}
@@ -80,9 +114,19 @@ public class CommentController {
 	//댓글 삭제 ==========================
 	@DeleteMapping("/comments/{commentNo}")
 	public ResponseEntity<ApiResponse<Void>> delete(
-			@PathVariable Integer commentNo) {
+			@PathVariable("commentNo") Integer commentNo,
+			Authentication authentication) {
+		
+		String email = authentication.getName();
+		
+		UserEntity user = userRepository.findByEmailId(email);
+		if (user == null) {
+		    throw new NotFoundException("존재하지 않는 사용자 입니다.");
+		}
+		
+		String loginUserNo = user.getUserNo();
 
-		commentService.deleteComment(commentNo);
+		commentService.deleteComment(commentNo, loginUserNo);
 		
 		return ResponseEntity.ok(ApiResponse.ok("댓글 삭제 성공", null));
 	}

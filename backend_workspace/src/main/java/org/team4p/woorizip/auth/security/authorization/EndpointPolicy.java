@@ -8,6 +8,7 @@ public final class EndpointPolicy {
             "/api/notice/**",
             	"/api/information/**",
             	"/api/event/**",
+            	"/api/qna/**",
             "/api/boards/**"
     };
 
@@ -23,7 +24,7 @@ public final class EndpointPolicy {
     		"/api/event/**"};
 
     // 게시글: USER/ADMIN (POST/PUT/DELETE)
-    public static final String[] BOARD_WRITE = { "/api/boards/**" };
+    public static final String[] QNA_WRITE = { "/api/qna/**" };
 
     // 댓글/대댓글: USER/ADMIN
     public static final String[] REPLY_WRITE = {

@@ -33,7 +33,7 @@ public class CommentDto {
 	@Min(value = 1)
 	private Integer postNo;
 	private Integer parentCommentNo;
-	@NotBlank(groups = {Create.class, Update.class})
+	@NotBlank(groups = {Update.class})
 	@Size(max = 36)
 	private String userNo;
 	@NotBlank(groups = {Create.class, Update.class})
