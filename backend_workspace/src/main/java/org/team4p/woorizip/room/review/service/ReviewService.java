@@ -6,7 +6,7 @@ import org.team4p.woorizip.room.review.dto.ReviewDto;
 
 public interface ReviewService {
 	Page<ReviewDto> selectRoomReviews(String roomNo, Pageable pageable);
-	ReviewDto insertRoomReview(ReviewDto reviewDto);
+	ReviewDto insertRoomReview(ReviewDto reviewDto, String currentUser);
 	void deleteRoomReview(int ReviewNo, String currentUser);
 	ReviewDto updateRoomReview(ReviewDto reviewDto, String currentUser);
 }

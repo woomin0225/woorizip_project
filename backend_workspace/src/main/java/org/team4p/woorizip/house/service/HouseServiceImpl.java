@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
@@ -71,7 +72,7 @@ public class HouseServiceImpl implements HouseService {
 
 	@Override
 	@Transactional
-	public HouseDto insertHouse(HouseDto houseDto) {
+	public HouseDto insertHouse(HouseDto houseDto, String currentUser) {
 		// 건물 등록
 		
 		// 주소 -> 위도, 경도 전환
@@ -93,6 +94,10 @@ public class HouseServiceImpl implements HouseService {
 		houseDto.setHouseLat(lat);
 		houseDto.setHouseLng(lng);
 		
+		// userNo 조립
+		String userNo = userRepository.findUserNoByEmailId(currentUser);
+		houseDto.setUserNo(userNo);
+		
 		// DB에 등록
 		return houseRepository.save(houseDto.toEntity()).toDto();
 	}
@@ -104,7 +109,7 @@ public class HouseServiceImpl implements HouseService {
 		
 		String userNo = houseRepository.findUserNoByHouseNo(houseDto.getHouseNo());
 		if (!userNo.equals(userRepository.findUserNoByEmailId(currentUser))) throw new ForbiddenException("수정 권한이 없습니다.");
-		
+		houseDto.setUserNo(userNo);
 		return houseRepository.save(houseDto.toEntity()).toDto();
 	}
 

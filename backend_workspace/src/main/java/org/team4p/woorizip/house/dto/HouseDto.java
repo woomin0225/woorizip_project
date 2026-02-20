@@ -9,6 +9,7 @@ import org.team4p.woorizip.house.jpa.entity.HouseEntity;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Null;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -23,7 +24,7 @@ public class HouseDto {
 	private String houseNo;
 	@NotBlank
 	private String houseName;
-	
+	@Null(message="userNo는 백엔드에서 설정")
 	private String userNo;
 
 	private LocalDateTime houseCreatedAt;

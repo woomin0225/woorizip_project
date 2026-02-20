@@ -81,13 +81,15 @@ public class HouseController {
 	@PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	public ResponseEntity<ApiResponse<Void>> createHouse(
 			@Valid @RequestBody HouseDto houseDto,
-			@RequestParam(value="newImages", required=false) List<MultipartFile> newImages) {
+			@RequestParam(value="newImages", required=false) List<MultipartFile> newImages,
+			Authentication auth) {
 		// 건물 등록
 		
 		// 위도 경도 반환
 		// => service 레이어에서 수행
 		// 서비스에서 위도 경도 추가해서 건물 DB에 정보 등록
-		HouseDto savedHouseDto = houseService.insertHouse(houseDto); 
+		String currentUser = auth.getName().toString();
+		HouseDto savedHouseDto = houseService.insertHouse(houseDto, currentUser); 
 		
 		// 이미지 등록 : 이미지 파일 저장 실패하면 DB에도 등록 안됨. DB에 저장 실패하면 파일저장소에서 삭제됨
 		if (savedHouseDto != null) {	// 건물 등록 성공한 경우

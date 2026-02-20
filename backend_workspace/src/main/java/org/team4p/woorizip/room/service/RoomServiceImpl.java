@@ -80,8 +80,13 @@ public class RoomServiceImpl implements RoomService {
 		if(houseRepository.existsById(roomDto.getHouseNo()) == false) throw new IllegalArgumentException("건물을 조회할 수 없습니다.");
 		
 		// 해당 유저의 건물 소유권이 있는지 확인
-		if(!houseRepository.findUserNoByHouseNo(roomDto.getHouseNo()).equals(userRepository.findUserNoByEmailId(currentUser))) throw new ForbiddenException("해당 건물에 대한 등록 권한이 없습니다.");
+		String userNo = houseRepository.findUserNoByHouseNo(roomDto.getHouseNo());
+		if(!userNo.equals(userRepository.findUserNoByEmailId(currentUser))) throw new ForbiddenException("해당 건물에 대한 등록 권한이 없습니다.");
 		
+		// userNo 조립
+		roomDto.setUserNo(userNo);
+		
+		// DB에 저장
 		return roomRepository.save(roomDto.toEntity()).toDto();
 	}
 
@@ -134,6 +139,10 @@ public class RoomServiceImpl implements RoomService {
 		String userNo = roomRepository.findUserNoByRoomNo(roomDto.getRoomNo());
 		if (!userNo.equals(userRepository.findUserNoByEmailId(currentUser))) throw new ForbiddenException("수정 권한이 없습니다.");
 		
+		// userNo 조립
+		roomDto.setUserNo(userNo);
+		
+		// DB에 저장
 		return roomRepository.save(roomDto.toEntity()).toDto();
 	}
 
