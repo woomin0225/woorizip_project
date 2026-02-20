@@ -134,15 +134,31 @@ public class RoomServiceImpl implements RoomService {
 	public RoomDto updateRoom(RoomDto roomDto, String currentUser) {
 		// 방 정보 수정
 		
-		// 소유권 검사
-		String userNo = roomRepository.findUserNoByRoomNo(roomDto.getRoomNo());
+		// 방이 DB에 있는지 검사
+		Optional<RoomEntity> row = roomRepository.findById(roomDto.getRoomNo());
+		if(!row.isPresent()) throw new NotFoundException("방을 조회할 수 없습니다.");
+		RoomEntity entity = row.get();
+		
+		// 방 소유권 검사
+		String userNo = entity.getUserNo();
 		if (!userNo.equals(userRepository.findUserNoByEmailId(currentUser))) throw new ForbiddenException("수정 권한이 없습니다.");
 		
 		// userNo 조립
-		roomDto.setUserNo(userNo);
+		entity.setRoomName(roomDto.getRoomName());
+		entity.setRoomDeposit(roomDto.getRoomDeposit());
+		entity.setRoomMonthly(roomDto.getRoomMonthly());
+		entity.setRoomMethod(roomDto.getRoomMethod());
+		entity.setRoomArea(roomDto.getRoomArea());
+		entity.setRoomFacing(roomDto.getRoomFacing());
+		entity.setRoomAvailableDate(roomDto.getRoomAvailableDate());
+		entity.setRoomAbstract(roomDto.getRoomAbstract());
+		entity.setRoomRoomCount(roomDto.getRoomRoomCount());
+		entity.setRoomBathCount(roomDto.getRoomBathCount());
+		entity.setRoomEmptyYn(roomDto.isRoomEmptyYn());
+		entity.setRoomStatus(roomDto.getRoomStatus());
+		entity.setRoomOptions(roomDto.getRoomOptions());
 		
-		// DB에 저장
-		return roomRepository.save(roomDto.toEntity()).toDto();
+		return entity.toDto();
 	}
 
 	@Override

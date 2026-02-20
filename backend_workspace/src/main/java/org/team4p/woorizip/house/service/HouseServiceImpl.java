@@ -112,10 +112,29 @@ public class HouseServiceImpl implements HouseService {
 	public HouseDto updateHouse(HouseDto houseDto, String currentUser) {
 		// 건물 정보 수정
 		
-		String userNo = houseRepository.findUserNoByHouseNo(houseDto.getHouseNo());
+		// 건물이 DB에 있는지 검사
+		Optional<HouseEntity> row = houseRepository.findById(houseDto.getHouseNo());
+		if(!row.isPresent()) throw new NotFoundException("건물을 조회할 수 없습니다.");
+		HouseEntity entity = row.get();
+		
+		// 건물 소유권 검사
+		String userNo = entity.getUserNo();
 		if (!userNo.equals(userRepository.findUserNoByEmailId(currentUser))) throw new ForbiddenException("수정 권한이 없습니다.");
-		houseDto.setUserNo(userNo);
-		return houseRepository.save(houseDto.toEntity()).toDto();
+		
+		entity.setHouseName(houseDto.getHouseName());
+		entity.setHouseZip(houseDto.getHouseZip());
+		entity.setHouseAddress(houseDto.getHouseAddress());
+		entity.setHouseAddressDetail(houseDto.getHouseAddressDetail());
+		entity.setHouseCompletionYear(houseDto.getHouseCompletionYear());
+		entity.setHouseFloors(houseDto.getHouseFloors());
+		entity.setHouseHouseHolds(houseDto.getHouseHouseHolds());
+		entity.setHouseElevatorYn(houseDto.isHouseElevatorYn());
+		entity.setHousePetYn(houseDto.isHousePetYn());
+		entity.setHouseFemaleLimit(houseDto.isHouseFemaleLimit());
+		entity.setHouseParkingMax(houseDto.getHouseParkingMax());
+		entity.setHouseAbstract(houseDto.getHouseAbstract());
+		
+		return entity.toDto();
 	}
 
 	@Override
