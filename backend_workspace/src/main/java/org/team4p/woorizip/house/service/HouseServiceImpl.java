@@ -102,7 +102,7 @@ public class HouseServiceImpl implements HouseService {
 	public HouseDto updateHouse(HouseDto houseDto, String currentUser) {
 		// 건물 정보 수정
 		
-		String userNo = houseRepository.findUserNoById(houseDto.getHouseNo());
+		String userNo = houseRepository.findUserNoByHouseNo(houseDto.getHouseNo());
 		if (!userNo.equals(userRepository.findUserNoByEmailId(currentUser))) throw new ForbiddenException("수정 권한이 없습니다.");
 		
 		return houseRepository.save(houseDto.toEntity()).toDto();

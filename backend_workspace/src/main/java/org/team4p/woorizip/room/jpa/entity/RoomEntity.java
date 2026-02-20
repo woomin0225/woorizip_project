@@ -12,13 +12,17 @@ import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Builder
 @Data
 @Table(name="tb_rooms")
 @Entity
+@NoArgsConstructor
+@AllArgsConstructor
 public class RoomEntity {
 	@Id
 	@Column(name="room_no")

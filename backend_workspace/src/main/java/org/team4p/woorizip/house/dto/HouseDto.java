@@ -4,11 +4,15 @@ import java.time.LocalDateTime;
 
 import org.team4p.woorizip.house.jpa.entity.HouseEntity;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class HouseDto {
 	
 	private String houseNo;
