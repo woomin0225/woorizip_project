@@ -81,7 +81,7 @@ public class SecurityConfig {
         	    .requestMatchers(HttpMethod.POST, "/api/wishlist/add/**").permitAll()
         	    .requestMatchers(HttpMethod.GET, "/api/wishlist/**").permitAll()
 
-                // admin write: notice, information only
+                // admin write: notice, information, event only
                 .requestMatchers(HttpMethod.POST, EndpointPolicy.ADMIN_WRITE).hasRole("ADMIN")
                 .requestMatchers(HttpMethod.PUT, EndpointPolicy.ADMIN_WRITE).hasRole("ADMIN")
                 .requestMatchers(HttpMethod.DELETE, EndpointPolicy.ADMIN_WRITE).hasRole("ADMIN")

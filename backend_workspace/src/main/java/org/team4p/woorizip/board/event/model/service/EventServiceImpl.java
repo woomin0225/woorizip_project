@@ -75,9 +75,17 @@ public class EventServiceImpl implements EventService {
 				postRepository.findTop3ByBoardTypeNoOrderByPostCreatedAtDesc(BOARD_TYPE_NO);
 
 		ArrayList<PostDto> list = new ArrayList<>();
+		
 		for (PostEntity entity : entities) {
 			PostDto dto = PostDto.fromEntity(entity);
 			dto.setFiles(getFiles(entity.getPostNo()));
+			
+			bannerImageRepository.findByPostNo(entity.getPostNo())
+				.ifPresent(banner -> 
+						dto.setBannerImage(
+								BannerImageDto.fromEntity(banner)
+						));
+			
 			list.add(dto);
 		}
 		return list;
@@ -126,6 +134,13 @@ public class EventServiceImpl implements EventService {
 
 		PostDto dto = PostDto.fromEntity(entity);
 		dto.setFiles(getFiles(entity.getPostNo()));
+		
+		bannerImageRepository.findByPostNo(entity.getPostNo())
+		.ifPresent(banner ->
+				dto.setBannerImage(
+						BannerImageDto.fromEntity(banner)
+							));
+		
 		return dto;
 	}
 
@@ -178,14 +193,18 @@ public class EventServiceImpl implements EventService {
 	@Transactional
 	public int updateEvent(PostDto postDto, List<Integer> deleteFileNo, BannerImageDto bannerDto) {
 
-		if (postDto.getPostNo() == null || 
-				!postRepository.existsById(postDto.getPostNo())) {
+		PostEntity entity = postRepository.findById(postDto.getPostNo())
+	            .orElseThrow(() -> new NotFoundException("수정할 이벤트 게시글이 없습니다."));
+		
+		entity.setPostTitle(postDto.getPostTitle());
+	    entity.setPostContent(postDto.getPostContent());
+	    entity.setUserNo(postDto.getUserNo());
+	    
+	    //첨부 파일 확인 
+	    boolean hasExistingFiles = fileRepository.existsById(entity.getPostNo());
+	    boolean hasNewFiles = postDto.getFiles() != null && !postDto.getFiles().isEmpty();
 
-			throw new NotFoundException("수정할 이벤트 게시글이 없습니다.");
-		}
-
-		postDto.setBoardTypeNo(BOARD_TYPE_NO);
-		postRepository.save(postDto.toEntity());
+	    entity.setPostFilesYn(hasExistingFiles || hasNewFiles);
 
 		// 기존 파일 삭제
 		if (deleteFileNo != null && !deleteFileNo.isEmpty()) {
@@ -195,23 +214,28 @@ public class EventServiceImpl implements EventService {
 		}
 
 		// 새 파일 추가
-		if (postDto.getFiles() != null) {
-			for (FileDto fileDto : postDto.getFiles()) {
-				fileDto.setPostNo(postDto.getPostNo());
-				fileRepository.save(fileDto.toEntity());
-			}
-		}
+		if (hasNewFiles) {
+	        for (FileDto fileDto : postDto.getFiles()) {
+	            fileDto.setPostNo(entity.getPostNo());
+	            fileRepository.save(fileDto.toEntity());
+	        }
+	    }
 
 		// 기존 배너 이미지 존재 여부 확인
-		if (bannerDto != null && bannerDto.getOriginalFileName() != null && bannerDto.getUpdatedFileName() != null) {
+		if (bannerDto != null) {
+			
+			bannerImageRepository.findByPostNo(entity.getPostNo())
+				.ifPresentOrElse(existingBanner -> {
+					//기존 배너 업데이트 
+					existingBanner.setOriginalFileName(bannerDto.getOriginalFileName());
+		            existingBanner.setUpdatedFileName(bannerDto.getUpdatedFileName());
 
-			// 기존 배너 삭제
-			bannerImageRepository.findByPostNo(postDto.getPostNo())
-					.ifPresent(banner -> bannerImageRepository.delete(banner));
-
-			// 새 배너 저장
-			bannerDto.setPostNo(postDto.getPostNo());
-			bannerImageRepository.save(bannerDto.toEntity());
+		            bannerImageRepository.save(existingBanner);
+				}, () -> {
+					//배너 없으면 insert
+					bannerDto.setPostNo(entity.getPostNo());
+		            bannerImageRepository.save(bannerDto.toEntity());
+				});
 		}
 
 		return 1;
