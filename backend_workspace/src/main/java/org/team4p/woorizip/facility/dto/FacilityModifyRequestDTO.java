@@ -8,6 +8,7 @@ import org.team4p.woorizip.common.validator.TextOnly;
 import org.team4p.woorizip.facility.enums.FacilityStatus;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -53,4 +54,14 @@ public class FacilityModifyRequestDTO {
 	private Integer facilityMaxDurationMinutes;
 	
 	private List<FacilityImageDTO> images;
+	
+	@AssertTrue(message = "예약이 필요한 시설은 일일 최대 예약 횟수, 예약 단위 시간, 최대 이용 시간 입력이 필요합니다.")
+	public boolean isRsvnFieldsValid() {
+	    if (facilityRsvnRequiredYn) {
+	        return maxRsvnPerDay != null && 
+	               facilityRsvnUnitMinutes != null && 
+	               facilityMaxDurationMinutes != null;
+	    }
+	    return true;
+	}
 }
