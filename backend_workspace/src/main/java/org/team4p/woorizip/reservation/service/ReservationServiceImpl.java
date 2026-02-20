@@ -90,8 +90,8 @@ public class ReservationServiceImpl implements ReservationService {
 	    }
 	    
 	    // 일일 최대 예약 횟수 검증
-	    long reservationCount = reservationRepository.countByUser_UserNoAndFacility_FacilityNoAndReservationDate(
-	            userNo, facilityNo, dto.getReservationDate());
+	    long reservationCount = reservationRepository.countByUserAndFacilityAndReservationDate(
+	            user, facility, dto.getReservationDate());
 	    if (reservationCount >= facility.getMaxRsvnPerDay()) {
 	        throw new ForbiddenException("Exceeds maximum reservations per day (" + facility.getMaxRsvnPerDay() + " times).");
 	    }
@@ -154,6 +154,7 @@ public class ReservationServiceImpl implements ReservationService {
 		// 예약 번호 찾기
 		ReservationEntity entity = reservationRepository.findById(reservationNo)
 				.orElseThrow(() -> new NotFoundException("no reservation data exists"));
+		
 		FacilityEntity facility = entity.getFacility();
 		
 		// 본인 확인
@@ -167,8 +168,8 @@ public class ReservationServiceImpl implements ReservationService {
 	    }
 	    
 	    // 시설 운영 시간 내의 예약인지 확인
-	    if (dto.getReservationStartTime().isBefore(entity.getFacility().getFacilityOpenTime()) || 
-	    		dto.getReservationEndTime().isAfter(entity.getFacility().getFacilityCloseTime())) {
+	    if (dto.getReservationStartTime().isBefore(facility.getFacilityOpenTime()) || 
+	    		dto.getReservationEndTime().isAfter(facility.getFacilityCloseTime())) {
 	    	throw new ForbiddenException("no permission to make reservation on this time");
 	    }
 
@@ -197,14 +198,14 @@ public class ReservationServiceImpl implements ReservationService {
 	    
 	    // 일일 최대 예약 횟수 검증
 	    long reservationCount = reservationRepository.countByUserAndFacilityAndReservationDateAndReservationNoNot(
-	            userNo, facility.getFacilityNo(), dto.getReservationDate(), reservationNo);
+	    		entity.getUser(), facility, dto.getReservationDate(), reservationNo);
 	    if (reservationCount >= facility.getMaxRsvnPerDay()) {
 	        throw new ForbiddenException("Exceeds maximum reservations per day (" + facility.getMaxRsvnPerDay() + " times).");
 	    }
 	    
 	    // 중복 예약인지 확인
 	    boolean isOverlapped = reservationRepository.existsByFacilityAndReservationDateAndReservationStartTimeBeforeAndReservationEndTimeAfterAndReservationNoNot(
-	            entity.getFacility(), 
+	            facility, 
 	            dto.getReservationDate(), 
 	            dto.getReservationEndTime(), 
 	            dto.getReservationStartTime(),
