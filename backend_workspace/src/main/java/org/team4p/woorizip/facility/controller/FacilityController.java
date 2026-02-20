@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.team4p.woorizip.common.api.ApiResponse;
+import org.team4p.woorizip.facility.dto.FacilityCategoryCreateRequestDTO;
 import org.team4p.woorizip.facility.dto.FacilityCategoryDTO;
 import org.team4p.woorizip.facility.dto.FacilityCreateRequestDTO;
 import org.team4p.woorizip.facility.dto.FacilityDetailResponseDTO;
@@ -45,24 +46,19 @@ public class FacilityController {
 	public ResponseEntity<ApiResponse<String>> createFacility(
 			@Valid @RequestBody FacilityCreateRequestDTO dto,
 			@AuthenticationPrincipal String currentUserNo) {
-		try {
-			facilityService.createFacility(dto, currentUserNo);
-	        return ResponseEntity.status(HttpStatus.CREATED)
-	                             .body(ApiResponse.ok("시설 정보 등록 성공", "facilityCreateSuccess"));
-	    } catch (Exception e) {
-	        log.error("[createFacility Error] facilityName: {}, Error: {}", dto.getFacilityName(), e.getMessage(), e);
-	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-	                             .body(ApiResponse.fail("시설 등록 실패", "facilityCreateFail"));
-	    }
+		facilityService.createFacility(dto, currentUserNo);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                             .body(ApiResponse.ok("새로운 시설이 정상적으로 등록되었습니다.", "facilityCreateSuccess"));
 	}
 	
 	// 시설 카테고리 등록
 	@PostMapping("/categories")
 	@PreAuthorize("hasRole('ADMIN')")
-	public ResponseEntity<ApiResponse<String>> createFacilityCategory(@RequestBody FacilityCategoryDTO dto) {
+	public ResponseEntity<ApiResponse<String>> createFacilityCategory(
+			@Valid @RequestBody FacilityCategoryCreateRequestDTO dto) {
 		facilityService.createCategory(dto);
 		return ResponseEntity.status(HttpStatus.CREATED)
-				.body(ApiResponse.ok("시설 카테고리 등록 성공", "facilityCategoryCreateSuccess"));
+				.body(ApiResponse.ok("새로운 시설 카테고리가 정상적으로 등록되었습니다.", "facilityCategoryCreateSuccess"));
 		}
 		
 	// 시설 카테고리 조회
@@ -78,15 +74,9 @@ public class FacilityController {
 	@PreAuthorize("hasRole('ADMIN')")
 	public ResponseEntity<ApiResponse<String>> modifyFacilityCategory(
 			@PathVariable Integer facilityCode,
-			@RequestBody FacilityCategoryDTO dto) {
-		try {
-	        facilityService.modifyFacilityCategory(facilityCode, dto);
-	        return ResponseEntity.ok(ApiResponse.ok("시설 카테고리 수정 성공", "facilityCategoryModifySuccess"));
-	    } catch (Exception e) {
-	        log.error("[modifyFacilityCategory Error] FacilityCode: {}, Error: {}", dto.getFacilityCode(), e.getMessage(), e);
-	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-	                             .body(ApiResponse.fail("시설 카테고리 수정 실패", "facilityCategoryModifyFail"));
-	    }
+			@Valid @RequestBody FacilityCategoryDTO dto) {
+		facilityService.modifyFacilityCategory(facilityCode, dto);
+        return ResponseEntity.ok(ApiResponse.ok("시설 카테고리의 내용이 정상적으로 수정되었습니다.", "facilityCategoryModifySuccess"));
 	}
 	
 	// 시설 상세 조회
@@ -100,15 +90,9 @@ public class FacilityController {
 	@PatchMapping("/{facilityNo}")
 	public ResponseEntity<ApiResponse<String>> modifyFacility(
 			@PathVariable String facilityNo,
-		    @RequestBody FacilityModifyRequestDTO dto,
+		    @Valid @RequestBody FacilityModifyRequestDTO dto,
 		    @AuthenticationPrincipal String currentUserNo) {
-	    try {
-	        facilityService.modifyFacility(facilityNo, dto, currentUserNo);
-	        return ResponseEntity.ok(ApiResponse.ok("시설 정보 수정 성공", "facilityModifySuccess"));
-	    } catch (Exception e) {
-	        log.error("[modifyFacility Error] FacilityName: {}, Error: {}", dto.getFacilityName(), e.getMessage(), e);
-	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-	                             .body(ApiResponse.fail("시설 수정 실패", "facilityModifyFail"));
-	    }
+		facilityService.modifyFacility(facilityNo, dto, currentUserNo);
+        return ResponseEntity.ok(ApiResponse.ok("해당 시설의 정보가 정상적으로 수정되었습니다.", "facilityModifySuccess"));
 	}
 }

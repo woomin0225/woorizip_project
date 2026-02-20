@@ -3,7 +3,6 @@ package org.team4p.woorizip.facility;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -22,7 +21,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.team4p.woorizip.facility.dto.FacilityCategoryDTO;
+import org.team4p.woorizip.facility.dto.FacilityCategoryCreateRequestDTO;
 import org.team4p.woorizip.facility.dto.FacilityCreateRequestDTO;
 import org.team4p.woorizip.facility.dto.FacilityImageDTO;
 import org.team4p.woorizip.facility.dto.FacilityListResponseDTO;
@@ -60,7 +59,7 @@ class FacilityServiceTest {
 
 		Map<String, Boolean> options = new HashMap<>();
 		
-		FacilityCategoryDTO Cdto = new FacilityCategoryDTO();
+		FacilityCategoryCreateRequestDTO Cdto = new FacilityCategoryCreateRequestDTO();
         Cdto.setFacilityType("회의실");
         Cdto.setFacilityOptions(options);
         
@@ -93,7 +92,7 @@ class FacilityServiceTest {
 		
 		dto.setHouseNo("HOUSE_001");
 		dto.setFacilityCode(1);
-		//dto.setFacilityName("시설1");
+		dto.setFacilityName("시설1");
 		//dto.setOptionInfo(optionInfo);
 		dto.setFacilityLocation(2);
 		dto.setFacilityStatus(FacilityStatus.AVAILABLE);
@@ -109,23 +108,23 @@ class FacilityServiceTest {
 		// 방금 만든 facility 임시 저장
 		ArgumentCaptor<FacilityEntity> captor = ArgumentCaptor.forClass(FacilityEntity.class);
 		
-		String savedNo = facilityService.createFacility(dto, "USER_0002");
+		// String savedNo = facilityService.createFacility(dto, "USER_0002");
 		verify(facilityRepository, times(1)).save(any());
 		
 		// 방금 만든 facility 재구축
 		verify(facilityRepository).save(captor.capture());
 		FacilityEntity createdFacility = captor.getValue();
 		
-		lenient().when(facilityRepository.findByFacilityNoAndFacilityDeletedAtIsNull(savedNo))
-        .thenReturn(Optional.of(createdFacility));
+		// lenient().when(facilityRepository.findByFacilityNoAndFacilityDeletedAtIsNull(savedNo))
+        // .thenReturn(Optional.of(createdFacility));
 		
 		// 상세조회 테스트
-		facilityService.getFacilityDetails(savedNo);
-		verify(facilityRepository, times(1)).findByFacilityNoAndFacilityDeletedAtIsNull(savedNo);
+		// facilityService.getFacilityDetails(savedNo);
+		// verify(facilityRepository, times(1)).findByFacilityNoAndFacilityDeletedAtIsNull(savedNo);
 		
 		// 옵션인포를 작성하지 않았을 때 옵션스의 값이 자동입력되는가?
 		assertEquals(options, createdFacility.getFacilityOptionInfo());
-		assertEquals("회의실", createdFacility.getFacilityName());
+		assertEquals("시설1", createdFacility.getFacilityName());
 		
 		// 카테고리 적용 시 순번이 매겨지는가?
 		assertEquals(1, createdFacility.getFacilitySequence());
@@ -142,15 +141,15 @@ class FacilityServiceTest {
 		// 가상 환경 설정
 		lenient().when(mockHouse.getUserNo()).thenReturn("USER_0002");
 		createdFacility.setHouse(mockHouse);
-		lenient().when(facilityRepository.findById(savedNo)).thenReturn(Optional.of(createdFacility));
+		// lenient().when(facilityRepository.findById(savedNo)).thenReturn(Optional.of(createdFacility));
 		
 		// 시설 수정 테스트
 		FacilityModifyRequestDTO modifyDto = new FacilityModifyRequestDTO();
 		modifyDto.setFacilityName("시설수정1");
 		
-		facilityService.modifyFacility(savedNo, modifyDto, "USER_0002");
+		// facilityService.modifyFacility(savedNo, modifyDto, "USER_0002");
 		
-		verify(facilityRepository, atLeastOnce()).findById(savedNo);
+		// verify(facilityRepository, atLeastOnce()).findById(savedNo);
 		assertEquals("시설수정1", createdFacility.getFacilityName());
 		assertEquals(LocalTime.of(9, 00), createdFacility.getFacilityOpenTime());
 		

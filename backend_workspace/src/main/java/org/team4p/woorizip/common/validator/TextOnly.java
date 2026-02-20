@@ -10,7 +10,7 @@ import jakarta.validation.Payload;
 
 @Target({ElementType.FIELD})
 @Retention(RetentionPolicy.RUNTIME)
-@Constraint(validatedBy = NumericValidator.class)
+@Constraint(validatedBy = TextValidator.class)
 public @interface TextOnly {
 	String message() default "한글과 영문자만 입력 가능합니다.";
     Class<?>[] groups() default {};

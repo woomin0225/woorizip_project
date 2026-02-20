@@ -33,8 +33,8 @@ import org.team4p.woorizip.room.dto.RoomDto;
 import org.team4p.woorizip.room.dto.request.RoomSearchCondition;
 import org.team4p.woorizip.room.dto.response.RoomSearchResponse;
 import org.team4p.woorizip.room.service.RoomService;
-import org.team4p.woorizip.room.type.SearchCriterion;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -47,7 +47,7 @@ public class HouseController {
 	private final RoomService roomService;
 	
 	@GetMapping("/marker")
-	public ResponseEntity<ApiResponse<List<HouseMarkerResponse>>> getHouseMarkers(@ModelAttribute RoomSearchCondition roomSearchCondition){
+	public ResponseEntity<ApiResponse<List<HouseMarkerResponse>>> getHouseMarkers(@Valid @ModelAttribute RoomSearchCondition roomSearchCondition){
 		// 지도 내 건물 마커용 검색 결과 조회
 		
 		List<HouseMarkerResponse> list = houseService.selectHouseMarkers(roomSearchCondition);
@@ -79,14 +79,16 @@ public class HouseController {
 	
 	@PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	public ResponseEntity<ApiResponse<Void>> createHouse(
-			@RequestBody HouseDto houseDto,
-			@RequestParam(value="newImages", required=false) List<MultipartFile> newImages) {
+			@Valid @RequestBody HouseDto houseDto,
+			@RequestParam(value="newImages", required=false) List<MultipartFile> newImages,
+			Authentication auth) {
 		// 건물 등록
 		
 		// 위도 경도 반환
 		// => service 레이어에서 수행
 		// 서비스에서 위도 경도 추가해서 건물 DB에 정보 등록
-		HouseDto savedHouseDto = houseService.insertHouse(houseDto); 
+		String currentUser = auth.getName().toString();
+		HouseDto savedHouseDto = houseService.insertHouse(houseDto, currentUser); 
 		
 		// 이미지 등록 : 이미지 파일 저장 실패하면 DB에도 등록 안됨. DB에 저장 실패하면 파일저장소에서 삭제됨
 		if (savedHouseDto != null) {	// 건물 등록 성공한 경우
@@ -145,7 +147,7 @@ public class HouseController {
 	@PutMapping("/{houseNo}")
 	public ResponseEntity<ApiResponse<Void>> modifyHouse(
 			@PathVariable("houseNo") String houseNo,
-			@RequestBody HouseDto houseDto,
+			@Valid @RequestBody HouseDto houseDto,
 			@RequestParam(value="deleteImageNos", required=false) List<Integer> deleteImageNos,
 			@RequestParam(value="newImages", required=false) List<MultipartFile> newImages,
 			Authentication auth
@@ -242,13 +244,12 @@ public class HouseController {
 	@GetMapping("/{houseNo}/search")
 	public ResponseEntity<ApiResponse<Slice<RoomSearchResponse>>> getRoomsInHouseMarker(
 			@PathVariable("houseNo") String houseNo,
-			@ModelAttribute RoomSearchCondition cond,
-			Pageable pageable,
-			@RequestParam SearchCriterion criterion
+			@Valid @ModelAttribute RoomSearchCondition cond,
+			Pageable pageable
 			) {
 		// 건물 마커 클릭시 리스트 조회
 		
-		Slice<RoomSearchResponse> slice = roomService.selectRoomsInHouseMarker(cond, pageable, criterion, houseNo);
+		Slice<RoomSearchResponse> slice = roomService.selectRoomsInHouseMarker(cond, pageable, houseNo);
 		return ResponseEntity.status(200).body(ApiResponse.ok("건물마커 내 방 목록 조회 성공", slice));
 	}
 	
