@@ -1,9 +1,11 @@
 package org.team4p.woorizip.facility.dto;
 
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.team4p.woorizip.facility.jpa.entity.FacilityCategoryEntity;
 
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -16,15 +18,19 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class FacilityCategoryDTO {
+	
     private Integer facilityCode;
+    
+    @Size(max=10)
     private String facilityType;
-    private Map<String, Boolean> facilityOptions;
+    
+    private List<String> facilityOptions;
     
     public static FacilityCategoryDTO from(FacilityCategoryEntity entity) {
 	    return FacilityCategoryDTO.builder()
 	    		.facilityCode(entity.getFacilityCode())
 	    		.facilityType(entity.getFacilityType())
-	    		.facilityOptions(entity.getFacilityOptions())
+	    		.facilityOptions(new ArrayList<>(entity.getFacilityOptions().keySet()))
 	            .build();
 	}
 }
