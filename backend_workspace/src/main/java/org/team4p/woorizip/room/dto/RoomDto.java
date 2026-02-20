@@ -24,7 +24,7 @@ public class RoomDto {
 	private String roomNo;
 	@NotBlank
 	private String roomName;
-	@NotBlank
+	@Null
 	private String houseNo;
 	@Null(message="userNo는 백엔드에서 설정")
 	private String userNo;
