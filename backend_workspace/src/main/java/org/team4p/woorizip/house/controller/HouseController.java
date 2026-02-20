@@ -35,6 +35,7 @@ import org.team4p.woorizip.room.dto.response.RoomSearchResponse;
 import org.team4p.woorizip.room.service.RoomService;
 import org.team4p.woorizip.room.type.SearchCriterion;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -47,7 +48,7 @@ public class HouseController {
 	private final RoomService roomService;
 	
 	@GetMapping("/marker")
-	public ResponseEntity<ApiResponse<List<HouseMarkerResponse>>> getHouseMarkers(@ModelAttribute RoomSearchCondition roomSearchCondition){
+	public ResponseEntity<ApiResponse<List<HouseMarkerResponse>>> getHouseMarkers(@Valid @ModelAttribute RoomSearchCondition roomSearchCondition){
 		// 지도 내 건물 마커용 검색 결과 조회
 		
 		List<HouseMarkerResponse> list = houseService.selectHouseMarkers(roomSearchCondition);
@@ -79,7 +80,7 @@ public class HouseController {
 	
 	@PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	public ResponseEntity<ApiResponse<Void>> createHouse(
-			@RequestBody HouseDto houseDto,
+			@Valid @RequestBody HouseDto houseDto,
 			@RequestParam(value="newImages", required=false) List<MultipartFile> newImages) {
 		// 건물 등록
 		
@@ -145,7 +146,7 @@ public class HouseController {
 	@PutMapping("/{houseNo}")
 	public ResponseEntity<ApiResponse<Void>> modifyHouse(
 			@PathVariable("houseNo") String houseNo,
-			@RequestBody HouseDto houseDto,
+			@Valid @RequestBody HouseDto houseDto,
 			@RequestParam(value="deleteImageNos", required=false) List<Integer> deleteImageNos,
 			@RequestParam(value="newImages", required=false) List<MultipartFile> newImages,
 			Authentication auth
@@ -242,7 +243,7 @@ public class HouseController {
 	@GetMapping("/{houseNo}/search")
 	public ResponseEntity<ApiResponse<Slice<RoomSearchResponse>>> getRoomsInHouseMarker(
 			@PathVariable("houseNo") String houseNo,
-			@ModelAttribute RoomSearchCondition cond,
+			@Valid @ModelAttribute RoomSearchCondition cond,
 			Pageable pageable,
 			@RequestParam SearchCriterion criterion
 			) {

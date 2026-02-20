@@ -2,8 +2,13 @@ package org.team4p.woorizip.room.dto;
 
 import java.time.LocalDateTime;
 
+import org.team4p.woorizip.common.validator.NumericOnly;
+import org.team4p.woorizip.common.validator.TextOnly;
 import org.team4p.woorizip.room.jpa.entity.RoomEntity;
 
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -15,9 +20,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class RoomDto {
 	private String roomNo;
-	
+	@NotBlank
 	private String roomName;
-
+	@NotBlank
 	private String houseNo;
 	
 	private String userNo;
@@ -25,27 +30,27 @@ public class RoomDto {
 	private LocalDateTime roomCreatedAt;
 	
 	private LocalDateTime roomUpdatedAt;
-	
+	@Min(value = 0) @NumericOnly
 	private Integer roomDeposit;
-	
+	@Min(value = 0) @NumericOnly
 	private Integer roomMonthly;
-	
+	@NotBlank
 	private String roomMethod;
-	
+	@Min(value = 0)
 	private Double roomArea;
-	
+	@NotBlank @TextOnly
 	private String roomFacing;
-	
+	@NotBlank
 	private LocalDateTime roomAvailableDate;
 	
 	private String roomAbstract;
-	
+	@NotBlank @Min(value = 1) @NumericOnly
 	private Integer roomRoomCount;
-	
+	@NotBlank @Min(value = 0) @NumericOnly
 	private Integer roomBathCount;
-	
+	@NotNull
 	private Boolean roomEmptyYn;
-	
+	@NotNull
 	private String roomStatus;
 	
 	private String roomOptions;
