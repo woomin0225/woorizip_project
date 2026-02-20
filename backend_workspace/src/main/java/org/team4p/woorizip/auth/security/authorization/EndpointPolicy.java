@@ -8,6 +8,7 @@ public final class EndpointPolicy {
             "/api/notice/**",
             	"/api/information/**",
             	"/api/event/**",
+            	"/api/qna/**",
             "/api/boards/**"
     };
 
