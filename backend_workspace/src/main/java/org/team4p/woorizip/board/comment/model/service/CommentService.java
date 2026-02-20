@@ -14,6 +14,6 @@ public interface CommentService {
 	
 	//DML ============================
 	int insertComment(CommentDto commentDto);
-	int updateComment(CommentDto commentDto);
-	int deleteComment(Integer commentNo);
+	int updateComment(CommentDto commentDto, String loginUserNo);
+	int deleteComment(Integer commentNo, String loginUserNo);
 }
