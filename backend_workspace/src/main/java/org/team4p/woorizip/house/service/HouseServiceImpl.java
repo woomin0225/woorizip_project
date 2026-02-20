@@ -6,7 +6,6 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
@@ -39,15 +38,21 @@ public class HouseServiceImpl implements HouseService {
 		cond.adjustment();
 		
 		List<HouseEntity> rows = houseRepository.searchHouses(cond);
-		Map<String, Integer> map= houseRepository.searchPriceOfHouses(cond);
-		Integer minDeposit = map.get("minDeposit");
-		Integer maxDeposit = map.get("maxDeposit");
-		Integer minMonthly = map.get("minMonthly");
-		Integer maxMonthly = map.get("maxMonthly");
+		Map<String, Long> map= houseRepository.searchPriceOfHouses(cond);
+		Long minDeposit = getOrZero(map, "minDeposit");
+		Long maxDeposit = getOrZero(map, "maxDeposit");
+		Long minMonthly = getOrZero(map, "minMonthly");
+		Long maxMonthly = getOrZero(map, "maxMonthly");
 		
 		List<HouseMarkerResponse> list = new ArrayList<>();
 		rows.forEach(entity->list.add(new HouseMarkerResponse(entity, minDeposit, maxDeposit, minMonthly, maxMonthly)));
 		return list;
+	}
+	
+	private long getOrZero(Map<String, Long> map, String key) {
+		if(map.isEmpty()) return 0L;
+		Long value = map.get(key);
+		return value == null ? 0L : value;
 	}
 
 	@Override

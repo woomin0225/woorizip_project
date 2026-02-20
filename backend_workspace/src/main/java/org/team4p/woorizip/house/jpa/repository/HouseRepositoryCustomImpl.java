@@ -128,7 +128,7 @@ public class HouseRepositoryCustomImpl implements HouseRepositoryCustom {
 	}
 
 	@Override
-	public Map<String, Integer> searchPriceOfHouses(RoomSearchCondition cond) {
+	public Map<String, Long> searchPriceOfHouses(RoomSearchCondition cond) {
 		// 건물 마커 조회시 최소 가격 조회
 		
 		// 조건 생성 시작
@@ -204,9 +204,9 @@ public class HouseRepositoryCustomImpl implements HouseRepositoryCustom {
 			where.and(qhouseEntity.houseParkingMax.gt(0));
 		}
 		
-		Integer min;
-		Integer max;
-		Map<String, Integer> map = new HashMap<>();
+		Long min;
+		Long max;
+		Map<String, Long> map = new HashMap<>();
 		if(cond.getRoomType() != null) {
 			List<Tuple> deposit = queryFactory
 					.select(qroomEntity.roomDeposit.min(), qroomEntity.roomDeposit.max())

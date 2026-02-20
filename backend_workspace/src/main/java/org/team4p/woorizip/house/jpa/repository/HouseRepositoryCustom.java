@@ -9,5 +9,5 @@ import org.team4p.woorizip.room.dto.request.RoomSearchCondition;
 public interface HouseRepositoryCustom {
 	long softDeleteByHouseNo(String houseNo);
 	List<HouseEntity> searchHouses(RoomSearchCondition cond);
-	Map<String, Integer> searchPriceOfHouses(RoomSearchCondition cond);
+	Map<String, Long> searchPriceOfHouses(RoomSearchCondition cond);
 }

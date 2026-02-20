@@ -16,12 +16,12 @@ public class HouseMarkerResponse {
 	private String houseName;
 	private double houseLat;
 	private double houseLng;
-	private int minMonthly;
-	private int maxMonthly;
-	private int minDeposit;
-	private int maxDeposit;
+	private long minMonthly;
+	private long maxMonthly;
+	private long minDeposit;
+	private long maxDeposit;
 	
-	public HouseMarkerResponse(HouseEntity houseEntity, int minDeposit, int maxDeposit, int minMonthly, int maxMonthly) {
+	public HouseMarkerResponse(HouseEntity houseEntity, long minDeposit, long maxDeposit, long minMonthly, long maxMonthly) {
 		super();
 		this.houseNo = houseEntity.getHouseNo();
 		this.houseName = houseEntity.getHouseName();
