@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.team4p.woorizip.common.api.ApiResponse;
+import org.team4p.woorizip.facility.dto.FacilityCategoryCreateRequestDTO;
 import org.team4p.woorizip.facility.dto.FacilityCategoryDTO;
 import org.team4p.woorizip.facility.dto.FacilityCreateRequestDTO;
 import org.team4p.woorizip.facility.dto.FacilityDetailResponseDTO;
@@ -53,7 +54,7 @@ public class FacilityController {
 	// 시설 카테고리 등록
 	@PostMapping("/categories")
 	@PreAuthorize("hasRole('ADMIN')")
-	public ResponseEntity<ApiResponse<String>> createFacilityCategory(@RequestBody FacilityCategoryDTO dto) {
+	public ResponseEntity<ApiResponse<String>> createFacilityCategory(@RequestBody FacilityCategoryCreateRequestDTO dto) {
 		facilityService.createCategory(dto);
 		return ResponseEntity.status(HttpStatus.CREATED)
 				.body(ApiResponse.ok("새로운 시설 카테고리가 정상적으로 등록되었습니다.", "facilityCategoryCreateSuccess"));

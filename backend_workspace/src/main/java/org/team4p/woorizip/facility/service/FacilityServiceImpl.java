@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.team4p.woorizip.common.exception.ForbiddenException;
 import org.team4p.woorizip.common.exception.NotFoundException;
+import org.team4p.woorizip.facility.dto.FacilityCategoryCreateRequestDTO;
 import org.team4p.woorizip.facility.dto.FacilityCategoryDTO;
 import org.team4p.woorizip.facility.dto.FacilityCreateRequestDTO;
 import org.team4p.woorizip.facility.dto.FacilityDetailResponseDTO;
@@ -48,7 +49,7 @@ public class FacilityServiceImpl implements FacilityService {
 	@Override
 	@Transactional
 	// public void createFacility(FacilityCreateRequestDTO dto, String userNo) {
-	public String createFacility(FacilityCreateRequestDTO dto, String userNo) {
+	public void createFacility(FacilityCreateRequestDTO dto, String userNo) {
 		// userNo로 houseList 추출
 		List<HouseEntity> houseList = houseRepository.findAllByUserNoOrderByHouseName(userNo);
 		
@@ -98,14 +99,11 @@ public class FacilityServiceImpl implements FacilityService {
 	    } else {
 	        nextSequence = 1;
 	    }
-
-	    // 테스트용
-	    String facilityNo = UUID.randomUUID().toString();
 	    
 		// 시설 정보 입력
 		FacilityEntity facility = FacilityEntity
 				.builder()
-				.facilityNo(facilityNo)
+				.facilityNo(UUID.randomUUID().toString())
 				.house(selectedHouse)
 				.category(facilityCategory)
 				.facilityName(finalName)
@@ -136,13 +134,12 @@ public class FacilityServiceImpl implements FacilityService {
 		}
 		
 		facilityRepository.save(facility);
-		return facilityNo;
 	}
 
 	// 시설 카테고리 등록
 	@Override
 	@Transactional
-	public void createCategory(FacilityCategoryDTO dto) {
+	public void createCategory(FacilityCategoryCreateRequestDTO dto) {
 		if (categoryRepository.existsByFacilityType(dto.getFacilityType())) {
 	        throw new ForbiddenException("같은 이름의 카테고리가 존재합니다.");
 	    }

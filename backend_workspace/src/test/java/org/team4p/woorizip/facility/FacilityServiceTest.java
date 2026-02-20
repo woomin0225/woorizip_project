@@ -22,7 +22,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.team4p.woorizip.facility.dto.FacilityCategoryDTO;
+import org.team4p.woorizip.facility.dto.FacilityCategoryCreateRequestDTO;
 import org.team4p.woorizip.facility.dto.FacilityCreateRequestDTO;
 import org.team4p.woorizip.facility.dto.FacilityImageDTO;
 import org.team4p.woorizip.facility.dto.FacilityListResponseDTO;
@@ -60,7 +60,7 @@ class FacilityServiceTest {
 
 		Map<String, Boolean> options = new HashMap<>();
 		
-		FacilityCategoryDTO Cdto = new FacilityCategoryDTO();
+		FacilityCategoryCreateRequestDTO Cdto = new FacilityCategoryCreateRequestDTO();
         Cdto.setFacilityType("회의실");
         Cdto.setFacilityOptions(options);
         

@@ -61,9 +61,9 @@ public class ReservationServiceImpl implements ReservationService {
 		    throw new ForbiddenException("이 시설에 대한 예약 권한이 없습니다.");
 		}
 		
-		// 예약하려는 날짜와 시간이 현재 시점 이후인지 확인
 		LocalDateTime reservationStartDateTime = LocalDateTime.of(dto.getReservationDate(), dto.getReservationStartTime());
 
+		// 예약하려는 날짜와 시간이 현재 시점 이후인지 확인
 		if (reservationStartDateTime.isBefore(LocalDateTime.now())) {
 		    throw new ForbiddenException("현재 시각 이전 시간대로는 예약할 수 없습니다.");
 		}
