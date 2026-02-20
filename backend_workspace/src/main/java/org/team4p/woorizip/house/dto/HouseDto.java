@@ -20,7 +20,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class HouseDto {
-	
+	@Null
 	private String houseNo;
 	@NotBlank
 	private String houseName;

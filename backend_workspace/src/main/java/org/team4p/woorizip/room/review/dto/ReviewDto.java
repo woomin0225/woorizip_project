@@ -19,7 +19,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ReviewDto {
-	
+	@Null
 	private int reviewNo;
 	@NotBlank
 	private String roomNo;
