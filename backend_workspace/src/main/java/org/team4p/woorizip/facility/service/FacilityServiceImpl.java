@@ -61,7 +61,7 @@ public class FacilityServiceImpl implements FacilityService {
 	        }
 	    }
 		if (selectedHouse == null) {
-	        throw new NotFoundException("no houseNo in userNo");
+	        throw new NotFoundException("해당 건물의 소유자로 등록되어 있지 않습니다.");
 	    }
 
 		// 카테고리 선택에 따른 옵션 기본값 가져오기 : 미선택 시 기본값 미적용
@@ -143,6 +143,10 @@ public class FacilityServiceImpl implements FacilityService {
 	@Override
 	@Transactional
 	public void createCategory(FacilityCategoryDTO dto) {
+		if (categoryRepository.existsByFacilityType(dto.getFacilityType())) {
+	        throw new ForbiddenException("같은 이름의 카테고리가 존재합니다.");
+	    }
+		
 		FacilityCategoryEntity category = 
 				FacilityCategoryEntity.builder()
 				.facilityType(dto.getFacilityType())
@@ -167,7 +171,7 @@ public class FacilityServiceImpl implements FacilityService {
 	public void modifyFacilityCategory(Integer facilityCode, FacilityCategoryDTO dto) {
 		// 시설 코드 찾기
 		FacilityCategoryEntity category = categoryRepository.findById(facilityCode)
-				.orElseThrow(() -> new NotFoundException("no categoryCode exists"));
+				.orElseThrow(() -> new NotFoundException("해당 카테고리를 찾을 수 없습니다."));
 		
 		// dto 업데이트
 		category.updateCategory(dto);
@@ -180,7 +184,7 @@ public class FacilityServiceImpl implements FacilityService {
 	public FacilityDetailResponseDTO getFacilityDetails(String facilityNo) {
 		return facilityRepository.findByFacilityNoAndFacilityDeletedAtIsNull(facilityNo)
 				.map(FacilityDetailResponseDTO::from)
-				.orElseThrow(() -> new NotFoundException("no facility data exists"));
+				.orElseThrow(() -> new NotFoundException("해당 시설 정보를 찾을 수 없습니다."));
 	}
 
 	// 시설 정보 수정
@@ -189,11 +193,11 @@ public class FacilityServiceImpl implements FacilityService {
 	public void modifyFacility(String facilityNo, FacilityModifyRequestDTO dto, String userNo) {
 		// 시설 번호 찾기
 		FacilityEntity entity = facilityRepository.findById(facilityNo)
-				.orElseThrow(() -> new NotFoundException("no facility data exists"));
+				.orElseThrow(() -> new NotFoundException("해당 시설 정보를 찾을 수 없습니다."));
 		
 		// 권한 확인하기
 	    if (!entity.getHouse().getUserNo().equals(userNo)) {
-	        throw new ForbiddenException("no permission to modify this facility"); 
+	        throw new ForbiddenException("해당 시설의 소유자로 등록되어 있지 않습니다."); 
 	    }
 
 		// 이미지 삭제 후 재업로드
