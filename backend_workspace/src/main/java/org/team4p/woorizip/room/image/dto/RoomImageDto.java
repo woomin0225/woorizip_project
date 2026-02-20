@@ -2,11 +2,15 @@ package org.team4p.woorizip.room.image.dto;
 
 import org.team4p.woorizip.room.image.jpa.entity.RoomImageEntity;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class RoomImageDto {
 	
 	private int roomImageNo;

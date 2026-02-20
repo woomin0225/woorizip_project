@@ -5,9 +5,15 @@ import java.util.Set;
 import org.team4p.woorizip.room.type.RoomType;
 import org.team4p.woorizip.room.type.SearchCriterion;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class RoomSearchCondition {
 	private String keyword;	// 검색 키워드
 	private RoomType roomType;	// 전세, 월세 구분
