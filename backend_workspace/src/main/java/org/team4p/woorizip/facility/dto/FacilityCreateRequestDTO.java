@@ -4,6 +4,7 @@ import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
 
+import org.team4p.woorizip.common.validator.TextOnly;
 import org.team4p.woorizip.facility.enums.FacilityStatus;
 
 import jakarta.validation.constraints.NotBlank;
@@ -26,6 +27,7 @@ public class FacilityCreateRequestDTO {
 	private Integer facilityCode;
 	
 	@NotBlank(message="facilityName needed")
+	@TextOnly
 	private String facilityName;
 	
 	@NotNull(message="facilityOptionInfo needed")

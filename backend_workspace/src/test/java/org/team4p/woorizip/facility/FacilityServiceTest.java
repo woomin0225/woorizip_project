@@ -93,7 +93,7 @@ class FacilityServiceTest {
 		
 		dto.setHouseNo("HOUSE_001");
 		dto.setFacilityCode(1);
-		//dto.setFacilityName("시설1");
+		dto.setFacilityName("시설1");
 		//dto.setOptionInfo(optionInfo);
 		dto.setFacilityLocation(2);
 		dto.setFacilityStatus(FacilityStatus.AVAILABLE);
@@ -125,7 +125,7 @@ class FacilityServiceTest {
 		
 		// 옵션인포를 작성하지 않았을 때 옵션스의 값이 자동입력되는가?
 		assertEquals(options, createdFacility.getFacilityOptionInfo());
-		assertEquals("회의실", createdFacility.getFacilityName());
+		assertEquals("시설1", createdFacility.getFacilityName());
 		
 		// 카테고리 적용 시 순번이 매겨지는가?
 		assertEquals(1, createdFacility.getFacilitySequence());

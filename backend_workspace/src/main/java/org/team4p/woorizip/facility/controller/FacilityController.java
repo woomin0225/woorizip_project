@@ -45,6 +45,10 @@ public class FacilityController {
 	public ResponseEntity<ApiResponse<String>> createFacility(
 			@Valid @RequestBody FacilityCreateRequestDTO dto,
 			@AuthenticationPrincipal String currentUserNo) {
+		facilityService.createFacility(dto, currentUserNo);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                             .body(ApiResponse.ok("시설 정보 등록 성공", "facilityCreateSuccess"));
+		/*
 		try {
 			facilityService.createFacility(dto, currentUserNo);
 	        return ResponseEntity.status(HttpStatus.CREATED)
@@ -54,6 +58,7 @@ public class FacilityController {
 	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
 	                             .body(ApiResponse.fail("시설 등록 실패", "facilityCreateFail"));
 	    }
+	    */
 	}
 	
 	// 시설 카테고리 등록
