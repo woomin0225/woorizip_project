@@ -21,7 +21,7 @@ import lombok.NoArgsConstructor;
 public class ReviewDto {
 	@Null
 	private int reviewNo;
-	@NotBlank
+	@Null
 	private String roomNo;
 	@Null(message="userNo는 백엔드에서 설정")
 	private String userNo;
@@ -29,7 +29,7 @@ public class ReviewDto {
 	private int rating;
 	
 	private String reviewContent;
-	
+	@Null
 	private LocalDateTime reviewCreatedAt;
 	
 	public ReviewEntity toEntity() {
