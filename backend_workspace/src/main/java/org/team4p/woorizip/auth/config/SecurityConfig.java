@@ -81,17 +81,17 @@ public class SecurityConfig {
         	    .requestMatchers(HttpMethod.POST, "/api/wishlist/add/**").permitAll()
         	    .requestMatchers(HttpMethod.GET, "/api/wishlist/**").permitAll()
 
-                // admin write: notice, information only
+                // admin write: notice, information, event only
                 .requestMatchers(HttpMethod.POST, EndpointPolicy.ADMIN_WRITE).hasRole("ADMIN")
                 .requestMatchers(HttpMethod.PUT, EndpointPolicy.ADMIN_WRITE).hasRole("ADMIN")
                 .requestMatchers(HttpMethod.DELETE, EndpointPolicy.ADMIN_WRITE).hasRole("ADMIN")
                 .requestMatchers(HttpMethod.PATCH, EndpointPolicy.ADMIN_WRITE).hasRole("ADMIN")
 
-                // boards write: USER or ADMIN
-                .requestMatchers(HttpMethod.POST, EndpointPolicy.BOARD_WRITE).hasAnyRole("USER","ADMIN")
-                .requestMatchers(HttpMethod.PUT, EndpointPolicy.BOARD_WRITE).hasAnyRole("USER","ADMIN")
-                .requestMatchers(HttpMethod.DELETE, EndpointPolicy.BOARD_WRITE).hasAnyRole("USER","ADMIN")
-                .requestMatchers(HttpMethod.PATCH, EndpointPolicy.BOARD_WRITE).hasAnyRole("USER","ADMIN")
+                // qna write: USER or ADMIN
+                .requestMatchers(HttpMethod.POST, EndpointPolicy.QNA_WRITE).hasAnyRole("USER","ADMIN")
+                .requestMatchers(HttpMethod.PUT, EndpointPolicy.QNA_WRITE).hasAnyRole("USER","ADMIN")
+                .requestMatchers(HttpMethod.DELETE, EndpointPolicy.QNA_WRITE).hasAnyRole("USER","ADMIN")
+                .requestMatchers(HttpMethod.PATCH, EndpointPolicy.QNA_WRITE).hasAnyRole("USER","ADMIN")
 
                 // replies write: USER or ADMIN
                 .requestMatchers(HttpMethod.POST, EndpointPolicy.REPLY_WRITE).hasAnyRole("USER","ADMIN")

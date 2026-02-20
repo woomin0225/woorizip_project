@@ -36,7 +36,6 @@ public class PostDto {
   @NotNull(groups = Update.class)
   @Min(value = 1, groups = Update.class)
   private Integer postNo;
-  @NotBlank(groups = {Create.class, Update.class})
   private String boardTypeNo;
   private String userNo;
   @NotBlank(message = "제목을 작성해야 합니다", groups = {Create.class, Update.class})

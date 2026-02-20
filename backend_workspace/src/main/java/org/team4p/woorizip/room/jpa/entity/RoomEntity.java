@@ -45,10 +45,10 @@ public class RoomEntity {
 	private LocalDateTime roomUpdatedAt;
 	
 	@Column(name="room_deposit")
-	private Integer roomDeposit;
+	private Long roomDeposit;
 	
 	@Column(name="room_monthly")
-	private Integer roomMonthly;
+	private Long roomMonthly;
 	
 	@Column(name="room_method")
 	private String roomMethod;

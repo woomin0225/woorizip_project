@@ -21,7 +21,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -36,8 +35,8 @@ import org.team4p.woorizip.room.image.service.RoomImageService;
 import org.team4p.woorizip.room.review.dto.ReviewDto;
 import org.team4p.woorizip.room.review.service.ReviewService;
 import org.team4p.woorizip.room.service.RoomService;
-import org.team4p.woorizip.room.type.SearchCriterion;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -50,16 +49,16 @@ public class RoomController {
 	private final ReviewService reviewService;
 	
 	@GetMapping("/search")
-	public ResponseEntity<ApiResponse<Slice<RoomSearchResponse>>> searchRooms(@ModelAttribute RoomSearchCondition cond, Pageable pageable, @RequestParam SearchCriterion criterion) {
+	public ResponseEntity<ApiResponse<Slice<RoomSearchResponse>>> searchRooms(@Valid @ModelAttribute RoomSearchCondition cond, Pageable pageable) {
 		// 방 검색 결과 조회
-		Slice<RoomSearchResponse> slice = roomService.selectRoomSearch(cond, pageable, criterion);
+		Slice<RoomSearchResponse> slice = roomService.selectRoomSearch(cond, pageable);
 		
 		return ResponseEntity.status(200).body(ApiResponse.ok("검색 성공", slice));
 	}
 	
 	@PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	public ResponseEntity<ApiResponse<Void>> createRoom(
-			@RequestBody RoomDto roomDto,
+			@Valid @RequestBody RoomDto roomDto,
 			@RequestParam(value="newImages", required=false) List<MultipartFile> newImages,
 			Authentication auth
 			) {
@@ -155,7 +154,7 @@ public class RoomController {
 	@PutMapping("/{roomNo}")
 	public ResponseEntity<ApiResponse<Void>> modifyRoom(
 			@PathVariable("roomNo") String roomNo,
-			@ModelAttribute RoomDto roomDto,
+			@Valid @ModelAttribute RoomDto roomDto,
 			@RequestParam(value="deleteImageNos", required=false) List<Integer> deleteImageNos,
 			@RequestParam(value="newImages", required=false) List<MultipartFile> newImages,
 			Authentication auth
@@ -234,10 +233,13 @@ public class RoomController {
 	}
 	
 	@PostMapping("/{roomNo}/reviews")
-	public ResponseEntity<ApiResponse<Void>> createRoomReview(@RequestBody ReviewDto reviewDto, @PathVariable("roomNo") String roomNo){
+	public ResponseEntity<ApiResponse<Void>> createRoomReview(@Valid @RequestBody ReviewDto reviewDto, @PathVariable("roomNo") String roomNo, Authentication auth){
 		// 방 리뷰 등록
 		reviewDto.setRoomNo(roomNo);
-		reviewService.insertRoomReview(reviewDto);
+		
+		String currentUser = auth.getName().toString();
+		
+		reviewService.insertRoomReview(reviewDto, currentUser);
 		
 		return ResponseEntity.status(201).body(ApiResponse.ok("리뷰 등록 성공", null));
 	}
@@ -259,7 +261,7 @@ public class RoomController {
 	public ResponseEntity<ApiResponse<Void>> ModifyRoomReview(
 			@PathVariable("roomNo") String roomNo,
 			@PathVariable("reviewNo") int reviewNo,
-			@RequestBody ReviewDto reviewDto,
+			@Valid @RequestBody ReviewDto reviewDto,
 			Authentication auth
 			){
 		// 방 리뷰 수정

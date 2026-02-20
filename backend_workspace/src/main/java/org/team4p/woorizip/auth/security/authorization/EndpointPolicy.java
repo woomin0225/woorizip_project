@@ -7,6 +7,8 @@ public final class EndpointPolicy {
     public static final String[] PUBLIC_GET = {
             "/api/notice/**",
             	"/api/information/**",
+            	"/api/event/**",
+            	"/api/qna/**",
             "/api/boards/**"
     };
 
@@ -15,13 +17,14 @@ public final class EndpointPolicy {
             "/api/user/check-id"
     };
 
-    // 공지사항, 정책・정보 : ADMIN만 (POST/PUT/DELETE)
+    // 공지사항, 정책・정보, 이벤트 : ADMIN만 (POST/PUT/DELETE)
     public static final String[] ADMIN_WRITE= {
     		"/api/notice/**",
-    		"/api/information/**"};
+    		"/api/information/**",
+    		"/api/event/**"};
 
     // 게시글: USER/ADMIN (POST/PUT/DELETE)
-    public static final String[] BOARD_WRITE = { "/api/boards/**" };
+    public static final String[] QNA_WRITE = { "/api/qna/**" };
 
     // 댓글/대댓글: USER/ADMIN
     public static final String[] REPLY_WRITE = {

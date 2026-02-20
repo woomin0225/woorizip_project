@@ -17,8 +17,8 @@ public class RoomSearchResponse {
 	private String roomNo;
 	private String roomName;
 	private LocalDateTime roomUpdatedAt;
-	private Integer roomDeposit;
-	private Integer roomMonthly;
+	private Long roomDeposit;
+	private Long roomMonthly;
 	private String roomMethod;
 	private Double roomArea;
 	private String roomFacing;
