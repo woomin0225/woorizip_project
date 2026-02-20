@@ -36,8 +36,8 @@ public class FacilityCategoryEntity {
 	@Convert(converter = MapToJsonConverter.class)
 	private Map<String, Boolean> facilityOptions;
 
-	public void updateCategory(FacilityCategoryDTO dto) {
+	public void updateCategory(FacilityCategoryDTO dto, Map<String, Boolean> optionsToMap) {
 		if (dto.getFacilityType() != null && !dto.getFacilityType().isBlank()) this.facilityType = dto.getFacilityType();
-		if (dto.getFacilityOptions() != null) this.facilityOptions = dto.getFacilityOptions();
+		if (dto.getFacilityOptions() != null) this.facilityOptions = optionsToMap;
 	}
 }

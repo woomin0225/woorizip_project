@@ -54,7 +54,8 @@ public class FacilityController {
 	// 시설 카테고리 등록
 	@PostMapping("/categories")
 	@PreAuthorize("hasRole('ADMIN')")
-	public ResponseEntity<ApiResponse<String>> createFacilityCategory(@RequestBody FacilityCategoryCreateRequestDTO dto) {
+	public ResponseEntity<ApiResponse<String>> createFacilityCategory(
+			@Valid @RequestBody FacilityCategoryCreateRequestDTO dto) {
 		facilityService.createCategory(dto);
 		return ResponseEntity.status(HttpStatus.CREATED)
 				.body(ApiResponse.ok("새로운 시설 카테고리가 정상적으로 등록되었습니다.", "facilityCategoryCreateSuccess"));
@@ -73,7 +74,7 @@ public class FacilityController {
 	@PreAuthorize("hasRole('ADMIN')")
 	public ResponseEntity<ApiResponse<String>> modifyFacilityCategory(
 			@PathVariable Integer facilityCode,
-			@RequestBody FacilityCategoryDTO dto) {
+			@Valid @RequestBody FacilityCategoryDTO dto) {
 		facilityService.modifyFacilityCategory(facilityCode, dto);
         return ResponseEntity.ok(ApiResponse.ok("시설 카테고리의 내용이 정상적으로 수정되었습니다.", "facilityCategoryModifySuccess"));
 	}
@@ -89,7 +90,7 @@ public class FacilityController {
 	@PatchMapping("/{facilityNo}")
 	public ResponseEntity<ApiResponse<String>> modifyFacility(
 			@PathVariable String facilityNo,
-		    @RequestBody FacilityModifyRequestDTO dto,
+		    @Valid @RequestBody FacilityModifyRequestDTO dto,
 		    @AuthenticationPrincipal String currentUserNo) {
 		facilityService.modifyFacility(facilityNo, dto, currentUserNo);
         return ResponseEntity.ok(ApiResponse.ok("해당 시설의 정보가 정상적으로 수정되었습니다.", "facilityModifySuccess"));

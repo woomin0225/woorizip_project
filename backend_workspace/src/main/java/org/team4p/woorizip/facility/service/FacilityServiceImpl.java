@@ -48,7 +48,6 @@ public class FacilityServiceImpl implements FacilityService {
 	// 시설 신규 등록
 	@Override
 	@Transactional
-	// public void createFacility(FacilityCreateRequestDTO dto, String userNo) {
 	public void createFacility(FacilityCreateRequestDTO dto, String userNo) {
 		// userNo로 houseList 추출
 		List<HouseEntity> houseList = houseRepository.findAllByUserNoOrderByHouseName(userNo);
@@ -144,10 +143,17 @@ public class FacilityServiceImpl implements FacilityService {
 	        throw new ForbiddenException("같은 이름의 카테고리가 존재합니다.");
 	    }
 		
+		List<String> categoryOptions = dto.getFacilityOptions();
+		Map<String, Boolean> optionsToMap = categoryOptions.stream()
+		        .collect(Collectors.toMap(
+		            name -> name,
+		            name -> true
+		        ));
+		
 		FacilityCategoryEntity category = 
 				FacilityCategoryEntity.builder()
 				.facilityType(dto.getFacilityType())
-				.facilityOptions(dto.getFacilityOptions())
+				.facilityOptions(optionsToMap)
 				.build();
 		categoryRepository.save(category);
 	}
@@ -170,9 +176,15 @@ public class FacilityServiceImpl implements FacilityService {
 		FacilityCategoryEntity category = categoryRepository.findById(facilityCode)
 				.orElseThrow(() -> new NotFoundException("해당 카테고리를 찾을 수 없습니다."));
 		
+		List<String> categoryOptions = dto.getFacilityOptions();
+		Map<String, Boolean> optionsToMap = categoryOptions.stream()
+		        .collect(Collectors.toMap(
+		            name -> name,
+		            name -> true
+		        ));
+		
 		// dto 업데이트
-		category.updateCategory(dto);
-		return;
+		category.updateCategory(dto, optionsToMap);
 	}
 	
 	// 시설 상세 조회

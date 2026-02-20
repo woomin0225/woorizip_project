@@ -1,7 +1,5 @@
 package org.team4p.woorizip.facility;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -34,8 +32,8 @@ class FacilityControllerTest {
 	@WithMockUser
 	void test() throws Exception {
 		// Validator Test
-		when(facilityService.createFacility(any(), any()))
-	    .thenReturn("테스트 성공");
+		// when(facilityService.createFacility(any(), any()))
+	    // .thenReturn("테스트 성공");
 		
 		String wrongJson = "{\"facilityName\": \"시설123\", \"facilityAddress\": \"서울\"}";
 

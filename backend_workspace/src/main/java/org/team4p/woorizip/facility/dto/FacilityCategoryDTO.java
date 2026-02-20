@@ -1,6 +1,7 @@
 package org.team4p.woorizip.facility.dto;
 
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.team4p.woorizip.facility.jpa.entity.FacilityCategoryEntity;
 
@@ -23,13 +24,13 @@ public class FacilityCategoryDTO {
     @Size(max=10)
     private String facilityType;
     
-    private Map<String, Boolean> facilityOptions;
+    private List<String> facilityOptions;
     
     public static FacilityCategoryDTO from(FacilityCategoryEntity entity) {
 	    return FacilityCategoryDTO.builder()
 	    		.facilityCode(entity.getFacilityCode())
 	    		.facilityType(entity.getFacilityType())
-	    		.facilityOptions(entity.getFacilityOptions())
+	    		.facilityOptions(new ArrayList<>(entity.getFacilityOptions().keySet()))
 	            .build();
 	}
 }
