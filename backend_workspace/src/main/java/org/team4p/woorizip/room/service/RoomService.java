@@ -19,4 +19,5 @@ public interface RoomService {
 	RoomDto updateRoomAvailability(String roomNo, LocalDateTime date, String userNo);
 	
 	Slice<RoomSearchResponse> selectRoomsInHouseMarker(RoomSearchCondition cond, Pageable pageable, String houseNo);
+	void updateRoomImageCount(String roomNo, int imageCount);
 }

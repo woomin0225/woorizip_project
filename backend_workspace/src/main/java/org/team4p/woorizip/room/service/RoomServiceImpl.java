@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.team4p.woorizip.common.exception.ForbiddenException;
 import org.team4p.woorizip.common.exception.NotFoundException;
+import org.team4p.woorizip.house.jpa.entity.HouseEntity;
 import org.team4p.woorizip.house.jpa.repository.HouseRepository;
 import org.team4p.woorizip.room.dto.RoomDto;
 import org.team4p.woorizip.room.dto.request.RoomSearchCondition;
@@ -217,6 +218,18 @@ public class RoomServiceImpl implements RoomService {
 		}
 		
 		return slice;
+	}
+
+	@Override
+	@Transactional
+	public void updateRoomImageCount(String roomNo, int imageCount) {
+		// 방 이미지 갯수 업데이트
+
+		Optional<RoomEntity> row = roomRepository.findById(roomNo);
+		if(!row.isPresent()) throw new NotFoundException("건물을 조회할 수 없습니다.");
+		RoomEntity entity = row.get();
+		
+		entity.setRoomImageCount(imageCount);
 	}
 
 }

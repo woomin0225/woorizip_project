@@ -159,6 +159,18 @@ public class HouseServiceImpl implements HouseService {
 		// 건물 삭제 통과하면 방 소프트 삭제 수행
 		roomRepository.softDeleteByHouseNo(houseNo);
 	}
+
+	@Override
+	@Transactional
+	public void updateHouseImageCount(String houseNo, int imageCount) {
+		// 건물 사진 갯수 업데이트
+		
+		Optional<HouseEntity> row = houseRepository.findById(houseNo);
+		if(!row.isPresent()) throw new NotFoundException("건물을 조회할 수 없습니다.");
+		HouseEntity entity = row.get();
+		
+		entity.setHouseImageCount(imageCount);
+	}
 	
 	
 

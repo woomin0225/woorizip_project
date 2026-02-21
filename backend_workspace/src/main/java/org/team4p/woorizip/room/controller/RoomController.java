@@ -1,11 +1,7 @@
 package org.team4p.woorizip.room.controller;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -22,7 +18,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
@@ -44,6 +39,7 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/rooms")
 @RequiredArgsConstructor
 public class RoomController {
+
 	private final RoomService roomService;
 	private final RoomImageService roomImageService;
 	private final UploadProperties uploadProperties;
@@ -69,56 +65,14 @@ public class RoomController {
 		RoomDto savedRoomDto = roomService.insertRoom(roomDto, currentUser); 
 		
 		// 이미지 등록 : 이미지 파일 저장 실패하면 DB에도 등록 안됨. DB에 저장 실패하면 파일저장소에서 삭제됨
-		if (savedRoomDto != null) {	// 건물 등록 성공한 경우
-			// 사진 첨부 있는지 확인
-			if (newImages != null && !newImages.isEmpty()) {	// 사진 있으면
-				for (MultipartFile newImage : newImages) {
-					String originalImageName = newImage.getOriginalFilename();
-					// 파일이름변환
-					if (originalImageName == null || originalImageName.isBlank()) {
-//			            throw new IllegalArgumentException("원본 파일명이 없습니다.");
-						continue;	//남은 파일 목록들을 계속 저장 시도하기 위해 에러발생없이 진행
-			        }
-					
-					int index = originalImageName.lastIndexOf(".");
-					if (index < 0) {
-//						throw new IllegalArgumentException("확장자가 없는 파일입니다: " + originalImageName);
-						continue;
-					}
-					String extension = originalImageName.substring(index);
-					
-					String storedImageName = UUID.randomUUID().toString() + extension;
-					
-					// 파일저장소에 저장
-					File saveDir = uploadProperties.roomImageDir().toFile();
-		            if (!saveDir.exists()) saveDir.mkdirs();
-		            File saveFile = new File(saveDir, storedImageName);
-		            try {
-		                newImage.transferTo(saveFile);
-		            } catch (Exception e) {
-		                continue;
-		            }
-
-		            // RoomImageDto만들어서 DB에 저장
-		            RoomImageDto roomImageDto = RoomImageDto.builder()
-												            		.roomNo(savedRoomDto.getRoomNo())
-												            		.roomOriginalImageName(originalImageName)
-												            		.roomStoredImageName(storedImageName)
-												            		.build();
-		            try {
-		            		roomImageService.insertRoomImage(roomImageDto);
-		            } catch(Exception e) {
-		            		// DB에 사진이름 저장 실패하면 저장소에서 파일 삭제
-		            		try {
-							Files.deleteIfExists(saveFile.toPath());
-						} catch (IOException e2) {}
-		            		continue;
-		            }
-				}	//for
-			}	//if 사진 있는 경우
-			return ResponseEntity.status(201).body(ApiResponse.ok("방 등록 성공", null));
-		}	//if 건물 등록 성공한 경우
-		// 사진 없으면
+		// 사진 첨부 있는지 확인
+		if (newImages != null && !newImages.isEmpty()) {	// 사진 있으면
+			int imageCount = roomImageService.insertRoomImage(newImages, roomDto.getRoomNo());
+			
+			// 사진 갯수 반영
+			roomService.updateRoomImageCount(savedRoomDto.getHouseNo(), imageCount);
+		}
+		
 		return ResponseEntity.status(201).body(ApiResponse.ok("방 등록 성공", null));
 	}
 	
@@ -167,69 +121,23 @@ public class RoomController {
 		roomService.updateRoom(roomDto, currentUser);
 		
 		// 삭제 사진 처리 : DB삭제 -> 저장소 삭제
+		int deleteCount = 0;
 		if(deleteImageNos != null && deleteImageNos.size() > 0) {
 			for (int deleteImageNo: deleteImageNos) {
-				// DB에서 삭제
-				RoomImageDto ImageDto;
-				try {
-					ImageDto = roomImageService.deleteRoomImageByRoomImageNo(deleteImageNo, roomNo);
-				} catch (Exception e) {continue;}
-				// Dto로부터 사진 경로 구성
-				File targetFile = new File(uploadProperties.roomImageDir().toFile(), ImageDto.getRoomStoredImageName());
-				
-				// 파일저장소에서 삭제
-				try {
-					Files.deleteIfExists(targetFile.toPath());
-				} catch (IOException e) {continue;}
+				deleteCount = roomImageService.deleteRoomImageByRoomImageNo(deleteImageNos, roomNo);
 			}
 		}
 		
 		// 추가 사진 처리 : 저장소 저장 -> DB저장
+		int addCount = 0;
 		if(newImages != null && newImages.size() > 0) {
-			for (MultipartFile newImage : newImages) {
-				String originalImageName = newImage.getOriginalFilename();
-				// 파일이름변환
-				if (originalImageName == null || originalImageName.isBlank()) {
-//		            throw new IllegalArgumentException("원본 파일명이 없습니다.");
-					continue;	//남은 파일 목록들을 계속 저장 시도하기 위해 에러발생없이 진행
-		        }
-				
-				int index = originalImageName.lastIndexOf(".");
-				if (index < 0) {
-//					throw new IllegalArgumentException("확장자가 없는 파일입니다: " + originalImageName);
-					continue;
-				}
-				String extension = originalImageName.substring(index);
-				
-				String storedImageName = UUID.randomUUID().toString() + extension;
-				
-				// 파일저장소에 저장
-				File saveDir = uploadProperties.roomImageDir().toFile();
-	            if (!saveDir.exists()) saveDir.mkdirs();
-	            File saveFile = new File(saveDir, storedImageName);
-	            try {
-	                newImage.transferTo(saveFile);
-	            } catch (Exception e) {
-	                continue;
-	            }
-
-	            // RoomImageDto만들어서 DB에 저장
-	            RoomImageDto roomImageDto = RoomImageDto.builder()
-											            		.roomNo(roomNo)
-											            		.roomOriginalImageName(originalImageName)
-											            		.roomStoredImageName(storedImageName)
-											            		.build();
-	            try {
-	            		roomImageService.insertRoomImage(roomImageDto);
-	            } catch(Exception e) {
-	            		// DB에 사진이름 저장 실패하면 저장소에서 파일 삭제
-	            		try {
-						Files.deleteIfExists(saveFile.toPath());
-					} catch (IOException e2) {}
-	            		continue;
-	            }
-			}
+			addCount = roomImageService.insertRoomImage(newImages, roomNo);
 		}
+		
+		// 사진 갯수 반영
+		int count = roomImageService.countRoomImageNumber(roomNo);	//기존 갯수
+		roomService.updateRoomImageCount(roomNo, (count-deleteCount+addCount));	//기존 갯수 - 삭제 갯수 - 추가 갯수
+		
 		return ResponseEntity.status(200).body(ApiResponse.ok("방 정보 수정 성공", null));
 	}
 	
