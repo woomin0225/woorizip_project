@@ -134,6 +134,25 @@ public class HouseServiceImpl implements HouseService {
 		entity.setHouseParkingMax(houseDto.getHouseParkingMax());
 		entity.setHouseAbstract(houseDto.getHouseAbstract());
 		
+		// 위도/경도 업데이트
+		// geocoding 요청할 URI 구성
+		String uri = UriComponentsBuilder
+				.fromPath("/v2/local/search/address.json")
+				.queryParam("query", entity.getHouseAddress())
+				.build(true)
+				.toUriString();
+		// RestTemplate 사용해서 API 응답 요청
+		KakaoGeocodingResponse response = houseRestTemplate.getForObject(uri, KakaoGeocodingResponse.class);
+		
+		if (response == null || response.getDocuments() == null || response.getDocuments().isEmpty()) {
+		    throw new IllegalArgumentException("주소를 좌표로 변환할 수 없습니다: " + entity.getHouseAddress());
+		}
+		
+		double lat = Double.parseDouble(response.getDocuments().get(0).getY());
+		double lng = Double.parseDouble(response.getDocuments().get(0).getX());
+		entity.setHouseLat(lat);
+		entity.setHouseLng(lng);
+		
 		return entity.toDto();
 	}
 
