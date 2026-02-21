@@ -20,7 +20,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class RoomDto {
-	@Null
+	
 	private String roomNo;
 	@NotBlank
 	private String roomName;

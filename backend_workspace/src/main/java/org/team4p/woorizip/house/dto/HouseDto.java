@@ -20,7 +20,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class HouseDto {
-	@Null
+	
 	private String houseNo;
 	@NotBlank
 	private String houseName;
@@ -37,29 +37,29 @@ public class HouseDto {
 	
 	private String houseAddressDetail;
 	@NotNull
-	private int houseCompletionYear;
+	private Integer houseCompletionYear;
 	@Min(value = 1)
-	private int houseFloors;
+	private Integer houseFloors;
 	@Min(value = 1)
-	private int houseHouseHolds;
+	private Integer houseHouseHolds;
 	@NotNull
-	private boolean houseElevatorYn;
+	private Boolean houseElevatorYn;
 	@NotNull
-	private boolean housePetYn;
+	private Boolean housePetYn;
 	@NotNull
-	private boolean houseFemaleLimit;
+	private Boolean houseFemaleLimit;
 	@Min(value = 0)
-	private int houseParkingMax;
+	private Integer houseParkingMax;
 	
 	private String houseAbstract;
 	@Null
-	private int houseImageCount;
+	private Integer houseImageCount;
 	@Null
-	private double houseLat;
+	private Double houseLat;
 	@Null
-	private double houseLng;
+	private Double houseLng;
 	@Null
-	private boolean deleted;
+	private Boolean deleted;
 	@Null
 	private LocalDateTime deletedAt;
 		

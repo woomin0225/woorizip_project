@@ -60,6 +60,7 @@ public class RoomController {
 			Authentication auth
 			) {
 		// 방 등록
+		roomDto.setRoomNo(null);
 		
 		String currentUser = auth.getName().toString();
 		RoomDto savedRoomDto = roomService.insertRoom(roomDto, currentUser); 

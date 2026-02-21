@@ -78,6 +78,7 @@ public class HouseController {
 			@RequestPart(value="newImages", required=false) List<MultipartFile> newImages,
 			Authentication auth) {
 		// 건물 등록
+		houseDto.setHouseNo(null);
 		
 		// 위도 경도 반환
 		// => service 레이어에서 수행
