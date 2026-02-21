@@ -1,5 +1,6 @@
 package org.team4p.woorizip.room.jpa.entity;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import org.team4p.woorizip.room.dto.RoomDto;
@@ -60,7 +61,7 @@ public class RoomEntity {
 	private String roomFacing;
 	
 	@Column(name="room_available_date")
-	private LocalDateTime roomAvailableDate;
+	private LocalDate roomAvailableDate;
 	
 	@Column(name="room_abstract")
 	private String roomAbstract;
