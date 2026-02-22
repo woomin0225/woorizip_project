@@ -2,6 +2,7 @@ package org.team4p.woorizip.reservation.service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.team4p.woorizip.common.exception.ForbiddenException;
 import org.team4p.woorizip.common.exception.NotFoundException;
+import org.team4p.woorizip.facility.enums.FacilityStatus;
 import org.team4p.woorizip.facility.jpa.entity.FacilityEntity;
 import org.team4p.woorizip.facility.jpa.repository.FacilityRepository;
 import org.team4p.woorizip.reservation.dto.ReservationCreateRequestDTO;
@@ -39,13 +41,13 @@ public class ReservationServiceImpl implements ReservationService {
 	@Override
 	@Transactional
 	public void createReservation(ReservationCreateRequestDTO dto, String userNo, String facilityNo) {
-		// 시설 번호 가져오기
+		// 시설 조회
 		FacilityEntity facility = facilityRepository.findById(facilityNo)
 				.orElseThrow(() -> new NotFoundException("시설 정보를 찾을 수 없습니다."));
 
-		// 유저 번호 가져오기
+		// 유저 조회
 		UserEntity user = userRepository.findById(userNo)
-				.orElseThrow(() -> new NotFoundException("유저 정보를 찾을 수 없습니다."));
+				.orElseThrow(() -> new NotFoundException("사용자 정보를 찾을 수 없습니다."));
 		
 		// facility가 속한 house의 거주자인지 확인
 		List<RoomEntity> rooms = roomRepository.findAllByHouseNo(facility.getHouse().getHouseNo());
@@ -59,6 +61,11 @@ public class ReservationServiceImpl implements ReservationService {
 		}
 		if (!isResident) {
 		    throw new ForbiddenException("이 시설에 대한 예약 권한이 없습니다.");
+		}
+		
+		// 시설이 사용 가능한 상태인지 확인
+		if(!facility.getFacilityStatus().equals(FacilityStatus.AVAILABLE)) {
+			throw new ForbiddenException("시설이 이용 가능한 상태가 아닙니다.");
 		}
 		
 		LocalDateTime reservationStartDateTime = LocalDateTime.of(dto.getReservationDate(), dto.getReservationStartTime());
@@ -98,15 +105,15 @@ public class ReservationServiceImpl implements ReservationService {
 	    }
 	    
 	    // 일일 최대 예약 횟수 검증
-	    long reservationCount = reservationRepository.countByUserAndFacilityAndReservationDate(
-	            user, facility, dto.getReservationDate());
+	    long reservationCount = reservationRepository.countByUser_UserNoAndFacility_FacilityNoAndReservationDate(
+	            userNo, facilityNo, dto.getReservationDate());
 	    if (reservationCount >= facility.getMaxRsvnPerDay()) {
 	        throw new ForbiddenException("일일 예약 가능 횟수인 "+ facility.getMaxRsvnPerDay() + "회를 초과하였습니다.");
 	    }
 		
 	    // 중복 예약인지 확인
-	    boolean isOverlapped = reservationRepository.existsByFacilityAndReservationDateAndReservationStartTimeBeforeAndReservationEndTimeAfter(
-	            facility, dto.getReservationDate(), dto.getReservationEndTime(), dto.getReservationStartTime());
+	    boolean isOverlapped = reservationRepository.existsByFacility_FacilityNoAndReservationDateAndReservationStartTimeBeforeAndReservationEndTimeAfter(
+	            facilityNo, dto.getReservationDate(), dto.getReservationEndTime(), dto.getReservationStartTime());
 	    if (isOverlapped) {
 	        throw new ForbiddenException("해당 시간에는 다른 예약이 존재합니다.");
 	    }
@@ -159,7 +166,7 @@ public class ReservationServiceImpl implements ReservationService {
 	@Override
 	@Transactional
 	public void modifyReservation(String reservationNo, ReservationModifyRequestDTO dto, String userNo) {
-		// 예약 번호 찾기
+		// 예약 조회
 		ReservationEntity entity = reservationRepository.findById(reservationNo)
 				.orElseThrow(() -> new NotFoundException("예약 정보를 찾을 수 없습니다."));
 		
@@ -240,5 +247,40 @@ public class ReservationServiceImpl implements ReservationService {
 	    
 		// dto 업데이트
 		entity.updateReservation(dto);
+	}
+
+	// FacilityStatus.UNAVAILABLE 처리
+	public void createBlockReservation(String facilityNo, LocalDateTime blockedStartTime, LocalDateTime blockedEndTime, String userNo) {
+		// 시설 조회
+	    FacilityEntity facility = facilityRepository.findById(facilityNo)
+	            .orElseThrow(() -> new NotFoundException("시설 정보를 찾을 수 없습니다."));
+	    
+	    // 유저 조회
+	    UserEntity user = userRepository.findById(userNo)
+	            .orElseThrow(() -> new NotFoundException("사용자 정보를 찾을 수 없습니다."));
+
+	    LocalDate startDate = blockedStartTime.toLocalDate();
+	    LocalDate endDate = blockedEndTime.toLocalDate();
+
+	    // 시작일부터 종료일까지 날짜별 예약 생성
+	    for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
+	        
+	        // 날짜별 시작/종료 시간 설정
+	        LocalTime startTime = (date.equals(startDate)) ? blockedStartTime.toLocalTime() : LocalTime.of(0, 0);
+	        LocalTime endTime = (date.equals(endDate)) ? blockedEndTime.toLocalTime() : LocalTime.of(23, 59);
+
+	        ReservationEntity blockRsvn = ReservationEntity.builder()
+	                .reservationNo(UUID.randomUUID().toString())
+	                .facility(facility)
+	                .user(user)
+	                .reservationName("시설 사용 불가")
+	                .reservationPhone(user.getPhone())
+	                .reservationDate(date)
+	                .reservationStartTime(startTime)
+	                .reservationEndTime(endTime)
+	                .reservationStatus(ReservationStatus.APPROVED)
+	                .build();
+	        reservationRepository.save(blockRsvn);
+	    }
 	}
 }
