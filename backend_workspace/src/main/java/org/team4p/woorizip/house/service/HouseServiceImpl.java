@@ -128,9 +128,9 @@ public class HouseServiceImpl implements HouseService {
 		entity.setHouseCompletionYear(houseDto.getHouseCompletionYear());
 		entity.setHouseFloors(houseDto.getHouseFloors());
 		entity.setHouseHouseHolds(houseDto.getHouseHouseHolds());
-		entity.setHouseElevatorYn(houseDto.isHouseElevatorYn());
-		entity.setHousePetYn(houseDto.isHousePetYn());
-		entity.setHouseFemaleLimit(houseDto.isHouseFemaleLimit());
+		entity.setHouseElevatorYn(houseDto.getHouseElevatorYn());
+		entity.setHousePetYn(houseDto.getHousePetYn());
+		entity.setHouseFemaleLimit(houseDto.getHouseFemaleLimit());
 		entity.setHouseParkingMax(houseDto.getHouseParkingMax());
 		entity.setHouseAbstract(houseDto.getHouseAbstract());
 		

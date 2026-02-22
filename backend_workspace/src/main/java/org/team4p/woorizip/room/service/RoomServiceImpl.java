@@ -155,7 +155,7 @@ public class RoomServiceImpl implements RoomService {
 		entity.setRoomAbstract(roomDto.getRoomAbstract());
 		entity.setRoomRoomCount(roomDto.getRoomRoomCount());
 		entity.setRoomBathCount(roomDto.getRoomBathCount());
-		entity.setRoomEmptyYn(roomDto.isRoomEmptyYn());
+		entity.setRoomEmptyYn(roomDto.getRoomEmptyYn());
 		entity.setRoomStatus(roomDto.getRoomStatus());
 		entity.setRoomOptions(roomDto.getRoomOptions());
 		
