@@ -38,6 +38,7 @@ import lombok.Setter;
 @NoArgsConstructor
 public class FacilityEntity {
 	@Id
+	@Column(name = "facility_no", columnDefinition = "char(36)", nullable = false)
 	private String facilityNo;
 	
 	@ManyToOne(fetch = FetchType.LAZY)
@@ -48,33 +49,33 @@ public class FacilityEntity {
 	@JoinColumn(name = "facility_code")
 	private FacilityCategoryEntity category;
 	
-	@Column(name = "facility_name")
+	@Column(name = "facility_name", length = 20, nullable = false)
 	private String facilityName;
 	
 	@Column(name = "facility_sequence")
 	private Integer facilitySequence;
 	
-	@Column(name = "facility_option_info", columnDefinition = "TEXT")
+	@Column(name = "facility_option_info", columnDefinition = "TEXT", nullable = false)
 	@Convert(converter = MapToJsonConverter.class)
 	private Map<String, Boolean> facilityOptionInfo;
 	
-	@Column(name = "facility_location")
+	@Column(name = "facility_location", nullable = false)
 	private Integer facilityLocation;
 	
-	@Column(name = "facility_open_time")
+	@Column(name = "facility_open_time", nullable = false)
 	private LocalTime facilityOpenTime;
 	
-	@Column(name = "facility_close_time")
+	@Column(name = "facility_close_time", nullable = false)
 	private LocalTime facilityCloseTime;
 	
-	@Column(name = "facility_status")
+	@Column(name = "facility_status", nullable = false)
 	@Enumerated(EnumType.STRING)
 	private FacilityStatus facilityStatus;
 	
-	@Column(name = "facility_rsvn_required_yn")
+	@Column(name = "facility_rsvn_required_yn", nullable = false)
 	private Boolean facilityRsvnRequiredYn;
 	
-	@Column(name = "facility_capacity")
+	@Column(name = "facility_capacity", nullable = false)
 	private Integer facilityCapacity;
 	
 	@Column(name = "facility_created_at")

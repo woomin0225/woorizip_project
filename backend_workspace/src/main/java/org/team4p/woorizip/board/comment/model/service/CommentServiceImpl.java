@@ -1,6 +1,9 @@
 package org.team4p.woorizip.board.comment.model.service;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -36,6 +39,21 @@ public class CommentServiceImpl implements CommentService {
 			throw new ForbiddenException("Q&A 게시글에만 댓글 작성이 가능합니다.");
 		}
 	}
+	
+	private List<CommentDto> buildTree(Integer parentNo, Map<Integer, List<CommentDto>> childrenMap) {
+		
+		List<CommentDto> children = childrenMap.get(parentNo);
+		
+		if(children == null) {
+			return new ArrayList<>();
+		}
+		
+		for(CommentDto child : children) {
+			child.setChildren(buildTree(child.getCommentNo(), childrenMap));
+		}
+		
+		return children;
+	}
 
 	//댓글 갯수 ==================================
 	@Override
@@ -46,7 +64,7 @@ public class CommentServiceImpl implements CommentService {
 		return commentRepository.countByPostNo(postNo);
 	}
 	
-	//댓글 목록 조회 (페이징) ==================================
+	//댓글 목록 조회 (페이징, 트리 로직 변) ==================================
 	@Override
 	public ArrayList<CommentDto> selectCommentList(Integer postNo, Pageable pageable) {
 		
@@ -54,13 +72,23 @@ public class CommentServiceImpl implements CommentService {
 		
 		Page<CommentEntity> page = commentRepository.findCommentList(postNo, pageable);
 		
-		ArrayList<CommentDto> list = new ArrayList<>();
+		List<CommentDto> flatList = page.getContent()
+				.stream()
+				.map(CommentDto::fromEntity)
+				.toList();
 		
-		for(CommentEntity entity : page.getContent()) {
-			list.add(CommentDto.fromEntity(entity));
+		//parent 기준으로 그룹핑
+		Map<Integer, List<CommentDto>> childrenMap = new LinkedHashMap<>();
+		
+		for(CommentDto dto : flatList) {
+			Integer parentNo = dto.getParentCommentNo();
+			childrenMap
+				.computeIfAbsent(parentNo, k -> new ArrayList<>())
+				.add(dto);
 		}
 		
-		return list;
+		//루트부터 재귀 생성
+		return new ArrayList<>(buildTree(null, childrenMap));
 	}
 	
 	//단건 조회 ==================================
@@ -95,17 +123,17 @@ public class CommentServiceImpl implements CommentService {
 			throw new ForbiddenException("잘못된 부모 댓글입니다.");
 		}
 
-		if (parent.getCommentLev() != 1) {
-			throw new ForbiddenException("대댓글은 1단계 댓글에만 작성할 수 있습니다.");
-		}
-
-		// 대댓글
-		dto.setCommentLev(2);
+		int nextLev = parent.getCommentLev() + 1;
+		dto.setCommentLev(nextLev);
 
 		// 같은 그룹의 기존 대댓글 seq 밀기 (최신을 위로)
-		commentRepository.shiftCommentSeq(dto.getPostNo(), dto.getParentCommentNo(), 2, 1);
-
-		dto.setCommentSeq(1);
+		Integer lastSeq = commentRepository.findLastCommentSeq(
+				dto.getPostNo(), 
+				dto.getParentCommentNo(), 
+				nextLev
+		);
+		
+		dto.setCommentSeq(lastSeq + 1);
 		commentRepository.save(dto.toEntity());
 
 		return 1;
@@ -114,10 +142,14 @@ public class CommentServiceImpl implements CommentService {
 	//댓글 수정 ==================================
 	@Override
 	@Transactional
-	public int updateComment(CommentDto dto) {
+	public int updateComment(CommentDto dto, String loginUserNo) {
 		
 		CommentEntity origin = commentRepository.findById(dto.getCommentNo())
-				.orElseThrow(() -> new NotFoundException("댓글이 존재하지 않습니다."));
+				.orElseThrow(() -> new NotFoundException("수정할 댓글이 존재하지 않습니다."));
+		
+		if(!origin.getUserNo().equals(loginUserNo)) {
+			throw new ForbiddenException("본인 댓글만 수정 가능합니다.");
+		}
 		
 		origin.setCommentContent(dto.getCommentContent());
 		commentRepository.save(origin);
@@ -128,11 +160,14 @@ public class CommentServiceImpl implements CommentService {
 	//댓글 삭제 ==================================
 	@Override
 	@Transactional
-	public int deleteComment(Integer commentNo) {
+	public int deleteComment(Integer commentNo, String loginUserNo) {
 		
-		if (!commentRepository.existsById(commentNo)) {
-	        throw new NotFoundException("삭제할 댓글이 존재하지 않습니다.");
-	    }
+		CommentEntity origin = commentRepository.findById(commentNo)
+				.orElseThrow(() -> new NotFoundException("삭제할 댓글이 존재하지 않습니다."));
+		
+		if(!origin.getUserNo().equals(loginUserNo)) {
+			throw new ForbiddenException("본인 댓글만 삭제 가능합니다.");
+		}
 		
 		commentRepository.deleteById(commentNo);
 		
