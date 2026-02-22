@@ -226,23 +226,23 @@ public class ReservationServiceImpl implements ReservationService {
 	    }
 	    
 	    // 일일 최대 예약 횟수 검증
-	    long reservationCount = reservationRepository.countByUserAndFacilityAndReservationDateAndReservationNoNot(
-	    		entity.getUser(), facility, dto.getReservationDate(), reservationNo);
+	    long reservationCount = reservationRepository.countByUser_UserNoAndFacility_FacilityNoAndReservationDateAndReservationNoNot(
+	    		userNo, facility.getFacilityNo(), dto.getReservationDate(), reservationNo);
 	    if (reservationCount >= facility.getMaxRsvnPerDay()) {
 	        throw new ForbiddenException("일일 예약 가능 횟수인 " + facility.getMaxRsvnPerDay() + "회를 초과하였습니다.");
 	    }
 	    
 	    // 중복 예약인지 확인
-	    boolean isOverlapped = reservationRepository.existsByFacilityAndReservationDateAndReservationStartTimeBeforeAndReservationEndTimeAfterAndReservationNoNot(
-	            facility, 
-	            dto.getReservationDate(),  
-	            dto.getReservationEndTime(),
-	            dto.getReservationStartTime(),
-	            reservationNo
-	    );
+	    boolean isOverlapped = reservationRepository
+	    		.existsByFacility_FacilityNoAndReservationDateAndReservationStartTimeBeforeAndReservationEndTimeAfterAndReservationNoNot(
+	    				facility.getFacilityNo(), 
+	    				dto.getReservationDate(),  
+	    				dto.getReservationEndTime(),
+	    				dto.getReservationStartTime(),
+	    				reservationNo);
 	    
 	    if (isOverlapped) {
-	        throw new ForbiddenException("해당 시간에는 다른 예약이 존재합니다.");
+	        throw new ForbiddenException("해당 시간에는 다른 예약 내역이 있습니다.");
 	    }
 	    
 		// dto 업데이트
@@ -269,7 +269,8 @@ public class ReservationServiceImpl implements ReservationService {
 	        LocalTime startTime = (date.equals(startDate)) ? blockedStartTime.toLocalTime() : LocalTime.of(0, 0);
 	        LocalTime endTime = (date.equals(endDate)) ? blockedEndTime.toLocalTime() : LocalTime.of(23, 59);
 
-	        ReservationEntity blockRsvn = ReservationEntity.builder()
+	        ReservationEntity blockRsvn = ReservationEntity
+	        		.builder()
 	                .reservationNo(UUID.randomUUID().toString())
 	                .facility(facility)
 	                .user(user)

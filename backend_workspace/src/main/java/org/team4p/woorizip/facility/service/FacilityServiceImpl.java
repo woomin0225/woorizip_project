@@ -49,7 +49,9 @@ public class FacilityServiceImpl implements FacilityService {
 	@Transactional(readOnly = true)
 	public List<FacilityListResponseDTO> getFacilityList(String houseNo) {
 		List<FacilityEntity> entity = facilityRepository.findByHouseHouseNoAndFacilityDeletedAtIsNull(houseNo);
-		return entity.stream().map(FacilityListResponseDTO::from).toList();
+		return entity.stream()
+				.map(FacilityListResponseDTO::from)
+				.toList();
 	}
 
 	// 시설 신규 등록
@@ -67,6 +69,7 @@ public class FacilityServiceImpl implements FacilityService {
 				break;
 			}
 		}
+		
 		if (selectedHouse == null) {
 			throw new NotFoundException("해당 건물의 소유자로 등록되어 있지 않습니다.");
 		}
@@ -96,8 +99,8 @@ public class FacilityServiceImpl implements FacilityService {
 
 		// 동일 카테고리의 시설이 있는지 확인
 		Optional<FacilityEntity> lastSequence = facilityRepository
-				.findFirstByHouse_HouseNoAndCategory_FacilityCodeOrderByFacilitySequenceDesc(selectedHouse,
-						dto.getFacilityCode());
+				.findFirstByHouse_HouseNoAndCategory_FacilityCodeOrderByFacilitySequenceDesc(
+						selectedHouse, dto.getFacilityCode());
 
 		// 동일 카테고리 시설 순서 배정
 		Integer nextSequence;
@@ -119,20 +122,33 @@ public class FacilityServiceImpl implements FacilityService {
 		}
 
 		// 시설 정보 입력
-		FacilityEntity facility = FacilityEntity.builder().facilityNo(UUID.randomUUID().toString()).house(selectedHouse)
-				.category(facilityCategory).facilityName(finalName).facilitySequence(nextSequence)
-				.facilityOptionInfo(finalOptions).facilityLocation(dto.getFacilityLocation())
-				.facilityStatus(FacilityStatus.AVAILABLE).facilityCapacity(dto.getFacilityCapacity())
-				.facilityOpenTime(dto.getFacilityOpenTime()).facilityCloseTime(dto.getFacilityCloseTime())
-				.facilityRsvnRequiredYn(dto.isFacilityRsvnRequiredYn()).maxRsvnPerDay(finalMaxRsvn)
-				.facilityRsvnUnitMinutes(finalUnitMin).facilityMaxDurationMinutes(finalMaxDur).build();
+		FacilityEntity facility = FacilityEntity
+				.builder()
+				.facilityNo(UUID.randomUUID().toString())
+				.house(selectedHouse)
+				.category(facilityCategory)
+				.facilityName(finalName)
+				.facilitySequence(nextSequence)
+				.facilityOptionInfo(finalOptions)
+				.facilityLocation(dto.getFacilityLocation())
+				.facilityStatus(FacilityStatus.AVAILABLE)
+				.facilityCapacity(dto.getFacilityCapacity())
+				.facilityOpenTime(dto.getFacilityOpenTime())
+				.facilityCloseTime(dto.getFacilityCloseTime())
+				.facilityRsvnRequiredYn(dto.isFacilityRsvnRequiredYn())
+				.maxRsvnPerDay(finalMaxRsvn)
+				.facilityRsvnUnitMinutes(finalUnitMin)
+				.facilityMaxDurationMinutes(finalMaxDur).build();
 
 		// 이미지 입력
 		if (dto.getImages() != null) {
 			for (FacilityImageDTO imageDto : dto.getImages()) {
-				FacilityImageEntity imageEntity = FacilityImageEntity.builder()
+				FacilityImageEntity imageEntity = FacilityImageEntity
+						.builder()
 						.facilityOriginalImageName(imageDto.getFacilityOriginalImageName())
-						.facilityStoredImageName(imageDto.getFacilityStoredImageName()).facility(facility).build();
+						.facilityStoredImageName(imageDto.getFacilityStoredImageName())
+						.facility(facility)
+						.build();
 				facility.getImages().add(imageEntity);
 			}
 		}
@@ -150,10 +166,15 @@ public class FacilityServiceImpl implements FacilityService {
 
 		List<String> categoryOptions = dto.getFacilityOptions();
 		Map<String, Boolean> optionsToMap = categoryOptions.stream()
-				.collect(Collectors.toMap(name -> name, name -> true));
+				.collect(Collectors.toMap(
+						name -> name,
+						name -> true));
 
-		FacilityCategoryEntity category = FacilityCategoryEntity.builder().facilityType(dto.getFacilityType())
-				.facilityOptions(optionsToMap).build();
+		FacilityCategoryEntity category = FacilityCategoryEntity
+				.builder()
+				.facilityType(dto.getFacilityType())
+				.facilityOptions(optionsToMap)
+				.build();
 		categoryRepository.save(category);
 	}
 
@@ -162,7 +183,9 @@ public class FacilityServiceImpl implements FacilityService {
 	@Transactional(readOnly = true)
 	public List<FacilityCategoryDTO> getFacilityCategory() {
 		List<FacilityCategoryEntity> categories = categoryRepository.findAll();
-		return categories.stream().map(FacilityCategoryDTO::from).collect(Collectors.toList());
+		return categories.stream()
+				.map(FacilityCategoryDTO::from)
+				.collect(Collectors.toList());
 	}
 
 	// 시설 카테고리 수정
@@ -175,7 +198,9 @@ public class FacilityServiceImpl implements FacilityService {
 
 		List<String> categoryOptions = dto.getFacilityOptions();
 		Map<String, Boolean> optionsToMap = categoryOptions.stream()
-				.collect(Collectors.toMap(name -> name, name -> true));
+				.collect(Collectors.toMap(
+						name -> name,
+						name -> true));
 
 		// dto 업데이트
 		category.updateCategory(dto, optionsToMap);

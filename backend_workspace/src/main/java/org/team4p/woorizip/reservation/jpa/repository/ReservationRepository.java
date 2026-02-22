@@ -6,9 +6,7 @@ import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
-import org.team4p.woorizip.facility.jpa.entity.FacilityEntity;
 import org.team4p.woorizip.reservation.jpa.entity.ReservationEntity;
-import org.team4p.woorizip.user.jpa.entity.UserEntity;
 
 import jakarta.transaction.Transactional;
 
@@ -29,14 +27,14 @@ public interface ReservationRepository  extends JpaRepository<ReservationEntity,
 			LocalTime endTime,
 			LocalTime startTime);
 	// 기존 예약 수정 시 예약 횟수 검증용 메서드
-	long countByUserAndFacilityAndReservationDateAndReservationNoNot(
-			UserEntity user,
-			FacilityEntity facility,
+	long countByUser_UserNoAndFacility_FacilityNoAndReservationDateAndReservationNoNot(
+			String userNo,
+			String facilityNo,
 			LocalDate date,
 			String reservationNo);
 	// 기존 예약 수정 시 중복 예약 확인용 메서드
-	boolean existsByFacilityAndReservationDateAndReservationStartTimeBeforeAndReservationEndTimeAfterAndReservationNoNot(
-		    FacilityEntity facility, 
+	boolean existsByFacility_FacilityNoAndReservationDateAndReservationStartTimeBeforeAndReservationEndTimeAfterAndReservationNoNot(
+		    String facilityNo, 
 		    LocalDate date,
 		    LocalTime endTime, 
 		    LocalTime startTime,
@@ -52,6 +50,7 @@ public interface ReservationRepository  extends JpaRepository<ReservationEntity,
     	    LocalDate EndDate);
 	// 해당 날짜에 있는 예약들의 리스트
 	List<ReservationEntity> findByFacility_FacilityNoAndReservationDateBetween(
-		    String facilityNo, LocalDate startDate, LocalDate endDate
-		);
+		    String facilityNo,
+		    LocalDate startDate,
+		    LocalDate endDate);
 }
