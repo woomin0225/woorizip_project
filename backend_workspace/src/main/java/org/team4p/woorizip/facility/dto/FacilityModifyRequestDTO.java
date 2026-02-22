@@ -1,5 +1,6 @@
 package org.team4p.woorizip.facility.dto;
 
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +40,10 @@ public class FacilityModifyRequestDTO {
 	
 	private FacilityStatus facilityStatus;
 	
+	private LocalDateTime blockedStartTime;
+	
+	private LocalDateTime blockedEndTime;
+	
 	private Integer facilityCapacity;
 	
 	private LocalTime facilityOpenTime;
@@ -55,12 +60,23 @@ public class FacilityModifyRequestDTO {
 	
 	private List<FacilityImageDTO> images;
 	
+	
+	
 	@AssertTrue(message = "예약이 필요한 시설은 일일 최대 예약 횟수, 예약 단위 시간, 최대 이용 시간 입력이 필요합니다.")
 	public boolean isRsvnFieldsValid() {
 	    if (facilityRsvnRequiredYn) {
 	        return maxRsvnPerDay != null && 
 	               facilityRsvnUnitMinutes != null && 
 	               facilityMaxDurationMinutes != null;
+	    }
+	    return true;
+	}
+	
+	@AssertTrue(message = "시설 이용이 불가능한 기간의 범위를 지정해주세요.")
+	public boolean isStatusFieldsValid() {
+	    if (facilityStatus.equals(FacilityStatus.UNAVAILABLE)) {
+	        return blockedStartTime != null && 
+	               blockedEndTime != null;
 	    }
 	    return true;
 	}
