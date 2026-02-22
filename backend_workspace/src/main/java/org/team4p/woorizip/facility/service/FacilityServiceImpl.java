@@ -231,8 +231,7 @@ public class FacilityServiceImpl implements FacilityService {
 	    reservationRepository.deleteByFacility_FacilityNoAndUser_UserNo(facilityNo, userNo);
 
 	    // 사용 불가 지정 기간 내에 예약이 있는지 확인
-	    if (entity.getFacilityStatus() == FacilityStatus.AVAILABLE && 
-	            dto.getFacilityStatus() == FacilityStatus.UNAVAILABLE) {
+	    if (dto.getFacilityStatus() == FacilityStatus.UNAVAILABLE) {
 	            
 	    	// 해당 기간 내에 예약이 있는 날짜 확인
 	    	List<LocalDate> datesWithReservation = reservationRepository.findDatesByPeriod(
