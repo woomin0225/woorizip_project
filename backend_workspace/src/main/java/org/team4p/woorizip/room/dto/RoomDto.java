@@ -1,11 +1,12 @@
 package org.team4p.woorizip.room.dto;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-import org.team4p.woorizip.common.validator.NumericOnly;
 import org.team4p.woorizip.common.validator.TextOnly;
 import org.team4p.woorizip.room.jpa.entity.RoomEntity;
 
+import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -20,46 +21,48 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class RoomDto {
+	
 	private String roomNo;
 	@NotBlank
 	private String roomName;
-	@NotBlank
+	
 	private String houseNo;
 	@Null(message="userNo는 백엔드에서 설정")
 	private String userNo;
-	
+	@Null
 	private LocalDateTime roomCreatedAt;
-	
+	@Null
 	private LocalDateTime roomUpdatedAt;
 	@Min(value = 0)
-	private long roomDeposit;
+	private Long roomDeposit;
 	@Min(value = 0)
-	private long roomMonthly;
+	private Long roomMonthly;
 	@NotBlank
 	private String roomMethod;
 	@Min(value = 0)
-	private double roomArea;
+	private Double roomArea;
 	@NotBlank @TextOnly
 	private String roomFacing;
-	@NotBlank
-	private LocalDateTime roomAvailableDate;
+	@NotNull(message = "입주 가능 날짜는 필수입니다.")
+	@FutureOrPresent(message = "입주 가능 날짜는 과거일 수 없습니다.")
+	private LocalDate roomAvailableDate;
 	
 	private String roomAbstract;
-	@NotBlank @Min(value = 1)
-	private int roomRoomCount;
-	@NotBlank @Min(value = 0)
-	private int roomBathCount;
+	@Min(value = 1)
+	private Integer roomRoomCount;
+	@Min(value = 0)
+	private Integer roomBathCount;
 	@NotNull
-	private boolean roomEmptyYn;
+	private Boolean roomEmptyYn;
 	@NotNull
 	private String roomStatus;
 	
 	private String roomOptions;
-	
-	private int roomImageCount;
-	
-	private boolean deleted;
-	
+	@Null
+	private Integer roomImageCount;
+	@Null
+	private Boolean deleted;
+	@Null
 	private LocalDateTime deletedAt;
 	
 	public RoomEntity toEntity() {

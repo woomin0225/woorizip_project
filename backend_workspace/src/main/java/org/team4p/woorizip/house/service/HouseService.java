@@ -14,5 +14,6 @@ public interface HouseService {
 	HouseDto insertHouse(HouseDto houseDto, String currentUser);
 	HouseDto updateHouse(HouseDto houseDto, String currentUser);
 	void deleteHouse(String houseNo, String currentUser);
+	void updateHouseImageCount(String houseNo, int imageCount);
 	
 }

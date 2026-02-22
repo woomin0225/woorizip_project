@@ -1,5 +1,7 @@
 package org.team4p.woorizip.room.review.service;
 
+import java.util.Optional;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -61,16 +63,18 @@ public class ReviewServiceImpl implements ReviewService {
 		// 방 리뷰 수정
 		
 		// 리뷰가 DB에 있는지 검사
-		if(!reviewRepository.existsById(reviewDto.getReviewNo())) throw new NotFoundException("해당 리뷰가 존재하지 않습니다."); 
+		Optional<ReviewEntity> row = reviewRepository.findById(reviewDto.getReviewNo());
+		if(!row.isPresent()) throw new NotFoundException("해당 리뷰가 존재하지 않습니다.");
+		ReviewEntity entity = row.get();
+		
 		// 리뷰 소유권 검사
-		String userNo = reviewRepository.findUserNoByReviewNo(reviewDto.getReviewNo());
+		String userNo = entity.getUserNo();
 		if(!userNo.equals(userRepository.findUserNoByEmailId(currentUser))) throw new ForbiddenException("해당 리뷰의 수정 권한이 없습니다.");
 		
-		//userNo 조립
-		reviewDto.setUserNo(userNo);
+		entity.setRating(reviewDto.getRating());
+		entity.setReviewContent(reviewDto.getReviewContent());
 		
-		ReviewEntity rows = reviewRepository.save(reviewDto.toEntity());
-		return rows.toDto();
+		return entity.toDto();
 	}
 
 }

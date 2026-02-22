@@ -1,10 +1,6 @@
 package org.team4p.woorizip.house.controller;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
 import java.util.List;
-import java.util.UUID;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -17,9 +13,8 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.team4p.woorizip.common.api.ApiResponse;
@@ -79,10 +74,11 @@ public class HouseController {
 	
 	@PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	public ResponseEntity<ApiResponse<Void>> createHouse(
-			@Valid @RequestBody HouseDto houseDto,
-			@RequestParam(value="newImages", required=false) List<MultipartFile> newImages,
+			@Valid @ModelAttribute HouseDto houseDto,
+			@RequestPart(value="newImages", required=false) List<MultipartFile> newImages,
 			Authentication auth) {
 		// 건물 등록
+		houseDto.setHouseNo(null);
 		
 		// 위도 경도 반환
 		// => service 레이어에서 수행
@@ -90,66 +86,23 @@ public class HouseController {
 		String currentUser = auth.getName().toString();
 		HouseDto savedHouseDto = houseService.insertHouse(houseDto, currentUser); 
 		
-		// 이미지 등록 : 이미지 파일 저장 실패하면 DB에도 등록 안됨. DB에 저장 실패하면 파일저장소에서 삭제됨
-		if (savedHouseDto != null) {	// 건물 등록 성공한 경우
-			// 사진 첨부 있는지 확인
-			if (newImages != null && !newImages.isEmpty()) {	// 사진 있으면
-				for (MultipartFile newImage : newImages) {
-					String originalImageName = newImage.getOriginalFilename();
-					// 파일이름변환
-					if (originalImageName == null || originalImageName.isBlank()) {
-//			            throw new IllegalArgumentException("원본 파일명이 없습니다.");
-						continue;	//남은 파일 목록들을 계속 저장 시도하기 위해 에러발생없이 진행
-			        }
-					
-					int index = originalImageName.lastIndexOf(".");
-					if (index < 0) {
-//						throw new IllegalArgumentException("확장자가 없는 파일입니다: " + originalImageName);
-						continue;
-					}
-					String extension = originalImageName.substring(index);
-					
-					String storedImageName = UUID.randomUUID().toString() + extension;
-					
-					// 파일저장소에 저장
-					File saveDir = uploadProperties.houseImageDir().toFile();
-		            if (!saveDir.exists()) saveDir.mkdirs();
-		            File saveFile = new File(saveDir, storedImageName);
-		            try {
-		                newImage.transferTo(saveFile);
-		            } catch (Exception e) {
-		                continue;
-		            }
-
-		            // HouseImageDto만들어서 DB에 저장
-		            HouseImageDto houseImageDto = HouseImageDto.builder()
-												            		.houseNo(savedHouseDto.getHouseNo())
-												            		.houseOriginalImageName(originalImageName)
-												            		.houseStoredImageName(storedImageName)
-												            		.build();
-		            try {
-		            		houseImageService.insertHouseImage(houseImageDto);
-		            } catch(Exception e) {
-		            		// DB에 사진이름 저장 실패하면 저장소에서 파일 삭제
-		            		try {
-							Files.deleteIfExists(saveFile.toPath());
-						} catch (IOException e2) {}
-		            		continue;
-		            }
-				}	//for
-			}	//if 사진 있는 경우
-			return ResponseEntity.status(201).body(ApiResponse.ok("건물 등록 성공", null));
-		}	//if 건물 등록 성공한 경우
-		// 사진 없으면
+		// 사진 첨부 있는지 확인
+		if (newImages != null && !newImages.isEmpty()) {	// 사진 있으면
+			int imageCount = houseImageService.insertHouseImage(newImages, savedHouseDto.getHouseNo());	// 내부에서 파일 리스트 반복 처리
+			
+			// 사진 갯수 반영
+			houseService.updateHouseImageCount(savedHouseDto.getHouseNo(), imageCount);
+		}
+		
 		return ResponseEntity.status(201).body(ApiResponse.ok("건물 등록 성공", null));
 	}
 
-	@PutMapping("/{houseNo}")
+	@PutMapping(value = "/{houseNo}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	public ResponseEntity<ApiResponse<Void>> modifyHouse(
 			@PathVariable("houseNo") String houseNo,
-			@Valid @RequestBody HouseDto houseDto,
-			@RequestParam(value="deleteImageNos", required=false) List<Integer> deleteImageNos,
-			@RequestParam(value="newImages", required=false) List<MultipartFile> newImages,
+			@Valid @ModelAttribute HouseDto houseDto,
+			@RequestPart(value="deleteImageNos", required=false) List<Integer> deleteImageNos,
+			@RequestPart(value="newImages", required=false) List<MultipartFile> newImages,
 			Authentication auth
 	){
 		// 건물 정보 수정
@@ -158,69 +111,21 @@ public class HouseController {
 		houseService.updateHouse(houseDto, currentUser);
 		
 		// 삭제 사진 처리 : DB삭제 -> 저장소 삭제
+		int deleteCount = 0;
 		if(deleteImageNos != null && deleteImageNos.size() > 0) {
-			for (int deleteImageNo: deleteImageNos) {
-				// DB에서 삭제
-				HouseImageDto ImageDto;
-				try {
-					ImageDto = houseImageService.deleteHouseImageByHouseImageNo(deleteImageNo, houseNo);
-				} catch (Exception e) {continue;}
-				// Dto로부터 사진 경로 구성
-				File targetFile = new File(uploadProperties.houseImageDir().toFile(), ImageDto.getHouseStoredImageName());
-				
-				// 파일저장소에서 삭제
-				try {
-					Files.deleteIfExists(targetFile.toPath());
-				} catch (IOException e) {continue;}
-			}
+			deleteCount = houseImageService.deleteHouseImageByHouseImageNo(deleteImageNos, houseNo);
 		}
 		
 		// 추가 사진 처리 : 저장소 저장 -> DB저장
+		int addCount = 0;
 		if(newImages != null && newImages.size() > 0) {
-			for (MultipartFile newImage : newImages) {
-				String originalImageName = newImage.getOriginalFilename();
-				// 파일이름변환
-				if (originalImageName == null || originalImageName.isBlank()) {
-//		            throw new IllegalArgumentException("원본 파일명이 없습니다.");
-					continue;	//남은 파일 목록들을 계속 저장 시도하기 위해 에러발생없이 진행
-		        }
-				
-				int index = originalImageName.lastIndexOf(".");
-				if (index < 0) {
-//					throw new IllegalArgumentException("확장자가 없는 파일입니다: " + originalImageName);
-					continue;
-				}
-				String extension = originalImageName.substring(index);
-				
-				String storedImageName = UUID.randomUUID().toString() + extension;
-				
-				// 파일저장소에 저장
-				File saveDir = uploadProperties.houseImageDir().toFile();
-	            if (!saveDir.exists()) saveDir.mkdirs();
-	            File saveFile = new File(saveDir, storedImageName);
-	            try {
-	                newImage.transferTo(saveFile);
-	            } catch (Exception e) {
-	                continue;
-	            }
-
-	            // HouseImageDto만들어서 DB에 저장
-	            HouseImageDto houseImageDto = HouseImageDto.builder()
-											            		.houseNo(houseNo)
-											            		.houseOriginalImageName(originalImageName)
-											            		.houseStoredImageName(storedImageName)
-											            		.build();
-	            try {
-	            		houseImageService.insertHouseImage(houseImageDto);
-	            } catch(Exception e) {
-	            		// DB에 사진이름 저장 실패하면 저장소에서 파일 삭제
-	            		try {
-						Files.deleteIfExists(saveFile.toPath());
-					} catch (IOException e2) {}
-	            		continue;
-	            }
-			}
+			addCount = houseImageService.insertHouseImage(newImages, houseNo);
 		}
+		
+		// 사진 갯수 반영
+		int count = houseImageService.countHouseImageNumber(houseNo);	//기존 갯수
+		houseService.updateHouseImageCount(houseNo, (count-deleteCount+addCount));	//기존 갯수 - 삭제 갯수 - 추가 갯수
+		
 		return ResponseEntity.status(200).body(ApiResponse.ok("건물 정보 수정 성공", null));
 	}
 	

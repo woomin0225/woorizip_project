@@ -1,13 +1,17 @@
 package org.team4p.woorizip.room.image.service;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.team4p.woorizip.common.exception.NotFoundException;
-import org.team4p.woorizip.house.image.jpa.entity.HouseImageEntity;
+import org.springframework.web.multipart.MultipartFile;
+import org.team4p.woorizip.common.config.UploadProperties;
 import org.team4p.woorizip.room.image.dto.RoomImageDto;
 import org.team4p.woorizip.room.image.jpa.entity.RoomImageEntity;
 import org.team4p.woorizip.room.image.jpa.repository.RoomImageRepository;
@@ -18,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class RoomImageServiceImpl implements RoomImageService {
 	private final RoomImageRepository roomImageRepository;
+	private final UploadProperties uploadProperties;
 	
 	@Override
 	public List<RoomImageDto> selectRoomImages(String roomNo) {
@@ -29,23 +34,83 @@ public class RoomImageServiceImpl implements RoomImageService {
 
 	@Override
 	@Transactional
-	public RoomImageDto insertRoomImage(RoomImageDto roomImageDto) {
+	public int insertRoomImage(List<MultipartFile> newImages, String roomNo) {
 		// 방 사진 등록
-		return roomImageRepository.save(roomImageDto.toEntity()).toDto();
+		
+		for(MultipartFile newImage : newImages) {
+			String originalImageName = newImage.getOriginalFilename();
+			// 파일이름변환
+			if (originalImageName == null || originalImageName.isBlank()) {
+//	            throw new IllegalArgumentException("원본 파일명이 없습니다.");
+				continue;	//남은 파일 목록들을 계속 저장 시도하기 위해 에러발생없이 진행
+	        }
+			
+			int index = originalImageName.lastIndexOf(".");
+			if (index < 0) {
+//				throw new IllegalArgumentException("확장자가 없는 파일입니다: " + originalImageName);
+				continue;
+			}
+			String extension = originalImageName.substring(index);
+			
+			String storedImageName = UUID.randomUUID().toString() + extension;
+			
+			// 파일저장소에 저장
+			File saveDir = uploadProperties.roomImageDir().toFile();
+            if (!saveDir.exists()) saveDir.mkdirs();
+            File saveFile = new File(saveDir, storedImageName);
+            try {
+                newImage.transferTo(saveFile);
+            } catch (Exception e) {
+                continue;
+            }
+            
+            // RoomImageDto만들어서 DB에 저장
+            RoomImageEntity roomImageEntity = RoomImageEntity.builder()
+										            		.roomNo(roomNo)
+										            		.roomOriginalImageName(originalImageName)
+										            		.roomStoredImageName(storedImageName)
+										            		.build();
+            try {
+            		roomImageRepository.save(roomImageEntity);
+            } catch(Exception e) {
+            		// DB에 사진이름 저장 실패하면 저장소에서 파일 삭제
+            		try {
+					Files.deleteIfExists(saveFile.toPath());
+				} catch (IOException e2) {continue;}
+            		continue;
+            }
+		}
+		int imageCount = roomImageRepository.countByRoomNo(roomNo);
+		return imageCount;
 	}
 
 	@Override
 	@Transactional
-	public RoomImageDto deleteRoomImageByRoomImageNo(int deleteImageNo, String currentRoomNo) {
+	public int deleteRoomImageByRoomImageNo(List<Integer> deleteImageNos, String currentRoomNo) {
 		// 방 이미지 삭제
-		// 건물사진번호로 방사진 엔티티 반환
-		Optional<RoomImageEntity> OptionalEntity = roomImageRepository.findById(deleteImageNo);
-		if(!OptionalEntity.isPresent()) throw new NotFoundException("해당 번호의 사진을 찾을 수 없습니다.");
-		if(!OptionalEntity.get().getRoomNo().equals(currentRoomNo)) throw new IllegalArgumentException("해당 건물의 사진이 아닙니다.");
+		// 방사진번호로 삭제하고 현재 사진 갯수 반환
+		for(int deleteImageNo : deleteImageNos) {
+			// 삭제할 사진이 db에 있는지 검사
+			Optional<RoomImageEntity> row= roomImageRepository.findById(deleteImageNo);
+			if(!row.isPresent()) continue;
+			RoomImageEntity entity = row.get();
+			// 삭제할 사진이 해당 건물의 소유가 맞는지 검사
+			if(!entity.getRoomNo().equals(currentRoomNo)) continue;
+			
+			// DB에서 삭제
+			roomImageRepository.deleteById(deleteImageNo);
+			
+			// entity로부터 사진 경로 구성
+			File targetFile = new File(uploadProperties.roomImageDir().toFile(), entity.getRoomStoredImageName());
+			// 파일저장소에서 삭제
+			try {
+				Files.deleteIfExists(targetFile.toPath());
+			} catch (IOException e) {continue;}
+		}
 		
-		roomImageRepository.deleteById(deleteImageNo);
+		int imageCount = roomImageRepository.countByRoomNo(currentRoomNo);
 		
-		return OptionalEntity.get().toDto();
+		return imageCount; 
 	}
 
 	@Override
@@ -56,6 +121,12 @@ public class RoomImageServiceImpl implements RoomImageService {
 		for(RoomImageEntity entity:rows) {
 			roomImageRepository.deleteById(entity.getRoomImageNo());
 		}
+	}
+
+	@Override
+	public int countRoomImageNumber(String roomNo) {
+		// 방 이미지 갯수 반환
+		return roomImageRepository.countByRoomNo(roomNo);
 	}
 	
 }

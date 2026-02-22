@@ -105,8 +105,8 @@ public class ReservationServiceImpl implements ReservationService {
 	    }
 	    
 	    // 일일 최대 예약 횟수 검증
-	    long reservationCount = reservationRepository.countByUser_UserNoAndFacility_FacilityNoAndReservationDate(
-	            userNo, facilityNo, dto.getReservationDate());
+	    long reservationCount = reservationRepository.countByUserAndFacilityAndReservationDate(
+	            user, facility, dto.getReservationDate());
 	    if (reservationCount >= facility.getMaxRsvnPerDay()) {
 	        throw new ForbiddenException("일일 예약 가능 횟수인 "+ facility.getMaxRsvnPerDay() + "회를 초과하였습니다.");
 	    }
