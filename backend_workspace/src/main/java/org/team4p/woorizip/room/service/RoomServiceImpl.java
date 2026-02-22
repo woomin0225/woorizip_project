@@ -1,6 +1,6 @@
 package org.team4p.woorizip.room.service;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -11,7 +11,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.team4p.woorizip.common.exception.ForbiddenException;
 import org.team4p.woorizip.common.exception.NotFoundException;
-import org.team4p.woorizip.house.jpa.entity.HouseEntity;
 import org.team4p.woorizip.house.jpa.repository.HouseRepository;
 import org.team4p.woorizip.room.dto.RoomDto;
 import org.team4p.woorizip.room.dto.request.RoomSearchCondition;
@@ -164,7 +163,7 @@ public class RoomServiceImpl implements RoomService {
 
 	@Override
 	@Transactional
-	public RoomDto updateRoomAvailability(String roomNo, LocalDateTime date, String currentUser) {
+	public RoomDto updateRoomAvailability(String roomNo, LocalDate date, String currentUser) {
 		// 방 입주가능 일자 변경
 		
 		// 해당 방 조회

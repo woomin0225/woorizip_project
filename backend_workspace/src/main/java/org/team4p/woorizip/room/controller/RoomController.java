@@ -1,6 +1,6 @@
 package org.team4p.woorizip.room.controller;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
@@ -188,7 +188,7 @@ public class RoomController {
 	}
 	
 	@PatchMapping("/{roomNo}/availability")
-	public ResponseEntity<ApiResponse<Void>> modifyRoomAvailability(@PathVariable String roomNo,@RequestBody LocalDateTime date, Authentication auth){
+	public ResponseEntity<ApiResponse<Void>> modifyRoomAvailability(@PathVariable String roomNo,@RequestBody LocalDate date, Authentication auth){
 		// 방 입주 가능 일자 변경
 		
 		String currentUser = auth.getName().toString();
