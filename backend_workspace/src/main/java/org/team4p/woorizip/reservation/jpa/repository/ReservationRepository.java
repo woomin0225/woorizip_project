@@ -44,11 +44,6 @@ public interface ReservationRepository  extends JpaRepository<ReservationEntity,
 	@Modifying
 	void deleteByFacility_FacilityNoAndUser_UserNo(String facilityNo, String userNo);
 	// facilityStatus == FacilityStatus.UNAVAILABLE 시 해당 날짜에 예약이 있는지 조회하는 메서드
-	List<LocalDate> findDatesByPeriod(
-			String facilityNo,
-    	    LocalDate StartDate, 
-    	    LocalDate EndDate);
-	// 해당 날짜에 있는 예약들의 리스트
 	List<ReservationEntity> findByFacility_FacilityNoAndReservationDateBetween(
 		    String facilityNo,
 		    LocalDate startDate,

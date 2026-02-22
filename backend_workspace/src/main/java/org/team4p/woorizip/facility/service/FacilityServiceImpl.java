@@ -232,22 +232,19 @@ public class FacilityServiceImpl implements FacilityService {
 
 	    // 사용 불가 지정 기간 내에 예약이 있는지 확인
 	    if (dto.getFacilityStatus() == FacilityStatus.UNAVAILABLE) {
-	            
 	    	// 해당 기간 내에 예약이 있는 날짜 확인
-	    	List<LocalDate> datesWithReservation = reservationRepository.findDatesByPeriod(
-	                facilityNo,
-	                dto.getBlockedStartTime().toLocalDate(), 
-	                dto.getBlockedEndTime().toLocalDate()
-	            );
-
+	    	List<ReservationEntity> reservations = reservationRepository.findByFacility_FacilityNoAndReservationDateBetween(
+	    		    facilityNo, 
+	    		    dto.getBlockedStartTime().toLocalDate(), 
+	    		    dto.getBlockedEndTime().toLocalDate());
+	    	List<LocalDate> datesWithReservation = reservations.stream()
+	    			.map(ReservationEntity::getReservationDate)
+	    		    .distinct()
+	    		    .toList();
+	    	
 	    	// 예약일시가 사용 불가 기간 범위인지 확인
 	    	if (!datesWithReservation.isEmpty()) {
-	    		List<ReservationEntity> reservationsInRange = reservationRepository.findByFacility_FacilityNoAndReservationDateBetween(
-	    		    		facilityNo,
-	    		    		dto.getBlockedStartTime().toLocalDate(),
-	    		    		dto.getBlockedEndTime().toLocalDate());
-
-	    		for (ReservationEntity rsvn : reservationsInRange) {
+	    		for (ReservationEntity rsvn : reservations) {
 	    		    LocalDateTime rsvnStart = LocalDateTime.of(rsvn.getReservationDate(), rsvn.getReservationStartTime());
 	    		    LocalDateTime rsvnEnd = LocalDateTime.of(rsvn.getReservationDate(), rsvn.getReservationEndTime());
 
