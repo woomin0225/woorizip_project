@@ -13,10 +13,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-/**
- * ContractDto
- * - ContractEntity(tb_contracts)와 필드 및 데이터 타입 동기화
- */
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -34,17 +31,17 @@ public class ContractDto {
 
     @NotNull(message = "입주 날짜는 필수입니다.")
     @JsonFormat(pattern = "yyyy-MM-dd")
-    private Date move_in_date;
+    private Date moveInDate;
 
     @NotNull(message = "계약 기간은 필수입니다.")
-    private int term_months;
+    private int termMonths;
 
     private String status;
     
     private String contractUrl;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private Timestamp payment_date;
+    private Timestamp paymentDate;
 
     /**
      * DTO -> Entity 변환
@@ -54,11 +51,11 @@ public class ContractDto {
                 .contractNo(contractNo)
                 .userNo(userNo)
                 .roomNo(roomNo)
-                .moveInDate(move_in_date)
-                .termMonths(term_months)
+                .moveInDate(moveInDate)
+                .termMonths(termMonths)
                 .status(status)
                 .contractUrl(contractUrl)
-                .paymentDate(payment_date)
+                .paymentDate(paymentDate)
                 .build();
     }
 
@@ -72,11 +69,11 @@ public class ContractDto {
                 .contractNo(entity.getContractNo())
                 .userNo(entity.getUserNo())
                 .roomNo(entity.getRoomNo())
-                .move_in_date(entity.getMoveInDate())
-                .term_months(entity.getTermMonths())
+                .moveInDate(entity.getMoveInDate())
+                .termMonths(entity.getTermMonths())
                 .status(entity.getStatus())
                 .contractUrl(entity.getContractUrl())
-                .payment_date(entity.getPaymentDate())
+                .paymentDate(entity.getPaymentDate())
                 .build();
     }
 }

@@ -50,10 +50,13 @@ public class ContractEntity {
         if (this.contractNo == null) {
             this.contractNo = java.util.UUID.randomUUID().toString();
         }
-        if (this.status == null) {
+        if (this.status == null || this.status.trim().isEmpty()) {
             this.status = "APPLIED";
+        } else {
+            this.status = this.status.trim().toUpperCase();
         }
     }
+    
 
     // --- 데이터 병합을 위한 편의 메서드 ---
     public void updateFromAmendment(ContractEntity amendment) {
