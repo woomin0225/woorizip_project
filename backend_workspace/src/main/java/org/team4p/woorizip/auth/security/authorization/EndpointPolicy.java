@@ -13,16 +13,7 @@ public final class EndpointPolicy {
             
             // PUBLIC_GET: house, room
             "/houses/**",
-//            "/houses/marker",
-//            "/houses/*/rooms",
-//            "/houses/*",
-//            "/houses/*/images",
-//            "/houses/*/search",
             "/rooms/**",
-//            "/rooms/search",
-//            "/rooms/*",
-//            "/rooms/*/images",
-//            "/rooms/*/reviews",
     };
 
     public static final String[] PUBLIC_POST = {
@@ -58,17 +49,10 @@ public final class EndpointPolicy {
     public static final String[] ESTATE_LESSOR = {
     		"/houses", "/houses/*",
     		"/rooms", "/rooms/*", "/rooms/*/availability"
-//    		"/houses", "/rooms",	//POST
-//    		"/houses/*", "/rooms/*",	//PUT
-//    		"/rooms/*/availability",	//PATCH
-//    		"/houses/*", "/rooms/*"	//DELETE
     	};
     // 건물, 방 (ESTATE): USER (POST, PUT, DELETE)
     public static final String[] ESTATE_USER = {
     		"/rooms/*/reviews", "/rooms/*/reviews/*",
-//    		"/rooms/*/reviews",	//POST
-//    		"/rooms/*/reviews/*",	//PUT
-//    		"/rooms/*/reviews/*"	//DELETE
     	};
     
 }
