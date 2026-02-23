@@ -28,6 +28,7 @@ DROP TABLE IF EXISTS `tb_board_type`;
 
 DROP TABLE IF EXISTS `tb_banner_images`;
 
+DROP TABLE IF EXISTS `tb_refresh_tokens`;
 DROP TABLE IF EXISTS `tb_users`;
 
 SET FOREIGN_KEY_CHECKS = 1;
@@ -46,9 +47,19 @@ CREATE TABLE `tb_users` (
   `created_at` TIMESTAMP DEFAULT NULL COMMENT '가입일시',
   `updated_at` TIMESTAMP DEFAULT NULL COMMENT '수정일시',
   `withdraw_at` TIMESTAMP DEFAULT NULL COMMENT '탈퇴일시',
-  `deleted_yn` BOOLEAN NOT NULL DEFAULT 0 COMMENT '탈퇴여부',
+  `deleted_yn` CHAR(1) NOT NULL DEFAULT 'N' COMMENT '탈퇴여부',
   PRIMARY KEY (`user_no`),
   UNIQUE KEY `uk_tb_users_email_id` (`email_id`)
+);
+
+CREATE TABLE tb_refresh_tokens (
+    id VARCHAR(50) NOT NULL PRIMARY KEY,
+    email_id VARCHAR(255) NOT NULL,
+    token_value VARCHAR(512) NOT NULL,
+    issued_at DATETIME NOT NULL,
+    expires_at DATETIME NOT NULL,
+    revoked BOOLEAN DEFAULT FALSE,
+    INDEX (email_id)
 );
 
 CREATE TABLE `tb_contracts` (
@@ -57,7 +68,7 @@ CREATE TABLE `tb_contracts` (
   `user_no` CHAR(36) NOT NULL COMMENT '회원번호',
   `move_in_date` DATE COMMENT '입주희망일',
   `term_months` MEDIUMINT COMMENT '계약기간(개월수)',
-  `contract_status` ENUM('APPLIED', 'APPROVED', 'PAID', 'ACTIVE', 'ENDED') COMMENT '계약상태(APPLIED, APPROVED, PAID, ACTIVE, ENDED)',
+  `status` ENUM('APPLIED', 'APPROVED', 'PAID', 'ACTIVE', 'ENDED') COMMENT '계약상태(APPLIED, APPROVED, PAID, ACTIVE, ENDED)',
   `contract_url` TEXT COMMENT '계약서URL',
   `payment_date` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '결제일시',
   PRIMARY KEY (`contract_no`)
