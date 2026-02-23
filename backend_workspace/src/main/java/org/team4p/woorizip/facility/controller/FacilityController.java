@@ -35,10 +35,10 @@ public class FacilityController {
 	private final FacilityService facilityService;
 	
 	// 시설 목록 조회
-	@GetMapping
+	@GetMapping({"/{houseNo}"})
 	public ResponseEntity<List<FacilityListResponseDTO>> getFacilityList(
-			@AuthenticationPrincipal String currentUserNo) {
-		return ResponseEntity.ok(facilityService.getFacilityList(currentUserNo));
+			@PathVariable String houseNo) {
+		return ResponseEntity.ok(facilityService.getFacilityList(houseNo));
 	}
 	
 	// 시설 신규 등록
