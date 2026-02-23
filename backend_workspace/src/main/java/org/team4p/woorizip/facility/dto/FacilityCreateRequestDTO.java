@@ -23,6 +23,7 @@ import lombok.Setter;
 @AllArgsConstructor
 public class FacilityCreateRequestDTO {
 	
+	@NotBlank(message="시설을 등록할 건물을 선택해주세요.")
 	private String houseNo;
 	
 	@NotNull(message="시설 카테고리를 선택해주세요.")

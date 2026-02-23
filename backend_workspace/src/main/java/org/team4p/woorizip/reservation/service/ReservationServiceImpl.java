@@ -3,6 +3,8 @@ package org.team4p.woorizip.reservation.service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -11,6 +13,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.team4p.woorizip.common.exception.ForbiddenException;
 import org.team4p.woorizip.common.exception.NotFoundException;
+import org.team4p.woorizip.contract.jpa.entity.ContractEntity;
+import org.team4p.woorizip.contract.jpa.repository.ContractRepository;
 import org.team4p.woorizip.facility.enums.FacilityStatus;
 import org.team4p.woorizip.facility.jpa.entity.FacilityEntity;
 import org.team4p.woorizip.facility.jpa.repository.FacilityRepository;
@@ -35,6 +39,7 @@ public class ReservationServiceImpl implements ReservationService {
 	private final FacilityRepository facilityRepository;
 	private final ReservationRepository reservationRepository;
 	private final UserRepository userRepository;
+	private final ContractRepository contractRepository;
 	private final RoomRepository roomRepository;
 
 	// 예약 신규 등록
@@ -49,18 +54,53 @@ public class ReservationServiceImpl implements ReservationService {
 		UserEntity user = userRepository.findById(userNo)
 				.orElseThrow(() -> new NotFoundException("사용자 정보를 찾을 수 없습니다."));
 		
-		// facility가 속한 house의 거주자인지 확인
-		List<RoomEntity> rooms = roomRepository.findAllByHouseNo(facility.getHouse().getHouseNo());
+		Calendar todayCal = Calendar.getInstance();
+		todayCal.set(Calendar.HOUR_OF_DAY, 0);
+		todayCal.set(Calendar.MINUTE, 0);
+		todayCal.set(Calendar.SECOND, 0);
+		todayCal.set(Calendar.MILLISECOND, 0);
+		Date today = todayCal.getTime();
 		
-		boolean isResident = false;
-		for (RoomEntity room : rooms) {
-		    if (room.getUserNo() != null && room.getUserNo().equals(userNo)) {
-		        isResident = true;
+		ContractEntity validContract = null;
+		
+		// 해당 사용자의 유효한 임대차 계약 확인
+		List<ContractEntity> contracts = contractRepository.findByUserNo(userNo);
+		
+		for (int i = 0; i < contracts.size(); i++) {
+		    ContractEntity c = contracts.get(i);
+		    
+		    Date moveInDate = c.getMoveInDate();
+		    int termMonths = c.getTermMonths();
+		    
+		    if (moveInDate == null) continue;
+
+		    Calendar endCal = Calendar.getInstance();
+		    endCal.setTime(moveInDate);
+		    endCal.set(Calendar.HOUR_OF_DAY, 0);
+		    endCal.set(Calendar.MINUTE, 0);
+		    endCal.set(Calendar.SECOND, 0);
+		    endCal.set(Calendar.MILLISECOND, 0);
+
+		    endCal.add(Calendar.MONTH, termMonths);
+		    Date moveOutDate = endCal.getTime();
+
+		    if (!today.before(moveInDate) && !today.after(moveOutDate)) {
+		        validContract = c;
 		        break;
 		    }
 		}
-		if (!isResident) {
-		    throw new ForbiddenException("이 시설에 대한 예약 권한이 없습니다.");
+
+		if (validContract == null) {
+		    throw new NotFoundException("유효한 계약 정보를 찾을 수 없습니다.");
+		}
+
+		// 실존하는 방인지 확인
+		RoomEntity room = roomRepository.findById(validContract.getRoomNo())
+		    .orElseThrow(() -> new NotFoundException("방 정보를 찾을 수 없습니다."));
+		
+		// facility가 속한 house의 거주자인지 확인
+		if (!room.getHouseNo().equals(facility.getHouse().getHouseNo())) {
+			throw new ForbiddenException("해당 시설이 속한 건물의 입주자가 아닙니다.");
 		}
 		
 		// 시설이 사용 가능한 상태인지 확인
