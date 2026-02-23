@@ -84,7 +84,7 @@ public class WishlistController {
     @DeleteMapping("/delete/all/{userNo}")
     public ResponseEntity<ApiResponse<Void>> deleteAll(@PathVariable("userNo") String userNo) {
         int result = wishlistService.deleteWishlist(userNo);
-        if (result >= 0) { // 0이어도 삭제 수행은 성공으로 간주 (목록이 비어있던 경우)
+        if (result >= 0) {
             return ResponseEntity.ok(ApiResponse.ok("찜 전체 삭제 성공", null));
         }
         return ResponseEntity.status(500).body(ApiResponse.fail("찜 전체 삭제 실패", null));

@@ -1,17 +1,19 @@
--- db_script_1조.sql
+-- db_create_script.sql
 -- drop 테이블로 정리 > 외래키제외 테이블 생성 > 외래키 설정
 
 -- 설계에서 Default 항목에 다른 테이블 값 사용하는 부분은 MySQL DEFAULT로 지정할 수 없어 COMMENT에 언급해놨습니다.
 -- ==========================================================
+SET FOREIGN_KEY_CHECKS = 0;
+
 DROP TABLE IF EXISTS `tb_fm_rsvn`;
 DROP TABLE IF EXISTS `tb_fm_images`;
 DROP TABLE IF EXISTS `tb_fm_list`;
 DROP TABLE IF EXISTS `tb_fm_category`;
 
-DROP TABLE IF EXISTS `tb_wishlist`;
+DROP TABLE IF EXISTS `tb_wishlists`;
 DROP TABLE IF EXISTS `tb_reviews`;
 DROP TABLE IF EXISTS `tb_tours`;
-DROP TABLE IF EXISTS `tb_contract`;
+DROP TABLE IF EXISTS `tb_contracts`;
 
 DROP TABLE IF EXISTS `tb_rooms_images`;
 DROP TABLE IF EXISTS `tb_rooms`;
@@ -26,8 +28,10 @@ DROP TABLE IF EXISTS `tb_board_type`;
 
 DROP TABLE IF EXISTS `tb_banner_images`;
 
-DROP TABLE IF EXISTS `tb_users`;
 DROP TABLE IF EXISTS `tb_refresh_tokens`;
+DROP TABLE IF EXISTS `tb_users`;
+
+SET FOREIGN_KEY_CHECKS = 1;
 -- ==================================================
 
 CREATE TABLE `tb_users` (
@@ -58,13 +62,13 @@ CREATE TABLE tb_refresh_tokens (
     INDEX (email_id)
 );
 
-CREATE TABLE `tb_contract` (
+CREATE TABLE `tb_contracts` (
   `contract_no` CHAR(36) NOT NULL COMMENT '계약번호',
   `room_no` CHAR(36) NOT NULL COMMENT '방번호',
   `user_no` CHAR(36) NOT NULL COMMENT '회원번호',
   `move_in_date` DATE COMMENT '입주희망일',
   `term_months` MEDIUMINT COMMENT '계약기간(개월수)',
-  `contract_status` ENUM('APPLIED', 'APPROVED', 'PAID', 'ACTIVE', 'ENDED') COMMENT '계약상태(APPLIED, APPROVED, PAID, ACTIVE, ENDED)',
+  `status` ENUM('APPLIED', 'APPROVED', 'PAID', 'ACTIVE', 'ENDED') COMMENT '계약상태(APPLIED, APPROVED, PAID, ACTIVE, ENDED)',
   `contract_url` TEXT COMMENT '계약서URL',
   `payment_date` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '결제일시',
   PRIMARY KEY (`contract_no`)
@@ -93,7 +97,7 @@ CREATE TABLE `tb_reviews` (
   PRIMARY KEY (`review_no`)
 );
 
-CREATE TABLE `tb_wishlist` (
+CREATE TABLE `tb_wishlists` (
   `wish_no` CHAR(36) NOT NULL COMMENT '찜번호',
   `user_no` CHAR(36) NOT NULL COMMENT '회원번호',
   `house_no` CHAR(36) NOT NULL COMMENT '건물번호',
@@ -221,7 +225,7 @@ CREATE TABLE `tb_rooms_images` (
 );
 
 CREATE TABLE `tb_fm_category` (
-  `facility_code` TINYINT NOT NULL COMMENT '시설코드 (001~)',
+  `facility_code` TINYINT NOT NULL AUTO_INCREMENT COMMENT '시설코드 (001~)',
   `facility_type` VARCHAR(10) NOT NULL COMMENT '시설의 기본 이름 (''라운지'', ''세탁실'', ''시네마룸'', ''운동시'', ''정원'', ''주방'', ''거실'', ''발코니'', ''테라스'', ''화장실'' 등)',
   `facility_options` TEXT NOT NULL COMMENT '시설의 기본 세부 옵션 (JSON)',
   PRIMARY KEY (`facility_code`, `facility_type`)
@@ -261,6 +265,8 @@ CREATE TABLE `tb_fm_rsvn` (
   `rsvn_no` CHAR(36) NOT NULL COMMENT '예약번호, UUID사용',
   `facility_no` CHAR(36) NOT NULL COMMENT '시설번호, UUID사용',
   `user_no` CHAR(36) NOT NULL COMMENT '회원번호, UUID사용',
+  `rsvn_name` VARCHAR(20) NOT NULL COMMENT '예약자 이름',
+  `rsvn_phone` VARCHAR(15) NOT NULL COMMENT '예약자 연락처',
   `rsvn_date` DATE NOT NULL COMMENT '예약날짜',
   `rsvn_start_time` TIME NOT NULL COMMENT '시작시간',
   `rsvn_end_time` TIME NOT NULL COMMENT '종료시간',
@@ -273,15 +279,15 @@ CREATE TABLE `tb_fm_rsvn` (
 
 -- Foreign Key
 ALTER TABLE `tb_fm_category` ADD UNIQUE KEY `uk_tb_fm_category_facility_code` (`facility_code`);
-ALTER TABLE `tb_contract` ADD CONSTRAINT `fk_tb_contract_room_no` FOREIGN KEY (`room_no`) REFERENCES `tb_rooms` (`room_no`);
-ALTER TABLE `tb_contract` ADD CONSTRAINT `fk_tb_contract_user_no` FOREIGN KEY (`user_no`) REFERENCES `tb_users` (`user_no`);
+ALTER TABLE `tb_contracts` ADD CONSTRAINT `fk_tb_contracts_room_no` FOREIGN KEY (`room_no`) REFERENCES `tb_rooms` (`room_no`);
+ALTER TABLE `tb_contracts` ADD CONSTRAINT `fk_tb_contracts_user_no` FOREIGN KEY (`user_no`) REFERENCES `tb_users` (`user_no`);
 ALTER TABLE `tb_tours` ADD CONSTRAINT `fk_tb_tours_room_no` FOREIGN KEY (`room_no`) REFERENCES `tb_rooms` (`room_no`);
 ALTER TABLE `tb_tours` ADD CONSTRAINT `fk_tb_tours_user_no` FOREIGN KEY (`user_no`) REFERENCES `tb_users` (`user_no`);
 ALTER TABLE `tb_reviews` ADD CONSTRAINT `fk_tb_reviews_room_no` FOREIGN KEY (`room_no`) REFERENCES `tb_rooms` (`room_no`);
 ALTER TABLE `tb_reviews` ADD CONSTRAINT `fk_tb_reviews_user_no` FOREIGN KEY (`user_no`) REFERENCES `tb_users` (`user_no`);
-ALTER TABLE `tb_wishlist` ADD CONSTRAINT `fk_tb_wishlist_user_no` FOREIGN KEY (`user_no`) REFERENCES `tb_users` (`user_no`) ON DELETE CASCADE;
-ALTER TABLE `tb_wishlist` ADD CONSTRAINT `fk_tb_wishlist_house_no` FOREIGN KEY (`house_no`) REFERENCES `tb_houses` (`house_no`) ON DELETE CASCADE;
-ALTER TABLE `tb_wishlist` ADD CONSTRAINT `fk_tb_wishlist_room_no` FOREIGN KEY (`room_no`) REFERENCES `tb_rooms` (`room_no`) ON DELETE CASCADE;
+ALTER TABLE `tb_wishlists` ADD CONSTRAINT `fk_tb_wishlists_user_no` FOREIGN KEY (`user_no`) REFERENCES `tb_users` (`user_no`) ON DELETE CASCADE;
+ALTER TABLE `tb_wishlists` ADD CONSTRAINT `fk_tb_wishlists_house_no` FOREIGN KEY (`house_no`) REFERENCES `tb_houses` (`house_no`) ON DELETE CASCADE;
+ALTER TABLE `tb_wishlists` ADD CONSTRAINT `fk_tb_wishlists_room_no` FOREIGN KEY (`room_no`) REFERENCES `tb_rooms` (`room_no`) ON DELETE CASCADE;
 ALTER TABLE `tb_posts` ADD CONSTRAINT `fk_tb_posts_board_type_no` FOREIGN KEY (`board_type_no`) REFERENCES `tb_board_type` (`board_type_no`);
 ALTER TABLE `tb_posts` ADD CONSTRAINT `fk_tb_posts_user_no` FOREIGN KEY (`user_no`) REFERENCES `tb_users` (`user_no`);
 ALTER TABLE `tb_comments` ADD CONSTRAINT `fk_tb_comments_post_no` FOREIGN KEY (`post_no`) REFERENCES `tb_posts` (`post_no`);
@@ -301,10 +307,10 @@ ALTER TABLE `tb_fm_rsvn` ADD CONSTRAINT `fk_tb_fm_rsvn_facility_no` FOREIGN KEY 
 ALTER TABLE `tb_fm_rsvn` ADD CONSTRAINT `fk_tb_fm_rsvn_user_no` FOREIGN KEY (`user_no`) REFERENCES `tb_users` (`user_no`);
 
 desc `tb_users`;
-desc `tb_contract`;
+desc `tb_contracts`;
 desc `tb_tours`;
 desc `tb_reviews`;
-desc `tb_wishlist`;
+desc `tb_wishlists`;
 desc `tb_board_type`;
 desc `tb_posts`;
 desc `tb_comments`;
@@ -318,7 +324,3 @@ desc `tb_fm_category`;
 desc `tb_fm_list`;
 desc `tb_fm_images`;
 desc `tb_fm_rsvn`;
-
-
-ALTER TABLE tb_users MODIFY COLUMN deleted_yn CHAR(1) DEFAULT 'N';
-select * from tb_users;

@@ -26,7 +26,7 @@ import lombok.Setter;
 @Builder
 public class UserDto {
 
-    private String userNo; // String (UUID)
+    private String userNo;
     
     @NotBlank(message = "이메일 아이디는 필수입력입니다.")
     @Email(message = "올바른 이메일 형식이 아닙니다.")
@@ -47,7 +47,7 @@ public class UserDto {
     private String gender; // Entity prePersist에서 M/F 변환 처리됨
 
     @JsonFormat(pattern = "yyyy-MM-dd")
-    private Date birthDate; // Entity 타입에 맞춰 Date로 변경
+    private Date birthDate;
     
     private Integer age;
 

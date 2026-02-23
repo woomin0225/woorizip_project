@@ -11,11 +11,11 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 @Entity
-@Table(name = "tb_contracts") // 기술서에 따른 테이블명
+@Table(name = "tb_contracts")
 public class ContractEntity {
 
 	@Id
-    @Column(name = "contract_no", length = 36) // DB 스키마와 일치 (snake_case)
+    @Column(name = "contract_no", length = 36)
     private String contractNo;
 
     @Column(name = "user_no", nullable = false, length = 36)
@@ -39,7 +39,6 @@ public class ContractEntity {
     @Column(name = "payment_date")
     private Timestamp paymentDate;
 
-    // --- 추가된 필드 ---
     @Column(name = "parent_contract_no", length = 36)
     private String parentContractNo;
 
@@ -52,7 +51,7 @@ public class ContractEntity {
             this.contractNo = java.util.UUID.randomUUID().toString();
         }
         if (this.status == null) {
-            this.status = "APPLIED"; // 스키마의 ENUM 첫 번째 값인 APPLIED로 맞춤
+            this.status = "APPLIED";
         }
     }
 

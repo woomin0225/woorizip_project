@@ -24,7 +24,7 @@ import lombok.Setter;
 @Builder
 public class ContractDto {
 
-    private String contractNo; // String (UUID)
+    private String contractNo;
 
     @NotBlank(message = "사용자 번호는 필수입니다.")
     private String userNo;
