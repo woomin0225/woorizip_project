@@ -40,10 +40,10 @@ public class UserEntity {
     @Column(name = "role", nullable = false)
     private String role;
     
-    @Transient // 이 어노테이션을 붙이면 DB 컬럼으로 인식하지 않습니다.
+    @Transient
     private String socialId;
 
-    @Transient // 빌더 오류는 막아주되, DB 쿼리(INSERT)에서는 빠집니다.
+    @Transient
     private String provider;
 
     @Column(name = "created_at")
@@ -62,12 +62,10 @@ public class UserEntity {
         if (this.createdAt == null) this.createdAt = now;
         if (this.updatedAt == null) this.updatedAt = now;
         
-        // [수정] 기본값 설정
         if (this.type == null) this.type = "USER";
         if (this.role == null) this.role = "USER";
         if (this.deletedYn == null) this.deletedYn = "N"; // 0 대신 'N'
 
-        // 성별 변환 로직은 그대로 유지
         if (this.gender != null) {
             if (this.gender.equals("1") || this.gender.equals("3")) this.gender = "M";
             else if (this.gender.equals("2") || this.gender.equals("4")) this.gender = "F";

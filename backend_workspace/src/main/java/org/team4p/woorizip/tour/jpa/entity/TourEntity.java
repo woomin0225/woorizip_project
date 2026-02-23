@@ -45,12 +45,10 @@ public class TourEntity {
 
     @PrePersist
     public void prePersist() {
-        // 1. 기본 설정 (PK)
         if (this.tourNo == null) {
             this.tourNo = java.util.UUID.randomUUID().toString();
         }
         
-        // 2. 기본 상태값 설정 (요청 시 기본값을 'PENDING'으로 가정)
         if (this.status == null) {
             this.status = "PENDING";
         }

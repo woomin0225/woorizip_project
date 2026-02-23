@@ -57,13 +57,11 @@ public class ContractController {
      */
     @PostMapping("/insert/{roomNo}")
     public ResponseEntity<ApiResponse<Void>> insertContract(
-            @PathVariable("roomNo") String roomNo, // String 타입으로 일치
+            @PathVariable("roomNo") String roomNo,
             @RequestBody @Valid ContractDto contractDto) {
         
-        // 경로 변수로 받은 roomNo를 DTO에 세팅 (DTO 필드명이 Snake Case이므로)
         contractDto.setRoomNo(roomNo); 
         
-        // 서비스 메서드 호출 (인자를 하나만 전달)
         int result = contractService.insertContract(contractDto);
         
         return result > 0 ? ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok("입주 신청 성공", null))

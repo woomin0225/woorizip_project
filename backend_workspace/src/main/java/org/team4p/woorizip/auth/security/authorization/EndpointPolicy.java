@@ -17,8 +17,9 @@ public final class EndpointPolicy {
     };
 
     public static final String[] PUBLIC_POST = {
-            "/api/user",
-            "/api/user/check-id"
+    		"/api/user/signup",
+            "/api/user/check-id",
+            "/auth/login"
     };
 
     // 공지사항, 정책・정보, 이벤트 : ADMIN만 (POST/PUT/DELETE)
@@ -36,7 +37,7 @@ public final class EndpointPolicy {
             "/api/replies/**"
     };
 
-    // 회원: 내정보 USER/ADMIN, 목록/검색 ADMIN
+    // 회원 조회
     public static final String[] USER_ME = { "/api/user/*" };
     public static final String[] USER_ADMIN_LIST = { "/api/user", "/api/user/search" };
     public static final String[] USER_ADMIN_PATCH = { "/api/user/*/login-ok" };
@@ -55,4 +56,14 @@ public final class EndpointPolicy {
     		"/rooms/*/reviews", "/rooms/*/reviews/*",
     	};
     
+    public static final String[] USER_ADMIN_LIST = { 
+            "/api/user/list", 
+            "/api/user/search" 
+    };
+    
+    // 위시리스트, 계약, 투어
+    public static final String[] WISHLIST_USER = { "/api/wishlist/**" };
+    public static final String[] CONTRACT_USER = { "/api/contract/**" };
+    public static final String[] TOUR_USER = { "/api/tour/**" };
+
 }
