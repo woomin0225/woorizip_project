@@ -56,8 +56,8 @@ public final class EndpointPolicy {
     	};
     // 건물, 방 (ESTATE): LESSOR (POST, PUT, PATCH, DELETE)
     public static final String[] ESTATE_LESSOR = {
-    		"/houses", "/houses/**",
-    		"/rooms", "/rooms/**",
+    		"/houses", "/houses/*",
+    		"/rooms", "/rooms/*", "/rooms/*/availability"
 //    		"/houses", "/rooms",	//POST
 //    		"/houses/*", "/rooms/*",	//PUT
 //    		"/rooms/*/availability",	//PATCH
