@@ -68,6 +68,8 @@ public class SecurityConfig {
                 // auth endpoints
                 .requestMatchers("/auth/**").permitAll()
 
+                .requestMatchers(HttpMethod.POST, EndpointPolicy.PUBLIC_POST).permitAll()
+                
                 // PUBLIC GET
                 .requestMatchers(HttpMethod.GET, EndpointPolicy.PUBLIC_GET).permitAll()
                 

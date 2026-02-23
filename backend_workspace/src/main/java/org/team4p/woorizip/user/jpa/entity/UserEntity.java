@@ -64,7 +64,7 @@ public class UserEntity {
         
         if (this.type == null) this.type = "USER";
         if (this.role == null) this.role = "USER";
-        if (this.deletedYn == null) this.deletedYn = "N"; // 0 대신 'N'
+        if (this.deletedYn == null) this.deletedYn = "N";
 
         if (this.gender != null) {
             if (this.gender.equals("1") || this.gender.equals("3")) this.gender = "M";

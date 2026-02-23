@@ -31,7 +31,6 @@ public class WishlistDto {
     @JsonFormat(pattern = "yyyy-MM-dd")
     private Date createdAt;
 
-    // 추가적인 UI 표현용 필드 (예: 매물 제목, 썸네일 등은 Join 후 세팅하거나 별도 처리)
     private String targetTitle; 
 
     /**

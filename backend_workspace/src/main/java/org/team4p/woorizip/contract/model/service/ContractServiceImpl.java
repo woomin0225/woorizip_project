@@ -35,6 +35,7 @@ public class ContractServiceImpl implements ContractService {
     @Override
     @Transactional
     public int insertContract(ContractDto contractDto) {
+    	contractDto.setStatus("APPLIED");
         try {
             ContractEntity entity = contractDto.toEntity();
             return contractRepository.save(entity) != null ? 1 : 0;

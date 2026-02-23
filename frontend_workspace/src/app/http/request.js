@@ -1,0 +1,20 @@
+// src/app/http/request.js
+import { axiosInstance } from './axiosInstance';
+import { setupInterceptors } from './interceptors';
+
+/**
+ * 앱 시작 시 1회 호출
+ * - axios 인터셉터 설치 (토큰 자동 첨부, 401 refresh, 실패 시 onLogout 호출)
+ */
+export function initHttpClient(options = {}) {
+  setupInterceptors(options);
+}
+
+export function apiJson() {
+  return axiosInstance;
+}
+
+export function apiForm() {
+  // multipart/form-data는 axios가 boundary를 자동 설정하는 게 안전
+  return axiosInstance;
+}
