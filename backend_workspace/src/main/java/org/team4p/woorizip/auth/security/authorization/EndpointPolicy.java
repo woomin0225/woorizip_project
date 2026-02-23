@@ -66,4 +66,11 @@ public final class EndpointPolicy {
     public static final String[] CONTRACT_USER = { "/api/contract/**" };
     public static final String[] TOUR_USER = { "/api/tour/**" };
 
+    // 공용시설
+    public static final String ADMIN_FACILITY_CATEGORY = "/api/facilities/categories/**";
+    public static final String FACILITY_ALL = "/api/facilities/**";
+
+    // 공용시설 예약
+    public static final String RESERVATION_ALL = "/api/reservations/**";
+    public static final String FACILITY_RESERVATION_ALL = "/api/facilities/*/reservations/**";
 }
