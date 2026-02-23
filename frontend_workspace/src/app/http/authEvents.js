@@ -1,0 +1,22 @@
+// src/app/http/authEvents.js
+// logout 브로드캐스트 처리 : 메모리 누수 방지, 다중 컴포넌트 구독 가능, 탭 내 전역 브로드캐스트 가능
+// 중요 : interceptors.js 에 반드시 연결할 것
+
+// src/app/http/authEvents.js
+
+const listeners = new Set();
+
+/**
+ * 로그아웃 이벤트 구독
+ */
+export function subscribeAuthEvent(callback) {
+  listeners.add(callback);
+  return () => listeners.delete(callback);
+}
+
+/**
+ * 전역 로그아웃 이벤트 발생
+ */
+export function emitLogout() {
+  listeners.forEach((cb) => cb());
+}
