@@ -51,7 +51,7 @@ public class FacilityServiceImpl implements FacilityService {
 	@Override
 	@Transactional(readOnly = true)
 	public List<FacilityListResponseDTO> getFacilityList(String houseNo) {
-	        return facilityRepository.findByHouse_HouseNo(houseNo) 
+	        return facilityRepository.findByHouseHouseNoAndFacilityDeletedAtIsNull(houseNo) 
 	                .stream()
 	                .map(FacilityListResponseDTO::from)
 	                .collect(Collectors.toList());	    
