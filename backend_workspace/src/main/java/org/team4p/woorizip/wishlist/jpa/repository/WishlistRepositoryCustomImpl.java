@@ -37,11 +37,8 @@ public class WishlistRepositoryCustomImpl implements WishlistRepositoryCustom {
                         wishlistEntity.userNo,
                         wishlistEntity.roomNo,
                         wishlistEntity.createdAt
-//                        ,
-//                        roomEntity.roomName.as("targetTitle") // roomName을 targetTitle로 매핑
                 ))
                 .from(wishlistEntity)
-//                .leftJoin(roomEntity).on(wishlistEntity.roomNo.eq(roomEntity.roomNo))
                 .where(wishlistEntity.userNo.eq(userNo))
                 .orderBy(wishlistEntity.createdAt.desc())
                 .offset(pageable.getOffset())

@@ -22,14 +22,12 @@ public class TourServiceImpl implements TourService {
 
     @Override
     public TourDto selectTour(String tourNo) {
-        // tour_no가 String(UUID)으로 저장되어 있으므로 변환하여 조회
         TourEntity entity = tourRepository.findById(String.valueOf(tourNo)).orElse(null);
         return entity != null ? TourDto.fromEntity(entity) : null;
     }
 
     @Override
     public List<TourDto> selectListTour(String userNo) {
-        // user_no 컬럼을 기준으로 목록 조회 (TourRepository에 해당 메서드 필요)
         List<TourEntity> list = tourRepository.findByUserNo(String.valueOf(userNo));
         return toList(list);
     }
@@ -50,7 +48,6 @@ public class TourServiceImpl implements TourService {
     @Transactional
     public int updateTour(TourDto tourDto) {
         try {
-            // save는 PK가 있으면 수정을 수행함
             return tourRepository.save(tourDto.toEntity()) != null ? 1 : 0;
         } catch (Exception e) {
             log.error("투어 수정 중 오류 발생: {}", e.getMessage());
@@ -58,7 +55,6 @@ public class TourServiceImpl implements TourService {
         }
     }
 
-    // List 변환 로직 (UserServiceImpl 구조 참조)
     private List<TourDto> toList(List<TourEntity> list) {
         List<TourDto> dtos = new ArrayList<>();
         if (list != null) {

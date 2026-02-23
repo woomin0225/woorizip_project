@@ -72,14 +72,6 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, EndpointPolicy.PUBLIC_GET).permitAll()
                 
                 
-                .requestMatchers("/api/tour/**").permitAll()
-                .requestMatchers("/api/contract/**").permitAll()
-        	    .requestMatchers("/api/user/signup", "/api/user/check-email").permitAll()
-        	    .requestMatchers(HttpMethod.GET, "/api/user/**").permitAll()
-        	    .requestMatchers(HttpMethod.PUT, "/api/user/**").permitAll()
-        	    .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
-        	    .requestMatchers(HttpMethod.POST, "/api/wishlist/add/**").permitAll()
-        	    .requestMatchers(HttpMethod.GET, "/api/wishlist/**").permitAll()
 
                 // admin write: notice, information, event only
                 .requestMatchers(HttpMethod.POST, EndpointPolicy.ADMIN_WRITE).hasRole("ADMIN")
@@ -98,15 +90,17 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.PUT, EndpointPolicy.REPLY_WRITE).hasAnyRole("USER","ADMIN")
                 .requestMatchers(HttpMethod.DELETE, EndpointPolicy.REPLY_WRITE).hasAnyRole("USER","ADMIN")
 
-                // members me: USER or ADMIN
-                .requestMatchers(HttpMethod.GET, EndpointPolicy.USER_ME).hasAnyRole("USER","ADMIN")
-                .requestMatchers(HttpMethod.PUT, EndpointPolicy.USER_ME).hasAnyRole("USER","ADMIN")
-                .requestMatchers(HttpMethod.DELETE, EndpointPolicy.USER_ME).hasAnyRole("USER","ADMIN")
-
-                // members list/search: ADMIN only
+                // user list/search: ADMIN only
                 .requestMatchers(HttpMethod.GET, EndpointPolicy.USER_ADMIN_LIST).hasRole("ADMIN")
-                .requestMatchers(HttpMethod.GET, EndpointPolicy.USER_ADMIN_PATCH).hasRole("ADMIN")
-                .requestMatchers(HttpMethod.PATCH, EndpointPolicy.USER_ADMIN_PATCH).hasRole("ADMIN")
+                
+                // user 조회, 수정
+                .requestMatchers(HttpMethod.GET, EndpointPolicy.USER_ME).hasAnyRole("USER", "ADMIN")
+                .requestMatchers(HttpMethod.PUT, EndpointPolicy.USER_ME).hasAnyRole("USER", "ADMIN")
+                
+                // 서비스 주요 기능 (위시리스트, 계약, 투어)
+                .requestMatchers(EndpointPolicy.WISHLIST_USER).hasAnyRole("USER", "ADMIN")
+                .requestMatchers(EndpointPolicy.CONTRACT_USER).hasAnyRole("USER", "ADMIN")
+                .requestMatchers(EndpointPolicy.TOUR_USER).hasAnyRole("USER", "ADMIN")
 
                 .anyRequest().authenticated()
             )            

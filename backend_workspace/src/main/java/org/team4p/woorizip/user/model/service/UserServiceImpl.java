@@ -113,7 +113,7 @@ public class UserServiceImpl implements UserService {
         if (gender_code == null) return null;
         if (gender_code.equals("1") || gender_code.equals("3")) return "M";
         if (gender_code.equals("2") || gender_code.equals("4")) return "F";
-        return gender_code; // 이미 M이나 F면 그대로 반환
+        return gender_code;
     }
 
     private List<UserDto> toList(List<UserEntity> list) {
