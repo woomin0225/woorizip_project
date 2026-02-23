@@ -33,7 +33,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/houses")
+@RequestMapping("/api/houses")
 @RequiredArgsConstructor
 public class HouseController {
 	private final HouseService houseService;
