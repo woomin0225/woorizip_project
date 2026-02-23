@@ -5,9 +5,9 @@
 -- 1. 회원 (임대인 1명, 임차인 2명)
 INSERT INTO `tb_users` (`user_no`, `email_id`, `password`, `name`, `phone`, `gender`, `birth_date`, `type`, `role`, `deleted_yn`) 
 VALUES 
-('lessor1', 'lessor@test.com', 'pass1234', '김임대', '010-1111-1111', 'M', '1980-01-01', 'LESSOR', 'USER', 'N'),
-('user1', 'user1@test.com', 'pass1234', '박일번', '010-2222-2222', 'F', '1995-05-05', 'USER', 'USER', 'N'),
-('user2', 'user2@test.com', 'pass1234', '이이번', '010-3333-3333', 'M', '1998-08-08', 'USER', 'USER', 'N');
+('lessor1', 'lessor@test.com', '$2a$10$Dfm3jPYmx2TvooIJ7zTZruXc3f1z/kOh8SCBZdVgikF90E2bBc/Yi', '김임대', '010-1111-1111', 'M', '1980-01-01', 'LESSOR', 'USER', 'N'),
+('user1', 'user1@test.com', '$2a$10$cuSDGuEpLkxydGri9qhQcuWym4C8sEWca4j6ZglG7QmIgI.KHuNs.', '박일번', '010-2222-2222', 'F', '1995-05-05', 'USER', 'USER', 'N'),
+('user2', 'user2@test.com', '$2a$10$GVeykywuFavxmd8HHN.y7OznrDGyHuWiD/y2Uav3vuLgQjMgvKh4W', '이이번', '010-3333-3333', 'M', '1998-08-08', 'USER', 'USER', 'N');
 
 -- 2. 건물 2개 (모두 '김임대' 소유)
 INSERT INTO `tb_houses`
