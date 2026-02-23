@@ -1,1 +1,34 @@
-// placeholder
+// src/app/http/errorMapper.js
+// 에러 표준화 : 백앤드의 ApiResponse.fail / ErrorResponse 둘 다 대응
+
+export function normalizeApiError(err) {
+  // 네트워크/타임아웃 등
+  if (!err?.response) {
+    return {
+      status: 0,
+      code: 'NETWORK_ERROR',
+      message: '서버 연결 실패',
+      raw: err,
+    };
+  }
+
+  const { status, data } = err.response;
+
+  // 1) ErrorResponse: { code, message, path, timestamp }
+  if (data?.code && data?.message) {
+    return { status, code: data.code, message: data.message, raw: err };
+  }
+
+  // 2) ApiResponse.fail: { success:false, message, data, timestamp }
+  if (typeof data?.success === 'boolean' && data?.message) {
+    return { status, code: 'API_FAIL', message: data.message, raw: err };
+  }
+
+  // fallback
+  return {
+    status,
+    code: 'UNKNOWN',
+    message: err.message || '오류 발생',
+    raw: err,
+  };
+}

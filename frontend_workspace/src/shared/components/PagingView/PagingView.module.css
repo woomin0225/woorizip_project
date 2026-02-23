@@ -1,1 +1,32 @@
-/* placeholder */
+/* src/components/common/PagingView.module.css */
+.pagingContainer {
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+  margin-top: 35px;
+}
+
+.pagingContainer button {
+  padding: 5px 10px;
+  border: 1px solid #7d7c7c;
+  background-color: #fff;
+  cursor: pointer;
+}
+
+.pagingContainer button:disabled {
+  cursor: not-allowed;
+  background-color: #c5c3c3;
+  color: #26232396;
+}
+
+.pagingContainer button.activePage {
+  font-weight: bold;
+  background-color: #007bff;
+  color: #fff;
+  border: 1px solid #007bff;
+}
+
+.pagingContainer button:hover {
+  background-color: #20f52b9c;
+  color: #000;
+}
