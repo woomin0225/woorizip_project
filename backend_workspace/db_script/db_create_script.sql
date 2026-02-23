@@ -168,7 +168,7 @@ CREATE TABLE `tb_houses` (
   `house_address_detail` VARCHAR(40) COMMENT '상세주소',
   `house_completion_year` YEAR NOT NULL COMMENT '준공년도',
   `house_floors` TINYINT NOT NULL COMMENT '층수',
-  `house_households` SMALLINT NOT NULL COMMENT '총세대수',
+  `house_house_holds` SMALLINT NOT NULL COMMENT '총세대수',
   `house_elevator_yn` BOOLEAN NOT NULL COMMENT '엘리베이터유무',
   `house_pet_yn` BOOLEAN NOT NULL COMMENT '애완동물가능여부',
   `house_female_limit` BOOLEAN NOT NULL COMMENT '여성전용',
