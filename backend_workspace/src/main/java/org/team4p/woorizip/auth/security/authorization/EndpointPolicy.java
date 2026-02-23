@@ -6,10 +6,14 @@ public final class EndpointPolicy {
     // 공개
     public static final String[] PUBLIC_GET = {
             "/api/notice/**",
-        	"/api/information/**",
-        	"/api/event/**",
-        	"/api/qna/**",
-            "/api/boards/**"
+            	"/api/information/**",
+            	"/api/event/**",
+            	"/api/qna/**",
+            "/api/boards/**",
+            
+            // PUBLIC_GET: house, room
+            "/houses/**",
+            "/rooms/**",
     };
 
     public static final String[] PUBLIC_POST = {
@@ -35,6 +39,23 @@ public final class EndpointPolicy {
 
     // 회원 조회
     public static final String[] USER_ME = { "/api/user/*" };
+    public static final String[] USER_ADMIN_LIST = { "/api/user", "/api/user/search" };
+    public static final String[] USER_ADMIN_PATCH = { "/api/user/*/login-ok" };
+    
+    // 건물, 방 (ESTATE): LESSOR (GET) - PUBLIC_GET의 /houses/*와 충돌 주의 => 먼저 설정하기
+    public static final String[] ESTATE_LESSOR_GET = {
+    		"/houses/owner"
+    	};
+    // 건물, 방 (ESTATE): LESSOR (POST, PUT, PATCH, DELETE)
+    public static final String[] ESTATE_LESSOR = {
+    		"/houses", "/houses/*",
+    		"/rooms", "/rooms/*", "/rooms/*/availability"
+    	};
+    // 건물, 방 (ESTATE): USER (POST, PUT, DELETE)
+    public static final String[] ESTATE_USER = {
+    		"/rooms/*/reviews", "/rooms/*/reviews/*",
+    	};
+    
     public static final String[] USER_ADMIN_LIST = { 
             "/api/user/list", 
             "/api/user/search" 
