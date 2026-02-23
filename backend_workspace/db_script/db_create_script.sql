@@ -200,7 +200,7 @@ CREATE TABLE `tb_rooms` (
   `room_updated_at` TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '방수정날짜',
   `room_deposit` INT NOT NULL COMMENT '보증금',
   `room_monthly` INT COMMENT '세액',
-  `room_method` ENUM('월세', '전세') NOT NULL COMMENT '월전세구분(월세, 전세)',
+  `room_method` ENUM('M', 'L') NOT NULL COMMENT '월전세구분(월세M, 전세L)',
   `room_area` DECIMAL(5, 2) NOT NULL COMMENT '면적',
   `room_facing` ENUM('북향', '동향', '남향', '서향', '북동향', '남동향', '남서향', '북서향') NOT NULL COMMENT '방 방향',
   `room_available_date` DATE NOT NULL COMMENT '입주가능일',
