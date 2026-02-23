@@ -39,8 +39,6 @@ public final class EndpointPolicy {
 
     // 회원 조회
     public static final String[] USER_ME = { "/api/user/*" };
-    public static final String[] USER_ADMIN_LIST = { "/api/user", "/api/user/search" };
-    public static final String[] USER_ADMIN_PATCH = { "/api/user/*/login-ok" };
     
     // 건물, 방 (ESTATE): LESSOR (GET) - PUBLIC_GET의 /houses/*와 충돌 주의 => 먼저 설정하기
     public static final String[] ESTATE_LESSOR_GET = {
