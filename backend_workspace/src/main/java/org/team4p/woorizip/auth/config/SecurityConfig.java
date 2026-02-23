@@ -72,14 +72,6 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, EndpointPolicy.PUBLIC_GET).permitAll()
                 
                 
-                .requestMatchers("/api/tour/**").permitAll()
-                .requestMatchers("/api/contract/**").permitAll()
-        	    .requestMatchers("/api/user/signup", "/api/user/check-email").permitAll()
-        	    .requestMatchers(HttpMethod.GET, "/api/user/**").permitAll()
-        	    .requestMatchers(HttpMethod.PUT, "/api/user/**").permitAll()
-        	    .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
-        	    .requestMatchers(HttpMethod.POST, "/api/wishlist/add/**").permitAll()
-        	    .requestMatchers(HttpMethod.GET, "/api/wishlist/**").permitAll()
 
                 // admin write: notice, information, event only
                 .requestMatchers(HttpMethod.POST, EndpointPolicy.ADMIN_WRITE).hasRole("ADMIN")
