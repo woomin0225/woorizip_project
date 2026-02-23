@@ -5,11 +5,11 @@
 -- 1. 회원 (임대인 1명, 임차인 2명)
 INSERT INTO `tb_users` (`user_no`, `email_id`, `password`, `name`, `phone`, `gender`, `birth_date`, `type`, `role`, `deleted_yn`) 
 VALUES 
-('lessor1', 'lessor@test.com', 'pass1234!', '김임대', '010-1111-1111', 'M', '1980-01-01', 'LESSOR', 'USER', 'N'),
-('user1', 'user1@test.com', 'pass1234!', '박일번', '010-2222-2222', 'F', '1995-05-05', 'USER', 'USER', 'N'),
-('user2', 'user2@test.com', 'pass1234!', '이이번', '010-3333-3333', 'M', '1998-08-08', 'USER', 'USER', 'N');
+('lessor1', 'lessor@test.com', 'pass1234', '김임대', '010-1111-1111', 'M', '1980-01-01', 'LESSOR', 'USER', 'N'),
+('user1', 'user1@test.com', 'pass1234', '박일번', '010-2222-2222', 'F', '1995-05-05', 'USER', 'USER', 'N'),
+('user2', 'user2@test.com', 'pass1234', '이이번', '010-3333-3333', 'M', '1998-08-08', 'USER', 'USER', 'N');
 
--- 2. 건물 2개 (모두 '김임대' 소유)
+-- 2. 건물 2개
 INSERT INTO `tb_houses` (`house_no`, `house_name`, `user_no`, `house_zip`, `house_address`, `house_address_detail`, `house_completion_year`, `house_floors`, `house_households`, `house_elevator_yn`, `house_pet_yn`, `house_female_limit`, `house_parking_max`, `house_abstract`, `house_image_count`) 
 VALUES 
 ('house1', '우리집오피스텔', 'lessor1', '06000', '서울 강남구 역삼동', '101번지', 2020, 5, 20, 1, 0, 0, 10, '역세권 깔끔한 오피스텔입니다.', 5),
@@ -92,14 +92,14 @@ VALUES
 INSERT INTO `tb_fm_category` (`facility_code`, `facility_type`, `facility_options`) 
 VALUES 
 (1, '라운지', '{"wifi": true, "coffee": true}'),
-(2, '세탁실', '{"washer": 2, "dryer": 1}'),
-(3, '운동시설', '{"treadmill": 3, "weights": true}');
+(2, '세탁실', '{"washer": true, "dryer": true}'),
+(3, '운동시설', '{"treadmill": true, "weights": true}');
 
 -- 16. 부대시설 목록 (tb_fm_list)
-INSERT INTO `tb_fm_list` (`facility_no`, `house_no`, `facility_code`, `facility_name`, `facility_location`, `facility_open_time`, `facility_close_time`, `facility_rsvn_required_yn`) 
+INSERT INTO `tb_fm_list` (`facility_no`, `house_no`, `facility_code`, `facility_name`, `facility_option_info`, `facility_location`, `facility_open_time`, `facility_close_time`, `facility_rsvn_required_yn`) 
 VALUES 
-('fac1', 'house1', 3, '입주민 전용 헬스장', 1, '06:00:00', '23:00:00', 0),
-('fac2', 'house1', 1, '공용 스터디 라운지', 2, '00:00:00', '23:59:59', 1);
+('fac1', 'house1', 3, '입주민 전용 헬스장', '{"treadmill": true, "weights": true}', 1, '06:00:00', '23:00:00', 0),
+('fac2', 'house1', 1, '공용 스터디 라운지', '{"wifi": true, "coffee": true}', 2, '00:00:00', '23:59:59', 1);
 
 -- 17. 부대시설 사진 (tb_fm_images)
 INSERT INTO `tb_fm_images` (`facility_image_no`, `facility_no`, `facility_original_image_name`, `facility_stored_image_name`) 
