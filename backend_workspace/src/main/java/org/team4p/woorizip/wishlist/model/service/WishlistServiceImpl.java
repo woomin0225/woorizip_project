@@ -26,11 +26,11 @@ public class WishlistServiceImpl implements WishlistService {
     @Override
     @Transactional
     public int insertWishlist(WishlistDto dto) {
-        // 1. 중복 체크: 이미 찜한 매물인지 확인
+        // 중복 체크
         if (wishlistRepository.existsByUserNoAndRoomNo(dto.getUserNo(), dto.getRoomNo())) {
-            return 0; // 이미 존재하므로 실패(0) 반환
+            return 0;
         }
-        // 2. 저장
+        // 저장
         return wishlistRepository.save(dto.toEntity()) != null ? 1 : 0;
     }
 
@@ -39,7 +39,6 @@ public class WishlistServiceImpl implements WishlistService {
      */
     @Override
     public WishlistDto selectWishlist(String wishNo) {
-        // findById는 Optional을 반환하므로 없으면 null 반환
         return WishlistDto.fromEntity(
             wishlistRepository.findById(wishNo).orElse(null)
         );
@@ -67,7 +66,6 @@ public class WishlistServiceImpl implements WishlistService {
     @Transactional
     public int deleteMyWishlist(String userNo) {
         try {
-            // Repository 인터페이스에 선언한 deleteByUserNo 사용
             wishlistRepository.deleteByUserNo(userNo);
             return 1;
         } catch (Exception e) {

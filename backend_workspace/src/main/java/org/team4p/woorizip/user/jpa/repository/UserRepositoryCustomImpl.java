@@ -43,7 +43,6 @@ public class UserRepositoryCustomImpl implements UserRepositoryCustom {
                 .select(Wildcard.count)
                 .from(userEntity)
                 .where(
-                    // allCond 대신 조건을 쉼표로 나열
                     emailContains(user_dto.getEmailId()),
                     nameContains(user_dto.getName()),
                     phoneContains(user_dto.getPhone()),
