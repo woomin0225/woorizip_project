@@ -4,12 +4,14 @@ import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.team4p.woorizip.auth.security.principal.CustomUserPrincipal;
 import org.team4p.woorizip.common.api.ApiResponse;
 import org.team4p.woorizip.contract.model.dto.ContractDto;
 import org.team4p.woorizip.contract.model.dto.request.ContractDecideRequest;
@@ -45,10 +47,11 @@ public class ContractController {
      * 계약 목록 조회
      * GET /contract/{userNo}
      */
-    @GetMapping("/user/{userNo}")
-    public ResponseEntity<ApiResponse<List<ContractDto>>> selectListContract(@PathVariable("userNo") String userNo) {
-        List<ContractDto> list = contractService.selectListContract(userNo);
-        return ResponseEntity.ok(ApiResponse.ok("계약 목록 조회 성공", list));
+    @GetMapping("/user/me")
+    public ResponseEntity<ApiResponse<List<ContractDto>>> selectListContract(
+            @AuthenticationPrincipal CustomUserPrincipal userPrincipal) {
+        List<ContractDto> list = contractService.selectListContract(userPrincipal.getUserNo());
+        return ResponseEntity.ok(ApiResponse.ok("내 계약 목록 조회 성공", list));
     }
 
     /**
@@ -58,12 +61,13 @@ public class ContractController {
     @PostMapping("/insert/{roomNo}")
     public ResponseEntity<ApiResponse<Void>> insertContract(
             @PathVariable("roomNo") String roomNo,
+            @AuthenticationPrincipal CustomUserPrincipal userPrincipal,
             @RequestBody @Valid ContractDto contractDto) {
         
         contractDto.setRoomNo(roomNo); 
+        contractDto.setUserNo(userPrincipal.getUserNo());
         
         int result = contractService.insertContract(contractDto);
-        
         return result > 0 ? ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok("입주 신청 성공", null))
                           : ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
     }
@@ -76,15 +80,11 @@ public class ContractController {
     public ResponseEntity<ApiResponse<Void>> requestAmendment(
             @PathVariable("originalContractNo") String originalNo,
             @RequestBody @Valid ContractDto amendmentDto) {
-        
-        // 원본 번호를 바탕으로 새로운 수정 요청 로우 생성
         int result = contractService.requestAmendment(originalNo, amendmentDto);
-        
         if (result == -1) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body(ApiResponse.fail("이미 진행 중인 수정 요청이 존재합니다.", null));
         }
-        
         return result > 0 ? ResponseEntity.ok(ApiResponse.ok("수정 요청이 완료되었습니다.", null))
                           : ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
     }
@@ -97,13 +97,7 @@ public class ContractController {
     public ResponseEntity<ApiResponse<Void>> decideAmendment(
             @PathVariable("amendmentNo") String amendmentNo,
             @RequestBody ContractDecideRequest decideRequest) {
-        
-        int result = contractService.decideAmendment(
-            amendmentNo, 
-            decideRequest.isApproved(), 
-            decideRequest.getReason()
-        );
-        
+        int result = contractService.decideAmendment(amendmentNo, decideRequest.isApproved(), decideRequest.getReason());
         return result > 0 ? ResponseEntity.ok(ApiResponse.ok("처리가 완료되었습니다.", null))
                           : ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
     }

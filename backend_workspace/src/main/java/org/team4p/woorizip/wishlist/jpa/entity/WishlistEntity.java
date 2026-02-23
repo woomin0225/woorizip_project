@@ -18,7 +18,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Table(name = "tb_wishlist")
+@Table(name = "tb_wishlists")
 @Entity
 public class WishlistEntity {
 

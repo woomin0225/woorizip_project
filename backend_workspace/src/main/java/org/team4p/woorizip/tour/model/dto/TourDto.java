@@ -19,7 +19,7 @@ import lombok.Setter;
 @Builder
 public class TourDto {
 
-    private String tourNo; // String (UUID)
+    private String tourNo;
 
     private String userNo;
 
@@ -29,12 +29,12 @@ public class TourDto {
     private Date visitDate;
 
     @JsonFormat(pattern = "HH:mm:ss")
-    private String visitTime; // Time 타입을 String으로 처리하거나 java.sql.Time 사용
+    private String visitTime;
 
     @NotBlank(message = "메시지는 필수 입력 사항입니다.")
     private String message;
 
-    private String status; // 예: 'PENDING', 'CONFIRMED', 'CANCELED'
+    private String status;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private Date canceledAt;
