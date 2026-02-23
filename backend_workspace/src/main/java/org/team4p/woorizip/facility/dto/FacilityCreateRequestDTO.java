@@ -5,8 +5,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.team4p.woorizip.common.validator.TextOnly;
-import org.team4p.woorizip.facility.enums.FacilityStatus;
 
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -25,9 +25,11 @@ public class FacilityCreateRequestDTO {
 	
 	private String houseNo;
 	
+	@NotNull(message="시설 카테고리를 선택해주세요.")
 	private Integer facilityCode;
 	
 	@NotBlank(message="시설 이름 입력이 필요합니다.")
+	@Size(max = 20, message = "시설 이름은 20자 이내여야 합니다.")
 	@TextOnly
 	private String facilityName;
 	
@@ -37,9 +39,6 @@ public class FacilityCreateRequestDTO {
 	
 	@NotNull(message="시설 위치 정보가 필요합니다.")
 	private int facilityLocation;
-	
-	@NotNull(message="시설 이용 가능 여부 입력이 필요합니다.")
-	private FacilityStatus facilityStatus;
 	
 	@NotNull(message="시설 수용 가능 인원 입력이 필요합니다.")
 	private int facilityCapacity;
@@ -59,4 +58,14 @@ public class FacilityCreateRequestDTO {
 	private Integer facilityMaxDurationMinutes;
 	
 	private List<FacilityImageDTO> images;
+	
+	@AssertTrue(message = "예약이 필요한 시설은 일일 최대 예약 횟수, 예약 단위 시간, 최대 이용 시간 입력이 필요합니다.")
+	public boolean isRsvnFieldsValid() {
+	    if (facilityRsvnRequiredYn) {
+	        return maxRsvnPerDay != null && 
+	               facilityRsvnUnitMinutes != null && 
+	               facilityMaxDurationMinutes != null;
+	    }
+	    return true;
+	}
 }

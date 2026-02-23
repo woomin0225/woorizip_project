@@ -26,7 +26,6 @@ import org.team4p.woorizip.facility.dto.FacilityCreateRequestDTO;
 import org.team4p.woorizip.facility.dto.FacilityImageDTO;
 import org.team4p.woorizip.facility.dto.FacilityListResponseDTO;
 import org.team4p.woorizip.facility.dto.FacilityModifyRequestDTO;
-import org.team4p.woorizip.facility.enums.FacilityStatus;
 import org.team4p.woorizip.facility.jpa.entity.FacilityCategoryEntity;
 import org.team4p.woorizip.facility.jpa.entity.FacilityEntity;
 import org.team4p.woorizip.facility.jpa.repository.FacilityCategoryRepository;
@@ -61,12 +60,12 @@ class FacilityServiceTest {
 		
 		FacilityCategoryCreateRequestDTO Cdto = new FacilityCategoryCreateRequestDTO();
         Cdto.setFacilityType("회의실");
-        Cdto.setFacilityOptions(options);
+        // Cdto.setFacilityOptions(options);
         
         FacilityCategoryEntity mockCategory = FacilityCategoryEntity.builder()
         		.facilityCode(1)
         		.facilityType(Cdto.getFacilityType())
-        		.facilityOptions(Cdto.getFacilityOptions())
+        		// .facilityOptions(Cdto.getFacilityOptions())
         		.build();
         
         lenient().when(categoryRepository.findById(1)).thenReturn(Optional.of(mockCategory));
@@ -95,7 +94,7 @@ class FacilityServiceTest {
 		dto.setFacilityName("시설1");
 		//dto.setOptionInfo(optionInfo);
 		dto.setFacilityLocation(2);
-		dto.setFacilityStatus(FacilityStatus.AVAILABLE);
+		//dto.setFacilityStatus(FacilityStatus.AVAILABLE);
 		dto.setFacilityCapacity(5);
 		dto.setFacilityOpenTime(LocalTime.of(9, 00));
 		dto.setFacilityCloseTime(LocalTime.of(21, 00));

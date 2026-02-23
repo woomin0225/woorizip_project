@@ -26,9 +26,9 @@ public class HouseDto {
 	private String houseName;
 	@Null(message="userNo는 백엔드에서 설정")
 	private String userNo;
-
+	@Null
 	private LocalDateTime houseCreatedAt;
-
+	@Null
 	private LocalDateTime houseUpdatedAt;
 	
 	private String houseZip;
@@ -36,31 +36,31 @@ public class HouseDto {
 	private String houseAddress;
 	
 	private String houseAddressDetail;
-	@NotBlank
-	private int houseCompletionYear;
-	@Min(value = 1) @NumericOnly
-	private int houseFloors;
-	@Min(value = 1) @NumericOnly
-	private int houseHouseHolds;
 	@NotNull
-	private boolean houseElevatorYn;
+	private Integer houseCompletionYear;
+	@Min(value = 1)
+	private Integer houseFloors;
+	@Min(value = 1)
+	private Integer houseHouseHolds;
 	@NotNull
-	private boolean housePetYn;
+	private Boolean houseElevatorYn;
 	@NotNull
-	private boolean houseFemaleLimit;
-	@Min(value = 0) @NumericOnly
-	private int houseParkingMax;
+	private Boolean housePetYn;
+	@NotNull
+	private Boolean houseFemaleLimit;
+	@Min(value = 0)
+	private Integer houseParkingMax;
 	
 	private String houseAbstract;
-	
-	private int houseImageCount;
-	
-	private double houseLat;
-	
-	private double houseLng;
-	
-	private boolean deleted;
-	
+	@Null
+	private Integer houseImageCount;
+	@Null
+	private Double houseLat;
+	@Null
+	private Double houseLng;
+	@Null
+	private Boolean deleted;
+	@Null
 	private LocalDateTime deletedAt;
 		
 	public HouseEntity toEntity() {

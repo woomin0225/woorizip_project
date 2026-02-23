@@ -29,10 +29,10 @@ public class FacilityCategoryEntity {
 	@GeneratedValue(strategy=GenerationType.IDENTITY)
 	private Integer facilityCode;
 	
-	@Column(name = "facility_type")
+	@Column(name = "facility_type", length = 10, nullable = false)
 	private String facilityType;
 	
-	@Column(name = "facility_options")
+	@Column(name = "facility_options", columnDefinition = "TEXT", nullable = false)
 	@Convert(converter = MapToJsonConverter.class)
 	private Map<String, Boolean> facilityOptions;
 
