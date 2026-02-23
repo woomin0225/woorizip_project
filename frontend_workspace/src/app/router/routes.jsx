@@ -90,7 +90,7 @@ export const router = createBrowserRouter([
           { path: '/user/reservation/new/:facilityNo', element: <UserReservationCreate /> },
           { path: '/user/reservation/detail/:reservationNo', element: <UserReservationDetail /> },
           { path: '/user/reservation/list/:houseNo', element: <UserReservationList /> },
-          { path: '/user/reservation/edit/:reservationNo/edit', element: <UserReservationModify /> }
+          { path: '/user/reservation/edit/:reservationNo', element: <UserReservationModify /> }
         ],
       },
 
@@ -102,17 +102,17 @@ export const router = createBrowserRouter([
           { path: '/notices/new', element: <NoticeWrite /> },
           { path: '/notices/:noticeNo/edit', element: <NoticeUpdate /> },
 
-          { path: '', element: < /> },
-          { path: '', element: < /> },
-          { path: '', element: < /> },
+          { path: '/admin/categories/new', element: <AdminFacilityCategoryCreate /> },
+          { path: '/admin/categories', element: <AdminFacilityCategoryList /> },
+          { path: '/admin/categories/edit/:facilityCode', element: <AdminFacilityCategoryModify /> },
 
-          { path: '', element: < /> },
-          { path: '', element: < /> },
-          { path: '', element: < /> },
+          { path: '/admin/facilities/detail/:facilityNo', element: <AdminFacilityDetail /> },
+          { path: '/admin/facilities/list/:houseNo', element: <AdminFacilityList /> },
+          { path: '/admin/facilities/edit/:facilityNo', element: <AdminFacilityModify /> },
 
-          { path: '', element: < /> },
-          { path: '', element: < /> },
-          { path: '', element: < /> }
+          { path: '/admin/reservation/detail/:reservationNo', element: <AdminReservationDetail /> },
+          { path: '/admin/reservation/list/:houseNo', element: <AdminReservationList /> },
+          { path: '/admin/reservation/edit/:reservationNo', element: <AdminReservationModify /> }
         ],
       },
     ],
