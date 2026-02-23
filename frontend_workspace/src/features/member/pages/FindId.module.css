@@ -1,6 +1,6 @@
-/* src/features/user/pages/Signup.module.css */
+/* src/features/user/pages/FindId.module.css */
 .container {
-  max-width: 500px;
+  max-width: 400px;
   margin: 2rem auto;
   padding: 1rem;
   border: 1px solid #ccc;
@@ -15,8 +15,7 @@
   flex-direction: column;
   gap: 0.5rem;
 }
-.group input,
-.group select {
+.group input {
   padding: 0.5rem;
 }
 .btn {
@@ -26,7 +25,8 @@
   cursor: pointer;
   border: none;
 }
-.error {
-  color: red;
-  font-size: 0.9rem;
+.result {
+  margin-top: 1rem;
+  font-weight: bold;
+  color: blue;
 }
