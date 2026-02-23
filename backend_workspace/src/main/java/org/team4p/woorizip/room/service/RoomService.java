@@ -1,6 +1,6 @@
 package org.team4p.woorizip.room.service;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.data.domain.Pageable;
@@ -16,7 +16,8 @@ public interface RoomService {
 	RoomDto selectRoom(String roomNo);
 	List<RoomDto> selectRoomsByHouseNo(String houseNo);
 	RoomDto updateRoom(RoomDto roomDto, String currentUser);
-	RoomDto updateRoomAvailability(String roomNo, LocalDateTime date, String userNo);
+	RoomDto updateRoomAvailability(String roomNo, LocalDate date, String userNo);
 	
 	Slice<RoomSearchResponse> selectRoomsInHouseMarker(RoomSearchCondition cond, Pageable pageable, String houseNo);
+	void updateRoomImageCount(String roomNo, int imageCount);
 }

@@ -35,7 +35,7 @@ public class QRoomEntity extends EntityPathBase<RoomEntity> {
 
     public final DateTimePath<java.time.LocalDateTime> roomCreatedAt = createDateTime("roomCreatedAt", java.time.LocalDateTime.class);
 
-    public final NumberPath<Integer> roomDeposit = createNumber("roomDeposit", Integer.class);
+    public final NumberPath<Long> roomDeposit = createNumber("roomDeposit", Long.class);
 
     public final BooleanPath roomEmptyYn = createBoolean("roomEmptyYn");
 
@@ -45,7 +45,7 @@ public class QRoomEntity extends EntityPathBase<RoomEntity> {
 
     public final StringPath roomMethod = createString("roomMethod");
 
-    public final NumberPath<Integer> roomMonthly = createNumber("roomMonthly", Integer.class);
+    public final NumberPath<Long> roomMonthly = createNumber("roomMonthly", Long.class);
 
     public final StringPath roomName = createString("roomName");
 

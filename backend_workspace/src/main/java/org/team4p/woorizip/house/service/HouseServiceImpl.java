@@ -6,7 +6,6 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
@@ -39,15 +38,21 @@ public class HouseServiceImpl implements HouseService {
 		cond.adjustment();
 		
 		List<HouseEntity> rows = houseRepository.searchHouses(cond);
-		Map<String, Integer> map= houseRepository.searchPriceOfHouses(cond);
-		Integer minDeposit = map.get("minDeposit");
-		Integer maxDeposit = map.get("maxDeposit");
-		Integer minMonthly = map.get("minMonthly");
-		Integer maxMonthly = map.get("maxMonthly");
+		Map<String, Long> map= houseRepository.searchPriceOfHouses(cond);
+		Long minDeposit = getOrZero(map, "minDeposit");
+		Long maxDeposit = getOrZero(map, "maxDeposit");
+		Long minMonthly = getOrZero(map, "minMonthly");
+		Long maxMonthly = getOrZero(map, "maxMonthly");
 		
 		List<HouseMarkerResponse> list = new ArrayList<>();
 		rows.forEach(entity->list.add(new HouseMarkerResponse(entity, minDeposit, maxDeposit, minMonthly, maxMonthly)));
 		return list;
+	}
+	
+	private long getOrZero(Map<String, Long> map, String key) {
+		if(map.isEmpty()) return 0L;
+		Long value = map.get(key);
+		return value == null ? 0L : value;
 	}
 
 	@Override
@@ -107,10 +112,48 @@ public class HouseServiceImpl implements HouseService {
 	public HouseDto updateHouse(HouseDto houseDto, String currentUser) {
 		// 건물 정보 수정
 		
-		String userNo = houseRepository.findUserNoByHouseNo(houseDto.getHouseNo());
+		// 건물이 DB에 있는지 검사
+		Optional<HouseEntity> row = houseRepository.findById(houseDto.getHouseNo());
+		if(!row.isPresent()) throw new NotFoundException("건물을 조회할 수 없습니다.");
+		HouseEntity entity = row.get();
+		
+		// 건물 소유권 검사
+		String userNo = entity.getUserNo();
 		if (!userNo.equals(userRepository.findUserNoByEmailId(currentUser))) throw new ForbiddenException("수정 권한이 없습니다.");
-		houseDto.setUserNo(userNo);
-		return houseRepository.save(houseDto.toEntity()).toDto();
+		
+		entity.setHouseName(houseDto.getHouseName());
+		entity.setHouseZip(houseDto.getHouseZip());
+		entity.setHouseAddress(houseDto.getHouseAddress());
+		entity.setHouseAddressDetail(houseDto.getHouseAddressDetail());
+		entity.setHouseCompletionYear(houseDto.getHouseCompletionYear());
+		entity.setHouseFloors(houseDto.getHouseFloors());
+		entity.setHouseHouseHolds(houseDto.getHouseHouseHolds());
+		entity.setHouseElevatorYn(houseDto.getHouseElevatorYn());
+		entity.setHousePetYn(houseDto.getHousePetYn());
+		entity.setHouseFemaleLimit(houseDto.getHouseFemaleLimit());
+		entity.setHouseParkingMax(houseDto.getHouseParkingMax());
+		entity.setHouseAbstract(houseDto.getHouseAbstract());
+		
+		// 위도/경도 업데이트
+		// geocoding 요청할 URI 구성
+		String uri = UriComponentsBuilder
+				.fromPath("/v2/local/search/address.json")
+				.queryParam("query", entity.getHouseAddress())
+				.build(true)
+				.toUriString();
+		// RestTemplate 사용해서 API 응답 요청
+		KakaoGeocodingResponse response = houseRestTemplate.getForObject(uri, KakaoGeocodingResponse.class);
+		
+		if (response == null || response.getDocuments() == null || response.getDocuments().isEmpty()) {
+		    throw new IllegalArgumentException("주소를 좌표로 변환할 수 없습니다: " + entity.getHouseAddress());
+		}
+		
+		double lat = Double.parseDouble(response.getDocuments().get(0).getY());
+		double lng = Double.parseDouble(response.getDocuments().get(0).getX());
+		entity.setHouseLat(lat);
+		entity.setHouseLng(lng);
+		
+		return entity.toDto();
 	}
 
 	@Override
@@ -134,6 +177,18 @@ public class HouseServiceImpl implements HouseService {
 		
 		// 건물 삭제 통과하면 방 소프트 삭제 수행
 		roomRepository.softDeleteByHouseNo(houseNo);
+	}
+
+	@Override
+	@Transactional
+	public void updateHouseImageCount(String houseNo, int imageCount) {
+		// 건물 사진 갯수 업데이트
+		
+		Optional<HouseEntity> row = houseRepository.findById(houseNo);
+		if(!row.isPresent()) throw new NotFoundException("건물을 조회할 수 없습니다.");
+		HouseEntity entity = row.get();
+		
+		entity.setHouseImageCount(imageCount);
 	}
 	
 	
