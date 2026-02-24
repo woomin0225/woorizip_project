@@ -1,1 +1,105 @@
-/* placeholder */
+/* src/features/user/pages/AdminUserList.module.css */
+.container {
+  max-width: 1000px;
+  margin: 3rem auto;
+  padding: 2rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #fff;
+}
+.title {
+  color: #1e293b;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.searchBar {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  justify-content: flex-end;
+}
+.select {
+  padding: 0.5rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  outline: none;
+}
+.input {
+  padding: 0.5rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  width: 200px;
+  outline: none;
+}
+.searchBtn {
+  padding: 0.5rem 1rem;
+  background: #475569;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.searchBtn:hover {
+  background: #334155;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1.5rem;
+}
+.table th,
+.table td {
+  padding: 0.75rem;
+  border-bottom: 1px solid #e2e8f0;
+  text-align: center;
+  font-size: 0.9rem;
+}
+.table th {
+  background: #f8fafc;
+  font-weight: 600;
+  color: #475569;
+}
+.empty {
+  padding: 2rem;
+  color: #64748b;
+}
+.status {
+  color: #3b82f6;
+  text-align: center;
+  margin: 2rem 0;
+  font-weight: 600;
+}
+.error {
+  color: #ef4444;
+  text-align: center;
+  margin: 2rem 0;
+  font-weight: 600;
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+}
+.pageBtn {
+  padding: 0.4rem 0.8rem;
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  border-radius: 4px;
+  cursor: pointer;
+  color: #1e293b;
+}
+.pageBtn:disabled {
+  color: #cbd5e1;
+  cursor: not-allowed;
+}
+.pageBtn:hover:not(:disabled) {
+  background: #f1f5f9;
+}
+.pageInfo {
+  font-weight: 600;
+  color: #475569;
+}
