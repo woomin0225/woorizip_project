@@ -54,6 +54,10 @@ public class ReservationServiceImpl implements ReservationService {
 		UserEntity user = userRepository.findById(userNo)
 				.orElseThrow(() -> new NotFoundException("사용자 정보를 찾을 수 없습니다."));
 		
+		// 임차인 전용 메서드		
+		boolean isUser = user.getRole().equals("USER") && user.getType().equals("USER");
+		if(!isUser) throw new ForbiddenException("시설 예약 권한이 없습니다.");
+		
 		Calendar todayCal = Calendar.getInstance();
 		todayCal.set(Calendar.HOUR_OF_DAY, 0);
 		todayCal.set(Calendar.MINUTE, 0);
@@ -195,7 +199,7 @@ public class ReservationServiceImpl implements ReservationService {
 	                .collect(Collectors.toList());
 	    }
 
-	    // 임대인
+	    // 임대인, 관리자
 	    return reservationRepository.findByFacility_FacilityNo(facilityNo)
 	    		.stream()
 	            .map(ReservationListResponseDTO::from)

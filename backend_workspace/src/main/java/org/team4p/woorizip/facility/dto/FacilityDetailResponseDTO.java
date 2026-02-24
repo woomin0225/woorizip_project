@@ -25,7 +25,7 @@ public class FacilityDetailResponseDTO {
 		private String facilityName;
 		private String facilityTitle;
 		private Map<String, Boolean> facilityOptionInfo;
-		private int facilityLocation;
+		private String facilityLocation;
 		private LocalTime facilityOpenTime;
 		private LocalTime facilityCloseTime;
 		private FacilityStatus facilityStatus;
@@ -38,12 +38,21 @@ public class FacilityDetailResponseDTO {
 		private List<FacilityImageDTO> images = new ArrayList<>();
 		
 		public static FacilityDetailResponseDTO from(FacilityEntity entity) {
+			String displayFloor;
+			int floor = entity.getFacilityLocation();
+		    
+			if (floor < 0) {
+		        displayFloor = "B" + Math.abs(floor);
+		    } else {
+		        displayFloor = String.valueOf(floor);
+		    }
+		    
 		    return FacilityDetailResponseDTO.builder()
 		            .facilityNo(entity.getFacilityNo())
 		            .facilityName(entity.getFacilityName())
 		            .facilityTitle(entity.getCategory().getFacilityType()+" "+entity.getFacilitySequence())
 		            .facilityOptionInfo(entity.getFacilityOptionInfo())
-		            .facilityLocation(entity.getFacilityLocation())
+		            .facilityLocation(displayFloor)
 		            .facilityOpenTime(entity.getFacilityOpenTime())
 		            .facilityCloseTime(entity.getFacilityCloseTime())
 		            .facilityStatus(entity.getFacilityStatus())

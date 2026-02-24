@@ -60,7 +60,10 @@ public class FacilityModifyRequestDTO {
 	
 	private List<FacilityImageDTO> images;
 	
-	
+	@AssertTrue(message = "시설 위치는 0이 아닌 값으로 입력해주세요.")
+	public boolean isValidFloor() {
+	    return this.facilityLocation != 0;
+	}
 	
 	@AssertTrue(message = "예약이 필요한 시설은 일일 최대 예약 횟수, 예약 단위 시간, 최대 이용 시간 입력이 필요합니다.")
 	public boolean isRsvnFieldsValid() {

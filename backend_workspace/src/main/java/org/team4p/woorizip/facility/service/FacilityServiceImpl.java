@@ -2,6 +2,8 @@ package org.team4p.woorizip.facility.service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -13,6 +15,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.team4p.woorizip.common.exception.ForbiddenException;
 import org.team4p.woorizip.common.exception.NotFoundException;
+import org.team4p.woorizip.contract.jpa.entity.ContractEntity;
+import org.team4p.woorizip.contract.jpa.repository.ContractRepository;
 import org.team4p.woorizip.facility.dto.FacilityCategoryCreateRequestDTO;
 import org.team4p.woorizip.facility.dto.FacilityCategoryDTO;
 import org.team4p.woorizip.facility.dto.FacilityCreateRequestDTO;
@@ -31,6 +35,8 @@ import org.team4p.woorizip.house.jpa.repository.HouseRepository;
 import org.team4p.woorizip.reservation.jpa.entity.ReservationEntity;
 import org.team4p.woorizip.reservation.jpa.repository.ReservationRepository;
 import org.team4p.woorizip.reservation.service.ReservationServiceImpl;
+import org.team4p.woorizip.room.jpa.entity.RoomEntity;
+import org.team4p.woorizip.room.jpa.repository.RoomRepository;
 import org.team4p.woorizip.user.jpa.entity.UserEntity;
 import org.team4p.woorizip.user.jpa.repository.UserRepository;
 
@@ -46,21 +52,85 @@ public class FacilityServiceImpl implements FacilityService {
 	private final ReservationRepository reservationRepository;
 	private final ReservationServiceImpl reservationService;
 	private final UserRepository userRepository;
-
+	private final ContractRepository contractRepository;
+	private final RoomRepository roomRepository;
+	
 	// 시설 목록 조회
 	@Override
 	@Transactional(readOnly = true)
-	public List<FacilityListResponseDTO> getFacilityList(String houseNo) {
-	        return facilityRepository.findByHouseHouseNoAndFacilityDeletedAtIsNull(houseNo) 
-	                .stream()
-	                .map(FacilityListResponseDTO::from)
-	                .collect(Collectors.toList());	    
+	public List<FacilityListResponseDTO> getFacilityList(String houseNo, String userNo) {
+		// 임차인
+	    if (houseNo == null) {			
+			Calendar todayCal = Calendar.getInstance();
+			todayCal.set(Calendar.HOUR_OF_DAY, 0);
+			todayCal.set(Calendar.MINUTE, 0);
+			todayCal.set(Calendar.SECOND, 0);
+			todayCal.set(Calendar.MILLISECOND, 0);
+			Date today = todayCal.getTime();
+			
+			ContractEntity validContract = null;
+			
+			// 해당 사용자의 유효한 임대차 계약 확인
+			List<ContractEntity> contracts = contractRepository.findByUserNo(userNo);
+			
+			for (int i = 0; i < contracts.size(); i++) {
+			    ContractEntity c = contracts.get(i);
+			    
+			    Date moveInDate = c.getMoveInDate();
+			    int termMonths = c.getTermMonths();
+			    
+			    if (moveInDate == null) continue;
+
+			    Calendar endCal = Calendar.getInstance();
+			    endCal.setTime(moveInDate);
+			    endCal.set(Calendar.HOUR_OF_DAY, 0);
+			    endCal.set(Calendar.MINUTE, 0);
+			    endCal.set(Calendar.SECOND, 0);
+			    endCal.set(Calendar.MILLISECOND, 0);
+
+			    endCal.add(Calendar.MONTH, termMonths);
+			    Date moveOutDate = endCal.getTime();
+
+			    if (!today.before(moveInDate) && !today.after(moveOutDate)) {
+			        validContract = c;
+			        break;
+			    }
+			}
+
+			if (validContract == null) {
+			    throw new NotFoundException("유효한 계약 정보를 찾을 수 없습니다.");
+			}
+
+			// 실존하는 방인지 확인
+			RoomEntity room = roomRepository.findById(validContract.getRoomNo())
+			    .orElseThrow(() -> new NotFoundException("방 정보를 찾을 수 없습니다."));
+			
+			String userHouseNo = room.getHouseNo();
+			
+			return facilityRepository.findByHouse_HouseNoAndFacilityDeletedAtIsNull(userHouseNo)
+		    		.stream()
+		            .map(FacilityListResponseDTO::from)
+		            .collect(Collectors.toList());
+	    }
+
+	    // 임대인, 관리자
+	    return facilityRepository.findByHouse_HouseNoAndFacilityDeletedAtIsNull(houseNo)
+	    		.stream()
+	            .map(FacilityListResponseDTO::from)
+	            .collect(Collectors.toList());	    
 	}
 
 	// 시설 신규 등록
 	@Override
 	@Transactional
 	public void createFacility(FacilityCreateRequestDTO dto, String userNo) {
+		UserEntity user = userRepository.findById(userNo)
+				.orElseThrow(() -> new NotFoundException("사용자 정보를 찾을 수 없습니다."));
+		
+		// 임대인 전용 메서드
+		boolean isLessor = user.getRole().equals("USER") && user.getType().equals("LESSOR");
+		if(!isLessor) throw new ForbiddenException("시설 등록 권한이 없습니다.");
+		
 		// userNo로 houseList 추출
 		List<HouseEntity> houseList = houseRepository.findAllByUserNoOrderByHouseName(userNo);
 
@@ -221,7 +291,7 @@ public class FacilityServiceImpl implements FacilityService {
 	@Override
 	@Transactional
 	public void modifyFacility(String facilityNo, FacilityModifyRequestDTO dto, String currentUserNo) {
-		// 시설 번호 찾기
+		// 시설 정보 찾기
 		FacilityEntity entity = facilityRepository.findById(facilityNo)
 				.orElseThrow(() -> new NotFoundException("해당 시설 정보를 찾을 수 없습니다."));
 		

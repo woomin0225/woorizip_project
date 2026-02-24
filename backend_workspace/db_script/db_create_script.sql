@@ -227,7 +227,7 @@ CREATE TABLE `tb_rooms_images` (
 );
 
 CREATE TABLE `tb_fm_category` (
-  `facility_code` TINYINT NOT NULL AUTO_INCREMENT COMMENT '시설코드 (001~)',
+  `facility_code` TINYINT NOT NULL AUTO_INCREMENT COMMENT '시설코드 (1~)',
   `facility_type` VARCHAR(10) NOT NULL COMMENT '시설의 기본 이름 (''라운지'', ''세탁실'', ''시네마룸'', ''운동시'', ''정원'', ''주방'', ''거실'', ''발코니'', ''테라스'', ''화장실'' 등)',
   `facility_options` TEXT NOT NULL COMMENT '시설의 기본 세부 옵션 (JSON)',
   PRIMARY KEY (`facility_code`, `facility_type`)
@@ -236,22 +236,22 @@ CREATE TABLE `tb_fm_category` (
 CREATE TABLE `tb_fm_list` (
   `facility_no` CHAR(36) NOT NULL COMMENT '시설번호, UUID사용',
   `house_no` CHAR(36) NOT NULL COMMENT '건물번호, UUID사용',
-  `facility_code` TINYINT NOT NULL COMMENT '시설코드 (001~)',
-  `facility_name` VARCHAR(20) NOT NULL COMMENT '트리거/백엔드 : 시설 이름 (Default: tb_fm_category.facility_type)',
-  `facility_sequence` TINYINT COMMENT '같은 시설 중첩 시 등록 순번, MAX+1로 지정',
-  `facility_option_info` TEXT NOT NULL COMMENT '트리거/백엔드 : 시설 세부 옵션 (Default: tb_fm_category.facility_options)',
-  `facility_location` TINYINT NOT NULL DEFAULT 1 COMMENT '시설 위치 (몇 층에 있는지)',
-  `facility_created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '등록일시',
-  `facility_updated_at` TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '수정일시',
-  `facility_deleted_at` TIMESTAMP COMMENT '삭제일시 SET WHEN DELETED',
-  `facility_capacity` SMALLINT UNSIGNED NOT NULL DEFAULT 1 COMMENT '수용인원',
+  `facility_code` TINYINT NOT NULL COMMENT '시설코드 (1~)',
+  `facility_name` VARCHAR(20) NOT NULL COMMENT '시설 이름 (백엔드 - Default: tb_fm_category.facility_type)',
+  `facility_sequence` TINYINT COMMENT '같은 시설 카테고리 등록 순번',
+  `facility_option_info` TEXT NOT NULL COMMENT '시설 세부 옵션 (백엔드 - Default: tb_fm_category.facility_options)',
+  `facility_location` TINYINT NOT NULL COMMENT '시설 위치 (몇 층에 있는지)',
+  `facility_created_at` TIMESTAMP NOT NULL COMMENT '등록일시',
+  `facility_updated_at` TIMESTAMP COMMENT '수정일시',
+  `facility_deleted_at` TIMESTAMP COMMENT '삭제일시',
+  `facility_capacity` SMALLINT UNSIGNED NOT NULL COMMENT '수용인원',
   `facility_open_time` TIME NOT NULL COMMENT '운영시작시간',
   `facility_close_time` TIME NOT NULL COMMENT '운영종료시간',
-  `facility_status` ENUM('AVAILABLE', 'UNAVAILABLE') NOT NULL DEFAULT 'AVAILABLE' COMMENT '시설 이용 가능 여부',
-  `facility_rsvn_required_yn` BOOLEAN NOT NULL DEFAULT 0  COMMENT '예약 필요 여부',
-  `max_rsvn_per_day` TINYINT UNSIGNED DEFAULT 1 COMMENT '인당 일일 최대 예약 가능 건수',
-  `facility_rsvn_unit_minutes` SMALLINT UNSIGNED DEFAULT 30 COMMENT '예약 최소 단위 시간',
-  `facility_max_duration_minutes` SMALLINT UNSIGNED DEFAULT 30 COMMENT '최대 사용 가능 시간',
+  `facility_status` ENUM('AVAILABLE', 'UNAVAILABLE', 'DELETED') NOT NULL COMMENT '시설 이용 가능 여부',
+  `facility_rsvn_required_yn` BOOLEAN NOT NULL COMMENT '예약 필요 여부',
+  `max_rsvn_per_day` TINYINT UNSIGNED COMMENT '인당 일일 최대 예약 가능 건수',
+  `facility_rsvn_unit_minutes` SMALLINT UNSIGNED COMMENT '예약 최소 단위 시간',
+  `facility_max_duration_minutes` SMALLINT UNSIGNED COMMENT '최대 사용 가능 시간',
   PRIMARY KEY (`facility_no`)
 );
 
@@ -273,9 +273,9 @@ CREATE TABLE `tb_fm_rsvn` (
   `rsvn_start_time` TIME NOT NULL COMMENT '시작시간',
   `rsvn_end_time` TIME NOT NULL COMMENT '종료시간',
   `rsvn_status` ENUM('APPROVED', 'CANCELED') NOT NULL COMMENT '예약상태',
-  `rsvn_created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '신청일시',
-  `rsvn_updated_at` TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '변경일시',
-  `rsvn_canceled_at` TIMESTAMP COMMENT '트리거 : 취소일시 SET WHEN rsvn_status = ''CANCELED''',
+  `rsvn_created_at` TIMESTAMP NOT NULL COMMENT '신청일시',
+  `rsvn_updated_at` TIMESTAMP COMMENT '변경일시',
+  `rsvn_canceled_at` TIMESTAMP COMMENT '취소일시',
   PRIMARY KEY (`rsvn_no`)
 );
 
