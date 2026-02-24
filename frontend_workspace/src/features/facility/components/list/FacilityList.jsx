@@ -4,7 +4,7 @@ import React from 'react';
 import { Container, Row, Col } from 'reactstrap';
 import FacilityCard from './FacilityCard';
 
-class FacilityListPage extends React.Component {
+class FacilityList extends React.Component {
   constructor(props) {
     super(props);
     this.state = {

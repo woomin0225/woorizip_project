@@ -2,7 +2,7 @@
 
 import { Container, Row, Col } from 'reactstrap';
 import { useFacilityList } from '../../hooks/useFacilityList';
-import FacilityList from './FacilityList';
+import FacilityList from '../../../components/list/FacilityList';
 import styles from './UserFacilityList.module.css';
 
 export default function UserFacilityList() {
