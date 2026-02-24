@@ -1,6 +1,6 @@
 import ResultItem from "./ResultItem";
 
-export default function ResultList({slice=[], criterion, onLoadMore, onChangeCriterion, hasNext, loading,}){
+export default function ResultList({ slice=[], criterion, onLoadMore, onChangeCriterion, hasNext, loading, wishMap, onToggleWish }){
     function searchLatest() {
         onChangeCriterion("LATEST");
     }
@@ -11,10 +11,15 @@ export default function ResultList({slice=[], criterion, onLoadMore, onChangeCri
         <div>
             <button onClick={searchLatest} value="LATEST" disabled={criterion === "LATEST"}>최신업데이트순</button>
             <button onClick={searchLargest} value="AREA"disabled={criterion === "AREA"}>면적큰순</button>
-            <br/>
-            {slice.map((room)=>{
-                <ResultItem key={room.roomNo} roomSearchResponse={room}/>
-            })}
+            <hr/>
+            {slice.map((room) => (
+                <ResultItem
+                key={room.roomNo}
+                roomSearchResponse={room}
+                wished={!!wishMap?.[room.roomNo]}
+                onToggleWish={onToggleWish}
+                />
+            ))}
             <div style={{marginTop:12}}>
                 <button onClick={onLoadMore} disabled={!hasNext || loading}>
                     {loading ? "불러오는 중..." : (hasNext ? "더보기" : "마지막입니다")}

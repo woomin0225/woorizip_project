@@ -6,6 +6,7 @@ import styles from './Search.module.css';
 
 import { searchRooms } from '../api/roomApi';
 import { getHouseMarkers } from '../api/houseApi';
+import { getRoomsInHouseMarker } from "../api/houseApi";
 
 const PAGE_SIZE = 10;
 
@@ -57,6 +58,11 @@ export default function Search() {
   const [loading, setLoading] = useState(false);
   // 로딩 - 지도 건물 마커 처리중 여부
   const [loadingMarkers, setLoadingMarkers] = useState();
+  const [wishMap, setWishMap] = useState({}); 
+  // { [roomNo]: true/false }  // 나중에 API 붙히기
+
+  const [markerPopup, setMarkerPopup] = useState(null);
+  // null or { houseNo, lat, lng, rooms: RoomSearchResponse[] }
 
   // =============================================================================================
 
@@ -109,6 +115,7 @@ export default function Search() {
     async function runSearch(firstCond, firstBbox) {
     setLoadingRooms(true);
     setLoadingMarkers(true);
+    setMarkerPopup(null);
 
     try {
       const merged = { ...firstCond, ...firstBbox };
@@ -158,6 +165,7 @@ export default function Search() {
 
   // 더보기(목록만 누적)
   const clickMore = async () => {
+    setMarkerPopup(null);
     if (!appliedCond) return;
     if (loadingRooms || !hasNext) return;
 
@@ -177,6 +185,31 @@ export default function Search() {
     }
   };
 
+  // 찜하기
+  function toggleWish(roomNo, nextWished) {
+    setWishMap((prev) => ({ ...prev, [roomNo]: nextWished }));
+    // 찜 API 붙히기
+  };
+
+  // 마커 클릭시 방 목록 출력
+  async function handleMarkerClick(house) {
+    // house: { houseNo, houseLat, houseLng }
+    // 기존 팝업 닫고 새로 열기
+    setMarkerPopup(null);
+
+    const roomsInHouse = await getRoomsInHouseMarker(house.houseNo);
+    setMarkerPopup({
+      houseNo: house.houseNo,
+      lat: house.houseLat,
+      lng: house.houseLng,
+      rooms: roomsInHouse || [],
+    });
+  };
+
+  function closeMarkerPopup() {
+    setMarkerPopup(null);
+  }
+
 
   return (
     <div>
@@ -188,17 +221,22 @@ export default function Search() {
       />
       <ResultList
         slice={rooms}
-        criterion={(appliedCond?.criterion ?? cond.criterion)}
+        criterion={appliedCond?.criterion ?? cond.criterion}
         onChangeCriterion={changeCriterion}
-        onLoadMore={loadMore}
+        clickMore={clickMore}
         hasNext={hasNext}
         loading={loadingRooms}
+        wishMap={wishMap}
+        onToggleWish={toggleWish}
       />
       {/* 리스트에 검색결과 더보기할 때마다 누적시키기 */}
       <MapPanel
-        markers={markers}
-        loadingMarkers={loadingMarkers}
-        onChangeBbox={handleChangeBbox}
+          markers={markers}
+          loadingMarkers={loadingMarkers}
+          onChangeBbox={handleChangeBbox}
+          onMarkerClick={handleMarkerClick}
+          popup={markerPopup}
+          onClosePopup={closeMarkerPopup}
       />
     </div>
   );

@@ -1,13 +1,15 @@
 import { useEffect, useState } from "react";
 import styles from "./ResultItem.module.css";
 
-export default function ResultItem({ roomSearchResponse }) {
+export default function ResultItem({ roomSearchResponse, wished = false, onToggleWish }) {
   const images = (roomSearchResponse.imageNames || []).filter(Boolean);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isWished, setIsWished] = useState(!!wished);
 
   useEffect(() => {
     setCurrentIndex(0);
-  }, [roomSearchResponse.roomNo]);
+    setIsWished(!!wished);
+  }, [roomSearchResponse.roomNo, wished]);
 
   const total = images.length;
 
@@ -18,6 +20,14 @@ export default function ResultItem({ roomSearchResponse }) {
     setCurrentIndex((i) => Math.min(total - 1, i + 1));
   }
 
+  function toggleWish(e) {
+    e.stopPropagation();
+    e.preventDefault();
+    const next = !isWished;
+    setIsWished(next);
+    if (onToggleWish) onToggleWish(roomSearchResponse.roomNo, next);
+  }
+
   function imgUrl(imageName) {
     if (!imageName) return "#";
     if (imageName.startsWith("http")) return imageName;
@@ -25,7 +35,11 @@ export default function ResultItem({ roomSearchResponse }) {
   }
 
   return (
-    <div>
+    <div className={styles.card}>
+      {/* 오른쪽 위 찜 버튼 */}
+      <button className={styles.wishBtn} onClick={toggleWish} aria-label="찜">
+        {isWished ? "★" : "☆"}
+      </button>
       <table>
         <tbody>
           <tr>
@@ -52,7 +66,12 @@ export default function ResultItem({ roomSearchResponse }) {
                 <tbody>
                   <tr>
                     <td>
-                      {roomSearchResponse.roomName} | {roomSearchResponse.roomUpdatedAt ?? ""}
+                      {/* 상세 이동 뼈대 */}
+                      <Link to={`/rooms/${roomSearchResponse.roomNo}`}>
+                        {roomSearchResponse.roomName}
+                      </Link>
+                      {" | "}
+                      {roomSearchResponse.roomUpdatedAt ?? ""}
                     </td>
                   </tr>
                   <tr>
