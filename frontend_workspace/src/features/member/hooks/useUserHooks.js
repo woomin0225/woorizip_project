@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 
-// --- 1. 회원가입 Hook ---
+// 회원가입
 export function useSignup() {
   const [form, setForm] = useState({
     emailId: '',
@@ -46,7 +46,7 @@ export function useSignup() {
   return { form, loading, error, handleChange, handleSubmit };
 }
 
-// --- 2. 아이디 찾기 Hook ---
+// 아이디 찾기
 export function useFindId() {
   const [form, setForm] = useState({ name: '', phone: '' });
   const [foundId, setFoundId] = useState('');
@@ -77,7 +77,7 @@ export function useFindId() {
   return { form, foundId, loading, handleChange, handleFindId };
 }
 
-// --- 3. 내 정보 조회 및 수정 Hook ---
+// 내 정보 조회 및 수정
 export function useUserInfo(userNo) {
   const [form, setForm] = useState({
     emailId: '',
@@ -126,43 +126,37 @@ export function useUserInfo(userNo) {
   return { form, loading, handleChange, handleUpdate };
 }
 
-// --- 4. 계약 목록 Hook (DTO 부족으로 빈 상태 유지) ---
+// 계약 목록
 export function useContractList() {
   const [contracts, setContracts] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    // TODO: 연관 DTO 및 API 구성 후 추가 필요
-  }, []);
+  useEffect(() => {}, []);
 
   return { contracts, loading };
 }
 
-// --- 5. 찜 목록 Hook (DTO 부족으로 빈 상태 유지) ---
+// 찜 목록
 export function useWishList() {
   const [wishList, setWishList] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    // TODO: 연관 DTO 및 API 구성 후 추가 필요
-  }, []);
+  useEffect(() => {}, []);
 
   return { wishList, loading };
 }
 
-// --- 6. 투어 목록 Hook (DTO 부족으로 빈 상태 유지) ---
+// 투어 목록
 export function useTourList() {
   const [tours, setTours] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    // TODO: 연관 DTO 및 API 구성 후 추가 필요
-  }, []);
+  useEffect(() => {}, []);
 
   return { tours, loading };
 }
 
-// --- 7. 로그인 Hook ---
+// 로그인
 export function useLogin() {
   const [form, setForm] = useState({ emailId: '', password: '' });
   const [loading, setLoading] = useState(false);
@@ -208,7 +202,7 @@ export function useLogin() {
   return { form, loading, error, handleChange, handleLogin };
 }
 
-// --- 8. 관리자용 회원 목록 및 검색 Hook ---
+// 관리자용 회원 목록 및 검색
 export function useAdminUserList() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -294,7 +288,7 @@ export function useAdminUserList() {
   };
 }
 
-// --- 9. 비밀번호 찾기 Hook ---
+// 비밀번호 찾기
 export function useFindPassword() {
   const [method, setMethod] = useState('email'); // 'email' or 'phone'
   const [form, setForm] = useState({ emailId: '', phone: '' });
