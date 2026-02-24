@@ -10,19 +10,22 @@ import java.util.Collection;
 @Getter
 public class CustomUserPrincipal implements UserDetails {
 
-	private final String userNo;
+    private final String userNo;
     private final String emailId;
+    private final String name;
     private final String password;
     private final boolean enabled;
     private final Collection<? extends GrantedAuthority> authorities;
 
     public CustomUserPrincipal(String userNo,
-    						   String emailId,
+                               String emailId,
+                               String name,
                                String password,
                                boolean enabled,
                                Collection<? extends GrantedAuthority> authorities) {
-    	this.userNo = userNo;
+        this.userNo = userNo;
         this.emailId = emailId;
+        this.name = name;
         this.password = password;
         this.enabled = enabled;
         this.authorities = authorities;

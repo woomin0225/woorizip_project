@@ -7,6 +7,7 @@ import Login from './features/member/pages/Login';
 import MemberList from './features/member/pages/MemberList';
 import FindPassword from './features/member/pages/FindPassword';
 import Main from './features/member/pages/Main';
+import OAuth2RedirectHandler from './features/member/pages/OAuth2RedirectHandler';
 import './assets/css/argon-design-system-react.min.css';
 
 function App() {
@@ -19,6 +20,7 @@ function App() {
         <Route path="/find-id" element={<FindId />} />
         <Route path="/find-password" element={<FindPassword />} />
         <Route path="/admin/users" element={<MemberList />} />
+        <Route path="/oauth2/redirect" element={<OAuth2RedirectHandler />} />
         <Route path="/" element={<Main />} />
 
         {/* 기본 경로 설정 */}

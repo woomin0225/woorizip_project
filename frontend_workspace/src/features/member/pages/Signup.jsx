@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSignup } from '../hooks/useUserHooks';
 import {
@@ -13,18 +13,43 @@ import {
   Container,
   Row,
   Col,
+  FormFeedback,
 } from 'reactstrap';
 import DemoNavbar from '../components/Navbars/DemoNavbar.js';
-import SimpleFooter from '../components/Footers/SimpleFooter.js';
 
 export default function Signup() {
   const navigate = useNavigate();
   const mainRef = useRef(null);
-  const { form, loading, error, handleChange, handleSubmit } = useSignup();
+  const [validated, setValidated] = useState(false);
+
+  const {
+    form,
+    loading,
+    error,
+    isIdChecked,
+    handleChange,
+    handleCheckId,
+    handleSubmit,
+  } = useSignup();
 
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
+
+  const onSignupSubmit = (e) => {
+    e.preventDefault();
+    if (
+      !form.emailId ||
+      !form.password ||
+      !form.name ||
+      !form.phone ||
+      !form.birthDate
+    ) {
+      setValidated(true);
+      return;
+    }
+    handleSubmit(e, navigate);
+  };
 
   return (
     <>
@@ -49,10 +74,7 @@ export default function Signup() {
                     <div className="text-center text-muted mb-4">
                       <small>회원가입</small>
                     </div>
-                    <Form
-                      role="form"
-                      onSubmit={(e) => handleSubmit(e, navigate)}
-                    >
+                    <Form role="form" noValidate onSubmit={onSignupSubmit}>
                       <Row>
                         <Col md="6">
                           <FormGroup>
@@ -86,8 +108,19 @@ export default function Signup() {
                                 type="email"
                                 value={form.emailId}
                                 onChange={handleChange}
-                                required
+                                invalid={validated && !form.emailId}
                               />
+                              <Button
+                                color={isIdChecked ? 'success' : 'info'}
+                                type="button"
+                                onClick={handleCheckId}
+                                className="m-0 px-3"
+                              >
+                                {isIdChecked ? '확인완료' : '중복확인'}
+                              </Button>
+                              <FormFeedback>
+                                이메일을 입력해 주세요.
+                              </FormFeedback>
                             </InputGroup>
                           </FormGroup>
                         </Col>
@@ -105,9 +138,16 @@ export default function Signup() {
                                 type="password"
                                 value={form.password}
                                 onChange={handleChange}
-                                required
+                                invalid={validated && !form.password}
                               />
+                              <FormFeedback>
+                                비밀번호를 입력해 주세요.
+                              </FormFeedback>
                             </InputGroup>
+                            <small className="text-muted mt-2 d-block">
+                              ※ 8~16자 영문, 숫자, 특수문자를 모두 포함해야
+                              합니다.
+                            </small>
                           </FormGroup>
                         </Col>
                         <Col md="6">
@@ -122,8 +162,11 @@ export default function Signup() {
                                 type="password"
                                 value={form.passwordConfirm}
                                 onChange={handleChange}
-                                required
+                                invalid={validated && !form.passwordConfirm}
                               />
+                              <FormFeedback>
+                                비밀번호 확인을 입력해 주세요.
+                              </FormFeedback>
                             </InputGroup>
                           </FormGroup>
                         </Col>
@@ -141,8 +184,9 @@ export default function Signup() {
                                 type="text"
                                 value={form.name}
                                 onChange={handleChange}
-                                required
+                                invalid={validated && !form.name}
                               />
+                              <FormFeedback>이름을 입력해 주세요.</FormFeedback>
                             </InputGroup>
                           </FormGroup>
                         </Col>
@@ -158,8 +202,11 @@ export default function Signup() {
                                 type="text"
                                 value={form.phone}
                                 onChange={handleChange}
-                                required
+                                invalid={validated && !form.phone}
                               />
+                              <FormFeedback>
+                                전화번호를 입력해 주세요.
+                              </FormFeedback>
                             </InputGroup>
                           </FormGroup>
                         </Col>
@@ -217,7 +264,11 @@ export default function Signup() {
                               className="form-control-alternative"
                               value={form.birthDate}
                               onChange={handleChange}
+                              invalid={validated && !form.birthDate}
                             />
+                            <FormFeedback>
+                              생년월일을 선택해 주세요.
+                            </FormFeedback>
                           </FormGroup>
                         </Col>
                       </Row>
@@ -244,7 +295,6 @@ export default function Signup() {
           </Container>
         </section>
       </main>
-      <SimpleFooter />
     </>
   );
 }

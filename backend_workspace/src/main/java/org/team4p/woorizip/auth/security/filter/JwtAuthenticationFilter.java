@@ -93,9 +93,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             role = "ROLE_" + role;
         }
         String userNo = jwt.getUserNo(token);
+        String name = jwt.getName(token);
         CustomUserPrincipal principal = new CustomUserPrincipal(
                 userNo,
                 userId,
+                name,
                 "",        // password (이미 인증되었으므로 빈 값)
                 true,
                 List.of(new SimpleGrantedAuthority(role))

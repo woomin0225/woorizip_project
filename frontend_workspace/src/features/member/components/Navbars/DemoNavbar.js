@@ -16,10 +16,37 @@ import {
 
 export default function DemoNavbar() {
   const [collapseClasses, setCollapseClasses] = useState('');
+  const [userName, setUserName] = useState('');
   const navigate = useNavigate();
 
-  const isLoggedIn = !!localStorage.getItem('accessToken');
-  const userName = '사용자';
+  const token = localStorage.getItem('accessToken');
+  const isLoggedIn = !!token;
+
+  useEffect(() => {
+    if (token) {
+      try {
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(
+          atob(base64)
+            .split('')
+            .map(function (c) {
+              return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+            })
+            .join('')
+        );
+        const decodedToken = JSON.parse(jsonPayload);
+
+        if (decodedToken.name) {
+          setUserName(decodedToken.name);
+        } else {
+          setUserName('고객');
+        }
+      } catch (e) {
+        console.error('토큰 파싱 에러:', e);
+      }
+    }
+  }, [token]);
 
   useEffect(() => {
     let headroom = new Headroom(document.getElementById('navbar-main'));
@@ -30,6 +57,7 @@ export default function DemoNavbar() {
     localStorage.removeItem('accessToken');
     alert('로그아웃 되었습니다.');
     navigate('/');
+    window.location.reload();
   };
 
   return (
@@ -78,7 +106,10 @@ export default function DemoNavbar() {
               </Row>
             </div>
 
-            <Nav className="navbar-nav-hover align-items-lg-center" navbar>
+            <Nav
+              className="navbar-nav-hover align-items-lg-center mx-auto"
+              navbar
+            >
               <NavItem>
                 <NavLink to="/about" tag={Link}>
                   웹사이트 소개
@@ -103,31 +134,40 @@ export default function DemoNavbar() {
 
             <Nav className="align-items-lg-center ml-lg-auto" navbar>
               {isLoggedIn ? (
-                <NavItem className="d-none d-lg-block ml-lg-4">
-                  <span className="text-white mr-3 font-weight-bold">
-                    {userName} 님 환영합니다!
+                <NavItem className="d-none d-lg-flex flex-column align-items-end ml-lg-4">
+                  <span
+                    className="text-white mb-1 font-weight-bold"
+                    style={{ fontSize: '0.85rem' }}
+                  >
+                    {userName}님 환영합니다!
                   </span>
-                  <Button
-                    className="btn-neutral btn-icon"
-                    color="default"
-                    to="/user-info"
-                    tag={Link}
-                  >
-                    <span className="nav-link-inner--text">마이페이지</span>
-                  </Button>
-                  <Button
-                    className="btn-warning btn-icon ml-2"
-                    color="default"
-                    onClick={handleLogout}
-                  >
-                    <span className="nav-link-inner--text">로그아웃</span>
-                  </Button>
+                  <div>
+                    <Button
+                      className="btn-neutral btn-icon"
+                      color="default"
+                      size="sm"
+                      to="/user-info"
+                      tag={Link}
+                    >
+                      <span className="nav-link-inner--text">마이페이지</span>
+                    </Button>
+                    <Button
+                      className="btn-warning btn-icon ml-2"
+                      color="default"
+                      size="sm"
+                      onClick={handleLogout}
+                    >
+                      <span className="nav-link-inner--text">로그아웃</span>
+                    </Button>
+                  </div>
                 </NavItem>
               ) : (
+                // 로그아웃
                 <NavItem className="d-none d-lg-block ml-lg-4">
                   <Button
                     className="btn-neutral btn-icon mr-2"
                     color="default"
+                    size="sm"
                     to="/login"
                     tag={Link}
                   >
@@ -136,6 +176,7 @@ export default function DemoNavbar() {
                   <Button
                     className="btn-info btn-icon"
                     color="default"
+                    size="sm"
                     to="/signup"
                     tag={Link}
                   >

@@ -9,73 +9,173 @@ export function useSignup() {
     name: '',
     phone: '',
     gender: 'M',
-    birthDate: '', // yyyy-MM-dd
-    type: 'USER', // 'USER' or 'LESSOR'
+    birthDate: '',
+    type: 'USER',
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [isIdChecked, setIsIdChecked] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
+    if (name === 'emailId') setIsIdChecked(false);
+  };
+
+  const handleCheckId = async () => {
+    if (!form.emailId) return alert('이메일 아이디를 입력해주세요.');
+    try {
+      const res = await fetch(
+        `http://localhost:8080/api/user/check-id?email_id=${form.emailId}`,
+        { method: 'POST' }
+      );
+      const data = await res.json();
+      if (
+        res.ok &&
+        (data.body === 'ok' ||
+          data.data === 'ok' ||
+          data.message?.includes('ok'))
+      ) {
+        alert('사용 가능한 아이디입니다.');
+        setIsIdChecked(true);
+      } else {
+        alert('이미 사용 중인 아이디입니다. 다른 아이디를 입력해주세요.');
+        setIsIdChecked(false);
+      }
+    } catch (err) {
+      alert('중복 확인 중 서버 오류가 발생했습니다.');
+    }
   };
 
   const handleSubmit = async (e, navigate) => {
     e.preventDefault();
-    if (form.password !== form.passwordConfirm) {
-      setError('비밀번호가 일치하지 않습니다.');
-      return;
+    if (!isIdChecked) return alert('아이디 중복 확인을 진행해주세요.');
+
+    const passwordRegex =
+      /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,16}$/;
+    if (!passwordRegex.test(form.password)) {
+      return alert(
+        '비밀번호 규칙을 준수해주세요.\n(8~16자 영문, 숫자, 특수문자를 모두 포함해야 합니다.)'
+      );
     }
+    if (form.password !== form.passwordConfirm)
+      return setError('비밀번호가 일치하지 않습니다.');
 
     setLoading(true);
     setError('');
 
+    const payload = {
+      emailId: form.emailId,
+      password: form.password,
+      name: form.name,
+      phone: form.phone,
+      gender: form.gender,
+      birthDate: form.birthDate,
+      type: form.type,
+    };
+
     try {
-      // TODO: API 파일 완성 시 fetch 연동 (예: const res = await signupApi(form);)
-      // fetch('/api/users/signup', { method: 'POST', body: JSON.stringify(form) })
-      console.log('가입 폼 데이터:', form);
-      alert('회원가입 요청이 처리되었습니다. (API 연동 대기)');
-      navigate('/login');
+      const res = await fetch('http://localhost:8080/api/user/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+
+      // [수정됨] res.ok(200번대 응답)면 성공으로 간주하도록 수정
+      if (res.ok) {
+        alert('회원가입이 완료되었습니다!');
+        navigate('/login');
+      } else {
+        throw new Error(data.message || '회원가입에 실패했습니다.');
+      }
     } catch (err) {
-      setError(err.message || '회원가입 중 오류가 발생했습니다.');
+      setError(err.message || '서버와 통신할 수 없습니다.');
     } finally {
       setLoading(false);
     }
   };
 
-  return { form, loading, error, handleChange, handleSubmit };
+  return {
+    form,
+    loading,
+    error,
+    isIdChecked,
+    handleChange,
+    handleCheckId,
+    handleSubmit,
+  };
 }
 
 // 아이디 찾기
-export function useFindId() {
-  const [form, setForm] = useState({ name: '', phone: '' });
-  const [foundId, setFoundId] = useState('');
+export const useFindId = () => {
+  const [form, setForm] = useState({ name: '', phone: '', code: '' });
+  const [foundId, setFoundId] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [isCodeSent, setIsCodeSent] = useState(false);
+  const [isVerified, setIsVerified] = useState(false);
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handleSendCode = () => {
+    if (!form.name || !form.phone) {
+      alert('이름과 휴대폰 번호를 입력해주세요.');
+      return;
+    }
+    alert('인증번호 1234가 발송되었습니다.');
+    setIsCodeSent(true);
+  };
+
+  const handleVerifyCode = () => {
+    if (form.code === '1234') {
+      alert('인증되었습니다.');
+      setIsVerified(true);
+    } else {
+      alert('인증번호가 일치하지 않습니다.');
+    }
   };
 
   const handleFindId = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setFoundId('');
+    if (!isVerified) {
+      setError('휴대폰 인증을 완료해주세요.');
+      return;
+    }
 
+    setLoading(true);
+    setError(null);
     try {
-      // TODO: API 연동 시 백엔드에서 emailId를 찾아오도록 구성
-      console.log('아이디 찾기 데이터:', form);
-      // 임시 결과
-      setFoundId('test@example.com (API 미연동)');
+      const res = await axios.post('http://localhost:8080/api/user/find-id', {
+        name: form.name,
+        phone: form.phone,
+      });
+      setFoundId(res.data.data);
     } catch (err) {
-      alert('아이디를 찾을 수 없습니다.');
+      setError(
+        err.response?.data?.message || '아이디 찾기 중 오류가 발생했습니다.'
+      );
     } finally {
       setLoading(false);
     }
   };
 
-  return { form, foundId, loading, handleChange, handleFindId };
-}
+  return {
+    form,
+    foundId,
+    loading,
+    error,
+    isCodeSent,
+    isVerified,
+    handleChange,
+    handleSendCode,
+    handleVerifyCode,
+    handleFindId,
+  };
+};
 
 // 내 정보 조회 및 수정
 export function useUserInfo(userNo) {
@@ -173,27 +273,41 @@ export function useLogin() {
     setError('');
 
     try {
-      // API 통신 예시 (백엔드 EndpointPolicy 기준 /auth/login)
-      const res = await fetch('/auth/login', {
+      const res = await fetch('http://localhost:8080/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
       });
 
-      if (!res.ok) throw new Error('아이디 또는 비밀번호를 확인해주세요.');
+      if (!res.ok) {
+        throw new Error('이메일 아이디 또는 비밀번호가 일치하지 않습니다.');
+      }
 
       const data = await res.json();
 
-      // JWT 토큰 저장 (응답 구조에 따라 token 필드명은 변경 필요)
-      const token = data.token || data.accessToken;
-      if (token) {
-        localStorage.setItem('accessToken', token);
-      }
+      if (data.accessToken) {
+        localStorage.setItem('accessToken', data.accessToken);
+        if (data.refreshToken) {
+          localStorage.setItem('refreshToken', data.refreshToken);
+        }
 
-      alert('로그인되었습니다.');
-      navigate('/');
+        alert('로그인 성공!');
+        navigate('/');
+      } else {
+        throw new Error('토큰 발급에 실패했습니다.');
+      }
     } catch (err) {
-      setError(err.message);
+      const status = err.response?.status;
+      const errorCode = err.response?.data?.code || 'UNKNOWN';
+
+      if (status === 401) {
+        // 인증 실패 (아이디 또는 비번 틀림)
+        setError('이메일 아이디 또는 비밀번호가 일치하지 않습니다.');
+      } else {
+        // 그 외 400, 500 등 서버/네트워크 에러
+        setError(`${errorCode} 에러: 관리자에게 문의하세요.`);
+        console.error('System Error:', err.response?.data);
+      }
     } finally {
       setLoading(false);
     }

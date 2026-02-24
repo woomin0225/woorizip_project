@@ -22,21 +22,22 @@ public class JwtTokenProvider {
         this.key = Keys.hmacShaKeyFor(props.secret().getBytes(StandardCharsets.UTF_8));
     }
 
-    public String createAccessToken(String userNo, String emailId, String role) {
-        return createToken(userNo, emailId, role, JwtClaims.ACCESS, props.accessExp());
+    public String createAccessToken(String userNo, String emailId, String role, String name) {
+        return createToken(userNo, emailId, role, name, JwtClaims.ACCESS, props.accessExp());
     }
 
-    public String createRefreshToken(String userNo, String emailId, String role) {
-        return createToken(userNo, emailId, role, JwtClaims.REFRESH, props.refreshExp());
+    public String createRefreshToken(String userNo, String emailId, String role, String name) {
+        return createToken(userNo, emailId, role, name, JwtClaims.REFRESH, props.refreshExp());
     }
 
-    private String createToken(String userNo, String emailId, String role, String type, long expMs) {
+    private String createToken(String userNo, String emailId, String role, String name, String type, long expMs) {
         long now = System.currentTimeMillis();
         
         return Jwts.builder()
                 .subject(emailId)
-                .claim("userNo", userNo) // userNo 추가
+                .claim("userNo", userNo)
                 .claim(JwtClaims.ROLE, role)
+                .claim("name", name) // <-- 이름 정보 추가!
                 .claim(JwtClaims.TYPE, type)
                 .issuedAt(new Date(now))
                 .expiration(new Date(now + expMs))
@@ -83,5 +84,9 @@ public class JwtTokenProvider {
     
     public String getUserNo(String token) {
         return parse(token).getPayload().get("userNo", String.class);
+    }
+    
+    public String getName(String token) {
+        return parse(token).getPayload().get("name", String.class);
     }
 }
