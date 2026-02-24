@@ -3,9 +3,11 @@ export const ROUTES = {
     LOGIN: '/login',
     SIGNUP: '/signup',
   },
+
   MEMBER: {
     MYPAGE: '/mypage',
   },
+
   ADMIN: {
     MEMBERS: '/admin/members',
 
@@ -21,6 +23,7 @@ export const ROUTES = {
     RESERVATION_DETAIL: '/admin/reservation/detail/:reservationNo',
     RESERVATION_MODIFY: '/admin/reservation/edit/:reservationNo',
   },
+  
   LESSOR: {
     FACILITY: '/lessor/facilities/list/:houseNo',
     FACILITY_DETAIL: '/lessor/facilities/detail/:facilityNo',
@@ -30,6 +33,7 @@ export const ROUTES = {
     RESERVATION: '/lessor/reservation/list/:houseNo/:facilityNo',
     RESERVATION_DETAIL: '/lessor/reservation/detail/:reservationNo',
   },
+  
   USER: {
     FACILITY: '/user/facilities/list',
     FACILITY_DETAIL: '/user/facilities/detail/:facilityNo',
