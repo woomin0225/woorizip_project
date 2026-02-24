@@ -1,1 +1,4 @@
-/* placeholder */
+/* 슬라이드 앨범 css */
+.sliderContainer { width: 500px; overflow: hidden; }
+.slides { display: flex; transition: transform 0.5s ease; }
+.slides img { width: 500px; flex-shrink: 0; }
