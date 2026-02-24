@@ -38,6 +38,11 @@ export default function FindId() {
 
   const onFindSubmit = (e) => {
     e.preventDefault();
+
+    // 수동 확인 포인트:
+    // 1) 이름/휴대폰 입력 후 "인증요청" -> 인증번호 입력/확인으로 isVerified=true 전환
+    // 2) 인증 완료 전에는 제출 버튼이 비활성화되고, 완료 후 "아이디 찾기" 제출 가능
+    // 3) 제출 시 useFindId.handleFindId가 호출되어 성공 시 foundId 화면으로 전환
     if (!form.name || !form.phone || !isVerified) {
       setValidated(true);
       return;

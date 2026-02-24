@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import axios from 'axios';
 
 // 회원가입
 export function useSignup() {
@@ -153,6 +154,8 @@ export const useFindId = () => {
         name: form.name,
         phone: form.phone,
       });
+
+      // 백엔드 응답 스펙: { data: "찾은 이메일 아이디" }
       setFoundId(res.data.data);
     } catch (err) {
       setError(
