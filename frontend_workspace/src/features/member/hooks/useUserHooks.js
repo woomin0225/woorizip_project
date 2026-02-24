@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 
+import axios from 'axios';
+
 // 회원가입
 export function useSignup() {
   const [form, setForm] = useState({
@@ -281,6 +283,30 @@ export function useLogin() {
 
       if (!res.ok) {
         throw new Error('이메일 아이디 또는 비밀번호가 일치하지 않습니다.');
+        const raw = await res.text();
+        let errorBody = {};
+
+        if (raw) {
+          try {
+            errorBody = JSON.parse(raw);
+          } catch {
+            errorBody = { message: raw };
+          }
+        }
+
+        const message =
+          errorBody.message ||
+          errorBody.error ||
+          errorBody.data?.message ||
+          '로그인 요청 처리 중 오류가 발생했습니다.';
+        const code =
+          errorBody.code || errorBody.errorCode || errorBody.data?.code || null;
+
+        throw {
+          status: res.status,
+          message,
+          code,
+        };
       }
 
       const data = await res.json();
@@ -297,17 +323,36 @@ export function useLogin() {
         throw new Error('토큰 발급에 실패했습니다.');
       }
     } catch (err) {
-      const status = err.response?.status;
-      const errorCode = err.response?.data?.code || 'UNKNOWN';
+      const status = err.status;
+      const errorCode = err.code;
+      const errorMessage = err.message;
+      let userMessage =
+        '로그인 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
 
       if (status === 401) {
-        // 인증 실패 (아이디 또는 비번 틀림)
-        setError('이메일 아이디 또는 비밀번호가 일치하지 않습니다.');
+        userMessage =
+          errorMessage || '이메일 아이디 또는 비밀번호가 일치하지 않습니다.';
+      } else if (status === 403) {
+        userMessage =
+          errorMessage || '접근 권한이 없습니다. 관리자에게 문의해주세요.';
+      } else if (status >= 500) {
+        userMessage =
+          '서버 오류가 발생했습니다. 잠시 후 다시 시도하거나 관리자에게 문의해주세요.';
+      } else if (!status) {
+        userMessage =
+          '네트워크 연결을 확인해주세요. 서버와 통신할 수 없습니다.';
       } else {
-        // 그 외 400, 500 등 서버/네트워크 에러
-        setError(`${errorCode} 에러: 관리자에게 문의하세요.`);
-        console.error('System Error:', err.response?.data);
+        userMessage =
+          errorMessage ||
+          '요청을 처리하지 못했습니다. 입력값을 다시 확인해주세요.';
       }
+
+      setError(userMessage);
+      console.error('Login Error:', {
+        status,
+        code: errorCode,
+        message: errorMessage,
+      });
     } finally {
       setLoading(false);
     }

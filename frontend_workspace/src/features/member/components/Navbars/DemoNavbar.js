@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Headroom from 'headroom.js';
+import { ROUTES } from '../../../../shared/constants/routes';
 import {
   Button,
   UncontrolledCollapse,
@@ -18,6 +19,7 @@ export default function DemoNavbar() {
   const [collapseClasses, setCollapseClasses] = useState('');
   const [userName, setUserName] = useState('');
   const navigate = useNavigate();
+  const [myPageRoute, setMyPageRoute] = useState(ROUTES.MEMBER.MYPAGE);
 
   const token = localStorage.getItem('accessToken');
   const isLoggedIn = !!token;
@@ -36,6 +38,14 @@ export default function DemoNavbar() {
             .join('')
         );
         const decodedToken = JSON.parse(jsonPayload);
+
+        const isAdmin =
+          decodedToken.role === 'ADMIN' ||
+          decodedToken.role === 'ROLE_ADMIN' ||
+          decodedToken.auth === 'ADMIN' ||
+          decodedToken.auth === 'ROLE_ADMIN';
+
+        setMyPageRoute(isAdmin ? ROUTES.ADMIN.MEMBERS : ROUTES.MEMBER.MYPAGE);
 
         if (decodedToken.name) {
           setUserName(decodedToken.name);
@@ -146,7 +156,7 @@ export default function DemoNavbar() {
                       className="btn-neutral btn-icon"
                       color="default"
                       size="sm"
-                      to="/user-info"
+                      to={myPageRoute}
                       tag={Link}
                     >
                       <span className="nav-link-inner--text">마이페이지</span>
