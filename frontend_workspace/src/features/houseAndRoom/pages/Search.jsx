@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import SearchFilterPanel from './../components/SearchFilterPanel';
-import MapPanel from '../components/MapPanel';
-import ResultList from './../components/ResultList';
+import SearchFilterPanel from './../components/Search/SearchFilterPanel';
+import MapPanel from '../components/Search/MapPanel';
+import ResultList from './../components/Search/ResultList';
+import styles from './Search.module.css';
 
 import { searchRooms } from '../api/roomApi';
 import { getHouseMarkers } from '../api/houseApi';
