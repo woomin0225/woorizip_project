@@ -31,6 +31,8 @@ import org.team4p.woorizip.house.jpa.repository.HouseRepository;
 import org.team4p.woorizip.reservation.jpa.entity.ReservationEntity;
 import org.team4p.woorizip.reservation.jpa.repository.ReservationRepository;
 import org.team4p.woorizip.reservation.service.ReservationServiceImpl;
+import org.team4p.woorizip.user.jpa.entity.UserEntity;
+import org.team4p.woorizip.user.jpa.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -43,15 +45,16 @@ public class FacilityServiceImpl implements FacilityService {
 	private final HouseRepository houseRepository;
 	private final ReservationRepository reservationRepository;
 	private final ReservationServiceImpl reservationService;
+	private final UserRepository userRepository;
 
 	// 시설 목록 조회
 	@Override
 	@Transactional(readOnly = true)
 	public List<FacilityListResponseDTO> getFacilityList(String houseNo) {
-		List<FacilityEntity> entity = facilityRepository.findByHouseHouseNoAndFacilityDeletedAtIsNull(houseNo);
-		return entity.stream()
-				.map(FacilityListResponseDTO::from)
-				.toList();
+	        return facilityRepository.findByHouseHouseNoAndFacilityDeletedAtIsNull(houseNo) 
+	                .stream()
+	                .map(FacilityListResponseDTO::from)
+	                .collect(Collectors.toList());	    
 	}
 
 	// 시설 신규 등록
@@ -217,15 +220,20 @@ public class FacilityServiceImpl implements FacilityService {
 
 	@Override
 	@Transactional
-	public void modifyFacility(String facilityNo, FacilityModifyRequestDTO dto, String userNo) {
+	public void modifyFacility(String facilityNo, FacilityModifyRequestDTO dto, String currentUserNo) {
 		// 시설 번호 찾기
 		FacilityEntity entity = facilityRepository.findById(facilityNo)
 				.orElseThrow(() -> new NotFoundException("해당 시설 정보를 찾을 수 없습니다."));
 		
-		// 권한 확인하기
-	    if (!entity.getHouse().getUserNo().equals(userNo)) {
-	        throw new ForbiddenException("해당 시설의 소유자로 등록되어 있지 않습니다."); 
-	    }
+		UserEntity user = userRepository.findById(currentUserNo)
+				.orElseThrow(() -> new NotFoundException("사용자 정보를 찾을 수 없습니다."));
+		 
+		String userNo = entity.getHouse().getUserNo();
+		boolean isAdmin = user.getRole().equals("ADMIN");
+		
+		if (!isAdmin && !userNo.equals(currentUserNo)) {
+		    throw new ForbiddenException("해당 시설의 정보를 수정할 권한이 없습니다."); 
+		}
 	    
 	    // 임대인이 이전에 사용 불가 기간을 설정한 적이 있다면 해당 예약 내역 전부 삭제
 	    reservationRepository.deleteByFacility_FacilityNoAndUser_UserNo(facilityNo, userNo);

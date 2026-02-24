@@ -212,10 +212,15 @@ public class ReservationServiceImpl implements ReservationService {
 		
 		FacilityEntity facility = entity.getFacility();
 		
-		// 본인 확인
-	    if (!entity.getUser().getUserNo().equals(userNo)) {
-	        throw new ForbiddenException("예약 정보 수정 권한이 없습니다."); 
-	    }
+		// 권한 확인
+		UserEntity user = userRepository.findById(userNo)
+				.orElseThrow(() -> new NotFoundException("사용자 정보를 찾을 수 없습니다."));
+		
+		boolean isAdmin = user.getRole().equals("ADMIN");
+		
+		if (!isAdmin && !entity.getUser().getUserNo().equals(userNo)) {
+		    throw new ForbiddenException("예약 정보 수정 권한이 없습니다."); 
+		}
 	    
 	    // 과거의 예약을 수정하는 것은 아닌지 확인
 	    if (entity.getReservationDate().isBefore(LocalDate.now())) {
@@ -266,11 +271,13 @@ public class ReservationServiceImpl implements ReservationService {
 	    }
 	    
 	    // 일일 최대 예약 횟수 검증
-	    long reservationCount = reservationRepository.countByUser_UserNoAndFacility_FacilityNoAndReservationDateAndReservationNoNot(
-	    		userNo, facility.getFacilityNo(), dto.getReservationDate(), reservationNo);
-	    if (reservationCount >= facility.getMaxRsvnPerDay()) {
-	        throw new ForbiddenException("일일 예약 가능 횟수인 " + facility.getMaxRsvnPerDay() + "회를 초과하였습니다.");
-	    }
+	    if (!isAdmin) {
+	    	long reservationCount = reservationRepository.countByUser_UserNoAndFacility_FacilityNoAndReservationDateAndReservationNoNot(
+		    		userNo, facility.getFacilityNo(), dto.getReservationDate(), reservationNo);
+		    if (reservationCount >= facility.getMaxRsvnPerDay()) {
+		        throw new ForbiddenException("일일 예약 가능 횟수인 " + facility.getMaxRsvnPerDay() + "회를 초과하였습니다.");
+		    }
+		}
 	    
 	    // 중복 예약인지 확인
 	    boolean isOverlapped = reservationRepository
