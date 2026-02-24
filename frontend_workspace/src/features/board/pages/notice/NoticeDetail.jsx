@@ -29,7 +29,7 @@ export default function NoticeDetail() {
 
   return (
     <div className={styles.container}>
-      <h2 className={styles.title}>공지 상세</h2>
+      <h2 className={styles.title}>공지사항 게시글 상세</h2>
 
       <table className={styles.table}>
         <tbody>

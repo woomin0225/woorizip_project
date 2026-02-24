@@ -25,7 +25,7 @@ export function useNoticeWrite({ navigate }) {
     }
 
     if (!isAdmin) {
-      alert('관리자만 공지글 등록이 가능합니다.');
+      alert('관리자만 공지사항 게시글 등록이 가능합니다.');
       navigate('/notices', { replace: true });
     }
   }, [isAuthed, isAdmin, navigate]);
@@ -70,11 +70,11 @@ export function useNoticeWrite({ navigate }) {
 
       const res = await createNotice(data);
 
-      alert(res?.message || '공지글 등록 성공');
+      alert(res?.message || '공지사항 게시글 등록 성공');
       navigate('/notices', { replace: true });
     } catch (error) {
       console.error(error);
-      alert('공지글 등록에 실패했습니다.');
+      alert('공지사항 게시글 등록에 실패했습니다.');
     } finally {
       setSubmitting(false);
     }

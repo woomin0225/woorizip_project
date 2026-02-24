@@ -10,7 +10,7 @@ export default function NoticeList() {
 
   return (
     <PostList
-      title="공지 목록"
+      title="공지사항 게시글 목록"
       isAdmin={hook.isAdmin}
       content={hook.content}
       pageResponse={hook.pageResponse}

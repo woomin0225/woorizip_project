@@ -24,7 +24,7 @@ export function useNoticeUpdate({ postNo, nav }) {
   const load = async () => {
     if (!canEdit) {
       setLoading(false);
-      setErrMsg('관리자만 수정 가능합니다.');
+      setErrMsg('관리자만 공지사항 게시글 수정이 가능합니다.');
       return;
     }
 
@@ -96,11 +96,11 @@ export function useNoticeUpdate({ postNo, nav }) {
     try {
       setSubmitting(true);
       await updateNotice(postNo, data);
-      alert('수정 성공');
+      alert('공지사항 게시글 수정 성공');
       nav(`/notices/${postNo}`);
     } catch (e2) {
       console.error(e2);
-      alert('수정 실패');
+      alert('공지사항 게시글 수정 실패');
     } finally {
       setSubmitting(false);
     }

@@ -21,7 +21,7 @@ export function useNoticeDetail({ postNo, nav }) {
       setNotice(dto || null);
     } catch (e) {
       console.error(e);
-      setError('공지 상세를 불러오지 못했습니다.');
+      setError('공지사항 게시글 상세보기를 불러오지 못했습니다.');
       setNotice(null);
     } finally {
       setLoading(false);

@@ -80,7 +80,7 @@ export function useNoticeList() {
       setPageResponse(body ? { ...body, page: query.page } : null);
     } catch (e) {
       console.error(e);
-      setErr('공지 목록/검색을 불러오지 못했습니다.');
+      setErr('공지사항 게시글 목록을 불러오지 못했습니다.');
       setPageResponse(null);
     } finally {
       setLoading(false);
