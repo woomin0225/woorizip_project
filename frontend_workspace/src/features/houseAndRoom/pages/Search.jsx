@@ -195,7 +195,7 @@ export default function Search() {
 
     // getRoomsInHouseMarker가 Slice를 주든 List를 주든 대응
     const slice = await getRoomsInHouseMarker(house.houseNo, base, 0, 10);
-    const rooms = slice.content;
+    const list = slice?.content??[];
 
     setMarkerPopup({
       houseNo: house.houseNo,

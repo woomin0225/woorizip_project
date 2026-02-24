@@ -33,7 +33,7 @@ export default function ResultItem({ roomSearchResponse, wished = false, onToggl
   function imgUrl(imageName) {
     if (!imageName) return "#";
     if (imageName.startsWith("http")) return imageName;
-    return `###이미지파일경로매핑###${imageName}`;
+    return `/upload_files/room_image/${imageName}`;
   }
 
   return (

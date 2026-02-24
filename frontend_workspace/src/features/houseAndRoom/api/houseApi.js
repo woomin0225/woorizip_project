@@ -25,7 +25,7 @@ export async function getRoomByHouseNo(houseNo) {
 
 // 건물 상세 조회 GET
 export async function getHouse(houseNo) {
-  const { data } = await apiJson().get(`api/houses/${houseNo}`);
+  const { data } = await apiJson().get(`/api/houses/${houseNo}`);
   return unwrap(data); // ApiResponse<HouseDto>
 }
 
@@ -78,7 +78,7 @@ export async function getHouseImages(houseNo){
 }
 
 // 검색-건물마커 클릭시 방 목록 조회 GET 
-export async function getRoomsInHouseMarker(houseNo, cond={}, pag=0, size=10){
-    const {data} = await apiJson().get(`/api/houses/${houseNo}/search`, {params: {...cond, page, size}});
+export async function getRoomsInHouseMarker(houseNo, cond={}, page=0, size=10){
+    const {data} = await apiJson().get(`/api/houses/${houseNo}/search`, {params: {...cond, page, size},});
     return unwrap(data);    // Slice<RoomSearchResponse>
 }

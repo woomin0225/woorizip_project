@@ -43,7 +43,7 @@ export async function getRoom(roomNo){
 
 // 방 상세 이미지 조회 GET
 export async function getRoomImages(roomNo){
-    const {data} = await apiJson().get(`/api/rooms/${roomNo}`);
+    const {data} = await apiJson().get(`/api/rooms/${roomNo}/images`);
     return unwrap(data);    // List<RoomImageDto>
 }
 
