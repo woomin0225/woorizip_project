@@ -84,12 +84,12 @@ export const router = createBrowserRouter([
           { path: '/lessor/reservation/list/:houseNo/:facilityNo', element: <LessorReservationList /> },
           { path: '/lessor/reservation/detail/:reservationNo', element: <LessorReservationDetail /> },
           
-          { path: '/user/facilities/list/:houseNo', element: <UserFaciliityList /> },
+          { path: '/user/facilities/list', element: <UserFaciliityList /> },
           { path: '/user/facilities/detail/:facilityNo', element: <UserFacilityDetail /> },
           
           { path: '/user/reservation/new/:facilityNo', element: <UserReservationCreate /> },
           { path: '/user/reservation/detail/:reservationNo', element: <UserReservationDetail /> },
-          { path: '/user/reservation/list/:houseNo', element: <UserReservationList /> },
+          { path: '/user/reservation/list', element: <UserReservationList /> },
           { path: '/user/reservation/edit/:reservationNo', element: <UserReservationModify /> }
         ],
       },
