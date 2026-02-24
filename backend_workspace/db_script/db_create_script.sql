@@ -66,11 +66,13 @@ CREATE TABLE `tb_contracts` (
   `contract_no` CHAR(36) NOT NULL COMMENT '계약번호',
   `room_no` CHAR(36) NOT NULL COMMENT '방번호',
   `user_no` CHAR(36) NOT NULL COMMENT '회원번호',
+  `parent_contract_no` CHAR(36) NULL COMMENT '수정 전 원본 계약번호',
   `move_in_date` DATE COMMENT '입주희망일',
   `term_months` MEDIUMINT COMMENT '계약기간(개월수)',
-  `status` ENUM('APPLIED', 'APPROVED', 'PAID', 'ACTIVE', 'ENDED') COMMENT '계약상태(APPLIED, APPROVED, PAID, ACTIVE, ENDED)',
+  `status` ENUM('APPLIED', 'APPROVED', 'PAID', 'ACTIVE', 'ENDED', 'REJECTED') NOT NULL DEFAULT 'APPLIED' COMMENT '계약상태(APPLIED, APPROVED, PAID, ACTIVE, ENDED, REJECTED)',
   `contract_url` TEXT COMMENT '계약서URL',
   `payment_date` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '결제일시',
+  `rejection_reason` TEXT COMMENT '거절사유',
   PRIMARY KEY (`contract_no`)
 );
 
@@ -80,10 +82,10 @@ CREATE TABLE `tb_tours` (
   `user_no` CHAR(36) NOT NULL COMMENT '회원번호',
   `visit_date` DATE NOT NULL COMMENT '희망방문일',
   `visit_time` TIME NOT NULL COMMENT '희망방문시간',
-  `status` ENUM('PENDING', 'APPROVED', 'REJECTED') COMMENT '투어신청상태',
+  `status` ENUM('PENDING', 'APPROVED', 'REJECTED') DEFAULT 'PENDING' COMMENT '투어신청상태',
   `message` TEXT COMMENT '신청메시지',
   `canceled_reason` TEXT COMMENT '투어취소사유',
-  `canceled_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '투어 취소 시간',
+  `canceled_at` TIMESTAMP DEFAULT NULL COMMENT '투어 취소 시간',
   PRIMARY KEY (`tour_no`)
 );
 
@@ -100,7 +102,7 @@ CREATE TABLE `tb_reviews` (
 CREATE TABLE `tb_wishlists` (
   `wish_no` CHAR(36) NOT NULL COMMENT '찜번호',
   `user_no` CHAR(36) NOT NULL COMMENT '회원번호',
-  `house_no` CHAR(36) NOT NULL COMMENT '건물번호',
+  `house_no` CHAR(36) NULL COMMENT '건물번호',
   `room_no` CHAR(36) NOT NULL COMMENT '방번호',
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '등록일시',
   PRIMARY KEY (`wish_no`)
@@ -168,7 +170,7 @@ CREATE TABLE `tb_houses` (
   `house_address_detail` VARCHAR(40) COMMENT '상세주소',
   `house_completion_year` YEAR NOT NULL COMMENT '준공년도',
   `house_floors` TINYINT NOT NULL COMMENT '층수',
-  `house_households` SMALLINT NOT NULL COMMENT '총세대수',
+  `house_house_holds` SMALLINT NOT NULL COMMENT '총세대수',
   `house_elevator_yn` BOOLEAN NOT NULL COMMENT '엘리베이터유무',
   `house_pet_yn` BOOLEAN NOT NULL COMMENT '애완동물가능여부',
   `house_female_limit` BOOLEAN NOT NULL COMMENT '여성전용',
@@ -200,7 +202,7 @@ CREATE TABLE `tb_rooms` (
   `room_updated_at` TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '방수정날짜',
   `room_deposit` INT NOT NULL COMMENT '보증금',
   `room_monthly` INT COMMENT '세액',
-  `room_method` ENUM('월세', '전세') NOT NULL COMMENT '월전세구분(월세, 전세)',
+  `room_method` ENUM('M', 'L') NOT NULL COMMENT '월전세구분(월세M, 전세L)',
   `room_area` DECIMAL(5, 2) NOT NULL COMMENT '면적',
   `room_facing` ENUM('북향', '동향', '남향', '서향', '북동향', '남동향', '남서향', '북서향') NOT NULL COMMENT '방 방향',
   `room_available_date` DATE NOT NULL COMMENT '입주가능일',

@@ -12,8 +12,8 @@ public final class EndpointPolicy {
             "/api/boards/**",
             
             // PUBLIC_GET: house, room
-            "/houses/**",
-            "/rooms/**",
+            "/api/houses/**",
+            "/api/rooms/**",
     };
 
     public static final String[] PUBLIC_POST = {
@@ -42,16 +42,16 @@ public final class EndpointPolicy {
     
     // 건물, 방 (ESTATE): LESSOR (GET) - PUBLIC_GET의 /houses/*와 충돌 주의 => 먼저 설정하기
     public static final String[] ESTATE_LESSOR_GET = {
-    		"/houses/owner"
+    		"/api/houses/owner"
     	};
     // 건물, 방 (ESTATE): LESSOR (POST, PUT, PATCH, DELETE)
     public static final String[] ESTATE_LESSOR = {
-    		"/houses", "/houses/*",
-    		"/rooms", "/rooms/*", "/rooms/*/availability"
+    		"/api/houses", "/api/houses/*",
+    		"/api/rooms", "/api/rooms/*", "/api/rooms/*/availability"
     	};
     // 건물, 방 (ESTATE): USER (POST, PUT, DELETE)
     public static final String[] ESTATE_USER = {
-    		"/rooms/*/reviews", "/rooms/*/reviews/*",
+    		"/api/rooms/*/reviews", "/api/rooms/*/reviews/*",
     	};
     
     public static final String[] USER_ADMIN_LIST = { 
@@ -64,4 +64,10 @@ public final class EndpointPolicy {
     public static final String[] CONTRACT_USER = { "/api/contract/**" };
     public static final String[] TOUR_USER = { "/api/tour/**" };
 
+    // 공용시설
+    public static final String ADMIN_FACILITY_CATEGORY = "/api/facilities/categories/**";
+    public static final String FACILITY_ALL = "/api/facilities/**";
+
+    // 공용시설 예약
+    public static final String RESERVATION_ALL = "/api/reservations/**";
 }

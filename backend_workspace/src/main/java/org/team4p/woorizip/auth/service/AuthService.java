@@ -27,14 +27,23 @@ public class AuthService {
                 new UsernamePasswordAuthenticationToken(req.emailId(), req.password())
         );
 
-        String emailId = auth.getName();
-        String role = auth.getAuthorities().stream().findFirst().map(a -> a.getAuthority()).orElse("ROLE_USER");
+        // 1. Principal을 CustomUserPrincipal로 형변환하여 정보 추출
+        org.team4p.woorizip.auth.security.principal.CustomUserPrincipal principal = 
+                (org.team4p.woorizip.auth.security.principal.CustomUserPrincipal) auth.getPrincipal();
 
-        String access = jwtTokenProvider.createAccessToken(emailId, role);
-        String refresh = jwtTokenProvider.createRefreshToken(emailId, role);
+        String userNo = principal.getUserNo(); // userNo 추출
+        String emailId = principal.getEmailId(); // auth.getName() 대신 사용 가능
+        String role = auth.getAuthorities().stream()
+                .findFirst()
+                .map(a -> a.getAuthority())
+                .orElse("ROLE_USER");
+
+        // 2. 3개의 인자(userNo, emailId, role)를 전달하도록 수정
+        String access = jwtTokenProvider.createAccessToken(userNo, emailId, role);
+        String refresh = jwtTokenProvider.createRefreshToken(userNo, emailId, role);
 
         LocalDateTime now = LocalDateTime.now();
-        refreshTokenService.upsert(emailId, refresh, now, now.plusDays(1)); // refresh 1일
+        refreshTokenService.upsert(emailId, refresh, now, now.plusDays(1));
 
         return new TokenResponse(access, refresh, jwtProperties.accessExp(), jwtProperties.refreshExp());
     }
@@ -44,6 +53,7 @@ public class AuthService {
             throw new RuntimeException("refresh expired");
         }
 
+        String userNo = jwtTokenProvider.getUserNo(refreshToken);
         String emailId = jwtTokenProvider.getEmailId(refreshToken);
         String role = jwtTokenProvider.getRole(refreshToken);
 
@@ -51,11 +61,12 @@ public class AuthService {
             throw new RuntimeException("refresh not matched");
         }
 
-        String newAccess = jwtTokenProvider.createAccessToken(emailId, role);
+        // 2. 3개의 인자를 전달
+        String newAccess = jwtTokenProvider.createAccessToken(userNo, emailId, role);
 
         String newRefresh = null;
         if (extendLogin) {
-            newRefresh = jwtTokenProvider.createRefreshToken(emailId, role);
+            newRefresh = jwtTokenProvider.createRefreshToken(userNo, emailId, role);
             LocalDateTime now = LocalDateTime.now();
             refreshTokenService.upsert(emailId, newRefresh, now, now.plusDays(1));
         }

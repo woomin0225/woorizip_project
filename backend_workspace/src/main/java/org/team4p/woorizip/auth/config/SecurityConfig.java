@@ -68,6 +68,8 @@ public class SecurityConfig {
                 // auth endpoints
                 .requestMatchers("/auth/**").permitAll()
 
+                .requestMatchers(HttpMethod.POST, EndpointPolicy.PUBLIC_POST).permitAll()
+                
                 // PUBLIC GET
                 .requestMatchers(HttpMethod.GET, EndpointPolicy.PUBLIC_GET).permitAll()
                 
@@ -101,6 +103,13 @@ public class SecurityConfig {
                 .requestMatchers(EndpointPolicy.WISHLIST_USER).hasAnyRole("USER", "ADMIN")
                 .requestMatchers(EndpointPolicy.CONTRACT_USER).hasAnyRole("USER", "ADMIN")
                 .requestMatchers(EndpointPolicy.TOUR_USER).hasAnyRole("USER", "ADMIN")
+                
+                // facilityCategory
+                .requestMatchers(EndpointPolicy.ADMIN_FACILITY_CATEGORY).hasRole("ADMIN")
+
+                // facility, reservation
+                .requestMatchers(EndpointPolicy.FACILITY_ALL).hasAnyRole("USER", "ADMIN")
+                .requestMatchers(EndpointPolicy.RESERVATION_ALL).hasAnyRole("USER", "ADMIN")
 
                 .anyRequest().authenticated()
             )            

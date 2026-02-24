@@ -20,12 +20,11 @@ public class CustomUserDetailsService implements UserDetailsService {
     public UserDetails loadUserByUsername(String emailId) throws UsernameNotFoundException {
         var user = Optional.ofNullable(userRepository.findByEmailId(emailId))
                 .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + emailId));
-
         return new CustomUserPrincipal(
                 user.getUserNo(),
                 user.getEmailId(),
                 user.getPassword(),
-                "0".equals(user.getDeletedYn()),
+                user.getDeletedYn() != null && "N".equalsIgnoreCase(user.getDeletedYn().trim()),
                 List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole()))
         );
     }
