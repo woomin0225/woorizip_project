@@ -1,0 +1,28 @@
+/* src/features/facility/components/Card.module.css */
+
+.LinkToDetail {
+  position: relative;
+  text-transform: none;
+  transition: all 0.15s ease;
+  letter-spacing: 0.025em;
+  font-size: 0.875rem;
+  padding: 0.625rem 1.25rem;
+  border-radius: 0.25rem;
+  border: 1px solid #5e72e4;
+  background-color: transparent;
+  color: #5e72e4;
+  cursor: pointer;
+  will-change: transform;
+}
+
+.LinkToDetail:hover {
+  color: #fff;
+  background-color: #5e72e4;
+  border-color: #5e72e4;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px rgba(50, 50, 93, 0.11), 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.LinkToDetail:active {
+  transform: translateY(1px);
+}
