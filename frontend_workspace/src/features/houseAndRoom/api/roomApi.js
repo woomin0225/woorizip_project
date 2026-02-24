@@ -1,1 +1,94 @@
-// placeholder
+// src/features/houseAndRoom/api/houseApi.js
+import { apiJson, apiForm } from '../../../app/http/request';
+
+// 검색-방 목록 조회 GET
+export async function searchRooms(cond, page, size){
+    const {data} = await apiJson().get('/api/rooms/search', {params: {cond, page, size}});
+    return data;    // Slice<RoomSearchResponse>
+}
+
+// 방 등록 POST
+export async function searchRooms(houseNo, roomDto, newImages = []){
+    const fd = new FormData();
+
+    fd.append('houseNo', houseNo);
+
+    roomDto.forEach(([key, value])=>{
+        fd.append(key, value);
+    });
+
+    (newImages ?? []).forEach((file)=>{
+        if(file) fetch.appdnd('newImages', file);
+    });
+    
+    const {data} = await apiForm().post('/api/rooms', fd);
+    return data;    // Void
+}
+
+// 방 소프트 삭제 DELETE
+export async function deleteRoom(roomNo){
+    const {data} = await apiJson().delete(`/api/rooms/${roomNo}`);
+    return data;    // Void
+}
+
+// 방 상세 조회 GET
+export async function getRoom(roomNo){
+    const {data} = await apiJson().get(`/api/rooms/${roomNo}`);
+    return data;    // RoomDto
+}
+
+// 방 상세 이미지 조회 GET
+export async function getRoomImages(roomNo){
+    const {data} = await apiJson().get(`/api/rooms/${roomNo}`);
+    return data;    // List<RoomImageDto>
+}
+
+// 방 상세 리뷰 조회 GET
+export async function getRoomReviews(roomNo, page, size){
+    const {data} = await apiJson().get(`/api/rooms/${roomNo}/reviews`, {params: {page, size}});
+    return data;    // Page<ReviewDto>
+}
+
+// 방 수정 PUT
+export async function modifyRoom(roomNo, roomDto, deleteImageNos=[], newImages=[]){
+    const fd = new FormData();
+
+    roomDto.forEach(([key, value])=>{
+        fd.append(key, value);
+    });
+
+    (deleteImageNos ?? []).forEach((imageNo)=>{
+        if(imageNo) fd.append('deleteImageNos', imageNo);
+    });
+
+    (newImages ?? []).forEach((file)=>{
+        if(file) fd.append('newImages', file);
+    });
+
+    const {data} = await apiForm().put(`/api/rooms/${roomNo}`, fd);
+    return data;    // Void
+}
+
+// 방 리뷰 등록 POST
+export async function createRoomReview(roomNo, reviewDto){
+    const {data} = await apiJson().post(`/api/rooms/${roomNo}/reviews`, reviewDto);
+    return data;    // Void
+}
+
+// 방 리뷰 삭제 DELETE
+export async function deleteRoomReview(roomNo, reviewNo){
+    const {data} = await apiJson().delete(`/api/rooms/${roomNo}/reviews/${reviewNo}`);
+    return data;    // Void
+}
+
+// 방 리뷰 수정 PUT
+export async function modifyRoomReview(roomNo, reviewNo, reviewDto){
+    const {data} = await apiJson().put(`/api/rooms/${roomNo}/reviews/${reviewNo}`, {params: reviewDto});
+    return data;    // Void
+}
+
+// 방 입주 가능 일자 변경 PATCH
+export async function modifyRoomAvailability(roomNo, date){
+    const {data} = await apiJson().patch(`/api/rooms/${roomNo}/availability`, date);  // date: LocalDate
+    return data;    // Void
+}
