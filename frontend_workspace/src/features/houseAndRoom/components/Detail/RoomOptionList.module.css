@@ -1,1 +1,4 @@
-/* placeholder */
+.wrap { display:flex; gap: 8px; flex-wrap: wrap; }
+.item { display:flex; gap: 6px; align-items:center; border:1px solid #eee; border-radius: 999px; padding: 6px 10px; background: #fff; }
+.icon { width: 20px; text-align: center; }
+.empty { color: #666; }

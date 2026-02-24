@@ -1,0 +1,1 @@
+// 방 삭제용 버튼. 방 이름 표시. 클릭시 DeleteConfirmModal로 확인
