@@ -1,9 +1,9 @@
 // src/features/facility/pages/user/facility/UserFacilityList.jsx
 
-import { Container, Row, Col } from 'reactstrap';
+import { Container } from 'reactstrap';
 import { useFacilityList } from '../../hooks/useFacilityList';
 import FacilityList from '../../../components/list/FacilityList';
-import styles from './UserFacilityList.module.css';
+import styles from './UserFaciliityList.module.css';
 
 export default function UserFacilityList() {
   // 데이터와 상태 수신
