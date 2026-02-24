@@ -11,6 +11,8 @@ import Login from '../../features/auth/pages/Login';
 import Signup from '../../features/member/pages/Signup';
 import Home from '../../shared/pages/Home';
 
+import EventList from '../../features/board/pages/event/eventList';
+
 import NoticeList from '../../features/notice/pages/NoticeList';
 import NoticeDetail from '../../features/notice/pages/NoticeDetail';
 import NoticeWrite from '../../features/notice/pages/NoticeWrite';
@@ -76,21 +78,57 @@ export const router = createBrowserRouter([
           { path: '/boards/:boardNum/edit', element: <BoardUpdate /> },
           { path: '/mypage', element: <MemberInfo /> },
 
-          { path: '/lessor/facilities/list/:houseNo', element: <LessorFacilityList /> },
-          { path: '/lessor/facilities/new/:houseNo', element: <LessorFacilityCreate /> },
-          { path: '/lessor/facilities/detail/:facilityNo', element: <LessorFacilityDetail /> },
-          { path: '/lessor/facilities/edit/:facilityNo', element: <LessorFacilityModify /> },
-          
-          { path: '/lessor/reservation/list/:houseNo/:facilityNo', element: <LessorReservationList /> },
-          { path: '/lessor/reservation/detail/:reservationNo', element: <LessorReservationDetail /> },
-          
-          { path: '/user/facilities/list/:houseNo', element: <UserFaciliityList /> },
-          { path: '/user/facilities/detail/:facilityNo', element: <UserFacilityDetail /> },
-          
-          { path: '/user/reservation/new/:facilityNo', element: <UserReservationCreate /> },
-          { path: '/user/reservation/detail/:reservationNo', element: <UserReservationDetail /> },
-          { path: '/user/reservation/list/:houseNo', element: <UserReservationList /> },
-          { path: '/user/reservation/edit/:reservationNo', element: <UserReservationModify /> }
+          {
+            path: '/lessor/facilities/list/:houseNo',
+            element: <LessorFacilityList />,
+          },
+          {
+            path: '/lessor/facilities/new/:houseNo',
+            element: <LessorFacilityCreate />,
+          },
+          {
+            path: '/lessor/facilities/detail/:facilityNo',
+            element: <LessorFacilityDetail />,
+          },
+          {
+            path: '/lessor/facilities/edit/:facilityNo',
+            element: <LessorFacilityModify />,
+          },
+
+          {
+            path: '/lessor/reservation/list/:houseNo/:facilityNo',
+            element: <LessorReservationList />,
+          },
+          {
+            path: '/lessor/reservation/detail/:reservationNo',
+            element: <LessorReservationDetail />,
+          },
+
+          {
+            path: '/user/facilities/list/:houseNo',
+            element: <UserFaciliityList />,
+          },
+          {
+            path: '/user/facilities/detail/:facilityNo',
+            element: <UserFacilityDetail />,
+          },
+
+          {
+            path: '/user/reservation/new/:facilityNo',
+            element: <UserReservationCreate />,
+          },
+          {
+            path: '/user/reservation/detail/:reservationNo',
+            element: <UserReservationDetail />,
+          },
+          {
+            path: '/user/reservation/list/:houseNo',
+            element: <UserReservationList />,
+          },
+          {
+            path: '/user/reservation/edit/:reservationNo',
+            element: <UserReservationModify />,
+          },
         ],
       },
 
@@ -102,17 +140,41 @@ export const router = createBrowserRouter([
           { path: '/notices/new', element: <NoticeWrite /> },
           { path: '/notices/:noticeNo/edit', element: <NoticeUpdate /> },
 
-          { path: '/admin/categories/new', element: <AdminFacilityCategoryCreate /> },
+          {
+            path: '/admin/categories/new',
+            element: <AdminFacilityCategoryCreate />,
+          },
           { path: '/admin/categories', element: <AdminFacilityCategoryList /> },
-          { path: '/admin/categories/edit/:facilityCode', element: <AdminFacilityCategoryModify /> },
+          {
+            path: '/admin/categories/edit/:facilityCode',
+            element: <AdminFacilityCategoryModify />,
+          },
 
-          { path: '/admin/facilities/detail/:facilityNo', element: <AdminFacilityDetail /> },
-          { path: '/admin/facilities/list/:houseNo', element: <AdminFacilityList /> },
-          { path: '/admin/facilities/edit/:facilityNo', element: <AdminFacilityModify /> },
+          {
+            path: '/admin/facilities/detail/:facilityNo',
+            element: <AdminFacilityDetail />,
+          },
+          {
+            path: '/admin/facilities/list/:houseNo',
+            element: <AdminFacilityList />,
+          },
+          {
+            path: '/admin/facilities/edit/:facilityNo',
+            element: <AdminFacilityModify />,
+          },
 
-          { path: '/admin/reservation/detail/:reservationNo', element: <AdminReservationDetail /> },
-          { path: '/admin/reservation/list/:houseNo', element: <AdminReservationList /> },
-          { path: '/admin/reservation/edit/:reservationNo', element: <AdminReservationModify /> }
+          {
+            path: '/admin/reservation/detail/:reservationNo',
+            element: <AdminReservationDetail />,
+          },
+          {
+            path: '/admin/reservation/list/:houseNo',
+            element: <AdminReservationList />,
+          },
+          {
+            path: '/admin/reservation/edit/:reservationNo',
+            element: <AdminReservationModify />,
+          },
         ],
       },
     ],
