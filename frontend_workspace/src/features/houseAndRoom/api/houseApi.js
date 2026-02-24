@@ -1,28 +1,32 @@
 // src/features/houseAndRoom/api/houseApi.js
 import { apiJson, apiForm } from '../../../app/http/request';
 
+function unwrap(res) {
+  return (res && typeof res === "object" && "data" in res) ? res.data : res;
+}
+
 // 검색-건물마커조회 GET
 export async function getHouseMarkers(cond) {
-  const { data } = await apiJson().get('/api/houses/marker', {params: cond});   //  @ModelAttribute: params로 보냄
-  return data.data; // ApiResponse<List<HouseMarkerResponse>>
+  const { data } = await apiJson().get('/api/houses/marker', {params: {...cond}});   //  @ModelAttribute: params로 보냄
+  return unwrap(data); // ApiResponse<List<HouseMarkerResponse>>
 }
 
 // 임대인용 건물 목록 조회 GET
 export async function getMyHouses() {
   const { data } = await apiJson().get('/api/houses/owner');
-  return data.data; // ApiResponse<List<HouseDto>>
+  return unwrap(data); // ApiResponse<List<HouseDto>>
 }
 
 // 건물의 방 조회 GET
 export async function getRoomByHouseNo(houseNo) {
   const { data } = await apiJson().get(`/api/houses/${houseNo}/rooms`);
-  return data.data; // ApiResponse<List<RoomDto>>
+  return unwrap(data); // ApiResponse<List<RoomDto>>
 }
 
 // 건물 상세 조회 GET
 export async function getHouse(houseNo) {
   const { data } = await apiJson().get(`api/houses/${houseNo}`);
-  return data.data; // ApiResponse<HouseDto>
+  return unwrap(data); // ApiResponse<HouseDto>
 }
 
 // 건물 등록 POST
@@ -38,7 +42,7 @@ export async function createHouse(houseDto, newImages = []){
     });
     
     const {data} = await apiForm().post('/api/houses', fd);
-    return data.data;    // Void
+    return unwrap(data);    // Void
 }
 
 // 건물 정보 수정 PUT
@@ -58,23 +62,23 @@ export async function modifyHouse(houseNo, houseDto, deleteImageNos = [], newIma
     });
     
     const {data} = await apiForm().put(`/api/houses/${houseNo}`, fd);
-    return data.data;    // Void
+    return unwrap(data);    // Void
 }
 
 // 건물 소프트 삭제 DELETE
 export async function deleteHouse(houseNo){
     const {data} = await apiJson().delete(`/api/houses/${houseNo}`);
-    return data.data;    // Void
+    return unwrap(data);    // Void
 }
 
 // 건물 이미지 목록 조회 GET
 export async function getHouseImages(houseNo){
     const {data} = await apiJson().get(`/api/houses/${houseNo}/images`);
-    return data.data;
+    return unwrap(data);
 }
 
 // 검색-건물마커 클릭시 방 목록 조회 GET 
-export async function getRoomsInHouseMarker(houseNo, cond, page, size){
-    const {data} = await apiJson().get(`/api/houses/${houseNo}/search`, {params: {cond, page, size}});
-    return data.data;    // Slice<RoomSearchResponse>
+export async function getRoomsInHouseMarker(houseNo, cond={}, pag=0, size=10){
+    const {data} = await apiJson().get(`/api/houses/${houseNo}/search`, {params: {...cond, page, size}});
+    return unwrap(data);    // Slice<RoomSearchResponse>
 }

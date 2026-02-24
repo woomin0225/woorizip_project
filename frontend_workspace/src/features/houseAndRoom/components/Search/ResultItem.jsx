@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import styles from "./ResultItem.module.css";
 
 export default function ResultItem({ roomSearchResponse, wished = false, onToggleWish }) {
@@ -28,23 +29,24 @@ export default function ResultItem({ roomSearchResponse, wished = false, onToggl
     if (onToggleWish) onToggleWish(roomSearchResponse.roomNo, next);
   }
 
+  
   function imgUrl(imageName) {
     if (!imageName) return "#";
     if (imageName.startsWith("http")) return imageName;
-    return `C:/upload_files/room_image${imageName}`;
+    return `###이미지파일경로매핑###${imageName}`;
   }
 
   return (
     <div className={styles.card}>
-      {/* 오른쪽 위 찜 버튼 */}
       <button className={styles.wishBtn} onClick={toggleWish} aria-label="찜">
         {isWished ? "★" : "☆"}
       </button>
+
       <table>
         <tbody>
           <tr>
             <td>
-              <div className={styles["slider-container"]}>
+              <div className={styles.sliderContainer}>
                 <div
                   className={styles.slides}
                   style={{ transform: `translateX(-${currentIndex * 500}px)` }}

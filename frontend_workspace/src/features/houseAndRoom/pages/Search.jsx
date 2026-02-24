@@ -2,11 +2,9 @@ import { useState } from 'react';
 import SearchFilterPanel from './../components/Search/SearchFilterPanel';
 import MapPanel from '../components/Search/MapPanel';
 import ResultList from './../components/Search/ResultList';
-import styles from './Search.module.css';
 
 import { searchRooms } from '../api/roomApi';
-import { getHouseMarkers } from '../api/houseApi';
-import { getRoomsInHouseMarker } from "../api/houseApi";
+import { getHouseMarkers, getRoomsInHouseMarker } from '../api/houseApi';
 
 const PAGE_SIZE = 10;
 
@@ -18,19 +16,21 @@ export default function Search() {
     maxDeposit: null,
     minTax: null,
     maxTax: null,
-    // 서울역 중심으로 기본 설정
+
+    // 서울역 중심 기본 bbox
     swLat: 37.54121,
     swLng: 126.95368,
     neLat: 37.56819,
     neLng: 126.98772,
-    options: "",
+
+    options: '',
     roomRoomCount: 1,
     houseElevatorYn: true,
     housePetYn: false,
     houseFemaleLimit: false,
     houseParking: true,
     criterion: 'LATEST',
-  }
+  };
 
   // 입력용(검색 안 함)
   const [cond, setCond] = useState(initialCond);
@@ -38,7 +38,7 @@ export default function Search() {
   // 마지막으로 “검색 버튼/정렬 버튼”으로 확정된 조건(검색에만 사용)
   const [appliedCond, setAppliedCond] = useState(null);
 
-  // bounding box 정보 (MapPanel의 남서, 북동 위도/경도)
+  // bounding box
   const [bbox, setBbox] = useState({
     swLat: initialCond.swLat,
     swLng: initialCond.swLng,
@@ -54,36 +54,33 @@ export default function Search() {
   const [page, setPage] = useState(0);
   // 슬라이스 상태 - 더보기 가능여부
   const [hasNext, setHasNext] = useState(true);
-  // 로딩 - 더보기 진행중 여부
-  const [loading, setLoading] = useState(false);
-  // 로딩 - 지도 건물 마커 처리중 여부
-  const [loadingMarkers, setLoadingMarkers] = useState();
-  const [wishMap, setWishMap] = useState({}); 
-  // { [roomNo]: true/false }  // 나중에 API 붙히기
+  // 로딩 상태
+  const [loadingRooms, setLoadingRooms] = useState(false);
+  const [loadingMarkers, setLoadingMarkers] = useState(false);
 
+  // 찜(로컬)
+  const [wishMap, setWishMap] = useState({}); // { [roomNo]: true/false }
+
+  // 마커 팝업 (마커 위 미니 리스트)
   const [markerPopup, setMarkerPopup] = useState(null);
   // null or { houseNo, lat, lng, rooms: RoomSearchResponse[] }
 
-  // =============================================================================================
-
-  // cond 처리 핸들러
+  // =========================
+  // 입력 핸들러(검색 X)
   const handleCondChange = (event) => {
-    const name = event.target.name;
-    const type = event.target.type;
-    const value = event.target.value;
-    const checked = event.target.checked;
+    const { name, type, value, checked } = event.target;
 
-    setCond(current=>{
-      if(type==="checkbox"){
-        return {...current, [name]:checked};
+    setCond((current) => {
+      if (type === 'checkbox') return { ...current, [name]: checked };
+
+      const numberFields = new Set([
+        'minDeposit', 'maxDeposit', 'minTax', 'maxTax', 'roomRoomCount',
+      ]);
+
+      if (numberFields.has(name)) {
+        return { ...current, [name]: value === '' || value === null ? null : Number(value) };
       }
-
-      const numberFields = new Set(["minDeposit", "maxDeposit", "minTax", "maxTax", "roomRoomCount", "swLat", "swLng", "neLat", "neLng",]);
-      if(numberFields.has(name)){
-        return {...current, [name]:value === "" || value === null ? null : Number(value)}
-      }
-
-      return {...current, [name]:value}
+      return { ...current, [name]: value };
     });
   };
 
@@ -91,42 +88,39 @@ export default function Search() {
   const handleOptionsChange = (event) => {
     const value = event.target.value;
     const checked = event.target.checked;
-    
-    setCond(current=>{
+
+    setCond((current) => {
       // 현재 옵션 문자열을 배열로 만들기
-      let arr = (current.options || "").split(",").filter(v=>v!=="");
-
+      let arr = (current.options || '').split(',').filter((v) => v !== '');
       // 체크된 옵션을 배열에 추가 | 체크 해제하면 배열에서 삭제
-      if(checked){
+      if (checked) {
         // 중복 확인하고 추가하기
-        if(!arr.includes(value)) arr.push(value);
-      }else{
-        arr = arr.filter(v=>v!=value);
+        if (!arr.includes(value)) arr.push(value);
+      } else {
+        arr = arr.filter((v) => v !== value);
       }
-
+      
       // 다시 문자열로 전환하기
-      return {
-        ...current, options: arr.join(",")
-      };
+      return { ...current, options: arr.join(',') };
     });
   };
 
-  // 검색: 첫 페이지
-    async function runSearch(firstCond, firstBbox) {
+  // =========================
+  // 검색(첫 페이지) : 목록 + 마커
+  async function runSearch(firstCond, firstBbox) {
     setLoadingRooms(true);
     setLoadingMarkers(true);
-    setMarkerPopup(null);
+    setMarkerPopup(null); // 검색 시작하면 팝업 닫기
 
     try {
       const merged = { ...firstCond, ...firstBbox };
 
       const [slice, markerList] = await Promise.all([
         searchRooms(merged, 0, PAGE_SIZE), // Slice<RoomSearchResponse>
-        getHouseMarkers(merged),           // List<HouseMarkerResponse>
+        getHouseMarkers(merged),          // List<HouseMarkerResponse>
       ]);
 
-      const content = slice?.content ?? [];
-      setRooms(content);
+      setRooms(slice?.content ?? []);
       setMarkers(markerList ?? []);
 
       setPage(slice?.number ?? 0);
@@ -137,14 +131,14 @@ export default function Search() {
     }
   }
 
-  // 검색 버튼(필터 입력 중에는 호출 안 됨)
+  // 검색 버튼
   const clickSearch = () => {
     const nextApplied = { ...cond };
     setAppliedCond(nextApplied);
     runSearch(nextApplied, bbox);
   };
 
-  // 정렬 버튼도 “검색”이므로: appliedCond 갱신 후 재검색(마커도 같이 갱신)
+  // 정렬 버튼도 검색 트리거
   const changeCriterion = (nextCriterion) => {
     setCond((c) => ({ ...c, criterion: nextCriterion }));
 
@@ -155,17 +149,17 @@ export default function Search() {
     runSearch(nextApplied, bbox);
   };
 
-  // 지도 이동/줌 때 bbox가 바뀌면 호출됨 (검색을 한번이라도 한 뒤에만 재검색)
+  // 지도 bbox 변경: 검색한 뒤(appliedCond 있을 때)만 재검색
   const handleChangeBbox = (nextBbox) => {
     setBbox(nextBbox);
 
-    if (!appliedCond) return; // 아직 검색 버튼을 안 눌렀으면 재검색 X
+    if (!appliedCond) return;
     runSearch(appliedCond, nextBbox);
   };
 
-  // 더보기(목록만 누적)
-  const clickMore = async () => {
-    setMarkerPopup(null);
+  // 더보기 (목록만 누적)
+  const onLoadMore = async () => {
+    setMarkerPopup(null); // 더보기도 팝업 닫기
     if (!appliedCond) return;
     if (loadingRooms || !hasNext) return;
 
@@ -185,31 +179,35 @@ export default function Search() {
     }
   };
 
-  // 찜하기
+  // 찜 토글(로컬)
   function toggleWish(roomNo, nextWished) {
     setWishMap((prev) => ({ ...prev, [roomNo]: nextWished }));
-    // 찜 API 붙히기
-  };
+    // 추후 찜 API 붙이면 여기서 호출
+  }
 
-  // 마커 클릭시 방 목록 출력
+  // 마커 클릭: 해당 house 방 목록을 “작게” 띄우기
   async function handleMarkerClick(house) {
-    // house: { houseNo, houseLat, houseLng }
     // 기존 팝업 닫고 새로 열기
     setMarkerPopup(null);
 
-    const roomsInHouse = await getRoomsInHouseMarker(house.houseNo);
+    // 필터 반영하고 싶으면 appliedCond 우선
+    const base = appliedCond ?? cond;
+
+    // getRoomsInHouseMarker가 Slice를 주든 List를 주든 대응
+    const slice = await getRoomsInHouseMarker(house.houseNo, base, 0, 10);
+    const rooms = slice.content;
+
     setMarkerPopup({
       houseNo: house.houseNo,
       lat: house.houseLat,
       lng: house.houseLng,
-      rooms: roomsInHouse || [],
+      rooms: list,
     });
-  };
+  }
 
   function closeMarkerPopup() {
     setMarkerPopup(null);
   }
-
 
   return (
     <div>
@@ -219,24 +217,25 @@ export default function Search() {
         handleOptionsChange={handleOptionsChange}
         clickSearch={clickSearch}
       />
+
       <ResultList
         slice={rooms}
         criterion={appliedCond?.criterion ?? cond.criterion}
         onChangeCriterion={changeCriterion}
-        clickMore={clickMore}
+        onLoadMore={onLoadMore}
         hasNext={hasNext}
         loading={loadingRooms}
         wishMap={wishMap}
         onToggleWish={toggleWish}
       />
-      {/* 리스트에 검색결과 더보기할 때마다 누적시키기 */}
+
       <MapPanel
-          markers={markers}
-          loadingMarkers={loadingMarkers}
-          onChangeBbox={handleChangeBbox}
-          onMarkerClick={handleMarkerClick}
-          popup={markerPopup}
-          onClosePopup={closeMarkerPopup}
+        markers={markers}
+        loadingMarkers={loadingMarkers}
+        onChangeBbox={handleChangeBbox}
+        onMarkerClick={handleMarkerClick}
+        popup={markerPopup}
+        onClosePopup={closeMarkerPopup}
       />
     </div>
   );
