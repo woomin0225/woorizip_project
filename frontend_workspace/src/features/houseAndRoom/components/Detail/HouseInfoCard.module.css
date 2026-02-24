@@ -1,0 +1,15 @@
+.wrap {
+  display: grid;
+  gap: 6px;
+  color: #333;
+}
+.abstract {
+  margin-top: 6px;
+  padding: 10px;
+  border: 1px solid #eee;
+  border-radius: 10px;
+  color: #444;
+}
+.empty {
+  color: #666;
+}

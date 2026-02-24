@@ -8,6 +8,9 @@ public interface UserService {
     
     // 아이디 중복 체크
     int selectCheckEmailId(String emailId);
+    
+    // 아이디 찾기
+    String selectFindId(UserDto userDto);
 
     // 회원 정보 조회
     UserDto selectUser(UserDto userDto);

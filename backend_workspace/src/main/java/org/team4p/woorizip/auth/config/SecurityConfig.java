@@ -17,16 +17,23 @@ import org.team4p.woorizip.auth.security.authorization.EndpointPolicy;
 import org.team4p.woorizip.auth.security.filter.JwtAuthenticationFilter;
 import org.team4p.woorizip.auth.security.filter.JwtExceptionFilter;
 import org.team4p.woorizip.auth.security.handler.CustomLogoutSuccessHandler;
+import org.team4p.woorizip.auth.security.handler.OAuth2AuthenticationSuccessHandler;
 import org.team4p.woorizip.auth.security.handler.RestAccessDeniedHandler;
 import org.team4p.woorizip.auth.security.handler.RestAuthenticationEntryPoint;
+import org.team4p.woorizip.auth.service.CustomOAuth2UserService;
 import org.team4p.woorizip.auth.token.jwt.JwtProperties;
 import org.team4p.woorizip.auth.token.jwt.JwtTokenProvider;
+
+import lombok.RequiredArgsConstructor;
 
 @Configuration
 @EnableWebSecurity
 @EnableConfigurationProperties(JwtProperties.class)
+@RequiredArgsConstructor
 public class SecurityConfig {
 
+	 private final CustomOAuth2UserService customOAuth2UserService;
+	 private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
     @Bean
     public AuthenticationManager authenticationManager(
             AuthenticationConfiguration configuration
@@ -50,10 +57,18 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http, JwtTokenProvider jwt) throws Exception {
 
+    	http.cors(org.springframework.security.config.Customizer.withDefaults());
+    	
         http.csrf(csrf -> csrf.disable())
             .formLogin(form -> form.disable())
             .httpBasic(basic -> basic.disable())
 
+            .oauth2Login(oauth2 -> oauth2
+                    .authorizationEndpoint(endpoint -> endpoint.baseUri("/oauth2/authorization"))
+                    .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
+                    .successHandler(oAuth2AuthenticationSuccessHandler)
+                )
+            
             .authorizeHttpRequests(auth -> auth
                 // React static + SPA entry (절대 "/**" permitAll 금지)
                 .requestMatchers(HttpMethod.GET,

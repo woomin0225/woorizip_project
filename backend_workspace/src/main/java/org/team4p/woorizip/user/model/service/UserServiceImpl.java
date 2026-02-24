@@ -25,6 +25,12 @@ public class UserServiceImpl implements UserService {
     public int selectCheckEmailId(String emailId) {
         return userRepository.findByEmailId(emailId) != null ? 1 : 0;
     }
+    
+    @Override
+    public String selectFindId(UserDto userDto) {
+        UserEntity user = userRepository.findByNameAndPhone(userDto.getName(), userDto.getPhone());
+        return (user != null) ? user.getEmailId() : null;
+    }
 
     @Override
     public UserDto selectUser(UserDto userDto) {
@@ -45,7 +51,7 @@ public class UserServiceImpl implements UserService {
     }
 
     /**
-     * [수정됨] 회원 정보 수정 (Update)
+     * 회원 정보 수정 (Update)
      * - 기존: DTO -> Entity 변환 후 save (덮어쓰기 위험)
      * - 변경: 조회 -> 필드 값 변경(Dirty Checking) -> 저장
      */
