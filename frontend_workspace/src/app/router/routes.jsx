@@ -80,54 +80,54 @@ export const router = createBrowserRouter([
           { path: ROUTES.MEMBER.MYPAGE, element: <MemberInfo /> },
 
           {
-            path: '/lessor/facilities/list/:houseNo',
+            path: ROUTES.LESSOR.FACILITY,
             element: <LessorFacilityList />,
           },
           {
-            path: '/lessor/facilities/new/:houseNo',
+            path: ROUTES.LESSOR.FACILITY_CREATE,
             element: <LessorFacilityCreate />,
           },
           {
-            path: '/lessor/facilities/detail/:facilityNo',
+            path: ROUTES.LESSOR.FACILITY_DETAIL,
             element: <LessorFacilityDetail />,
           },
           {
-            path: '/lessor/facilities/edit/:facilityNo',
+            path: ROUTES.LESSOR.FACILITY_MODIFY,
             element: <LessorFacilityModify />,
           },
 
           {
-            path: '/lessor/reservation/list/:houseNo/:facilityNo',
+            path: ROUTES.LESSOR.RESERVATION,
             element: <LessorReservationList />,
           },
           {
-            path: '/lessor/reservation/detail/:reservationNo',
+            path: ROUTES.LESSOR.RESERVATION_DETAIL,
             element: <LessorReservationDetail />,
           },
 
           {
-            path: '/user/facilities/list/:houseNo',
+            path: ROUTES.USER.FACILITY,
             element: <UserFaciliityList />,
           },
           {
-            path: '/user/facilities/detail/:facilityNo',
+            path: ROUTES.USER.FACILITY_DETAIL,
             element: <UserFacilityDetail />,
           },
 
           {
-            path: '/user/reservation/new/:facilityNo',
-            element: <UserReservationCreate />,
-          },
-          {
-            path: '/user/reservation/detail/:reservationNo',
-            element: <UserReservationDetail />,
-          },
-          {
-            path: '/user/reservation/list/:houseNo',
+            path: ROUTES.USER.RESERVATION,
             element: <UserReservationList />,
           },
           {
-            path: '/user/reservation/edit/:reservationNo',
+            path: ROUTES.USER.RESERVATION_DETAIL,
+            element: <UserReservationDetail />,
+          },
+          {
+            path: ROUTES.USER.RESERVATION_CREATE,
+            element: <UserReservationCreate />,
+          },
+          {
+            path: ROUTES.USER.RESERVATION_MODIFY,
             element: <UserReservationModify />,
           },
         ],
@@ -142,38 +142,40 @@ export const router = createBrowserRouter([
           { path: '/notices/:noticeNo/edit', element: <NoticeUpdate /> },
 
           {
-            path: '/admin/categories/new',
+            path: ROUTES.ADMIN.CATEGORY,
+            element: <AdminFacilityCategoryList /> },
+          {
+            path: ROUTES.ADMIN.CATEGOGY_CREATE,
             element: <AdminFacilityCategoryCreate />,
           },
-          { path: '/admin/categories', element: <AdminFacilityCategoryList /> },
           {
-            path: '/admin/categories/edit/:facilityCode',
+            path: ROUTES.ADMIN.CATEGORY_MODIFY,
             element: <AdminFacilityCategoryModify />,
           },
 
           {
-            path: '/admin/facilities/detail/:facilityNo',
-            element: <AdminFacilityDetail />,
-          },
-          {
-            path: '/admin/facilities/list/:houseNo',
+            path: ROUTES.ADMIN.FACILITY,
             element: <AdminFacilityList />,
           },
           {
-            path: '/admin/facilities/edit/:facilityNo',
+            path: ROUTES.ADMIN.FACILITY_DETAIL,
+            element: <AdminFacilityDetail />,
+          },
+          {
+            path: ROUTES.ADMIN.FACILITY_MODIFY,
             element: <AdminFacilityModify />,
           },
 
           {
-            path: '/admin/reservation/detail/:reservationNo',
+            path: ROUTES.ADMIN.RESERVATION,
+            element: <AdminReservationList />,
+          },          
+          {
+            path: ROUTES.ADMIN.RESERVATION_DETAIL,
             element: <AdminReservationDetail />,
           },
           {
-            path: '/admin/reservation/list/:houseNo',
-            element: <AdminReservationList />,
-          },
-          {
-            path: '/admin/reservation/edit/:reservationNo',
+            path: ROUTES.ADMIN.RESERVATION_MODIFY,
             element: <AdminReservationModify />,
           },
         ],
