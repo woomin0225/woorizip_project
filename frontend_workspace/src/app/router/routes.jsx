@@ -12,6 +12,8 @@ import Login from '../../features/auth/pages/Login';
 import Signup from '../../features/member/pages/Signup';
 import Home from '../../shared/pages/Home';
 
+import EventList from '../../features/board/pages/event/eventList';
+
 import NoticeList from '../../features/notice/pages/NoticeList';
 import NoticeDetail from '../../features/notice/pages/NoticeDetail';
 import NoticeWrite from '../../features/notice/pages/NoticeWrite';

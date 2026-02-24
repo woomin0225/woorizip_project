@@ -1,1 +1,72 @@
-/* placeholder */
+/* src/features/board/pages/notice/NoticeList.module.css */
+.noticeContainer {
+  padding: 20px;
+  max-width: 1000px;
+  margin: 0 auto;
+  background-color: #fdfdfd;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+}
+
+.title {
+  font-size: 2rem;
+  margin-bottom: 20px;
+  color: #2db400;
+  text-align: center;
+}
+
+/* 버튼 영역 */
+.buttonGroup {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.button {
+  background-color: #2db4005a;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  font-size: 1rem;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.button:hover {
+  background-color: #239400;
+}
+
+/* 테이블 스타일 */
+.noticeTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.noticeTable th,
+.noticeTable td {
+  border: 1px solid #ddd;
+  padding: 10px;
+}
+
+.tableHeaderRow {
+  background-color: #f0f0f0;
+  font-weight: bold;
+}
+
+/* 항목 행 스타일 */
+.noticeItem:hover {
+  background-color: #f9f9f9;
+  cursor: pointer;
+}
+
+/* 기타 상태 메시지 */
+.loading,
+.error {
+  text-align: center;
+  font-size: 1.2rem;
+  margin-top: 40px;
+  color: #555;
+}
