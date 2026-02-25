@@ -1,11 +1,11 @@
-// src/features/board/pages/notice/NoticeWrite.jsx
+// src/features/board/pages/qna/QnaWrite.jsx
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { useNoticeWrite } from '../../hooks/useNoticeWrite';
 import PostEditor from '../../components/PostEditor';
+import { useQnaWrite } from '../../hooks/useQnaWrite';
 
-export default function NoticeWrite() {
+export default function QnaWrite() {
   const navigate = useNavigate();
 
   const {
@@ -16,7 +16,7 @@ export default function NoticeWrite() {
     setNewFiles,
     submitting,
     handleSubmit,
-  } = useNoticeWrite({ navigate });
+  } = useQnaWrite({ navigate });
 
   return (
     <PostEditor
@@ -27,7 +27,7 @@ export default function NoticeWrite() {
       setNewFiles={setNewFiles}
       submitting={submitting}
       onSubmit={handleSubmit}
-      onCancel={() => navigate('/notices')}
+      onCancel={() => navigate('/qna')}
     />
   );
 }

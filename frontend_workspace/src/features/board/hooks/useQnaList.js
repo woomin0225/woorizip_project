@@ -1,8 +1,8 @@
-// src/features/board/hooks/useInformationList.js
+// src/features/board/hooks/useQnaList.js
 import { useEffect, useMemo, useState } from 'react';
 import { useQueryState } from '../../../shared/hooks/useQueryState';
 import { unwrapApi } from '../../../shared/utils/apiUnwrap';
-import { fetchInformationList, searchInformation } from '../api/InformationApi';
+import { fetchQnaList, searchQna } from '../api/QnaApi';
 import { useAuth } from '../../../app/providers/AuthProvider';
 
 const defaultQuerySchema = {
@@ -17,8 +17,9 @@ const defaultQuerySchema = {
   direct: 'DESC',
 };
 
-export function useInformationList() {
-  const { isAdmin } = useAuth();
+export function useQnaList() {
+  const { isAuthed } = useAuth();
+
   const { query, setQuery } = useQueryState(defaultQuerySchema);
 
   const [loading, setLoading] = useState(false);
@@ -27,7 +28,6 @@ export function useInformationList() {
 
   const content = useMemo(() => pageResponse?.content || [], [pageResponse]);
 
-  // 화면 표시용 search object
   const search = useMemo(
     () => ({
       type: query.type,
@@ -63,8 +63,9 @@ export function useInformationList() {
       };
 
       let resp;
+
       if (query.mode === 'search') {
-        resp = await searchInformation({
+        resp = await searchQna({
           ...baseReq,
           type: query.type,
           keyword: query.keyword,
@@ -72,15 +73,14 @@ export function useInformationList() {
           end: query.end,
         });
       } else {
-        resp = await fetchInformationList(baseReq);
+        resp = await fetchQnaList(baseReq);
       }
 
       const body = unwrapApi(resp);
-      // PagingView가 현재 page를 표시하므로 page를 query에서 주입
       setPageResponse(body ? { ...body, page: query.page } : null);
     } catch (e) {
       console.error(e);
-      setErr('정책・정보 게시글 목록을 불러오지 못했습니다.');
+      setErr('Q&A 게시글 목록을 불러오지 못했습니다.');
       setPageResponse(null);
     } finally {
       setLoading(false);
@@ -102,7 +102,7 @@ export function useInformationList() {
     query.direct,
   ]);
 
-  const onSubmitSearch = async (e) => {
+  const onSubmitSearch = (e) => {
     e.preventDefault();
     setQuery({ mode: 'search', page: 1 });
   };
@@ -118,7 +118,6 @@ export function useInformationList() {
     });
   };
 
-  // type 변경 시 UI 입력값 정리(기간/키워드)
   const onChangeType = (nextType) => {
     if (nextType === 'date') {
       setQuery({ type: 'date', keyword: '', page: 1 });
@@ -128,19 +127,13 @@ export function useInformationList() {
   };
 
   return {
-    isAdmin,
-
-    // query-backed state
+    isAuthed,
     query,
     search,
-
-    // derived state
     pageResponse,
     content,
     loading,
     err,
-
-    // actions
     setSearch,
     setPage,
     setSize,

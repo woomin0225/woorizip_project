@@ -1,7 +1,7 @@
 // src/features/board/hooks/useNoticeDetail.js
 import { useEffect, useState } from 'react';
 import { unwrapApi } from '../../../shared/utils/apiUnwrap';
-import { fetchNoticeDetail, deleteNotice } from '../api/noticeApi';
+import { fetchNoticeDetail, deleteNotice } from '../api/NoticeApi';
 import { useAuth } from '../../../app/providers/AuthProvider';
 
 export function useNoticeDetail({ postNo, nav }) {

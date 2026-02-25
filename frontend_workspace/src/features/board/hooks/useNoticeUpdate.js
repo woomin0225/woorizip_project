@@ -1,6 +1,6 @@
 // src/features/board/hooks/useNoticeUpdate.js
 import { useEffect, useMemo, useState } from 'react';
-import { fetchNoticeDetail, updateNotice } from '../api/noticeApi';
+import { fetchNoticeDetail, updateNotice } from '../api/NoticeApi';
 import { unwrapApi } from '../../../shared/utils/apiUnwrap';
 import { useAuth } from '../../../app/providers/AuthProvider';
 

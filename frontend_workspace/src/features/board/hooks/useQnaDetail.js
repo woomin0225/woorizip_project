@@ -1,13 +1,13 @@
-// src/features/board/hooks/useEventDetail.js
+// src/features/board/hooks/useQnaDetail.js
 import { useEffect, useState } from 'react';
 import { unwrapApi } from '../../../shared/utils/apiUnwrap';
-import { fetchEventDetail, deleteEvent } from '../api/EventApi';
+import { fetchQnaDetail, deleteQna } from '../api/QnaApi';
 import { useAuth } from '../../../app/providers/AuthProvider';
 
-export function useEventDetail({ postNo, nav }) {
-  const { isAdmin } = useAuth();
+export function useQnaDetail({ postNo, nav }) {
+  const { isAuthed, user } = useAuth();
 
-  const [event, setEvent] = useState(null);
+  const [qna, setQna] = useState(null);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState('');
@@ -16,13 +16,13 @@ export function useEventDetail({ postNo, nav }) {
     setLoading(true);
     setError('');
     try {
-      const resp = await fetchEventDetail(postNo);
+      const resp = await fetchQnaDetail(postNo);
       const dto = unwrapApi(resp);
-      setEvent(dto || null);
+      setQna(dto || null);
     } catch (e) {
       console.error(e);
-      setError('이벤트 게시글 상세보기를 불러오지 못했습니다.');
-      setEvent(null);
+      setError('Q&A 게시글 상세보기를 불러오지 못했습니다.');
+      setQna(null);
     } finally {
       setLoading(false);
     }
@@ -33,15 +33,22 @@ export function useEventDetail({ postNo, nav }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [postNo]);
 
+  const isOwner = isAuthed && qna && user?.userNo === qna.userNo;
+
   const handleDelete = async () => {
+    if (!isOwner) {
+      alert('작성자만 삭제할 수 있습니다.');
+      return;
+    }
+
     const ok = window.confirm('정말 삭제하시겠습니까?');
     if (!ok) return;
 
     try {
       setDeleting(true);
-      await deleteEvent(postNo);
-      alert('삭제되었습니다.');
-      nav('/events');
+      await deleteQna(postNo);
+      alert('삭제되었습니다');
+      nav('/qna');
     } catch (e) {
       console.error(e);
       alert('삭제에 실패했습니다.');
@@ -51,11 +58,11 @@ export function useEventDetail({ postNo, nav }) {
   };
 
   return {
-    isAdmin,
-    event,
+    qna,
     loading,
     deleting,
     error,
+    isOwner,
     reload: load,
     handleDelete,
   };

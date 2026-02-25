@@ -2,10 +2,10 @@
 import React from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
-import styles from '../notice/NoticeDtail.module.css'; //동일 CSS 재사용
+import styles from '../notice/NoticeDetail.module.css'; //동일 CSS 재사용
 import FileDownloadButton from '../../components/FileDownloadButton';
 import { useInformationDetail } from '../../hooks/useInformationDetail';
-import { downloadInformationFile } from '../../api/informationApi';
+import { downloadInformationFile } from '../../api/InformationApi';
 
 // 라우트가 다르면 여기만 수정
 const EDIT_PATH = (postNo) => `/information/${postNo}/edit`;

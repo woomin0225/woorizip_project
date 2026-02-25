@@ -2,7 +2,7 @@
 import { use, useEffect, useMemo, useState } from 'react';
 import { useQueryState } from '../../../shared/hooks/useQueryState';
 import { unwrapApi } from '../../../shared/utils/apiUnwrap';
-import { fetchEventList, searchEvent } from '../api/eventApi';
+import { fetchEventList, searchEvent } from '../api/EventApi';
 import { useAuth } from '../../../app/providers/AuthProvider';
 
 const defaultQuerySchema = {
@@ -21,7 +21,7 @@ export function useEventList() {
   const { isAdmin } = useAuth();
   const { query, setQuery } = useQueryState(defaultQuerySchema);
 
-  const [loading, setLoading] = useQueryState(false);
+  const [loading, setLoading] = useState(false);
   const [err, setErr] = useState('');
   const [pageResponse, setPageResponse] = useState(null);
 

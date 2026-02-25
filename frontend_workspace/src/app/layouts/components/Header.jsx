@@ -13,6 +13,10 @@ import {
   Container,
   Row,
   Col,
+  UncontrolledDropdown,
+  DropdownToggle,
+  DropdownMenu,
+  DropdownItem,
 } from 'reactstrap';
 
 export default function Header() {
@@ -125,11 +129,26 @@ export default function Header() {
                   웹사이트 소개
                 </NavLink>
               </NavItem>
-              <NavItem>
-                <NavLink to="/board" tag={Link}>
+              <UncontrolledDropdown nav inNavbar>
+                <DropdownToggle nav caret>
                   게시판
-                </NavLink>
-              </NavItem>
+                </DropdownToggle>
+
+                <DropdownMenu>
+                  <DropdownItem tag={Link} to="/notices">
+                    공지사항
+                  </DropdownItem>
+                  <DropdownItem tag={Link} to="/event">
+                    이벤트
+                  </DropdownItem>
+                  <DropdownItem tag={Link} to="/qna">
+                    QnA
+                  </DropdownItem>
+                  <DropdownItem tag={Link} to="/information">
+                    정책・정보
+                  </DropdownItem>
+                </DropdownMenu>
+              </UncontrolledDropdown>
               <NavItem>
                 <NavLink to="/rooms" tag={Link}>
                   방찾기

@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQueryState } from '../../../shared/hooks/useQueryState';
 import { unwrapApi } from '../../../shared/utils/apiUnwrap';
-import { fetchNoticeList, searchNotice } from '../api/noticeApi';
+import { fetchNoticeList, searchNotice } from '../api/NoticeApi';
 import { useAuth } from '../../../app/providers/AuthProvider';
 
 const defaultQuerySchema = {

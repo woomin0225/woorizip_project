@@ -1,15 +1,11 @@
-// src/features/board/hooks/useInformationUpdate.js
+// src/features/board/hooks/useQnaUpdate.js
 import { useEffect, useMemo, useState } from 'react';
-import {
-  fetchInformationDetail,
-  updateInformation,
-} from '../api/InformationApi';
+import { fetchQnaDetail, updateQna } from '../api/QnaApi';
 import { unwrapApi } from '../../../shared/utils/apiUnwrap';
 import { useAuth } from '../../../app/providers/AuthProvider';
 
-export function useInformationUpdate({ postNo, nav }) {
-  const { isAdmin } = useAuth();
-  const canEdit = useMemo(() => Boolean(isAdmin), [isAdmin]);
+export function useQnaUpdate({ postNo, nav }) {
+  const { isAuthed, user } = useAuth();
 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -24,21 +20,30 @@ export function useInformationUpdate({ postNo, nav }) {
     postContent: '',
   });
 
+  const [ownerNo, setOwnerNo] = useState(null);
+
+  const canEdit = useMemo(() => {
+    return isAuthed && user?.useNo && ownerNo === user.userNo;
+  }, [isAuthed, user, ownerNo]);
+
   const load = async () => {
-    if (!canEdit) {
+    if (!isAuthed) {
+      setErrMsg('로그인이 필요합니다.');
       setLoading(false);
-      setErrMsg('관리자만 공지사항 게시글 수정이 가능합니다.');
       return;
     }
 
     try {
-      const resp = await fetchInformationDetail(postNo);
+      const resp = await fetchQnaDetail(postNo);
       const dto = unwrapApi(resp);
 
       if (!dto) {
         setErrMsg('데이터를 불러오지 못했습니다.');
+        setLoading(false);
         return;
       }
+
+      setOwnerNo(dto.userNo);
 
       setForm({
         postTitle: dto.postTitle || '',
@@ -56,11 +61,12 @@ export function useInformationUpdate({ postNo, nav }) {
 
   useEffect(() => {
     load();
-  }, [postNo, canEdit]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [postNo]);
 
   const onChange = (e) => {
     const { name, value } = e.target;
-    setForm((p) => ({ ...p, [name]: value }));
+    setForm((prev) => ({ ...prev, [name]: value }));
   };
 
   const validate = () => {
@@ -79,10 +85,17 @@ export function useInformationUpdate({ postNo, nav }) {
 
   const onSubmit = async (e) => {
     e.preventDefault();
-    if (!canEdit) return;
+
+    if (!canEdit) {
+      alert('작성자만 수정할 수 있습니다.');
+      return;
+    }
 
     const msg = validate();
-    if (msg) return alert(msg);
+    if (msg) {
+      alert(msg);
+      return;
+    }
 
     const data = new FormData();
     data.append('postTitle', form.postTitle);
@@ -98,12 +111,12 @@ export function useInformationUpdate({ postNo, nav }) {
 
     try {
       setSubmitting(true);
-      await updateInformation(postNo, data);
-      alert('정책・정보 게시글 수정 성공');
-      nav(`/information/${postNo}`);
+      await updateQna(postNo, data);
+      alert('Q&A 게시글 수정 성공');
+      nav(`/qna/${postNo}`);
     } catch (e2) {
       console.error(e2);
-      alert('정책・정보 게시글 수정 실패');
+      alert('Q&A 게시글 수정 실패');
     } finally {
       setSubmitting(false);
     }
