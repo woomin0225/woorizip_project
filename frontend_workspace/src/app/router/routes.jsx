@@ -11,17 +11,25 @@ import Login from '../../features/member/pages/Login';
 import Signup from '../../features/member/pages/Signup';
 import Home from '../../shared/pages/Home';
 
-import EventList from '../../features/board/pages/event/eventList';
-
 import NoticeList from '../../features/notice/pages/NoticeList';
 import NoticeDetail from '../../features/notice/pages/NoticeDetail';
 import NoticeWrite from '../../features/notice/pages/NoticeWrite';
 import NoticeUpdate from '../../features/notice/pages/NoticeUpdate';
 
-import BoardList from '../../features/board/pages/BoardList';
-import BoardWrite from '../../features/board/pages/BoardWrite';
-import BoardDetail from '../../features/board/pages/BoardDetail';
-import BoardUpdate from '../../features/board/pages/BoardUpdate';
+import EventList from '../../features/board/pages/event/EventList';
+import EventDetail from '../../features/board/pages/event/EventDetail';
+import EventWrite from '../../features/board/pages/event/EventWrite';
+import EventUpdate from '../../features/board/pages/event/EventUpdate';
+
+import QnaList from '../../features/board/pages/qna/QnaList';
+import QnaDetail from '../../features/board/pages/qna/QnaDetail';
+import QnaWrite from '../../features/board/pages/qna/QnaWrite';
+import QnaUpdate from '../../features/board/pages/qna/QnaUpdate';
+
+import InformationList from '../../features/board/pages/information/InformationList';
+import InformationDetail from '../../features/board/pages/information/InformationDetail';
+import InformationWrite from '../../features/board/pages/information/InformationWrite';
+import InformationUpdate from '../../features/board/pages/information/InformationUpdate';
 
 import MemberList from '../../features/member/pages/MemberList';
 // import MemberInfo from '../../features/member/pages/MemberInfo';
@@ -50,8 +58,14 @@ export const router = createBrowserRouter([
       { path: '/notices', element: <NoticeList /> },
       { path: '/notices/:noticeNo', element: <NoticeDetail /> },
 
-      // { path: '/boards', element: <BoardList /> },
-      // { path: '/boards/:boardNum', element: <BoardDetail /> },
+      { path: '/qna', element: <QnaList /> },
+      { path: '/qna/:postNo', element: <QnaDetail /> },
+
+      { path: '/information', element: <InformationList /> },
+      { path: '/information/:postNo', element: <InformationDetail /> },
+
+      { path: '/event', element: <EventList /> },
+      { path: '/event/:postNo', element: <EventDetail /> },
 
       { path: '/rooms', element: <Search /> }, // 방 찾기 페이지
       { path: '/rooms/:roomNo', element: <Detail /> }, // 방 상세보기 페이지
@@ -60,11 +74,9 @@ export const router = createBrowserRouter([
       {
         element: <RequireAuth />,
         children: [
-          { path: '/boards/new', element: <BoardWrite /> },
-          { path: '/boards/:boardNum/edit', element: <BoardUpdate /> },
           // { path: ROUTES.MEMBER.MYPAGE, element: <MemberInfo /> },
-          // { path: '/boards/new', element: <BoardWrite /> },
-          // { path: '/boards/:boardNum/edit', element: <BoardUpdate /> },
+          { path: '/qna/new', element: <QnaWrite /> },
+          { path: '/qna/:postNo/edit', element: <QnaUpdate /> },
           // { path: ROUTES.MEMBER.MYPAGE, element: <MemberInfo /> },
           {
             path: ROUTES.USER.FACILITY,
@@ -96,8 +108,14 @@ export const router = createBrowserRouter([
         element: <RequireRole allowedRoles={[ROLES.ADMIN]} />,
         children: [
           // { path: ROUTES.ADMIN.MEMBERS, element: <MemberList /> },
-          // { path: '/notices/new', element: <NoticeWrite /> },
-          // { path: '/notices/:noticeNo/edit', element: <NoticeUpdate /> },
+          { path: '/notices/new', element: <NoticeWrite /> },
+          { path: '/notices/:noticeNo/edit', element: <NoticeUpdate /> },
+
+          { path: '/information/new', element: <InformationWrite /> },
+          { path: '/information/:postNo/edit', element: <InformationUpdate /> },
+
+          { path: '/event/new', element: <EventWrite /> },
+          { path: '/event/:postNo/edit', element: <EventUpdate /> },
 
           {
             path: ROUTES.ADMIN.CATEGORY,
