@@ -12,12 +12,13 @@ export const ROUTES = {
     MEMBERS: '/admin/members',
 
     CATEGORY: '/admin/categories',
-    CATEGOGY_FORM: '/admin/categories/:facilityCode'
+    CATEGORY_FORM: '/admin/categories/:facilityCode'
   },
   
   USER: {
     FACILITY: '/facilities/list/:houseNo/:facilityNo',
     FACILITY_FORM: '/facilities/form/:facilityNo',
+    
     RESERVATION: '/reservation/list/:houseNo',
     RESERVATION_FORM: '/reservation/new/:facilityNo/',
   }

@@ -1,8 +1,14 @@
 // 상세페이지를 보고 있는 방의 리뷰1행의 상위 컴포넌트. 상위로부터 리뷰 목록 받아서 리뷰 1행씩 반복시킴
-import ReviewItem from './ReviewItem';
-import styles from './ReviewList.module.css';
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
+import styles from "./ReviewList.module.css";
 
-function buildPageButtons(current, total) {
+import ReviewItem from "./ReviewItem";
+import DeleteConfirmModal from "../DeleteConfirmModal";
+import { deleteRoomReview } from "../../api/roomApi"
+
+function buildButtons(current, total) {
   if (total <= 7) return Array.from({ length: total }).map((_, i) => i);
   const start = Math.max(0, current - 3);
   const end = Math.min(total - 1, start + 6);
@@ -10,11 +16,17 @@ function buildPageButtons(current, total) {
   return Array.from({ length: end - s + 1 }).map((_, i) => s + i);
 }
 
-export default function ReviewList({ page, currentUserNo, roomNo, onChangePage }) {
+export default function ReviewList({ roomNo, page, currentUserNo, onChangePage, onRefresh }) {
   const content = page?.content ?? [];
   const number = page?.number ?? 0;
   const totalPages = page?.totalPages ?? 1;
-  const buttons = buildPageButtons(number, totalPages);
+
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [target, setTarget] = useState(null);
+
+  const buttons = buildButtons(number, totalPages);
+
+const navigate = useNavigate();
 
   function go(p) {
     if (!onChangePage) return;
@@ -22,20 +34,58 @@ export default function ReviewList({ page, currentUserNo, roomNo, onChangePage }
     onChangePage(p);
   }
 
+  function requestDelete(review) {
+    setTarget(review);
+    setConfirmOpen(true);
+  }
+
+  async function confirmDelete() {
+    if (!target) return;
+    try {
+      await deleteRoomReview(roomNo, target.reviewNo);
+      setConfirmOpen(false);
+      setTarget(null);
+      // ✅ 삭제 후 현재 페이지 재조회(부모 Detail이 getRoomReviews 재호출)
+      onRefresh?.();
+    } catch {
+      alert("삭제에 실패했습니다.");
+    }
+  }
+
   return (
     <div>
+      <div className={styles.header}>
+        <div className={styles.title}>리뷰</div>
+
+        {/* 라우트는 나중에 추가할 예정이므로 Link 뼈대만 */}
+        <Link to={`/rooms/${roomNo}/reviews/new`} className={styles.writeLink}>
+          리뷰 작성
+        </Link>
+      </div>
+
       {content.length === 0 && <div className={styles.empty}>리뷰가 없습니다.</div>}
 
-      {content.map((r) => (
-        <ReviewItem
-          key={r.reviewNo ?? Math.random()}
-          review={r}
-          isMine={String(r.userNo ?? '') === String(currentUserNo ?? '')}
-          onEdit={() => alert('리뷰 수정 UI는 다음 단계')}
-          onDelete={() => alert('리뷰 삭제 연결은 다음 단계')}
-        />
-      ))}
+      {content.map((r) => {
+        const isMine = String(r.userNo ?? "") === String(currentUserNo ?? "");
+        return (
+          <ReviewItem
+            key={r.reviewNo}
+            review={r}
+            isMine={isMine}
+            onEdit={(review) => {navigate(`/rooms/${roomNo}/reviews/${reviewNo}/edit`, {state: {review}})}}
+            onDelete={requestDelete}
+          />
+        );
+      })}
 
+      {/* 수정 Link는 ReviewItem에 넣고 싶으면 ReviewItem을 Link 포함으로 바꿔도 됨.
+          지금은 “수정” 버튼을 ReviewItem 내부에서 onEdit 호출하도록 되어있으니,
+          여기서 onEdit을 Link로 처리할 수 있게 아래처럼 바꾸는 방식 추천: */}
+      <div className={styles.note}>
+        * 수정은 각 행의 “수정” 버튼을 Link로 바꿔 연결할 예정(라우트 추가 시)
+      </div>
+
+      {/* 페이지네이션 */}
       <div className={styles.paging}>
         <button onClick={() => go(number - 1)} disabled={number <= 0}>이전</button>
 
@@ -67,6 +117,14 @@ export default function ReviewList({ page, currentUserNo, roomNo, onChangePage }
 
         <button onClick={() => go(number + 1)} disabled={number >= totalPages - 1}>다음</button>
       </div>
+
+      <DeleteConfirmModal
+        open={confirmOpen}
+        title="리뷰 삭제"
+        message="정말 삭제할까요?"
+        onCancel={() => { setConfirmOpen(false); setTarget(null); }}
+        onConfirm={confirmDelete}
+      />
     </div>
   );
 }

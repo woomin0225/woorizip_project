@@ -1,4 +1,4 @@
-// src/features/houseAndRoom/api/houseApi.js
+// src/features/houseAndRoom/api/roomApi.js
 import { apiJson, apiForm } from '../../../app/http/request';
 
 function unwrap(res) {
@@ -87,7 +87,7 @@ export async function deleteRoomReview(roomNo, reviewNo){
 
 // 방 리뷰 수정 PUT
 export async function modifyRoomReview(roomNo, reviewNo, reviewDto){
-    const {data} = await apiJson().put(`/api/rooms/${roomNo}/reviews/${reviewNo}`, {params: reviewDto});
+    const {data} = await apiJson().put(`/api/rooms/${roomNo}/reviews/${reviewNo}`, reviewDto);
     return unwrap(data);    // Void
 }
 

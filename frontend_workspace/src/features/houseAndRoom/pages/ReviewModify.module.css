@@ -1,0 +1,11 @@
+.wrap {
+  padding: 16px;
+}
+.title {
+  margin: 0 0 12px 0;
+}
+.warn {
+  margin-bottom: 10px;
+  color: #b00020;
+  font-size: 13px;
+}

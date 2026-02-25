@@ -40,7 +40,7 @@ function computeIsAdmin(role) {
   return r === ROLES.ADMIN || r === 'ROLE_ADMIN' || r === 'ADMIN';
 }
 
-export function AuthProvider({ children }) {
+export default function AuthProvider({ children }) {
   // tokenStore 스냅샷으로 초기 상태
   const [accessToken, setAccessToken] = useState(tokenStore.getAccess());
   const [refreshToken, setRefreshToken] = useState(tokenStore.getRefresh());
