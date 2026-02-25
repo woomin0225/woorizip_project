@@ -10,7 +10,6 @@ import { ROUTES } from '../../shared/constants/routes';
 import Home from '../../shared/pages/Home';
 import Login from '../../features/member/pages/Login';
 import Signup from '../../features/member/pages/Signup';
-import Home from '../../shared/pages/Home';
 
 import NoticeList from '../../features/board/pages/notice/NoticeList';
 import NoticeDetail from '../../features/board/pages/notice/NoticeDetail';
@@ -27,10 +26,10 @@ import QnaDetail from '../../features/board/pages/qna/QnaDetail';
 import QnaWrite from '../../features/board/pages/qna/QnaWrite';
 import QnaUpdate from '../../features/board/pages/qna/QnaUpdate';
 
-import InformationList from '../../features/board/pages/information/InformationList';
-import InformationDetail from '../../features/board/pages/information/InformationDetail';
-import InformationWrite from '../../features/board/pages/information/InformationWrite';
-import InformationUpdate from '../../features/board/pages/information/InformationUpdate';
+import InformationList from '../../features/board/pages/Information/InformationList';
+import InformationDetail from '../../features/board/pages/Information/InformationDetail';
+import InformationWrite from '../../features/board/pages/Information/informationWrite';
+import InformationUpdate from '../../features/board/pages/Information/informationUpdate';
 
 import MemberList from '../../features/member/pages/MemberList';
 
@@ -85,6 +84,8 @@ export const router = createBrowserRouter([
           { path: ROUTES.CONTRACT.LIST, element: <Statement /> },
           { path: ROUTES.CONTRACT.COMPLETION, element: <Completion /> },
           { path: '/mypage/contracts', element: <Statement /> },
+        ],
+      },
       { path: '/notices', element: <NoticeList /> },
       { path: '/notices/:noticeNo', element: <NoticeDetail /> },
 
@@ -110,11 +111,11 @@ export const router = createBrowserRouter([
           // { path: ROUTES.MEMBER.MYPAGE, element: <MemberInfo /> },
           {
             path: ROUTES.USER.FACILITY,
-            element: <FacilityView />,
+            // element: <FacilityView />,
           },
           {
             path: ROUTES.USER.FACILITY_FORM,
-            element: <FacilityForm />,
+            // element: <FacilityForm />,
           },
           {
             path: ROUTES.USER.RESERVATION,
@@ -138,7 +139,7 @@ export const router = createBrowserRouter([
 
       {
         element: <RequireRole allowedRoles={[ROLES.ADMIN]} />,
-        children: [{ path: ROUTES.ADMIN.MEMBERS, element: <MemberList /> }],
+        // children: [{ path: ROUTES.ADMIN.MEMBERS, element: <MemberList /> }],
         children: [
           // { path: ROUTES.ADMIN.MEMBERS, element: <MemberList /> },
           { path: '/notices/new', element: <NoticeWrite /> },
@@ -152,11 +153,11 @@ export const router = createBrowserRouter([
 
           {
             path: ROUTES.ADMIN.CATEGORY,
-            element: <FacilityCategoryList />,
+            // element: <FacilityCategoryList />,
           },
           {
             path: ROUTES.ADMIN.CATEGORY_FORM,
-            element: <FacilityCategoryForm />,
+            // element: <FacilityCategoryForm />,
           },
         ],
       },
