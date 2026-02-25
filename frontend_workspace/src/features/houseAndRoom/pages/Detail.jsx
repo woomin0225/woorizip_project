@@ -61,6 +61,12 @@ export default function Detail() {
 
   const currentUserNo = useMemo(() => tokenStore.getUserId(), []);
 
+  const refreshReviews = async () => {
+    if (!selectedRoomNo) return;
+    const page = await getRoomReviews(selectedRoomNo, reviewPageNo, REVIEW_PAGE_SIZE);
+    setReviewPage(page);
+  };
+
   useEffect(() => {
     if (routeRoomNo) setSelectedRoomNo(routeRoomNo);
   }, [routeRoomNo]);
@@ -223,6 +229,7 @@ export default function Detail() {
                 currentUserNo={currentUserNo}
                 roomNo={selectedRoomNo}
                 onChangePage={setReviewPageNo}
+                onRefresh={refreshReviews}
               />
             </section>
           </>

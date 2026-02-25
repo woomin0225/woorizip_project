@@ -1,9 +1,10 @@
 // src/features/facility/pages/user/facility/UserFacilityList.jsx
 
 import { Container, Row, Col } from 'reactstrap';
-import { useFacilityList } from '../../hooks/useFacilityList';
-import FacilityList from './FacilityList';
-import styles from './UserFacilityList.module.css';
+import { useFacilityList } from './../../../hooks/facility/useFacilityList';
+
+import styles from './UserFaciliityList.module.css';
+import FacilityListPage from '../../../components/list/FacilityList';
 
 export default function UserFacilityList() {
   // 데이터와 상태 수신
@@ -34,7 +35,7 @@ export default function UserFacilityList() {
   return (
     <Container fluid className="pt-5">
       <h2 className={styles.title}>공용 시설 목록</h2>
-      <FacilityList facilityList={facilities} />
+      <FacilityListPage facilityList={facilities} />
     </Container>
   );
 }

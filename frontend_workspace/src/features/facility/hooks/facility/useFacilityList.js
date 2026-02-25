@@ -1,6 +1,7 @@
 // src/features/facility/hooks/facility/useFacilityList.js
 import { useState, useEffect } from 'react';
-import { fetchFacilityList } from '../api/facilityApi';
+import { fetchFacilityList } from '../../api/facility';
+
 
 export const useFacilityList = () => {
   const [facilities, setFacilities] = useState([]);
