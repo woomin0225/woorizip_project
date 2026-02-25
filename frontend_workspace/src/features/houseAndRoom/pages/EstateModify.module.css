@@ -1,0 +1,71 @@
+.wrap {
+  padding: 16px;
+}
+.title {
+  margin: 0 0 12px 0;
+}
+.layout {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 14px;
+}
+.left {
+  border: 1px solid #eee;
+  border-radius: 12px;
+  padding: 12px;
+  background: #fff;
+  height: fit-content;
+}
+.right {
+  border: 1px solid #eee;
+  border-radius: 12px;
+  padding: 12px;
+  background: #fff;
+}
+.blockTitle {
+  font-weight: 900;
+  margin-bottom: 8px;
+}
+.list {
+  display: grid;
+  gap: 8px;
+}
+.btn,
+.selectedBtn {
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 10px;
+  background: #fff;
+  cursor: pointer;
+  text-align: left;
+}
+.selectedBtn {
+  border-color: #6b5b95;
+  box-shadow: 0 0 0 2px rgba(107, 91, 149, 0.15);
+}
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.tab,
+.tabActive {
+  border: 1px solid #ddd;
+  background: #fff;
+  border-radius: 10px;
+  padding: 8px 10px;
+  cursor: pointer;
+}
+.tabActive {
+  background: #f2eef7;
+  border-color: #6b5b95;
+  font-weight: 800;
+}
+.empty {
+  color: #666;
+  padding: 12px 0;
+}
+.sectionTitle {
+  margin: 12px 0 8px 0;
+  font-weight: 900;
+}

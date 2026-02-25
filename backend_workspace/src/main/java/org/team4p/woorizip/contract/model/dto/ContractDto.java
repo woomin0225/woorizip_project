@@ -1,8 +1,11 @@
 package org.team4p.woorizip.contract.model.dto;
 
-import java.util.Date;
 import java.sql.Timestamp;
+import java.util.Date;
+
 import org.team4p.woorizip.contract.jpa.entity.ContractEntity;
+import org.team4p.woorizip.room.jpa.repository.RoomRepository;
+
 import com.fasterxml.jackson.annotation.JsonFormat;
 
 import jakarta.validation.constraints.NotBlank;
@@ -43,6 +46,7 @@ public class ContractDto {
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private Timestamp paymentDate;
 
+    private RoomRepository roomRepository;
     /**
      * DTO -> Entity 변환
      */

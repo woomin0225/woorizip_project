@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import styles from "./FacilityList.module.css";
-import { fetchFacilityList } from "../../../facility/api/facility";
+import { getFacilityList } from "../../../facility/api/facilityApi";
 
 export default function FacilityList({ houseNo }) {
   const [items, setItems] = useState([]);
@@ -9,8 +9,8 @@ export default function FacilityList({ houseNo }) {
     if (!houseNo) return;
     (async () => {
       try {
-        const data = await fetchFacilityList(houseNo);
-        // fetchFacilityList는 data를 그대로 반환하므로 배열이면 그대로, 아니면 data.data 방어
+        const data = await getFacilityList(houseNo);
+        // getFacilityList data를 그대로 반환하므로 배열이면 그대로, 아니면 data.data 방어
         const list = Array.isArray(data) ? data : (data?.data ?? []);
         setItems(list);
       } catch {

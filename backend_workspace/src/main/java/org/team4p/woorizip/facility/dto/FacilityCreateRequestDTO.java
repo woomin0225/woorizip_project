@@ -29,12 +29,10 @@ public class FacilityCreateRequestDTO {
 	@NotNull(message="시설 카테고리를 선택해주세요.")
 	private Integer facilityCode;
 	
-	@NotBlank(message="시설 이름 입력이 필요합니다.")
 	@Size(max = 20, message = "시설 이름은 20자 이내여야 합니다.")
 	@TextOnly
 	private String facilityName;
 	
-	@NotNull(message="시설 옵션 정보가 필요합니다.")
 	@Size(max = 20, message = "시설 옵션 정보는 최대 10개까지만 등록 가능합니다.")
 	private Map<@Size(max = 20, message = "시설 옵션 이름은 20자 이내여야 합니다.") String, Boolean> facilityOptionInfo;
 	
@@ -61,12 +59,12 @@ public class FacilityCreateRequestDTO {
 	private List<FacilityImageDTO> images;
 	
 	@AssertTrue(message = "시설 위치는 0이 아닌 값으로 입력해주세요.")
-	public boolean isValidFloor() {
+	public boolean validValidFloor() {
 	    return this.facilityLocation != 0;
 	}
 	
 	@AssertTrue(message = "예약이 필요한 시설은 일일 최대 예약 횟수, 예약 단위 시간, 최대 이용 시간 입력이 필요합니다.")
-	public boolean isRsvnFieldsValid() {
+	public boolean validRsvnFieldsValid() {
 	    if (facilityRsvnRequiredYn) {
 	        return maxRsvnPerDay != null && 
 	               facilityRsvnUnitMinutes != null && 

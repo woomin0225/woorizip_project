@@ -85,6 +85,17 @@ public class SecurityConfig {
 
                 .requestMatchers(HttpMethod.POST, EndpointPolicy.PUBLIC_POST).permitAll()
                 
+                // house, room
+                .requestMatchers(HttpMethod.GET, EndpointPolicy.ESTATE_LESSOR_GET).hasAnyRole("USER", "ADMIN")
+                .requestMatchers(HttpMethod.POST, EndpointPolicy.ESTATE_LESSOR).hasAnyRole("USER", "ADMIN")
+                .requestMatchers(HttpMethod.PUT, EndpointPolicy.ESTATE_LESSOR).hasAnyRole("USER", "ADMIN")
+                .requestMatchers(HttpMethod.PATCH, EndpointPolicy.ESTATE_LESSOR).hasAnyRole("USER", "ADMIN")
+                .requestMatchers(HttpMethod.DELETE, EndpointPolicy.ESTATE_LESSOR).hasAnyRole("USER", "ADMIN")
+                .requestMatchers(HttpMethod.POST, EndpointPolicy.ESTATE_USER).hasAnyRole("USER", "ADMIN")
+                .requestMatchers(HttpMethod.PUT, EndpointPolicy.ESTATE_USER).hasAnyRole("USER", "ADMIN")
+                .requestMatchers(HttpMethod.DELETE, EndpointPolicy.ESTATE_USER).hasAnyRole("USER", "ADMIN")
+                
+                
                 // PUBLIC GET
                 .requestMatchers(HttpMethod.GET, EndpointPolicy.PUBLIC_GET).permitAll()
                 
