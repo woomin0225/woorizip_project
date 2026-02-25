@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   fetchInformationDetail,
   updateInformation,
-} from '../api/informationApi';
+} from '../api/InformationApi';
 import { unwrapApi } from '../../../shared/utils/apiUnwrap';
 import { useAuth } from '../../../app/providers/AuthProvider';
 

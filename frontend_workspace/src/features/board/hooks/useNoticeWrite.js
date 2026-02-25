@@ -1,6 +1,6 @@
 // src/features/board/hooks/useNoticeWrite.js
 import { useEffect, useState } from 'react';
-import { createNotice } from '../api/noticeApi';
+import { createNotice } from '../api/NoticeApi';
 import { useAuth } from '../../../app/providers/AuthProvider';
 
 export function useNoticeWrite({ navigate }) {

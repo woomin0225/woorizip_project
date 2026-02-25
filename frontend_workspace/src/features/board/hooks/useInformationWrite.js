@@ -1,6 +1,6 @@
 // src/features/board/hooks/useInformationWrite.js
 import { useEffect, useState } from 'react';
-import { createInformation } from '../api/informationApi';
+import { createInformation } from '../api/InformationApi';
 import { useAuth } from '../../../app/providers/AuthProvider';
 
 export function useInformationWrite({ navigate }) {

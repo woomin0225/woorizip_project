@@ -4,7 +4,7 @@ import { unwrapApi } from '../../../shared/utils/apiUnwrap';
 import {
   fetchInformationDetail,
   deleteInformation,
-} from '../api/informationApi';
+} from '../api/InformationApi';
 import { useAuth } from '../../../app/providers/AuthProvider';
 
 export function useInformationDetail({ postNo, nav }) {
