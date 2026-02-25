@@ -6,6 +6,8 @@ import ResultList from './../components/Search/ResultList';
 import { searchRooms } from '../api/roomApi';
 import { getHouseMarkers, getRoomsInHouseMarker } from '../api/houseApi';
 
+import styles from './Search.module.css';
+
 const PAGE_SIZE = 10;
 
 export default function Search() {
@@ -210,33 +212,43 @@ export default function Search() {
   }
 
   return (
-    <div>
-      <SearchFilterPanel
-        cond={cond}
-        handleCondChange={handleCondChange}
-        handleOptionsChange={handleOptionsChange}
-        clickSearch={clickSearch}
-      />
+    <div className={styles.page}>
+      {/* 상단: 필터(가로 한 줄로 만들 영역) */}
+      <div className={styles.top}>
+        <SearchFilterPanel
+          cond={cond}
+          handleCondChange={handleCondChange}
+          handleOptionsChange={handleOptionsChange}
+          clickSearch={clickSearch}
+        />
+      </div>
 
-      <ResultList
-        slice={rooms}
-        criterion={appliedCond?.criterion ?? cond.criterion}
-        onChangeCriterion={changeCriterion}
-        onLoadMore={onLoadMore}
-        hasNext={hasNext}
-        loading={loadingRooms}
-        wishMap={wishMap}
-        onToggleWish={toggleWish}
-      />
+      {/* 본문: 좌(리스트) + 우(지도) */}
+      <div className={styles.body}>
+        <div className={styles.left}>
+          <ResultList
+            slice={rooms}
+            criterion={appliedCond?.criterion ?? cond.criterion}
+            onChangeCriterion={changeCriterion}
+            onLoadMore={onLoadMore}
+            hasNext={hasNext}
+            loading={loadingRooms}
+            wishMap={wishMap}
+            onToggleWish={toggleWish}
+          />
+        </div>
 
-      <MapPanel
-        markers={markers}
-        loadingMarkers={loadingMarkers}
-        onChangeBbox={handleChangeBbox}
-        onMarkerClick={handleMarkerClick}
-        popup={markerPopup}
-        onClosePopup={closeMarkerPopup}
-      />
+        <div className={styles.right}>
+          <MapPanel
+            markers={markers}
+            loadingMarkers={loadingMarkers}
+            onChangeBbox={handleChangeBbox}
+            onMarkerClick={handleMarkerClick}
+            popup={markerPopup}
+            onClosePopup={closeMarkerPopup}
+          />
+        </div>
+      </div>
     </div>
   );
 }
