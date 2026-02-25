@@ -8,25 +8,6 @@ import RequireRole from './guards/RequireRole';
 import { ROLES } from '../../shared/constants/roles';
 import { ROUTES } from '../../shared/constants/routes';
 
-import Login from '../../features/auth/pages/Login';
-import Signup from '../../features/member/pages/Signup';
-import Home from '../../shared/pages/Home';
-
-import EventList from '../../features/board/pages/event/eventList';
-
-import NoticeList from '../../features/notice/pages/NoticeList';
-import NoticeDetail from '../../features/notice/pages/NoticeDetail';
-import NoticeWrite from '../../features/notice/pages/NoticeWrite';
-import NoticeUpdate from '../../features/notice/pages/NoticeUpdate';
-
-import BoardList from '../../features/board/pages/BoardList';
-import BoardWrite from '../../features/board/pages/BoardWrite';
-import BoardDetail from '../../features/board/pages/BoardDetail';
-import BoardUpdate from '../../features/board/pages/BoardUpdate';
-
-import MemberList from '../../features/member/pages/MemberList';
-import MemberInfo from '../../features/member/pages/MemberInfo';
-
 import AdminFacilityCategoryCreate from './../../features/facility/pages/admin/category/AdminFacilityCategoryCreate';
 import AdminFacilityCategoryList from './../../features/facility/pages/admin/category/AdminFacilityCategoryList';
 import AdminFacilityCategoryModify from './../../features/facility/pages/admin/category/AdminFacilityCategoryModify';
@@ -54,6 +35,15 @@ import UserReservationCreate from './../../features/facility/pages/user/reservat
 import UserReservationDetail from './../../features/facility/pages/user/reservation/UserReservationDetail';
 import UserReservationList from './../../features/facility/pages/user/reservation/UserReservationList';
 import UserReservationModify from './../../features/facility/pages/user/reservation/UserReservationModify';
+import ReviewCreate from './../../features/houseAndRoom/pages/ReviewCreate';
+import ReviewModify from './../../features/houseAndRoom/pages/ReviewModify';
+import Search from './../../features/houseAndRoom/pages/Search';
+import Detail from './../../features/houseAndRoom/pages/Detail';
+import Home from './../../shared/pages/Home';
+import Login from '../../features/member/pages/Login';
+import Signup from '../../features/member/pages/Signup';
+import NoticeList from './../../features/board/pages/notice/NoticeList';
+import NoticeDetail from './../../features/board/pages/notice/NoticeDetail';
 
 export const router = createBrowserRouter([
   {
@@ -68,16 +58,19 @@ export const router = createBrowserRouter([
       { path: '/notices', element: <NoticeList /> },
       { path: '/notices/:noticeNo', element: <NoticeDetail /> },
 
-      { path: '/boards', element: <BoardList /> },
-      { path: '/boards/:boardNum', element: <BoardDetail /> },
+      // { path: '/boards', element: <BoardList /> },
+      // { path: '/boards/:boardNum', element: <BoardDetail /> },
+      
+      { path: '/rooms', element: <Search /> },  // 방 찾기 페이지
+      { path: '/rooms/:roomNo', element: <Detail /> },  // 방 상세보기 페이지
 
       // 로그인 필요
       {
         element: <RequireAuth />,
         children: [
-          { path: '/boards/new', element: <BoardWrite /> },
-          { path: '/boards/:boardNum/edit', element: <BoardUpdate /> },
-          { path: ROUTES.MEMBER.MYPAGE, element: <MemberInfo /> },
+          // { path: '/boards/new', element: <BoardWrite /> },
+          // { path: '/boards/:boardNum/edit', element: <BoardUpdate /> },
+          // { path: ROUTES.MEMBER.MYPAGE, element: <MemberInfo /> },
 
           {
             path: '/lessor/facilities/list/:houseNo',
@@ -130,6 +123,9 @@ export const router = createBrowserRouter([
             path: '/user/reservation/edit/:reservationNo',
             element: <UserReservationModify />,
           },
+
+          { path: '/rooms/:roomNo/reviews/new', element: <ReviewCreate /> },  // 리뷰 등록 페이지
+          { path: '/rooms/:roomNo/reviews/:reviewNo/edit', element: <ReviewModify /> }, // 리뷰 수정 페이지
         ],
       },
 
@@ -137,9 +133,9 @@ export const router = createBrowserRouter([
       {
         element: <RequireRole allowedRoles={[ROLES.ADMIN]} />,
         children: [
-          { path: ROUTES.ADMIN.MEMBERS, element: <MemberList /> },
-          { path: '/notices/new', element: <NoticeWrite /> },
-          { path: '/notices/:noticeNo/edit', element: <NoticeUpdate /> },
+          // { path: ROUTES.ADMIN.MEMBERS, element: <MemberList /> },
+          // { path: '/notices/new', element: <NoticeWrite /> },
+          // { path: '/notices/:noticeNo/edit', element: <NoticeUpdate /> },
 
           {
             path: '/admin/categories/new',
