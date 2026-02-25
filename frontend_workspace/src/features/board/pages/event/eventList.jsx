@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useEventList } from '../../hooks/useEventList';
 import EventListItem from '../../components/EventListItem';
 import PostSearchBar from '../../components/PostSearchBar';
-import PagingView from '../../../../shared/components/PagingView';
+import PagingView from '../../../../shared/components/PagingView/PagingView';
 
 export default function EventList() {
   const nav = useNavigate();

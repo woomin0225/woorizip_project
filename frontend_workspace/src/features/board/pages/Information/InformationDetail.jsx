@@ -2,7 +2,7 @@
 import React from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
-import styles from '../notice/NoticeDtail.module.css'; //동일 CSS 재사용
+import styles from '../notice/NoticeDetail.module.css'; //동일 CSS 재사용
 import FileDownloadButton from '../../components/FileDownloadButton';
 import { useInformationDetail } from '../../hooks/useInformationDetail';
 import { downloadInformationFile } from '../../api/InformationApi';

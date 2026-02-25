@@ -1,6 +1,6 @@
 // src/features/board/components/CommentBox.jsx
 import React from 'react';
-import useQnaComments from '../../hooks/useQnaComments';
+import useQnaComments from '../hooks/useQnaComments';
 import CommentItem from './CommentItem';
 import CommentEditor from './CommentEditor';
 

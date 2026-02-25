@@ -6,7 +6,7 @@ import {
   createQnaReplyComment,
   updateQnaComment,
   deleteQnaComment,
-} from '../api/qnaCommentApi';
+} from '../api/CommentApi';
 
 export default function useQnaComments(postNo) {
   const [comments, setComments] = useState([]);
