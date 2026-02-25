@@ -1,6 +1,28 @@
-.row { border-top: 1px solid #eee; padding: 10px 0; }
-.top { display:flex; align-items:center; justify-content: space-between; gap: 10px; }
-.stars { font-weight: 700; }
-.meta { display:flex; gap: 10px; color: #666; font-size: 12px; }
-.actions { display:flex; gap: 6px; }
-.content { margin-top: 6px; color: #333; }
+.row {
+  border-top: 1px solid #eee;
+  padding: 10px 0;
+}
+.top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.stars {
+  font-weight: 700;
+}
+.meta {
+  display: flex;
+  gap: 10px;
+  color: #666;
+  font-size: 12px;
+}
+.actions {
+  display: flex;
+  gap: 6px;
+}
+.content {
+  margin-top: 6px;
+  color: #333;
+  white-space: pre-wrap;
+}
