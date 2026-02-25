@@ -1,0 +1,124 @@
+﻿.heroSection {
+  position: fixed;
+  inset: 0;
+  min-height: 100vh;
+  margin: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.contentSection {
+  position: relative;
+  z-index: 5;
+  margin-top: 0;
+  padding: 120px 0 40px;
+  min-height: calc(100vh - 120px);
+}
+
+.mainCard {
+  min-height: 72vh;
+}
+
+.menuTitle { margin: 0 0 14px; font-size: 1rem; font-weight: 700; color: #344767; }
+.menuList { display: flex; flex-direction: column; gap: 8px; }
+.menuItem { display: block; padding: 10px 12px; border-radius: 8px; color: #344767; font-weight: 600; text-decoration: none; background: #f8f9fe; }
+.menuItem:hover { background: #eef2ff; text-decoration: none; }
+.active { background: #11cdef; color: #fff; }
+
+.headerRow { margin-bottom: 18px; }
+.title { margin: 0; font-size: 1.6rem; color: #32325d; }
+.subTitle { margin: 6px 0 0; color: #8898aa; }
+
+.infoGrid { display: grid; grid-template-columns: 140px 1fr; gap: 10px 14px; align-items: center; }
+.infoGrid dt { margin: 0; font-weight: 700; color: #525f7f; }
+.infoGrid dd { margin: 0; color: #32325d; }
+
+.formRow { margin-bottom: 12px; }
+.fieldRow {
+  margin-bottom: 12px;
+  display: grid;
+  grid-template-columns: 130px 1fr auto;
+  gap: 10px;
+  align-items: center;
+}
+.fieldLabel {
+  margin: 0;
+  font-weight: 700;
+  color: #525f7f;
+}
+.fieldControl {
+  min-width: 0;
+}
+.inlineBtn {
+  border: 1px solid #11cdef;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-weight: 700;
+  color: #11cdef;
+  background: #fff;
+}
+.inlineBtnActive {
+  color: #fff;
+  background: #11cdef;
+}
+.input {
+  width: 100%;
+  border: 1px solid #d2d6da;
+  border-radius: 8px;
+  padding: 10px 12px;
+  outline: none;
+}
+.input:focus { border-color: #11cdef; }
+.readOnlyInput {
+  background: #f8f9fe;
+  color: #8898aa;
+}
+
+.primaryBtn {
+  border: 0;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-weight: 700;
+  color: #fff;
+  background: #11cdef;
+}
+
+.dangerBtn {
+  border: 0;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-weight: 700;
+  color: #fff;
+  background: #f5365c;
+}
+
+.grid2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.itemCard {
+  display: flex;
+  gap: 12px;
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+  padding: 12px;
+  background: #fff;
+  min-height: 180px;
+}
+.thumb {
+  width: 120px;
+  min-width: 120px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #9ad7ff, #d2f1ff);
+}
+.itemTitle { margin: 0; font-size: 0.95rem; color: #344767; }
+.meta { margin: 8px 0 4px; font-size: 0.86rem; color: #5e72e4; }
+.desc { margin: 0; font-size: 0.86rem; color: #525f7f; }
+
+@media (max-width: 991px) {
+  .mainCard { min-height: 0; }
+  .grid2 { grid-template-columns: 1fr; }
+  .fieldRow { grid-template-columns: 1fr; }
+}

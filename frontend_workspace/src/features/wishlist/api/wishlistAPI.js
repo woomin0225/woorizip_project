@@ -14,15 +14,17 @@ async function request(path, options = {}) {
   });
   const text = await response.text();
   const json = text ? JSON.parse(text) : null;
-  if (!response.ok) throw new Error(json?.message || 'Tour request failed');
+  if (!response.ok) throw new Error(json?.message || 'Wishlist request failed');
   return json?.data ?? json;
 }
 
-export async function createTour(roomNo, payload) {
-  return request(`/api/tour/insert/${roomNo}`, { method: 'POST', body: JSON.stringify(payload) });
+export async function getWishlistByUser(userNo, page = 1, size = 20) {
+  const data = await request(`/api/wishlist/${userNo}?page=${page}&size=${size}`);
+  if (Array.isArray(data?.content)) return data.content;
+  if (Array.isArray(data)) return data;
+  return [];
 }
 
-export async function getTourList() {
-  const data = await request('/api/tour/list/me');
-  return Array.isArray(data) ? data : [];
+export async function deleteWishlist(wishNo) {
+  return request(`/api/wishlist/delete/${wishNo}`, { method: 'DELETE' });
 }

@@ -1,0 +1,8 @@
+﻿.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.card { display: flex; gap: 12px; border: 1px solid #e9ecef; border-radius: 12px; padding: 12px; background: #fff; min-height: 180px; }
+.thumb { width: 120px; min-width: 120px; border-radius: 10px; background: linear-gradient(135deg, #9ad7ff, #d2f1ff); }
+.body { flex: 1; }
+.title { margin: 0; font-size: 0.95rem; color: #344767; }
+.meta { margin: 8px 0; font-size: 0.86rem; color: #5e72e4; }
+.deleteBtn { border: 0; border-radius: 8px; padding: 8px 12px; background: #f5365c; color: #fff; font-weight: 700; }
+@media (max-width: 991px) { .grid { grid-template-columns: 1fr; } }
