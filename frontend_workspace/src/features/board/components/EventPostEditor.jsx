@@ -1,0 +1,137 @@
+// src/features/board/components/EventPostEditor.jsx
+import React, { useRef } from 'react';
+import RichTextEditor from './RichTextEditor';
+
+export default function EventPostEditor({
+  mode = 'create', // 'create' | 'update'
+
+  form,
+  onChange,
+
+  bannerFile,
+  setBannerFile,
+
+  submitting = false,
+
+  onSubmit,
+  onCancel,
+}) {
+  const fileInputRef = useRef(null);
+  const isUpdate = mode === 'update';
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files[0];
+    if (file) {
+      setBannerFile(file); // 단일 파일만 허용
+    }
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setBannerFile(file); // 단일 파일만 허용
+    }
+  };
+
+  return (
+    <form onSubmit={onSubmit} style={{ padding: 24 }}>
+      <h2 style={{ textAlign: 'center', marginBottom: 24 }}>
+        {isUpdate ? '이벤트 수정' : '이벤트 등록'}
+      </h2>
+
+      {/* 배너 제목 */}
+      <div style={{ marginBottom: 20 }}>
+        <label style={{ display: 'block', marginBottom: 6 }}>배너 제목</label>
+        <input
+          type="text"
+          name="postTitle"
+          value={form.postTitle}
+          onChange={onChange}
+          disabled={submitting}
+          style={{
+            width: '100%',
+            height: 40,
+            padding: '0 10px',
+            border: '1px solid #ccc',
+          }}
+        />
+      </div>
+
+      {/* 배너 이미지 업로드 영역 */}
+      <div
+        onDragOver={(e) => e.preventDefault()}
+        onDrop={handleDrop}
+        onClick={() => fileInputRef.current.click()}
+        style={{
+          border: '2px dashed #bbb',
+          padding: 50,
+          textAlign: 'center',
+          cursor: 'pointer',
+          marginBottom: 30,
+          backgroundColor: '#fafafa',
+        }}
+      >
+        {bannerFile
+          ? `선택된 파일: ${bannerFile.name}`
+          : '이미지를 드래그하거나 클릭하여 업로드하세요'}
+      </div>
+
+      <input
+        type="file"
+        accept="image/*"
+        ref={fileInputRef}
+        style={{ display: 'none' }}
+        onChange={handleFileChange}
+        disabled={submitting}
+      />
+
+      {/* 배너 내용 */}
+      <div style={{ marginBottom: 30 }}>
+        <label style={{ display: 'block', marginBottom: 6 }}>배너 내용</label>
+        <RichTextEditor
+          value={form.postContent}
+          readOnly={submitting}
+          onChange={(html) =>
+            onChange({
+              target: { name: 'postContent', value: html },
+            })
+          }
+        />
+      </div>
+
+      {/* 버튼 */}
+      <div style={{ textAlign: 'center' }}>
+        <button
+          type="submit"
+          disabled={submitting}
+          style={{
+            padding: '10px 30px',
+            marginRight: 10,
+            cursor: 'pointer',
+          }}
+        >
+          {submitting
+            ? isUpdate
+              ? '수정중...'
+              : '등록중...'
+            : isUpdate
+              ? '수정'
+              : '등록'}
+        </button>
+
+        <button
+          type="button"
+          onClick={onCancel}
+          disabled={submitting}
+          style={{
+            padding: '10px 30px',
+            cursor: 'pointer',
+          }}
+        >
+          취소
+        </button>
+      </div>
+    </form>
+  );
+}
