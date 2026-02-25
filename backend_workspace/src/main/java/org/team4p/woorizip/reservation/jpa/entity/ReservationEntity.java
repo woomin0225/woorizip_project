@@ -48,7 +48,7 @@ public class ReservationEntity {
 	@Column(name = "rsvn_name", length = 20, nullable = false)
 	private String reservationName;
 
-	@Column(name = "rsvn_phone", length = 10, nullable = false)
+	@Column(name = "rsvn_phone", length = 15, nullable = false)
 	private String reservationPhone;
 
 	@Column(name = "rsvn_date", nullable = false)

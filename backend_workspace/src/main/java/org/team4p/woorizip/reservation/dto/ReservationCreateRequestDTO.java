@@ -28,7 +28,7 @@ public class ReservationCreateRequestDTO {
 	private String reservationName;
 	
 	@NotBlank(message="예약자 전화번호를 입력해주세요.")
-	@Size(max=10, message = "예약자 전화번호는 10자 이내여야 합니다.")
+	@Size(max=15, message = "예약자 전화번호는 15자 이내여야 합니다.")
 	@NumericOnly
 	private String reservationPhone;
 	

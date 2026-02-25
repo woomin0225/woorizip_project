@@ -1,5 +1,6 @@
 package org.team4p.woorizip.facility.controller;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.http.HttpStatus;
@@ -12,12 +13,18 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+import org.team4p.woorizip.auth.security.principal.CustomUserPrincipal;
 import org.team4p.woorizip.common.api.ApiResponse;
+import org.team4p.woorizip.common.util.FileNameChange;
+import org.team4p.woorizip.common.util.FileNameChange.RenameStrategy;
 import org.team4p.woorizip.facility.dto.FacilityCategoryCreateRequestDTO;
 import org.team4p.woorizip.facility.dto.FacilityCategoryDTO;
 import org.team4p.woorizip.facility.dto.FacilityCreateRequestDTO;
 import org.team4p.woorizip.facility.dto.FacilityDetailResponseDTO;
+import org.team4p.woorizip.facility.dto.FacilityImageDTO;
 import org.team4p.woorizip.facility.dto.FacilityListResponseDTO;
 import org.team4p.woorizip.facility.dto.FacilityModifyRequestDTO;
 import org.team4p.woorizip.facility.service.FacilityService;
@@ -37,16 +44,36 @@ public class FacilityController {
 	// 시설 목록 조회
 	@GetMapping({"", "/{houseNo}"})
 	public ResponseEntity<List<FacilityListResponseDTO>> getFacilityList(
-			@PathVariable String houseNo,
-			@AuthenticationPrincipal String currentUserNo) {
+			@PathVariable(value = "houseNo", required = false) String houseNo,
+			@AuthenticationPrincipal CustomUserPrincipal principal) {
+		String currentUserNo = (principal != null) ? principal.getUserNo() : null;
 		return ResponseEntity.ok(facilityService.getFacilityList(houseNo, currentUserNo));
 	}
 	
 	// 시설 신규 등록
 	@PostMapping
 	public ResponseEntity<ApiResponse<String>> createFacility(
-			@Valid @RequestBody FacilityCreateRequestDTO dto,
-			@AuthenticationPrincipal String currentUserNo) {
+			@RequestPart(value = "dto") @Valid FacilityCreateRequestDTO dto,
+		    @RequestPart(value = "files", required = false) List<MultipartFile> files,
+			@AuthenticationPrincipal CustomUserPrincipal principal) {
+		if (files != null && !files.isEmpty()) {
+	        List<FacilityImageDTO> imageDtoList = new ArrayList<>();
+	        
+	        for (MultipartFile file : files) {
+	            String originalName = file.getOriginalFilename();
+	            String storedName = FileNameChange.change(originalName, RenameStrategy.DATETIME_UUID);
+	            
+	            FacilityImageDTO imageDto = FacilityImageDTO.builder()
+	                .facilityOriginalImageName(originalName)
+	                .facilityStoredImageName(storedName)
+	                .build();
+	            
+	            imageDtoList.add(imageDto);
+	        }
+	        
+	        dto.setImages(imageDtoList);
+	    }
+		String currentUserNo = (principal != null) ? principal.getUserNo() : null;
 		facilityService.createFacility(dto, currentUserNo);
         return ResponseEntity.status(HttpStatus.CREATED)
                              .body(ApiResponse.ok("새로운 시설이 정상적으로 등록되었습니다.", "facilityCreateSuccess"));
@@ -74,15 +101,15 @@ public class FacilityController {
 	@PatchMapping("/categories/{facilityCode}")
 	@PreAuthorize("hasRole('ADMIN')")
 	public ResponseEntity<ApiResponse<String>> modifyFacilityCategory(
-			@PathVariable Integer facilityCode,
+			@PathVariable(value="facilityCode") Integer facilityCode,
 			@Valid @RequestBody FacilityCategoryDTO dto) {
 		facilityService.modifyFacilityCategory(facilityCode, dto);
         return ResponseEntity.ok(ApiResponse.ok("시설 카테고리의 내용이 정상적으로 수정되었습니다.", "facilityCategoryModifySuccess"));
 	}
 	
 	// 시설 상세 조회
-	@GetMapping("/{facilityNo}")
-	public ResponseEntity<FacilityDetailResponseDTO> getFacilityDetails(@PathVariable String facilityNo) {
+	@GetMapping("/detail/{facilityNo}")
+	public ResponseEntity<FacilityDetailResponseDTO> getFacilityDetails(@PathVariable(value = "facilityNo") String facilityNo) {
 		FacilityDetailResponseDTO response = facilityService.getFacilityDetails(facilityNo);
         return ResponseEntity.ok(response);
 	}
@@ -90,9 +117,10 @@ public class FacilityController {
 	// 시설 정보 수정
 	@PatchMapping("/{facilityNo}")
 	public ResponseEntity<ApiResponse<String>> modifyFacility(
-			@PathVariable String facilityNo,
+			@PathVariable(value="facilityNo") String facilityNo,
 		    @Valid @RequestBody FacilityModifyRequestDTO dto,
-		    @AuthenticationPrincipal String currentUserNo) {
+		    @AuthenticationPrincipal CustomUserPrincipal principal) {
+		String currentUserNo = (principal != null) ? principal.getUserNo() : null;
 		facilityService.modifyFacility(facilityNo, dto, currentUserNo);
         return ResponseEntity.ok(ApiResponse.ok("해당 시설의 정보가 정상적으로 수정되었습니다.", "facilityModifySuccess"));
 	}

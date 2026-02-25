@@ -5,10 +5,9 @@ import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.team4p.woorizip.facility.jpa.entity.FacilityEntity;
-import org.team4p.woorizip.house.jpa.entity.HouseEntity;
 
 public interface FacilityRepository extends JpaRepository<FacilityEntity, String> {
-	List<FacilityEntity> findByHouse_HouseNoAndFacilityDeletedAtIsNull(String houseNo);
-	Optional<FacilityEntity> findFirstByHouse_HouseNoAndCategory_FacilityCodeOrderByFacilitySequenceDesc(HouseEntity house, Integer facilityCode);
+	List<FacilityEntity> findByHouseHouseNoAndFacilityDeletedAtIsNull(String houseNo);
+	Optional<FacilityEntity> findFirstByHouse_HouseNoAndCategory_FacilityCodeOrderByFacilitySequenceDesc(String houseNo, Integer facilityCode);
 	Optional<FacilityEntity> findByFacilityNoAndFacilityDeletedAtIsNull(String facilityNo);
 }
