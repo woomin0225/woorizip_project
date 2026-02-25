@@ -1,8 +1,8 @@
 // src/features/board/pages/event/eventUpdate.jsx
 import React from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import PostEditor from '../../components/PostEditor';
 import { useEventUpdate } from '../../hooks/useEventUpdate';
+import EventPostEditor from '../../components/EventPostEditor';
 
 export default function EventUpdate() {
   const { postNo } = useParams();
@@ -39,33 +39,16 @@ export default function EventUpdate() {
       <h2 style={{ textAlign: 'center', marginBottom: 24 }}>이벤트 수정</h2>
 
       <form onSubmit={handleSubmit}>
-        <PostEditor
+        <EventPostEditor
           mode={mode}
           form={form}
           onChange={onChange}
-          existingFiles={existingFiles}
-          deleteFileNos={deleteFileNos}
-          toggleDeleteFile={toggleDeleteFile}
-          newFiles={newFiles}
-          setNewFiles={setNewFiles}
+          bannerFile={bannerFile}
+          setBannerFile={setBannerFile}
           submitting={submitting}
           onSubmit={handleSubmit}
           onCancel={() => navigate(`/events/${postNo}`)}
         />
-
-        <div style={{ marginTop: 20 }}>
-          <label>배너 이미지 변경</label>
-          <br />
-          <input
-            type="file"
-            accept="image/*"
-            onChange={(e) => setBannerFile(e.target.files[0])}
-            disabled={submitting}
-          />
-          {bannerFile && (
-            <div style={{ marginTop: 8 }}>선택된 파일: {bannerFile.name}</div>
-          )}
-        </div>
       </form>
     </div>
   );
