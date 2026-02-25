@@ -1,10 +1,10 @@
 // src/features/facility/pages/facility/FacilityView.jsx
 import { useEffect, useState } from 'react';
-import styles from './LessorFacilityList.module.css'; 
+import styles from './FacilityView.module.css'; 
 import HouseList from '../../components/list/HouseList';
 import FacilityList from '../../components/list/FacilityList';
 import { getMyHouses } from '../../../houseAndRoom/api/houseApi';
-import useFacilityList from '../../hooks/facility/useFacilityList';
+import { useFacilityList } from '../../hooks/facility/useFacilityList';
 
 export default function FacilityView() {
   const [houses, setHouses] = useState([]);

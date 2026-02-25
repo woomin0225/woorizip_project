@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Container, Row, Col } from 'reactstrap';
-import FacilityCard from '../card/FacilityCard';
+import FacilityCard from './FacilityCard';
 
 class FacilityList extends React.Component {
   constructor(props) {
@@ -29,5 +29,5 @@ class FacilityList extends React.Component {
   }
 }
 
-export default FacilityListPage;
+export default FacilityList;
 
