@@ -7,7 +7,7 @@ import RequireAuth from './guards/RequireAuth';
 import RequireRole from './guards/RequireRole';
 import { ROLES } from '../../shared/constants/roles';
 import { ROUTES } from '../../shared/constants/routes';
-import Login from '../../features/auth/pages/Login';
+import Login from '../../features/member/pages/Login';
 import Signup from '../../features/member/pages/Signup';
 import Home from '../../shared/pages/Home';
 
@@ -24,7 +24,7 @@ import BoardDetail from '../../features/board/pages/BoardDetail';
 import BoardUpdate from '../../features/board/pages/BoardUpdate';
 
 import MemberList from '../../features/member/pages/MemberList';
-import MemberInfo from '../../features/member/pages/MemberInfo';
+// import MemberInfo from '../../features/member/pages/MemberInfo';
 
 import FacilityCategoryList from '../../features/facility/pages/category/FacilityCategoryList';
 import FacilityCategoryForm from './../../features/facility/pages/category/FacilityCategoryForm';
@@ -52,9 +52,9 @@ export const router = createBrowserRouter([
 
       // { path: '/boards', element: <BoardList /> },
       // { path: '/boards/:boardNum', element: <BoardDetail /> },
-      
-      { path: '/rooms', element: <Search /> },  // 방 찾기 페이지
-      { path: '/rooms/:roomNo', element: <Detail /> },  // 방 상세보기 페이지
+
+      { path: '/rooms', element: <Search /> }, // 방 찾기 페이지
+      { path: '/rooms/:roomNo', element: <Detail /> }, // 방 상세보기 페이지
 
       // 로그인 필요
       {
@@ -62,29 +62,32 @@ export const router = createBrowserRouter([
         children: [
           { path: '/boards/new', element: <BoardWrite /> },
           { path: '/boards/:boardNum/edit', element: <BoardUpdate /> },
-          { path: ROUTES.MEMBER.MYPAGE, element: <MemberInfo /> },
+          // { path: ROUTES.MEMBER.MYPAGE, element: <MemberInfo /> },
           // { path: '/boards/new', element: <BoardWrite /> },
           // { path: '/boards/:boardNum/edit', element: <BoardUpdate /> },
           // { path: ROUTES.MEMBER.MYPAGE, element: <MemberInfo /> },
           {
             path: ROUTES.USER.FACILITY,
-            element: <FacilityView />
+            element: <FacilityView />,
           },
           {
             path: ROUTES.USER.FACILITY_FORM,
-            element: <FacilityForm />
+            element: <FacilityForm />,
           },
           {
             path: ROUTES.USER.RESERVATION,
-            element: <ReservationView />
+            element: <ReservationView />,
           },
           {
             path: ROUTES.USER.RESERVATION_FORM,
-            element: <ReservationForm />
+            element: <ReservationForm />,
           },
 
-          { path: '/rooms/:roomNo/reviews/new', element: <ReviewCreate /> },  // 리뷰 등록 페이지
-          { path: '/rooms/:roomNo/reviews/:reviewNo/edit', element: <ReviewModify /> }, // 리뷰 수정 페이지
+          { path: '/rooms/:roomNo/reviews/new', element: <ReviewCreate /> }, // 리뷰 등록 페이지
+          {
+            path: '/rooms/:roomNo/reviews/:reviewNo/edit',
+            element: <ReviewModify />,
+          }, // 리뷰 수정 페이지
         ],
       },
 
@@ -98,13 +101,13 @@ export const router = createBrowserRouter([
 
           {
             path: ROUTES.ADMIN.CATEGORY,
-            element: <FacilityCategoryList />
+            element: <FacilityCategoryList />,
           },
           {
             path: ROUTES.ADMIN.CATEGORY_FORM,
             element: <FacilityCategoryForm />,
-          }
-        ]
+          },
+        ],
       },
     ],
   },

@@ -15,7 +15,6 @@ import {
   Col,
   FormFeedback,
 } from 'reactstrap';
-import DemoNavbar from '../components/Navbars/DemoNavbar.js';
 
 export default function Signup() {
   const navigate = useNavigate();
@@ -53,7 +52,6 @@ export default function Signup() {
 
   return (
     <>
-      <DemoNavbar />
       <main ref={mainRef}>
         <section className="section section-shaped section-lg">
           <div className="shape shape-style-1 bg-gradient-info">

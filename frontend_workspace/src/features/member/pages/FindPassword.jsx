@@ -13,8 +13,6 @@ import {
   Row,
   Col,
 } from 'reactstrap';
-import DemoNavbar from '../components/Navbars/DemoNavbar.js';
-import SimpleFooter from '../components/Footers/SimpleFooter.js';
 
 export default function FindPassword() {
   const mainRef = useRef(null);
@@ -34,7 +32,6 @@ export default function FindPassword() {
 
   return (
     <>
-      <DemoNavbar />
       <main ref={mainRef}>
         <section className="section section-shaped section-lg">
           <div className="shape shape-style-1 bg-gradient-info">
@@ -141,7 +138,6 @@ export default function FindPassword() {
           </Container>
         </section>
       </main>
-      <SimpleFooter />
     </>
   );
 }

@@ -10,8 +10,6 @@ import {
   Col,
   Input,
 } from 'reactstrap';
-import DemoNavbar from '../components/Navbars/DemoNavbar.js';
-import SimpleFooter from '../components/Footers/SimpleFooter.js';
 
 export default function AdminUserList() {
   const mainRef = useRef(null);
@@ -36,7 +34,6 @@ export default function AdminUserList() {
 
   return (
     <>
-      <DemoNavbar />
       <main ref={mainRef}>
         <section className="section section-shaped section-lg">
           <div className="shape shape-style-1 bg-gradient-info">
@@ -180,7 +177,6 @@ export default function AdminUserList() {
           </Container>
         </section>
       </main>
-      <SimpleFooter />
     </>
   );
 }
