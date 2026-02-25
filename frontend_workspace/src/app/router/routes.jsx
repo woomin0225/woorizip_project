@@ -56,6 +56,7 @@ import HouseRegistration from "../../features/houseAndRoom/pages/house/HouseRegi
 import HouseSelection from "../../features/houseAndRoom/pages/house/HouseSelection";
 import RoomRegistration from "../../features/houseAndRoom/pages/room/RoomRegistration";
 import EstateModify from '../../features/houseAndRoom/pages/EstateModify';
+import Delete from '../../features/houseAndRoom/pages/Delete';
 
 export const router = createBrowserRouter([
   {
@@ -131,6 +132,7 @@ export const router = createBrowserRouter([
           { path: "/estate/houses/new", element: <HouseRegistration /> },
           { path: "/estate/houses/select", element: <HouseSelection /> },
           { path: "/estate/houses/:houseNo/rooms/new", element: <RoomRegistration /> },
+          { path: "/estate/delete", element: <Delete /> },
         ],
       },
 
