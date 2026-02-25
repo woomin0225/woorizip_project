@@ -51,44 +51,105 @@ export default function MyInfo() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    getMyInfo().then(setInfo).catch((e) => setError(e.message || '내정보 조회 실패'));
+    getMyInfo()
+      .then(setInfo)
+      .catch((e) => setError(e.message || '내정보 조회 실패'));
   }, []);
 
-  const birthDate = normalizeBirthDate(pickFirst(info?.birth_date, info?.birthDate));
+  const birthDate = normalizeBirthDate(
+    pickFirst(info?.birth_date, info?.birthDate)
+  );
 
   return (
     <>
-      <section className={`section section-shaped section-lg ${styles.heroSection}`}><div className="shape shape-style-1 bg-gradient-info"><span /><span /><span /><span /><span /><span /><span /><span /></div></section>
-      <section className={styles.contentSection}><Container><Row>
-        <Col lg="3" className="mb-4"><Card className={`shadow border-0 ${styles.mainCard}`}><CardBody><MyPageSideNav /></CardBody></Card></Col>
-        <Col lg="9"><Card className={`shadow border-0 ${styles.mainCard}`}><CardBody>
-          <div className={styles.headerRow}><h2 className={styles.title}>내정보 보기</h2><p className={styles.subTitle}>회원 정보를 확인합니다.</p></div>
-          {error && <p className={styles.desc}>{error}</p>}
-          {!error && !info && <p className={styles.desc}>불러오는 중...</p>}
-          {!!info && (
-            <>
-              <dl className={styles.infoGrid}>
-                <dt>이메일 아이디</dt><dd>{pickFirst(info.emailId, info.email_id, info.email) || '-'}</dd>
-                <dt>이름</dt><dd>{info.name || '-'}</dd>
-                <dt>휴대번호</dt><dd>{pickFirst(info.phone, info.phoneNumber, info.phone_number) || '-'}</dd>
-                <dt>주소</dt><dd>{pickFirst(info.address, info.addr, info.roadAddress) || '-'}</dd>
-                <dt>닉네임</dt><dd>{pickFirst(info.nickname, info.nickName) || '-'}</dd>
-                <dt>나이</dt><dd>{calculateAge(birthDate)}</dd>
-                <dt>성별</dt><dd>{genderLabel(info.gender)}</dd>
-                <dt>회원유형</dt><dd>{userTypeLabel(info.type)}</dd>
-              </dl>
-              <button
-                type="button"
-                className={styles.primaryBtn}
-                style={{ marginTop: 16 }}
-                onClick={() => navigate('/mypage/edit')}
-              >
-                수정하기
-              </button>
-            </>
-          )}
-        </CardBody></Card></Col>
-      </Row></Container></section>
+      <section
+        className={`section section-shaped section-lg ${styles.heroSection}`}
+      >
+        <div className="shape shape-style-1 bg-gradient-info">
+          <span />
+          <span />
+          <span />
+          <span />
+          <span />
+          <span />
+          <span />
+          <span />
+        </div>
+      </section>
+      <section className={styles.contentSection}>
+        <Container>
+          <Row>
+            <Col lg="3" className="mb-4">
+              <Card className={`shadow border-0 ${styles.mainCard}`}>
+                <CardBody>
+                  <MyPageSideNav />
+                </CardBody>
+              </Card>
+            </Col>
+            <Col lg="9">
+              <Card className={`shadow border-0 ${styles.mainCard}`}>
+                <CardBody>
+                  <div className={styles.headerRow}>
+                    <h2 className={styles.title}>내정보 보기</h2>
+                    <p className={styles.subTitle}>회원 정보를 확인합니다.</p>
+                  </div>
+                  {error && <p className={styles.desc}>{error}</p>}
+                  {!error && !info && (
+                    <p className={styles.desc}>불러오는 중...</p>
+                  )}
+                  {!!info && (
+                    <>
+                      <dl className={styles.infoGrid}>
+                        <dt>이메일</dt>
+                        <dd>
+                          {pickFirst(info.emailId, info.email_id, info.email) ||
+                            '-'}
+                        </dd>
+                        <dt>이름</dt>
+                        <dd>{info.name || '-'}</dd>
+                        <dt>휴대번호</dt>
+                        <dd>
+                          {pickFirst(
+                            info.phone,
+                            info.phoneNumber,
+                            info.phone_number
+                          ) || '-'}
+                        </dd>
+                        <dt>주소</dt>
+                        <dd>
+                          {pickFirst(
+                            info.address,
+                            info.addr,
+                            info.roadAddress
+                          ) || '-'}
+                        </dd>
+                        <dt>닉네임</dt>
+                        <dd>
+                          {pickFirst(info.nickname, info.nickName) || '-'}
+                        </dd>
+                        <dt>나이</dt>
+                        <dd>{calculateAge(birthDate)}</dd>
+                        <dt>성별</dt>
+                        <dd>{genderLabel(info.gender)}</dd>
+                        <dt>회원유형</dt>
+                        <dd>{userTypeLabel(info.type)}</dd>
+                      </dl>
+                      <button
+                        type="button"
+                        className={styles.primaryBtn}
+                        style={{ marginTop: 16 }}
+                        onClick={() => navigate('/mypage/edit')}
+                      >
+                        수정하기
+                      </button>
+                    </>
+                  )}
+                </CardBody>
+              </Card>
+            </Col>
+          </Row>
+        </Container>
+      </section>
     </>
   );
 }

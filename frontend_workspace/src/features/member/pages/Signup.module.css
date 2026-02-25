@@ -1,32 +1,113 @@
-/* src/features/user/pages/Signup.module.css */
-.container {
-  max-width: 500px;
-  margin: 2rem auto;
-  padding: 1rem;
-  border: 1px solid #ccc;
+.formSection {
+  border: 1px solid #e6ebf1;
+  border-radius: 12px;
+  background: #ffffff;
+  padding: 16px;
+  margin-bottom: 14px;
 }
-.form {
+
+.sectionBody {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  align-items: flex-start;
+  gap: 12px;
 }
-.group {
+
+.sectionTitle {
+  margin: 0 0 12px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #344767;
+}
+
+.inlineActionBtn {
+  min-width: 96px;
+  border-radius: 8px;
+  margin-left: 10px;
+}
+
+.hintText {
+  margin-top: 8px;
+  color: #8898aa;
+  font-size: 0.78rem;
+}
+
+.derivedBox {
+  border: 1px solid #d7e4ff;
+  background: #f6f9ff;
+  border-radius: 10px;
+  padding: 10px 12px;
+  color: #344767;
+  font-size: 0.88rem;
+}
+
+.rrnMask {
+  min-width: 84px;
+  justify-content: center;
+  letter-spacing: 2px;
+  color: #8898aa;
+}
+
+.rrnBackInput {
+  max-width: 72px;
+  flex: 0 0 72px;
+  text-align: center;
+}
+
+.rrnWrap {
+  width: min(250px, 100%);
+}
+
+.narrowInputWrap {
+  width: min(540px, 100%);
+}
+
+.inlineInputAction {
+  width: min(540px, 100%);
   display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+  align-items: center;
 }
-.group input,
-.group select {
-  padding: 0.5rem;
+
+.inlineInputAction :global(.input-group) {
+  flex: 1;
+  min-width: 0;
 }
-.btn {
-  padding: 0.75rem;
-  background: #333;
-  color: #fff;
+
+.typeField {
+  width: min(360px, 100%);
+}
+
+.typePills {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.typePill {
+  border: 1px solid #dbe4f0;
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: #f8fbff;
+  color: #344767;
+  font-weight: 600;
+  text-align: center;
   cursor: pointer;
-  border: none;
 }
-.error {
-  color: red;
-  font-size: 0.9rem;
+
+.typePillActive {
+  border-color: #11cdef;
+  background: #11cdef;
+  color: #fff;
+}
+
+@media (max-width: 767px) {
+  .inlineInputAction {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .inlineActionBtn {
+    margin-left: 0;
+  }
 }

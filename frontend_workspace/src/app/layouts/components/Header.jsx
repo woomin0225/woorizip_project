@@ -1,7 +1,9 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Headroom from 'headroom.js';
 import { ROUTES } from './../../../shared/constants/routes';
+import logo from '../../../logo.png';
+
 import {
   Button,
   UncontrolledCollapse,
@@ -25,7 +27,9 @@ export default function Header() {
   const isLoggedIn = !!token;
 
   useEffect(() => {
-    if (token) {
+    const syncUserState = () => {
+      if (!token) return;
+
       try {
         const base64Url = token.split('.')[1];
         const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
@@ -47,15 +51,22 @@ export default function Header() {
 
         setMyPageRoute(isAdmin ? ROUTES.ADMIN.MEMBERS : ROUTES.MEMBER.MYPAGE);
 
-        if (decodedToken.name) {
-          setUserName(decodedToken.name);
-        } else {
-          setUserName('고객');
-        }
+        const latestName =
+          localStorage.getItem('userName') || decodedToken.name || '고객';
+        setUserName(latestName);
       } catch (e) {
         console.error('토큰 파싱 에러:', e);
       }
-    }
+    };
+
+    syncUserState();
+    window.addEventListener('profile-updated', syncUserState);
+    window.addEventListener('storage', syncUserState);
+
+    return () => {
+      window.removeEventListener('profile-updated', syncUserState);
+      window.removeEventListener('storage', syncUserState);
+    };
   }, [token]);
 
   useEffect(() => {
@@ -65,6 +76,7 @@ export default function Header() {
 
   const handleLogout = () => {
     localStorage.removeItem('accessToken');
+    localStorage.removeItem('userName');
     alert('로그아웃 되었습니다.');
     navigate('/');
     window.location.reload();
@@ -79,12 +91,7 @@ export default function Header() {
       >
         <Container>
           <NavbarBrand className="mr-lg-5" to="/" tag={Link}>
-            <span
-              className="text-white font-weight-bold"
-              style={{ fontSize: '1.2rem' }}
-            >
-              우리집
-            </span>
+            <img src={logo} alt="우리집 로고" style={{ height: '40px' }} />
           </NavbarBrand>
 
           <button className="navbar-toggler" id="navbar_global">
@@ -122,7 +129,7 @@ export default function Header() {
             >
               <NavItem>
                 <NavLink to="/about" tag={Link}>
-                  웹사이트 소개
+                  소개
                 </NavLink>
               </NavItem>
               <NavItem>
@@ -172,7 +179,6 @@ export default function Header() {
                   </div>
                 </NavItem>
               ) : (
-                // 로그아웃
                 <NavItem className="d-none d-lg-block ml-lg-4">
                   <Button
                     className="btn-neutral btn-icon mr-2"

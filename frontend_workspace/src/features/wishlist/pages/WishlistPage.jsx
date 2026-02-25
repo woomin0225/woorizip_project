@@ -2,8 +2,20 @@
 import { Container, Row, Col, Card, CardBody } from 'reactstrap';
 import MyPageSideNav from '../../user/components/MyPageSideNav';
 import { getWishlistByUser, deleteWishlist } from '../api/wishlistAPI';
+import { parseJwt } from '../../../app/providers/utils/jwt';
 import WishlistTable from '../components/WishlistTable';
 import styles from '../../../app/layouts/MyPageLayout.module.css';
+
+function getCurrentUserNo() {
+  const fromStorage = localStorage.getItem('userNo') || localStorage.getItem('userId');
+  if (fromStorage) return fromStorage;
+
+  const token = localStorage.getItem('accessToken');
+  const payload = parseJwt(token);
+  if (!payload) return null;
+
+  return payload.userNo || payload.userId || null;
+}
 
 export default function WishlistPage() {
   const [items, setItems] = useState([]);
@@ -12,8 +24,11 @@ export default function WishlistPage() {
   async function load() {
     try {
       setError('');
-      const userNo = localStorage.getItem('userNo');
-      if (!userNo) throw new Error('로그인 사용자 번호가 없습니다.');
+      const userNo = getCurrentUserNo();
+      if (!userNo) {
+        throw new Error('로그인 사용자 정보를 확인할 수 없습니다. 다시 로그인해 주세요.');
+      }
+
       const list = await getWishlistByUser(userNo, 1, 20);
       setItems(list);
     } catch (e) {
@@ -22,7 +37,9 @@ export default function WishlistPage() {
     }
   }
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+  }, []);
 
   return (
     <>

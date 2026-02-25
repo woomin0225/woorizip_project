@@ -1,13 +1,6 @@
-import logo from './logo.svg';
+import logo from './logo.png';
 import './App.css';
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
-import Signup from './features/member/pages/Signup';
-import FindId from './features/member/pages/FindId';
-import Login from './features/member/pages/Login';
-import MemberList from './features/member/pages/MemberList';
-import FindPassword from './features/member/pages/FindPassword';
-import Main from './features/member/pages/Main';
-import OAuth2RedirectHandler from './features/member/pages/OAuth2RedirectHandler';
 import './assets/css/argon-design-system-react.min.css';
 import AuthProvider from './app/providers/AuthProvider';
 import AppRouter from './app/router';
@@ -17,28 +10,6 @@ function App() {
     <AuthProvider>
       <AppRouter />
     </AuthProvider>
-    // <BrowserRouter>
-    //   {/* 라우트 설정 */}
-    //   <Routes>
-    //     <Route path="/login" element={<Login />} />
-    //     <Route path="/signup" element={<Signup />} />
-    //     <Route path="/find-id" element={<FindId />} />
-    //     <Route path="/find-password" element={<FindPassword />} />
-    //     <Route path="/admin/users" element={<MemberList />} />
-    //     <Route path="/oauth2/redirect" element={<OAuth2RedirectHandler />} />
-    //     <Route path="/" element={<Main />} />
-
-    //     {/* 기본 경로 설정 */}
-    //     <Route
-    //       path="/"
-    //       element={
-    //         <div style={{ padding: '20px' }}>
-    //           <h1>메인 페이지</h1>상단 메뉴를 클릭해서 각 페이지를 확인하세요.
-    //         </div>
-    //       }
-    //     />
-    //   </Routes>
-    // </BrowserRouter>
   );
 }
 

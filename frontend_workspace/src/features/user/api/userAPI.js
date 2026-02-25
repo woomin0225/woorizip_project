@@ -14,8 +14,18 @@ async function request(path, options = {}) {
     ...options,
   });
   const text = await response.text();
-  const json = text ? JSON.parse(text) : null;
-  if (!response.ok) throw new Error(json?.message || 'User request failed');
+  let json = null;
+
+  try {
+    json = text ? JSON.parse(text) : null;
+  } catch (_) {
+    json = { message: text || 'User request failed' };
+  }
+
+  if (!response.ok) {
+    const message = json?.message || text || 'User request failed';
+    throw new Error(`[${response.status}] ${message}`);
+  }
   return json?.data ?? json;
 }
 
@@ -57,3 +67,4 @@ export async function updateMyInfo(payload) {
     body: JSON.stringify(payload),
   });
 }
+

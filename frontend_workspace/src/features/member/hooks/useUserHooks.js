@@ -1,8 +1,25 @@
-import { useState, useEffect, useCallback } from 'react';
-
+﻿import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 
-// 회원가입
+function parseJwtPayload(token) {
+  if (!token) return null;
+  const parts = token.split('.');
+  if (parts.length !== 3) return null;
+
+  try {
+    const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    const json = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map((c) => `%${(`00${c.charCodeAt(0).toString(16)}`).slice(-2)}`)
+        .join('')
+    );
+    return JSON.parse(json);
+  } catch {
+    return null;
+  }
+}
+
 export function useSignup() {
   const [form, setForm] = useState({
     emailId: '',
@@ -10,33 +27,111 @@ export function useSignup() {
     passwordConfirm: '',
     name: '',
     phone: '',
-    gender: 'M',
-    birthDate: '',
+    rrnFront: '',
+    rrnBack: '',
+    phoneCode: '',
     type: 'USER',
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [isIdChecked, setIsIdChecked] = useState(false);
+  const [isPhoneCodeSent, setIsPhoneCodeSent] = useState(false);
+  const [isPhoneVerified, setIsPhoneVerified] = useState(false);
+  const [phoneCode, setPhoneCode] = useState('');
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
     if (name === 'emailId') setIsIdChecked(false);
+    if (name === 'phone') {
+      setIsPhoneCodeSent(false);
+      setIsPhoneVerified(false);
+      setPhoneCode('');
+      setForm((prev) => ({ ...prev, phoneCode: '' }));
+    }
+  };
+
+  const deriveBirthAndGender = () => {
+    const front = String(form.rrnFront || '').replace(/\D/g, '');
+    const back = String(form.rrnBack || '').replace(/\D/g, '');
+    if (front.length !== 6 || back.length !== 1) return null;
+
+    const yy = Number(front.slice(0, 2));
+    const mm = Number(front.slice(2, 4));
+    const dd = Number(front.slice(4, 6));
+    const code = Number(back);
+
+    let century = null;
+    let gender = null;
+    if (code === 1 || code === 2 || code === 5 || code === 6) century = 1900;
+    if (code === 3 || code === 4 || code === 7 || code === 8) century = 2000;
+    if (code === 9 || code === 0) century = 1800;
+    if (code === 1 || code === 3 || code === 5 || code === 7 || code === 9) gender = 'M';
+    if (code === 2 || code === 4 || code === 6 || code === 8 || code === 0) gender = 'F';
+    if (!century || !gender) return null;
+
+    const year = century + yy;
+    const birthDate = `${year}-${String(mm).padStart(2, '0')}-${String(dd).padStart(2, '0')}`;
+    const date = new Date(`${birthDate}T00:00:00`);
+
+    if (
+      Number.isNaN(date.getTime()) ||
+      date.getFullYear() !== year ||
+      date.getMonth() + 1 !== mm ||
+      date.getDate() !== dd
+    ) {
+      return null;
+    }
+
+    const today = new Date();
+    let age = today.getFullYear() - year;
+    const monthDiff = today.getMonth() + 1 - mm;
+    const dayDiff = today.getDate() - dd;
+    if (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) age -= 1;
+
+    return { birthDate, gender, age: age >= 0 ? age : 0 };
+  };
+
+  const handleSendPhoneCode = () => {
+    const phone = String(form.phone || '').replace(/\D/g, '');
+    if (phone.length < 10 || phone.length > 11) {
+      alert('휴대폰 번호를 올바르게 입력해주세요.');
+      return;
+    }
+    const issued = String(Math.floor(100000 + Math.random() * 900000));
+    setPhoneCode(issued);
+    setIsPhoneCodeSent(true);
+    setIsPhoneVerified(false);
+    alert(`인증번호 ${issued}가 발송되었습니다.`);
+  };
+
+  const handleVerifyPhoneCode = () => {
+    if (!isPhoneCodeSent) {
+      alert('먼저 인증번호 발송을 진행해주세요.');
+      return;
+    }
+    if (String(form.phoneCode || '').trim() !== phoneCode) {
+      alert('인증번호가 일치하지 않습니다.');
+      setIsPhoneVerified(false);
+      return;
+    }
+    setIsPhoneVerified(true);
+    alert('휴대폰 인증이 완료되었습니다.');
   };
 
   const handleCheckId = async () => {
     if (!form.emailId) return alert('이메일 아이디를 입력해주세요.');
+
     try {
       const res = await fetch(
         `http://localhost:8080/api/user/check-id?email_id=${form.emailId}`,
         { method: 'POST' }
       );
       const data = await res.json();
+
       if (
         res.ok &&
-        (data.body === 'ok' ||
-          data.data === 'ok' ||
-          data.message?.includes('ok'))
+        (data.body === 'ok' || data.data === 'ok' || data.message?.includes('ok'))
       ) {
         alert('사용 가능한 아이디입니다.');
         setIsIdChecked(true);
@@ -44,7 +139,7 @@ export function useSignup() {
         alert('이미 사용 중인 아이디입니다. 다른 아이디를 입력해주세요.');
         setIsIdChecked(false);
       }
-    } catch (err) {
+    } catch {
       alert('중복 확인 중 서버 오류가 발생했습니다.');
     }
   };
@@ -52,42 +147,49 @@ export function useSignup() {
   const handleSubmit = async (e, navigate) => {
     e.preventDefault();
     if (!isIdChecked) return alert('아이디 중복 확인을 진행해주세요.');
+    if (!isPhoneVerified) return alert('휴대폰 본인인증을 완료해주세요.');
+
+    const derived = deriveBirthAndGender();
+    if (!derived) {
+      setError('주민등록번호를 올바르게 입력해주세요. (앞 6자리 + 뒤 1자리)');
+      return;
+    }
 
     const passwordRegex =
       /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,16}$/;
+
     if (!passwordRegex.test(form.password)) {
       return alert(
         '비밀번호 규칙을 준수해주세요.\n(8~16자 영문, 숫자, 특수문자를 모두 포함해야 합니다.)'
       );
     }
-    if (form.password !== form.passwordConfirm)
+
+    if (form.password !== form.passwordConfirm) {
       return setError('비밀번호가 일치하지 않습니다.');
+    }
 
     setLoading(true);
     setError('');
-
-    const payload = {
-      emailId: form.emailId,
-      password: form.password,
-      name: form.name,
-      phone: form.phone,
-      gender: form.gender,
-      birthDate: form.birthDate,
-      type: form.type,
-    };
 
     try {
       const res = await fetch('http://localhost:8080/api/user/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          emailId: form.emailId,
+          password: form.password,
+          name: form.name,
+          phone: String(form.phone || '').replace(/\D/g, ''),
+          gender: derived.gender,
+          birthDate: derived.birthDate,
+          type: form.type,
+        }),
       });
 
       const data = await res.json();
 
-      // [수정됨] res.ok(200번대 응답)면 성공으로 간주하도록 수정
       if (res.ok) {
-        alert('회원가입이 완료되었습니다!');
+        alert('회원가입이 완료되었습니다.');
         navigate('/login');
       } else {
         throw new Error(data.message || '회원가입에 실패했습니다.');
@@ -103,14 +205,18 @@ export function useSignup() {
     form,
     loading,
     error,
+    derivedProfile: deriveBirthAndGender(),
     isIdChecked,
+    isPhoneCodeSent,
+    isPhoneVerified,
     handleChange,
     handleCheckId,
+    handleSendPhoneCode,
+    handleVerifyPhoneCode,
     handleSubmit,
   };
 }
 
-// 아이디 찾기
 export const useFindId = () => {
   const [form, setForm] = useState({ name: '', phone: '', code: '' });
   const [foundId, setFoundId] = useState(null);
@@ -150,6 +256,7 @@ export const useFindId = () => {
 
     setLoading(true);
     setError(null);
+
     try {
       const res = await axios.post('http://localhost:8080/api/user/find-id', {
         name: form.name,
@@ -157,9 +264,7 @@ export const useFindId = () => {
       });
       setFoundId(res.data.data);
     } catch (err) {
-      setError(
-        err.response?.data?.message || '아이디 찾기 중 오류가 발생했습니다.'
-      );
+      setError(err.response?.data?.message || '아이디 찾기 중 오류가 발생했습니다.');
     } finally {
       setLoading(false);
     }
@@ -179,7 +284,6 @@ export const useFindId = () => {
   };
 };
 
-// 내 정보 조회 및 수정
 export function useUserInfo(userNo) {
   const [form, setForm] = useState({
     emailId: '',
@@ -190,22 +294,20 @@ export function useUserInfo(userNo) {
   });
   const [loading, setLoading] = useState(true);
 
-  // 초기 정보 불러오기
   useEffect(() => {
     if (!userNo) return;
+
     const fetchMyInfo = async () => {
       setLoading(true);
       try {
-        // TODO: API 연동
-        // const data = await getUserInfo(userNo);
-        // setForm(data);
-        console.log(`${userNo} 정보 불러오기 API 호출 대기`);
+        // TODO: API 연동 예정
       } catch (err) {
         console.error(err);
       } finally {
         setLoading(false);
       }
     };
+
     fetchMyInfo();
   }, [userNo]);
 
@@ -217,10 +319,9 @@ export function useUserInfo(userNo) {
   const handleUpdate = async (e) => {
     e.preventDefault();
     try {
-      // TODO: API 연동
-      console.log('업데이트할 정보:', form);
+      // TODO: API 연동 예정
       alert('수정되었습니다. (API 연동 대기)');
-    } catch (err) {
+    } catch {
       alert('수정 실패');
     }
   };
@@ -228,7 +329,6 @@ export function useUserInfo(userNo) {
   return { form, loading, handleChange, handleUpdate };
 }
 
-// 계약 목록
 export function useContractList() {
   const [contracts, setContracts] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -238,7 +338,6 @@ export function useContractList() {
   return { contracts, loading };
 }
 
-// 찜 목록
 export function useWishList() {
   const [wishList, setWishList] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -248,7 +347,6 @@ export function useWishList() {
   return { wishList, loading };
 }
 
-// 투어 목록
 export function useTourList() {
   const [tours, setTours] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -258,7 +356,6 @@ export function useTourList() {
   return { tours, loading };
 }
 
-// 로그인
 export function useLogin() {
   const [form, setForm] = useState({ emailId: '', password: '' });
   const [loading, setLoading] = useState(false);
@@ -283,76 +380,29 @@ export function useLogin() {
 
       if (!res.ok) {
         throw new Error('이메일 아이디 또는 비밀번호가 일치하지 않습니다.');
-        const raw = await res.text();
-        let errorBody = {};
-
-        if (raw) {
-          try {
-            errorBody = JSON.parse(raw);
-          } catch {
-            errorBody = { message: raw };
-          }
-        }
-
-        const message =
-          errorBody.message ||
-          errorBody.error ||
-          errorBody.data?.message ||
-          '로그인 요청 처리 중 오류가 발생했습니다.';
-        const code =
-          errorBody.code || errorBody.errorCode || errorBody.data?.code || null;
-
-        throw {
-          status: res.status,
-          message,
-          code,
-        };
       }
 
       const data = await res.json();
 
-      if (data.accessToken) {
-        localStorage.setItem('accessToken', data.accessToken);
-        if (data.refreshToken) {
-          localStorage.setItem('refreshToken', data.refreshToken);
-        }
-
-        alert('로그인 성공!');
-        navigate('/');
-      } else {
+      if (!data.accessToken) {
         throw new Error('토큰 발급에 실패했습니다.');
       }
-    } catch (err) {
-      const status = err.status;
-      const errorCode = err.code;
-      const errorMessage = err.message;
-      let userMessage =
-        '로그인 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
 
-      if (status === 401) {
-        userMessage =
-          errorMessage || '이메일 아이디 또는 비밀번호가 일치하지 않습니다.';
-      } else if (status === 403) {
-        userMessage =
-          errorMessage || '접근 권한이 없습니다. 관리자에게 문의해주세요.';
-      } else if (status >= 500) {
-        userMessage =
-          '서버 오류가 발생했습니다. 잠시 후 다시 시도하거나 관리자에게 문의해주세요.';
-      } else if (!status) {
-        userMessage =
-          '네트워크 연결을 확인해주세요. 서버와 통신할 수 없습니다.';
-      } else {
-        userMessage =
-          errorMessage ||
-          '요청을 처리하지 못했습니다. 입력값을 다시 확인해주세요.';
+      localStorage.setItem('accessToken', data.accessToken);
+      if (data.refreshToken) {
+        localStorage.setItem('refreshToken', data.refreshToken);
       }
 
-      setError(userMessage);
-      console.error('Login Error:', {
-        status,
-        code: errorCode,
-        message: errorMessage,
-      });
+      const payload = parseJwtPayload(data.accessToken);
+      const userId = data.userId || data.userNo || payload?.userId || payload?.userNo;
+      if (userId) {
+        localStorage.setItem('userId', String(userId));
+      }
+
+      alert('로그인 성공!');
+      navigate('/');
+    } catch (err) {
+      setError(err.message || '로그인 중 오류가 발생했습니다.');
     } finally {
       setLoading(false);
     }
@@ -361,22 +411,17 @@ export function useLogin() {
   return { form, loading, error, handleChange, handleLogin };
 }
 
-// 관리자용 회원 목록 및 검색
 export function useAdminUserList() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // 페이징 상태
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const size = 10;
 
-  // 검색 상태
-  const [searchType, setSearchType] = useState('emailId'); // emailId, name, phone
+  const [searchType, setSearchType] = useState('emailId');
   const [searchKeyword, setSearchKeyword] = useState('');
-
-  // 실제 API 요청에 쓰일 검색어 상태 (버튼 클릭 시 업데이트)
   const [activeSearch, setActiveSearch] = useState({ type: '', keyword: '' });
 
   const fetchUsers = useCallback(
@@ -387,7 +432,6 @@ export function useAdminUserList() {
         let url = `/api/user/list?page=${currentPage}&size=${size}&sort=createdAt&direct=DESC`;
 
         if (searchParams.keyword) {
-          // 검색어가 있을 경우 /api/user/search 사용
           url = `/api/user/search?page=${currentPage}&size=${size}&${searchParams.type}=${searchParams.keyword}`;
         }
 
@@ -403,10 +447,9 @@ export function useAdminUserList() {
         const list = json.data || [];
 
         setUsers(list);
-        // 받아온 데이터가 size보다 작으면 다음 페이지가 없다고 판단
         setHasMore(list.length === size);
       } catch (err) {
-        setError(err.message);
+        setError(err.message || '회원 목록 조회 실패');
       } finally {
         setLoading(false);
       }
@@ -420,13 +463,14 @@ export function useAdminUserList() {
 
   const handleSearch = (e) => {
     e.preventDefault();
-    setPage(1); // 검색 시 1페이지로 초기화
+    setPage(1);
     setActiveSearch({ type: searchType, keyword: searchKeyword });
   };
 
   const handleNextPage = () => {
     if (hasMore) setPage((p) => p + 1);
   };
+
   const handlePrevPage = () => {
     if (page > 1) setPage((p) => p - 1);
   };
@@ -447,9 +491,8 @@ export function useAdminUserList() {
   };
 }
 
-// 비밀번호 찾기
 export function useFindPassword() {
-  const [method, setMethod] = useState('email'); // 'email' or 'phone'
+  const [method, setMethod] = useState('email');
   const [form, setForm] = useState({ emailId: '', phone: '' });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
@@ -465,18 +508,14 @@ export function useFindPassword() {
     setMessage('');
 
     try {
-      // TODO: 백엔드에 임시 비밀번호 발급 API 구성 후 연결 (예: /api/user/reset-password)
       const targetValue = method === 'email' ? form.emailId : form.phone;
       console.log(`인증 요청: [${method}] ${targetValue}`);
 
-      // 임시 시뮬레이션
       setTimeout(() => {
-        setMessage(
-          '인증이 완료되어 새로운 임시 비밀번호가 발급/전송 되었습니다.'
-        );
+        setMessage('인증이 완료되어 새로운 임시 비밀번호가 발급/전송 되었습니다.');
         setLoading(false);
       }, 1000);
-    } catch (err) {
+    } catch {
       setMessage('인증에 실패했습니다. 입력 정보를 확인해주세요.');
       setLoading(false);
     }
