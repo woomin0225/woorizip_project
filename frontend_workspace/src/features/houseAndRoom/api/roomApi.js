@@ -22,7 +22,7 @@ export async function createRoom(houseNo, roomDto, newImages = []){
     });
 
     (newImages ?? []).forEach((file)=>{
-        if(file) fetch.append('newImages', file);
+        if(file) fd.append('newImages', file);
     });
     
     const {data} = await apiForm().post('/api/rooms', fd);
@@ -62,7 +62,7 @@ export async function modifyRoom(roomNo, roomDto, deleteImageNos=[], newImages=[
     });
 
     (deleteImageNos ?? []).forEach((imageNo)=>{
-        if(imageNo) fd.append('deleteImageNos', imageNo);
+        if(imageNo !== null && imageNo !== undefined) fd.append('deleteImageNos', imageNo);
     });
 
     (newImages ?? []).forEach((file)=>{

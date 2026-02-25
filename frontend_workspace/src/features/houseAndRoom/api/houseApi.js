@@ -54,10 +54,10 @@ export async function modifyHouse(houseNo, houseDto, deleteImageNos = [], newIma
     });
 
     (deleteImageNos ?? []).forEach((imageNo)=>{
-        if(imageNo) fd.append('deleteImageNos', imageNo);
+        if(imageNo !== null && imageNo !== undefined) fd.append('deleteImageNos', imageNo);
     });
 
-    (newImages).forEach((file)=>{
+    (newImages ?? []).forEach((file)=>{
         if(file) fd.append('newImages', file);
     });
     
