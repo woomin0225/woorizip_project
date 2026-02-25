@@ -13,18 +13,8 @@ import Home from '../../shared/pages/Home';
 
 import EventList from '../../features/board/pages/event/eventList';
 
-import NoticeList from '../../features/notice/pages/NoticeList';
-import NoticeDetail from '../../features/notice/pages/NoticeDetail';
-import NoticeWrite from '../../features/notice/pages/NoticeWrite';
-import NoticeUpdate from '../../features/notice/pages/NoticeUpdate';
-
-import BoardList from '../../features/board/pages/BoardList';
-import BoardWrite from '../../features/board/pages/BoardWrite';
-import BoardDetail from '../../features/board/pages/BoardDetail';
-import BoardUpdate from '../../features/board/pages/BoardUpdate';
-
-import MemberList from '../../features/member/pages/MemberList';
-// import MemberInfo from '../../features/member/pages/MemberInfo';
+import NoticeList from './../../features/board/pages/notice/NoticeList';
+import NoticeDetail from './../../features/board/pages/notice/NoticeDetail';
 
 import FacilityCategoryList from '../../features/facility/pages/category/FacilityCategoryList';
 import FacilityCategoryForm from './../../features/facility/pages/category/FacilityCategoryForm';
@@ -35,7 +25,15 @@ import FacilityForm from './../../features/facility/pages/facility/FacilityForm'
 import ReservationView from './../../features/facility/pages/reservation/ReservationView';
 import ReservationForm from './../../features/facility/pages/reservation/ReservationForm';
 
-import { Routes } from 'react-router-dom';
+import Search from '../../features/houseAndRoom/pages/Search';
+import Detail from './../../features/houseAndRoom/pages/Detail';
+import ReviewCreate from './../../features/houseAndRoom/pages/ReviewCreate';
+import ReviewModify from './../../features/houseAndRoom/pages/ReviewModify';
+import Management from "../../features/houseAndRoom/pages/Management";
+import HouseRegistration from "../../features/houseAndRoom/pages/house/HouseRegistration";
+import HouseSelection from "../../features/houseAndRoom/pages/house/HouseSelection";
+import RoomRegistration from "../../features/houseAndRoom/pages/room/RoomRegistration";
+import EstateModify from '../../features/houseAndRoom/pages/EstateModify';
 
 export const router = createBrowserRouter([
   {
@@ -60,9 +58,6 @@ export const router = createBrowserRouter([
       {
         element: <RequireAuth />,
         children: [
-          { path: '/boards/new', element: <BoardWrite /> },
-          { path: '/boards/:boardNum/edit', element: <BoardUpdate /> },
-          // { path: ROUTES.MEMBER.MYPAGE, element: <MemberInfo /> },
           // { path: '/boards/new', element: <BoardWrite /> },
           // { path: '/boards/:boardNum/edit', element: <BoardUpdate /> },
           // { path: ROUTES.MEMBER.MYPAGE, element: <MemberInfo /> },
@@ -83,11 +78,13 @@ export const router = createBrowserRouter([
             element: <ReservationForm />,
           },
 
-          { path: '/rooms/:roomNo/reviews/new', element: <ReviewCreate /> }, // 리뷰 등록 페이지
-          {
-            path: '/rooms/:roomNo/reviews/:reviewNo/edit',
-            element: <ReviewModify />,
-          }, // 리뷰 수정 페이지
+          { path: '/rooms/:roomNo/reviews/new', element: <ReviewCreate /> },  // 리뷰 등록 페이지
+          { path: '/rooms/:roomNo/reviews/:reviewNo/edit', element: <ReviewModify /> }, // 리뷰 수정 페이지
+          { path: "/estate/manage", element: <Management /> },
+          { path: "/estate/modify", element: <EstateModify/> },
+          { path: "/estate/houses/new", element: <HouseRegistration /> },
+          { path: "/estate/houses/select", element: <HouseSelection /> },
+          { path: "/estate/houses/:houseNo/rooms/new", element: <RoomRegistration /> },
         ],
       },
 
