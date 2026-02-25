@@ -1,1 +1,50 @@
-/* placeholder */
+.form {
+  display: grid;
+  gap: 12px;
+  border: 1px solid #eee;
+  border-radius: 12px;
+  padding: 14px;
+  background: #fff;
+}
+.row {
+  display: grid;
+  gap: 6px;
+}
+.row label {
+  font-weight: 800;
+}
+.row input,
+.row textarea,
+.row select {
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 10px;
+}
+.inline {
+  display: flex;
+  gap: 10px;
+}
+.inline button {
+  border: 1px solid #ddd;
+  background: #fff;
+  border-radius: 10px;
+  padding: 10px 12px;
+  cursor: pointer;
+}
+.grid2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.actions {
+  display: flex;
+  justify-content: flex-end;
+}
+.actions button {
+  border: none;
+  background: #d8c5e5;
+  border-radius: 10px;
+  padding: 10px 14px;
+  cursor: pointer;
+  font-weight: 800;
+}

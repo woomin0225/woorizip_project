@@ -58,12 +58,20 @@ export default function MapPanel({ markers = [],
     }
 
     function initMap() {
+      if (mapRef.current) return; // StrictMode useEffect 2번 실행 방지
+
       const kakao = window.kakao;
 
       const center = new kakao.maps.LatLng(37.5547, 126.9706); // 서울역 근처
       const map = new kakao.maps.Map(mapDivRef.current, { center, level: 5 });
       mapRef.current = map;
 
+      // 컨테이너 크기 계산 꼬임 방지(가끔 빈 화면 해결)
+      setTimeout(() => {
+        map.relayout();
+        map.setCenter(center);
+      }, 0);
+      
       // bounds_changed: 팝업 닫기 + bbox 상위 전달(디바운스)
       kakao.maps.event.addListener(map, "bounds_changed", () => {
         if (onClosePopup) onClosePopup(); // ✅ 지도 움직이면 목록 사라짐
@@ -90,8 +98,9 @@ export default function MapPanel({ markers = [],
     }
 
     const script = document.createElement("script");
-    script.src = `//dapi.kakao.com/v2/maps/sdk.js?appkey=${KAKAO_KEY}&autoload=false`;
+    script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${KAKAO_KEY}&autoload=false`;
     script.async = true;
+    script.onerror = () => console.error("카카오 지도 SDK 로드 실패 (키/도메인/네트워크 확인)");
     script.onload = () => window.kakao.maps.load(initMap);
     document.head.appendChild(script);
   }, [KAKAO_KEY, onChangeBbox, onClosePopup]);
@@ -168,7 +177,7 @@ export default function MapPanel({ markers = [],
 
   return (
     <div style={{ position: "relative", height: 500 }}>
-      <div ref={mapDivRef} style={{ height: "100%" }} />
+      <div ref={mapDivRef} style={{ width: "100%", height: "100%", background: "#f7f7f7" }} />
 
       {loadingMarkers && (
         <div style={{ position: "absolute", top: 10, left: 10, background: "white", padding: 6 }}>

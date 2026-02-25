@@ -5,7 +5,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import styles from './NoticeDetail.module.css';
 import FileDownloadButton from '../../components/FileDownloadButton';
 import { useNoticeDetail } from '../../hooks/useNoticeDetail';
-import { downloadNoticeFile } from '../../api/noticeApi';
+import { downloadNoticeFile } from '../../api/NoticeApi';
 
 // 라우트가 다르면 여기만 수정
 const EDIT_PATH = (postNo) => `/notices/${postNo}/edit`;

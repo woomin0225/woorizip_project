@@ -1,7 +1,7 @@
 // src/features/board/hooks/useEventDetail.js
 import { useEffect, useState } from 'react';
 import { unwrapApi } from '../../../shared/utils/apiUnwrap';
-import { fetchEventDetail, deleteEvent } from '../api/eventApi';
+import { fetchEventDetail, deleteEvent } from '../api/EventApi';
 import { useAuth } from '../../../app/providers/AuthProvider';
 
 export function useEventDetail({ postNo, nav }) {

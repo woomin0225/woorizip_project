@@ -1,24 +1,25 @@
-// src/features/board/pages/event/eventWrite.jsx
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import PostEditor from '../../components/PostEditor';
-import { createEvent } from '../../api/eventApi';
-import { useAuth } from '../../../app/providers/AuthProvider';
+// src/features/board/hooks/useEventWrite.js
 
-export default function EventWrite() {
-  const navigate = useNavigate();
+import { useEffect, useState } from 'react';
+import { useAuth } from '../../../app/providers/AuthProvider';
+import { createEvent } from '../api/EventApi';
+
+export function useEventWrite({ navigate }) {
   const { isAuthed, isAdmin } = useAuth();
 
-  const [form, setForm] = React.useState({
+  const [form, setForm] = useState({
     postTitle: '',
     postContent: '',
   });
 
-  const [newFiles, setNewFiles] = React.useState([]);
-  const [bannerFile, setBannerFile] = React.useState(null);
-  const [submitting, setSubmitting] = React.useState(false);
+  const [bannerFile, setBannerFile] = useState(null);
+  const [newFiles, setNewFiles] = useState([]);
+  const [submitting, setSubmitting] = useState(false);
 
-  React.useEffect(() => {
+  /* =========================
+     권한 체크
+  ========================= */
+  useEffect(() => {
     if (!isAuthed) {
       alert('로그인이 필요합니다.');
       navigate('/login', { replace: true });
@@ -31,6 +32,9 @@ export default function EventWrite() {
     }
   }, [isAuthed, isAdmin, navigate]);
 
+  /* =========================
+     입력 변경
+  ========================= */
   const onChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({
@@ -39,6 +43,9 @@ export default function EventWrite() {
     }));
   };
 
+  /* =========================
+     유효성 검사
+  ========================= */
   const validate = () => {
     if (!form.postTitle.trim()) return '제목을 입력하세요.';
     if (!form.postContent.trim()) return '내용을 입력하세요.';
@@ -46,6 +53,9 @@ export default function EventWrite() {
     return '';
   };
 
+  /* =========================
+     제출
+  ========================= */
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -58,7 +68,7 @@ export default function EventWrite() {
     const data = new FormData();
     data.append('postTitle', form.postTitle);
     data.append('postContent', form.postContent);
-    data.append('banner', bannerFile);
+    data.append('bannerFile', bannerFile);
 
     newFiles.forEach((file) => {
       data.append('files', file);
@@ -67,6 +77,7 @@ export default function EventWrite() {
     try {
       setSubmitting(true);
       const res = await createEvent(data);
+
       alert(res?.message || '이벤트 등록 성공');
       navigate('/events', { replace: true });
     } catch (error) {
@@ -77,33 +88,19 @@ export default function EventWrite() {
     }
   };
 
-  return (
-    <div style={{ padding: 24 }}>
-      <h2 style={{ textAlign: 'center', marginBottom: 24 }}>이벤트 등록</h2>
+  return {
+    mode: 'create',
 
-      <form onSubmit={handleSubmit}>
-        <PostEditor
-          mode="create"
-          form={form}
-          onChange={onChange}
-          newFiles={newFiles}
-          setNewFiles={setNewFiles}
-          submitting={submitting}
-          onSubmit={handleSubmit}
-          onCancel={() => navigate('/events')}
-        />
+    form,
+    onChange,
 
-        <div style={{ marginTop: 20 }}>
-          <label>배너 이미지</label>
-          <br />
-          <input
-            type="file"
-            accept="image/*"
-            onChange={(e) => setBannerFile(e.target.files[0])}
-            disabled={submitting}
-          />
-        </div>
-      </form>
-    </div>
-  );
+    bannerFile,
+    setBannerFile,
+
+    newFiles,
+    setNewFiles,
+
+    submitting,
+    handleSubmit,
+  };
 }

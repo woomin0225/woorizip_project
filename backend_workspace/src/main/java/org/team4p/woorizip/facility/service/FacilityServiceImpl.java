@@ -2,8 +2,6 @@ package org.team4p.woorizip.facility.service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,8 +14,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.team4p.woorizip.common.exception.ForbiddenException;
 import org.team4p.woorizip.common.exception.NotFoundException;
 import org.team4p.woorizip.common.validator.LesseeValidator;
-import org.team4p.woorizip.contract.jpa.entity.ContractEntity;
-import org.team4p.woorizip.contract.jpa.repository.ContractRepository;
 import org.team4p.woorizip.facility.dto.FacilityCategoryCreateRequestDTO;
 import org.team4p.woorizip.facility.dto.FacilityCategoryDTO;
 import org.team4p.woorizip.facility.dto.FacilityCreateRequestDTO;
@@ -36,8 +32,6 @@ import org.team4p.woorizip.house.jpa.repository.HouseRepository;
 import org.team4p.woorizip.reservation.jpa.entity.ReservationEntity;
 import org.team4p.woorizip.reservation.jpa.repository.ReservationRepository;
 import org.team4p.woorizip.reservation.service.ReservationServiceImpl;
-import org.team4p.woorizip.room.jpa.entity.RoomEntity;
-import org.team4p.woorizip.room.jpa.repository.RoomRepository;
 import org.team4p.woorizip.user.jpa.entity.UserEntity;
 import org.team4p.woorizip.user.jpa.repository.UserRepository;
 
@@ -62,17 +56,17 @@ public class FacilityServiceImpl implements FacilityService {
 		// 임차인
 	    if (houseNo == null) {			
 	    	String userHouseNo = lesseeValidator.validLessee(userNo);
-			return facilityRepository.findByHouse_HouseNoAndFacilityDeletedAtIsNull(userHouseNo)
+			return facilityRepository.findByHouseHouseNoAndFacilityDeletedAtIsNull(userHouseNo)
 		    		.stream()
 		            .map(FacilityListResponseDTO::from)
 		            .collect(Collectors.toList());
 	    }
-
+	    
 	    // 임대인, 관리자
-	    return facilityRepository.findByHouse_HouseNoAndFacilityDeletedAtIsNull(houseNo)
+	    return facilityRepository.findByHouseHouseNoAndFacilityDeletedAtIsNull(houseNo)
 	    		.stream()
 	            .map(FacilityListResponseDTO::from)
-	            .collect(Collectors.toList());	    
+	            .collect(Collectors.toList());
 	}
 
 	// 시설 신규 등록
@@ -128,11 +122,11 @@ public class FacilityServiceImpl implements FacilityService {
 		// 동일 카테고리의 시설이 있는지 확인
 		Optional<FacilityEntity> lastSequence = facilityRepository
 				.findFirstByHouse_HouseNoAndCategory_FacilityCodeOrderByFacilitySequenceDesc(
-						selectedHouse, dto.getFacilityCode());
+						selectedHouse.getHouseNo(), dto.getFacilityCode());
 
 		// 동일 카테고리 시설 순서 배정
 		Integer nextSequence;
-		if (lastSequence.isPresent()) {
+		if (lastSequence.isPresent() && lastSequence.get().getFacilitySequence() != null) {
 			nextSequence = lastSequence.get().getFacilitySequence() + 1;
 		} else {
 			nextSequence = 1;

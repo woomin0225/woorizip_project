@@ -1,7 +1,6 @@
 // src/features/board/components/PostEditor.jsx
 import React from 'react';
-import ReactQuill from 'react-quill';
-import 'react-quill/dist/quill.snow.css';
+import RichTextEditor from './RichTextEditor';
 import styles from './PostEditor.module.css';
 
 export default function PostEditor({
@@ -35,21 +34,11 @@ export default function PostEditor({
     setNewFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
-  // ReactQuill 변경
+  // 변경
   const handleContentChange = (value) => {
     onChange({
       target: { name: 'postContent', value },
     });
-  };
-
-  const modules = {
-    toolbar: [
-      [{ header: [1, 2, 3, false] }],
-      ['bold', 'italic', 'underline', 'strike'],
-      [{ list: 'ordered' }, { list: 'bullet' }],
-      ['link', 'image'],
-      ['clean'],
-    ],
   };
 
   return (
@@ -129,12 +118,14 @@ export default function PostEditor({
             <th className={styles.th}>내용</th>
             <td className={styles.td}>
               <div className={styles.editor}>
-                <ReactQuill
-                  theme="snow"
+                <RichTextEditor
                   value={form.postContent}
-                  onChange={handleContentChange}
-                  modules={modules}
                   readOnly={submitting}
+                  onChange={(html) =>
+                    onChange({
+                      target: { name: 'postContent', value: html },
+                    })
+                  }
                 />
               </div>
             </td>

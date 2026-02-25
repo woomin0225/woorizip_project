@@ -1,18 +1,17 @@
-// src/features/board/pages/event/eventUpdate.jsx
-import React, { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import PostEditor from '../../components/PostEditor';
-import { fetchEventDetail, updateEvent } from '../../api/eventApi';
-import { unwrapApi } from '../../../../shared/utils/apiUnwrap';
-import { useAuth } from '../../../../app/providers/AuthProvider';
+// src/features/board/hooks/useEventUpdate.js
 
-export default function EventUpdate() {
-  const { postNo } = useParams();
-  const navigate = useNavigate();
+import { useEffect, useState, useMemo } from 'react';
+import { useAuth } from '../../../app/providers/AuthProvider';
+import { fetchEventDetail, updateEvent } from '../api/EventApi';
+import { unwrapApi } from '../../../shared/utils/apiUnwrap';
+
+export function useEventUpdate({ postNo, navigate }) {
   const { isAdmin } = useAuth();
+  const canEdit = useMemo(() => Boolean(isAdmin), [isAdmin]);
 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [errMsg, setErrMsg] = useState('');
 
   const [form, setForm] = useState({
     postTitle: '',
@@ -22,13 +21,15 @@ export default function EventUpdate() {
   const [existingFiles, setExistingFiles] = useState([]);
   const [deleteFileNos, setDeleteFileNos] = useState([]);
   const [newFiles, setNewFiles] = useState([]);
-
   const [bannerFile, setBannerFile] = useState(null);
 
+  /* =========================
+     초기 로딩
+  ========================= */
   useEffect(() => {
-    if (!isAdmin) {
-      alert('관리자만 이벤트 수정이 가능합니다.');
-      navigate('/events', { replace: true });
+    if (!canEdit) {
+      setLoading(false);
+      setErrMsg('관리자만 이벤트 수정이 가능합니다.');
       return;
     }
 
@@ -37,7 +38,10 @@ export default function EventUpdate() {
         const resp = await fetchEventDetail(postNo);
         const dto = unwrapApi(resp);
 
-        if (!dto) return;
+        if (!dto) {
+          setErrMsg('데이터를 불러오지 못했습니다.');
+          return;
+        }
 
         setForm({
           postTitle: dto.postTitle || '',
@@ -47,15 +51,18 @@ export default function EventUpdate() {
         setExistingFiles(dto.files || []);
       } catch (e) {
         console.error(e);
-        alert('데이터를 불러오지 못했습니다.');
+        setErrMsg('조회 중 오류가 발생했습니다.');
       } finally {
         setLoading(false);
       }
     };
 
     load();
-  }, [postNo, isAdmin, navigate]);
+  }, [postNo, canEdit]);
 
+  /* =========================
+     입력 변경
+  ========================= */
   const onChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({
@@ -64,6 +71,9 @@ export default function EventUpdate() {
     }));
   };
 
+  /* =========================
+     기존 파일 삭제 토글
+  ========================= */
   const toggleDeleteFile = (fileNo) => {
     setDeleteFileNos((prev) =>
       prev.includes(fileNo)
@@ -72,14 +82,21 @@ export default function EventUpdate() {
     );
   };
 
+  /* =========================
+     유효성 검사
+  ========================= */
   const validate = () => {
     if (!form.postTitle.trim()) return '제목을 입력하세요.';
     if (!form.postContent.trim()) return '내용을 입력하세요.';
     return '';
   };
 
+  /* =========================
+     제출
+  ========================= */
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!canEdit) return;
 
     const msg = validate();
     if (msg) {
@@ -99,55 +116,43 @@ export default function EventUpdate() {
       data.append('files', file);
     });
 
-    deleteFileNos.forEach((no) => {
-      data.append('deleteFileNos', no);
+    deleteFileNos.forEach((fileNo) => {
+      data.append('deleteFileNo', fileNo);
     });
 
     try {
       setSubmitting(true);
-      await unwrapApi(updateEvent(postNo, data));
-      alert('이벤트가 수정되었습니다.');
+      await updateEvent(postNo, data);
+      alert('이벤트 수정 성공');
       navigate(`/events/${postNo}`);
     } catch (e) {
       console.error(e);
-      alert('이벤트 수정에 실패했습니다.');
+      alert('이벤트 수정 실패');
     } finally {
       setSubmitting(false);
     }
   };
 
-  if (loading) return <div>로딩중...</div>;
+  return {
+    mode: 'update',
+    canEdit,
+    loading,
+    errMsg,
 
-  return (
-    <div style={{ padding: 24 }}>
-      <h2 style={{ textAlign: 'center', marginBottom: 24 }}>이벤트 수정</h2>
+    form,
+    onChange,
 
-      <form onSubmit={handleSubmit}>
-        <PostEditor
-          mode="update"
-          form={form}
-          onChange={onChange}
-          existingFiles={existingFiles}
-          deleteFileNos={deleteFileNos}
-          toggleDeleteFile={toggleDeleteFile}
-          newFiles={newFiles}
-          setNewFiles={setNewFiles}
-          submitting={submitting}
-          onSubmit={handleSubmit}
-          onCancel={() => navigate(`/events/${postNo}`)}
-        />
+    existingFiles,
+    deleteFileNos,
+    toggleDeleteFile,
 
-        <div style={{ marginTop: 20 }}>
-          <label>배너 이미지 변경</label>
-          <br />
-          <input
-            type="file"
-            accept="image/*"
-            onChange={(e) => setBannerFile(e.target.files[0])}
-            disabled={submitting}
-          />
-        </div>
-      </form>
-    </div>
-  );
+    newFiles,
+    setNewFiles,
+
+    bannerFile,
+    setBannerFile,
+
+    submitting,
+    handleSubmit,
+  };
 }

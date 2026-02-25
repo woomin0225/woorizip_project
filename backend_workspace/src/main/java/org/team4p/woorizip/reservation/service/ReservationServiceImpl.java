@@ -51,7 +51,7 @@ public class ReservationServiceImpl implements ReservationService {
 		String houseNo = lesseeValidator.validLessee(userNo);
 		
 		// facility가 속한 house의 거주자인지 확인
-		if (houseNo.equals(facility.getHouse().getHouseNo())) {
+		if (!houseNo.equals(facility.getHouse().getHouseNo())) {
 			throw new ForbiddenException("해당 시설이 속한 건물의 입주자가 아닙니다.");
 		}
 		
@@ -136,6 +136,11 @@ public class ReservationServiceImpl implements ReservationService {
 	    // 이미 시작된 예약을 수정하려는 것은 아닌지 확인
 	    if (originalStart.isBefore(LocalDateTime.now())) {
 	        throw new ForbiddenException("이미 시작된 예약은 수정할 수 없습니다.");
+	    }
+	    
+	    // 취소한 예약을 수정하려는 것은 아닌지 확인
+	    if(entity.getReservationCanceledAt() != null) {
+	    	throw new ForbiddenException("이미 취소한 예약은 수정할 수 없습니다.");
 	    }
 	    
 	    validateReservation(facility, userNo, dto.getReservationDate(), dto.getReservationStartTime(), dto.getReservationEndTime(), reservationNo, isAdmin);

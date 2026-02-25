@@ -2,7 +2,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { useNoticeWrite } from '../hooks/useNoticeWrite';
+import { useNoticeWrite } from '../../hooks/useNoticeWrite';
 import PostEditor from '../../components/PostEditor';
 
 export default function NoticeWrite() {
