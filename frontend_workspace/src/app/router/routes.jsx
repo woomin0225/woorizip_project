@@ -50,9 +50,9 @@ export const router = createBrowserRouter([
 
       // { path: '/boards', element: <BoardList /> },
       // { path: '/boards/:boardNum', element: <BoardDetail /> },
-      
-      { path: '/rooms', element: <Search /> },  // 방 찾기 페이지
-      { path: '/rooms/:roomNo', element: <Detail /> },  // 방 상세보기 페이지
+
+      { path: '/rooms', element: <Search /> }, // 방 찾기 페이지
+      { path: '/rooms/:roomNo', element: <Detail /> }, // 방 상세보기 페이지
 
       // 로그인 필요
       {
@@ -63,19 +63,19 @@ export const router = createBrowserRouter([
           // { path: ROUTES.MEMBER.MYPAGE, element: <MemberInfo /> },
           {
             path: ROUTES.USER.FACILITY,
-            element: <FacilityView />
+            element: <FacilityView />,
           },
           {
             path: ROUTES.USER.FACILITY_FORM,
-            element: <FacilityForm />
+            element: <FacilityForm />,
           },
           {
             path: ROUTES.USER.RESERVATION,
-            element: <ReservationView />
+            element: <ReservationView />,
           },
           {
             path: ROUTES.USER.RESERVATION_FORM,
-            element: <ReservationForm />
+            element: <ReservationForm />,
           },
 
           { path: '/rooms/:roomNo/reviews/new', element: <ReviewCreate /> },  // 리뷰 등록 페이지
@@ -98,13 +98,13 @@ export const router = createBrowserRouter([
 
           {
             path: ROUTES.ADMIN.CATEGORY,
-            element: <FacilityCategoryList />
+            element: <FacilityCategoryList />,
           },
           {
             path: ROUTES.ADMIN.CATEGORY_FORM,
             element: <FacilityCategoryForm />,
-          }
-        ]
+          },
+        ],
       },
     ],
   },
