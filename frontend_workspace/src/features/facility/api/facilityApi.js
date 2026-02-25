@@ -2,7 +2,7 @@
 import { apiJson, apiForm } from '../../../app/http/request';
 
 // 시설 목록 조회
-export async function fetchFacilityList(houseNo = "") {
+export async function getFacilityList(houseNo = "") {
   const url = houseNo ? `/api/facilities/${houseNo}` : '/api/facilities';
   const { data } = await apiJson().get(url);
   return data;
@@ -21,7 +21,7 @@ export async function createFacilityCategory(categoryData) {
 }
 
 // 시설 카테고리 조회
-export async function fetchFacilityCategories() {
+export async function getFacilityCategories() {
   const { data } = await apiJson().get('/api/facilities/categories');
   return data;
 }
@@ -33,7 +33,7 @@ export async function modifyFacilityCategory(facilityCode, categoryData) {
 }
 
 // 시설 상세 조회
-export async function fetchFacilityDetail(facilityNo) {
+export async function getFacilityDetail(facilityNo) {
   const { data } = await apiJson().get(`/api/facilities/${facilityNo}`);
   return data; 
 }
