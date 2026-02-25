@@ -2,7 +2,7 @@
 import React from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useEventDetail } from '../../hooks/useEventDetail';
-import { downloadEventFile } from '../../api/eventApi';
+import { downloadEventFile } from '../../api/EventApi';
 import FileDownloadButton from '../../components/FileDownloadButton';
 
 export default function EventDetail() {
