@@ -33,6 +33,16 @@ public class UserController {
         int result = userService.selectCheckEmailId(emailId);
         return ResponseEntity.ok(ApiResponse.ok("아이디 중복 체크 결과", (result == 0) ? "ok" : "dup"));
     }
+    
+    @PostMapping("/find-id")
+    public ResponseEntity<ApiResponse<String>> findId(@RequestBody UserDto userDto) {
+        String emailId = userService.selectFindId(userDto);
+        if (emailId == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                                 .body(ApiResponse.fail("일치하는 회원 정보가 없습니다.", null));
+        }
+        return ResponseEntity.ok(ApiResponse.ok("아이디 찾기 성공", emailId));
+    }
 
     /**
      * 회원 정보 조회

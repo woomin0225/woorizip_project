@@ -6,6 +6,7 @@ import MainLayout from '../layouts/MainLayout';
 import RequireAuth from './guards/RequireAuth';
 import RequireRole from './guards/RequireRole';
 import { ROLES } from '../../shared/constants/roles';
+import { ROUTES } from '../../shared/constants/routes';
 
 import Login from '../../features/auth/pages/Login';
 import Signup from '../../features/member/pages/Signup';
@@ -61,8 +62,8 @@ export const router = createBrowserRouter([
       // 메인 홈
       { path: '/', element: <Home /> },
 
-      { path: '/login', element: <Login /> },
-      { path: '/signup', element: <Signup /> },
+      { path: ROUTES.AUTH.LOGIN, element: <Login /> },
+      { path: ROUTES.AUTH.SIGNUP, element: <Signup /> },
 
       { path: '/notices', element: <NoticeList /> },
       { path: '/notices/:noticeNo', element: <NoticeDetail /> },
@@ -76,7 +77,7 @@ export const router = createBrowserRouter([
         children: [
           { path: '/boards/new', element: <BoardWrite /> },
           { path: '/boards/:boardNum/edit', element: <BoardUpdate /> },
-          { path: '/mypage', element: <MemberInfo /> },
+          { path: ROUTES.MEMBER.MYPAGE, element: <MemberInfo /> },
 
           {
             path: '/lessor/facilities/list/:houseNo',
@@ -136,7 +137,7 @@ export const router = createBrowserRouter([
       {
         element: <RequireRole allowedRoles={[ROLES.ADMIN]} />,
         children: [
-          { path: '/admin/members', element: <MemberList /> },
+          { path: ROUTES.ADMIN.MEMBERS, element: <MemberList /> },
           { path: '/notices/new', element: <NoticeWrite /> },
           { path: '/notices/:noticeNo/edit', element: <NoticeUpdate /> },
 

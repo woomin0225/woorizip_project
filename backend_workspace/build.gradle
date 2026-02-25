@@ -69,6 +69,7 @@ dependencies {
 	implementation 'com.github.scribejava:scribejava-apis:8.3.3'
 	implementation 'com.github.scribejava:scribejava-core:8.3.3'
 	implementation 'org.apache.httpcomponents:httpclient:4.5.13'
+	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
 	
 	//jsonObject 사용 라이브러리 의존성 추가
 	implementation 'com.googlecode.json-simple:json-simple:1.1.1'

@@ -60,7 +60,7 @@ public class FacilityEntity {
 	private Map<String, Boolean> facilityOptionInfo;
 	
 	@Column(name = "facility_location", nullable = false)
-	private Integer facilityLocation;
+	private int facilityLocation;
 	
 	@Column(name = "facility_open_time", nullable = false)
 	private LocalTime facilityOpenTime;

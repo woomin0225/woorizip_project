@@ -8,7 +8,7 @@ import org.team4p.woorizip.facility.jpa.entity.FacilityEntity;
 import org.team4p.woorizip.house.jpa.entity.HouseEntity;
 
 public interface FacilityRepository extends JpaRepository<FacilityEntity, String> {
-	List<FacilityEntity> findByHouseHouseNoAndFacilityDeletedAtIsNull(String houseNo);
+	List<FacilityEntity> findByHouse_HouseNoAndFacilityDeletedAtIsNull(String houseNo);
 	Optional<FacilityEntity> findFirstByHouse_HouseNoAndCategory_FacilityCodeOrderByFacilitySequenceDesc(HouseEntity house, Integer facilityCode);
 	Optional<FacilityEntity> findByFacilityNoAndFacilityDeletedAtIsNull(String facilityNo);
 }
