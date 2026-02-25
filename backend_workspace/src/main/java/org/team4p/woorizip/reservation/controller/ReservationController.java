@@ -30,7 +30,7 @@ public class ReservationController {
 	private final ReservationService reservationService;
 
 	// 예약 신규 등록
-	@PostMapping("api/facilities/{facilityNo}/reservations")
+	@PostMapping("/api/facilities/{facilityNo}/reservations")
 	public ResponseEntity<ApiResponse<String>> createReservation(
 			@Valid @RequestBody ReservationCreateRequestDTO dto,
 			@AuthenticationPrincipal String currentUserNo,
@@ -42,7 +42,7 @@ public class ReservationController {
 	}
 
 	// 예약 상세 조회
-	@GetMapping("api/reservations/{reservationNo}")
+	@GetMapping("/api/reservations/{reservationNo}")
 	public ResponseEntity<ReservationDetailResponseDTO> getReservationDetails(@PathVariable String reservationNo) {
 		ReservationDetailResponseDTO response = reservationService.getReservationDetails(reservationNo);
 		return ResponseEntity.ok(response);
@@ -58,7 +58,7 @@ public class ReservationController {
 	}
 
 	// 예약 내용 수정
-	@PatchMapping("api/reservations/{reservationNo}")
+	@PatchMapping("/api/reservations/{reservationNo}")
 	public ResponseEntity<ApiResponse<String>> modifyReservation(
 			@PathVariable String reservationNo,
 			@RequestBody ReservationModifyRequestDTO dto,

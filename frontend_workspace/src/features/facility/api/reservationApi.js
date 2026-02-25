@@ -2,8 +2,8 @@
 import { apiJson } from '../../../app/http/request';
 
 // 예약 목록 조회
-export async function getReservationList(houseNo = "") {
-  const url = houseNo ? `/api/reservations/${houseNo}` : '/api/reservations';
+export async function getReservationList(facilityNo = "") {
+  const url = houseNo ? `/api/reservations/${facilityNo}` : '/api/reservations';
   const { data } = await apiJson().get(url);
   return data;
 }
