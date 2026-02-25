@@ -146,10 +146,10 @@ VALUES
 (3, '운동시설', '{"treadmill": true, "weights": true}');
 
 -- 16. 부대시설 목록 (tb_fm_list)
-INSERT INTO `tb_fm_list` (`facility_no`, `house_no`, `facility_code`, `facility_name`, `facility_option_info`, `facility_location`, `facility_open_time`, `facility_close_time`, `facility_rsvn_required_yn`, `max_rsvn_per_day`, `facility_rsvn_unit_minutes`, `facility_max_duration_minutes`) 
+INSERT INTO `tb_fm_list` (`facility_no`, `house_no`, `facility_code`, `facility_name`, `facility_option_info`, `facility_location`, `facility_open_time`, `facility_close_time`, `facility_rsvn_required_yn`, `max_rsvn_per_day`, `facility_rsvn_unit_minutes`, `facility_max_duration_minutes`, `facility_created_at`, `facility_capacity`) 
 VALUES 
-('fac1', 'house1', 3, '입주민 전용 헬스장', '{"treadmill": true, "weights": true}', 1, '06:00:00', '23:00:00', 0, 2, 30, 60),
-('fac2', 'house1', 1, '공용 스터디 라운지', '{"wifi": true, "coffee": true}', 2, '00:00:00', '23:59:59', 1, null, null, null );
+('fac1', 'house1', 3, '입주민 전용 헬스장', '{"treadmill": true, "weights": true}', 1, '06:00:00', '23:00:00', 0, 2, 30, 60, '2026-01-01 00:00:01', 30),
+('fac2', 'house1', 1, '공용 스터디 라운지', '{"wifi": true, "coffee": true}', 2, '00:00:00', '23:59:59', 1, null, null, null,  '2026-02-02 00:00:02', 10);
 
 -- 17. 부대시설 사진 (tb_fm_images)
 INSERT INTO `tb_fm_images` (`facility_image_no`, `facility_no`, `facility_original_image_name`, `facility_stored_image_name`) 
@@ -157,6 +157,6 @@ VALUES
 (1, 'fac1', 'gym_main.jpg', 'uuid-fac1-img1.jpg');
 
 -- 18. 부대시설 예약 (tb_fm_rsvn)
-INSERT INTO `tb_fm_rsvn` (`rsvn_no`, `facility_no`, `user_no`, `rsvn_name`, `rsvn_phone`, `rsvn_date`, `rsvn_start_time`, `rsvn_end_time`, `rsvn_status`) 
+INSERT INTO `tb_fm_rsvn` (`rsvn_no`, `facility_no`, `user_no`, `rsvn_name`, `rsvn_phone`, `rsvn_date`, `rsvn_start_time`, `rsvn_end_time`, `rsvn_status`, `rsvn_created_at`) 
 VALUES 
-('rsvn1', 'fac2', 'user1', '박일번', '010-2222-2222', '2026-03-20', '19:00:00', '21:00:00', 'APPROVED');
+('rsvn1', 'fac2', 'user1', '박일번', '010-2222-2222', '2026-03-20', '19:00:00', '21:00:00', 'APPROVED', '2026-02-10 00:00:01');
