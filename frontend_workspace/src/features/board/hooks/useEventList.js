@@ -21,7 +21,7 @@ export function useEventList() {
   const { isAdmin } = useAuth();
   const { query, setQuery } = useQueryState(defaultQuerySchema);
 
-  const [loading, setLoading] = useQueryState(false);
+  const [loading, setLoading] = useState(false);
   const [err, setErr] = useState('');
   const [pageResponse, setPageResponse] = useState(null);
 
