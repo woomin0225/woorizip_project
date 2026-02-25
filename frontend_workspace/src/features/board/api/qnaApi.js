@@ -1,5 +1,5 @@
 // src/features/board/api/QnaApi.js
-import { apiJson, apiFrom } from '../../../app/http/request';
+import { apiJson, apiForm } from '../../../app/http/request';
 
 // Top3 =========================================
 export async function fetchQnaTop3() {

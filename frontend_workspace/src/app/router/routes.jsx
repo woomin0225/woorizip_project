@@ -11,10 +11,10 @@ import Login from '../../features/member/pages/Login';
 import Signup from '../../features/member/pages/Signup';
 import Home from '../../shared/pages/Home';
 
-import NoticeList from '../../features/notice/pages/NoticeList';
-import NoticeDetail from '../../features/notice/pages/NoticeDetail';
-import NoticeWrite from '../../features/notice/pages/NoticeWrite';
-import NoticeUpdate from '../../features/notice/pages/NoticeUpdate';
+import NoticeList from '../../features/board/pages/notice/NoticeList';
+import NoticeDetail from '../../features/board/pages/notice/NoticeDetail';
+import NoticeWrite from '../../features/board/pages/notice/NoticeWrite';
+import NoticeUpdate from '../../features/board/pages/notice/NoticeUpdate';
 
 import EventList from '../../features/board/pages/event/EventList';
 import EventDetail from '../../features/board/pages/event/EventDetail';
