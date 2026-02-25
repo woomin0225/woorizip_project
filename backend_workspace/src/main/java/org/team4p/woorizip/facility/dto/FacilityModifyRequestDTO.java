@@ -8,7 +8,6 @@ import java.util.Map;
 import org.team4p.woorizip.common.validator.TextOnly;
 import org.team4p.woorizip.facility.enums.FacilityStatus;
 
-import jakarta.validation.Valid;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -20,7 +19,6 @@ import lombok.Setter;
 @Getter
 @Setter
 @Builder
-@Valid
 @NoArgsConstructor
 @AllArgsConstructor
 public class FacilityModifyRequestDTO {
@@ -61,12 +59,12 @@ public class FacilityModifyRequestDTO {
 	private List<FacilityImageDTO> images;
 	
 	@AssertTrue(message = "시설 위치는 0이 아닌 값으로 입력해주세요.")
-	public boolean isValidFloor() {
+	public boolean validValidFloor() {
 	    return this.facilityLocation != 0;
 	}
 	
 	@AssertTrue(message = "예약이 필요한 시설은 일일 최대 예약 횟수, 예약 단위 시간, 최대 이용 시간 입력이 필요합니다.")
-	public boolean isRsvnFieldsValid() {
+	public boolean validRsvnFieldsValid() {
 	    if (facilityRsvnRequiredYn) {
 	        return maxRsvnPerDay != null && 
 	               facilityRsvnUnitMinutes != null && 
@@ -76,7 +74,7 @@ public class FacilityModifyRequestDTO {
 	}
 	
 	@AssertTrue(message = "시설 이용이 불가능한 기간의 범위를 지정해주세요.")
-	public boolean isStatusFieldsValid() {
+	public boolean validStatusFieldsValid() {
 	    if (facilityStatus.equals(FacilityStatus.UNAVAILABLE)) {
 	        return blockedStartTime != null && 
 	               blockedEndTime != null;
