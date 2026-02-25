@@ -9,31 +9,36 @@ import FindPassword from './features/member/pages/FindPassword';
 import Main from './features/member/pages/Main';
 import OAuth2RedirectHandler from './features/member/pages/OAuth2RedirectHandler';
 import './assets/css/argon-design-system-react.min.css';
+import AuthProvider from './app/providers/AuthProvider';
+import AppRouter from './app/router';
 
 function App() {
   return (
-    <BrowserRouter>
-      {/* 라우트 설정 */}
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
-        <Route path="/find-id" element={<FindId />} />
-        <Route path="/find-password" element={<FindPassword />} />
-        <Route path="/admin/users" element={<MemberList />} />
-        <Route path="/oauth2/redirect" element={<OAuth2RedirectHandler />} />
-        <Route path="/" element={<Main />} />
+    <AuthProvider>
+      <AppRouter />
+    </AuthProvider>
+    // <BrowserRouter>
+    //   {/* 라우트 설정 */}
+    //   <Routes>
+    //     <Route path="/login" element={<Login />} />
+    //     <Route path="/signup" element={<Signup />} />
+    //     <Route path="/find-id" element={<FindId />} />
+    //     <Route path="/find-password" element={<FindPassword />} />
+    //     <Route path="/admin/users" element={<MemberList />} />
+    //     <Route path="/oauth2/redirect" element={<OAuth2RedirectHandler />} />
+    //     <Route path="/" element={<Main />} />
 
-        {/* 기본 경로 설정 */}
-        <Route
-          path="/"
-          element={
-            <div style={{ padding: '20px' }}>
-              <h1>메인 페이지</h1>상단 메뉴를 클릭해서 각 페이지를 확인하세요.
-            </div>
-          }
-        />
-      </Routes>
-    </BrowserRouter>
+    //     {/* 기본 경로 설정 */}
+    //     <Route
+    //       path="/"
+    //       element={
+    //         <div style={{ padding: '20px' }}>
+    //           <h1>메인 페이지</h1>상단 메뉴를 클릭해서 각 페이지를 확인하세요.
+    //         </div>
+    //       }
+    //     />
+    //   </Routes>
+    // </BrowserRouter>
   );
 }
 

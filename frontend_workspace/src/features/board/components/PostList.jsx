@@ -2,7 +2,8 @@
 import React from 'react';
 import PostListItem from './PostListItem';
 import PostSearchBar from './PostSearchBar';
-import PagingView from '../../../shared/components/PagingView';
+import PagingView from './../../../shared/components/PagingView/PagingView';
+
 
 export default function PostList({
   title,

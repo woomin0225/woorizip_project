@@ -2,9 +2,10 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
 
-import Header from '../../shared/components/common/Header';
-import Footer from '../../shared/components/common/Footer';
+
 import styles from './MainLayout.module.css';
+import Header from './components/Header';
+import Footer from './components/Footer';
 
 export default function MainLayout() {
   return (
