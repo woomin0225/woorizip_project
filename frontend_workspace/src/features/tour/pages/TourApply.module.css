@@ -1,1 +1,5 @@
-/* placeholder */
+﻿.page { padding: 140px 0 60px; }
+.title { margin: 0 0 16px; color: #32325d; }
+.input { width: 100%; margin-bottom: 10px; border: 1px solid #d2d6da; border-radius: 8px; padding: 10px 12px; }
+.btn { border: 0; border-radius: 8px; background: #11cdef; color: #fff; font-weight: 700; padding: 10px 14px; }
+.msg { margin-top: 10px; color: #525f7f; }

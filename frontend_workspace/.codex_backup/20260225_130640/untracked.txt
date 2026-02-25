@@ -1,0 +1,8 @@
+.codex_backup/20260225_130640/status.txt
+.codex_backup/20260225_130640/working.diff
+src/features/tour/components/TourUpdateActions.module.css
+src/features/wishlist/api/wishlistAPI.js
+src/features/wishlist/components/WishlistTable.jsx
+src/features/wishlist/components/WishlistTable.module.css
+src/features/wishlist/pages/WishlistPage.jsx
+src/features/wishlist/pages/WishlistPage.module.css

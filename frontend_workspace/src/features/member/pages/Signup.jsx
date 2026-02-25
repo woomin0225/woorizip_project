@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+﻿import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSignup } from '../hooks/useUserHooks';
 import {
@@ -15,6 +15,7 @@ import {
   Col,
   FormFeedback,
 } from 'reactstrap';
+import styles from './Signup.module.css';
 
 export default function Signup() {
   const navigate = useNavigate();
@@ -26,8 +27,12 @@ export default function Signup() {
     loading,
     error,
     isIdChecked,
+    isPhoneCodeSent,
+    isPhoneVerified,
     handleChange,
     handleCheckId,
+    handleSendPhoneCode,
+    handleVerifyPhoneCode,
     handleSubmit,
   } = useSignup();
 
@@ -40,9 +45,11 @@ export default function Signup() {
     if (
       !form.emailId ||
       !form.password ||
+      !form.passwordConfirm ||
       !form.name ||
       !form.phone ||
-      !form.birthDate
+      !form.rrnFront ||
+      !form.rrnBack
     ) {
       setValidated(true);
       return;
@@ -73,106 +80,132 @@ export default function Signup() {
                       <small>회원가입</small>
                     </div>
                     <Form role="form" noValidate onSubmit={onSignupSubmit}>
-                      <Row>
-                        <Col md="6">
-                          <FormGroup>
-                            <label className="form-control-label">
-                              <small>계정유형</small>
-                            </label>
-                            <Input
-                              type="select"
-                              name="type"
-                              className="form-control-alternative"
-                              value={form.type}
-                              onChange={handleChange}
-                            >
-                              <option value="USER">일반 사용자</option>
-                              <option value="LESSOR">임대인</option>
-                            </Input>
-                          </FormGroup>
-                        </Col>
-                        <Col md="6">
-                          <FormGroup>
+                      <div className={styles.formSection}>
+                        <h4 className={styles.sectionTitle}>계정 정보</h4>
+                        <div className={styles.sectionBody}>
+                          <FormGroup className={styles.narrowInputWrap}>
                             <label className="form-control-label">
                               <small>이메일 아이디</small>
                             </label>
-                            <InputGroup className="input-group-alternative mb-3">
-                              <InputGroupText>
-                                <i className="ni ni-email-83" />
-                              </InputGroupText>
-                              <Input
-                                name="emailId"
-                                placeholder="이메일"
-                                type="email"
-                                value={form.emailId}
-                                onChange={handleChange}
-                                invalid={validated && !form.emailId}
-                              />
+                            <div className={styles.inlineInputAction}>
+                              <InputGroup className="input-group-alternative mb-0">
+                                <InputGroupText>
+                                  <i className="ni ni-email-83" />
+                                </InputGroupText>
+                                <Input
+                                  name="emailId"
+                                  placeholder="이메일"
+                                  type="email"
+                                  value={form.emailId}
+                                  onChange={handleChange}
+                                  invalid={validated && !form.emailId}
+                                />
+                                <FormFeedback>
+                                  이메일을 입력해 주세요.
+                                </FormFeedback>
+                              </InputGroup>
                               <Button
                                 color={isIdChecked ? 'success' : 'info'}
                                 type="button"
                                 onClick={handleCheckId}
-                                className="m-0 px-3"
+                                className={styles.inlineActionBtn}
                               >
                                 {isIdChecked ? '확인완료' : '중복확인'}
                               </Button>
-                              <FormFeedback>
-                                이메일을 입력해 주세요.
-                              </FormFeedback>
-                            </InputGroup>
+                            </div>
                           </FormGroup>
-                        </Col>
-                      </Row>
-                      <Row>
-                        <Col md="6">
-                          <FormGroup>
-                            <InputGroup className="input-group-alternative">
-                              <InputGroupText>
-                                <i className="ni ni-lock-circle-open" />
-                              </InputGroupText>
-                              <Input
-                                name="password"
-                                placeholder="비밀번호"
-                                type="password"
-                                value={form.password}
-                                onChange={handleChange}
-                                invalid={validated && !form.password}
-                              />
-                              <FormFeedback>
-                                비밀번호를 입력해 주세요.
-                              </FormFeedback>
-                            </InputGroup>
-                            <small className="text-muted mt-2 d-block">
-                              ※ 8~16자 영문, 숫자, 특수문자를 모두 포함해야
-                              합니다.
-                            </small>
+                          <FormGroup className={`mb-0 ${styles.typeField}`}>
+                            <label className="form-control-label">
+                              <small>계정유형</small>
+                            </label>
+                            <div className={styles.typePills}>
+                              <button
+                                type="button"
+                                className={`${styles.typePill} ${form.type === 'USER' ? styles.typePillActive : ''}`}
+                                onClick={() =>
+                                  handleChange({
+                                    target: { name: 'type', value: 'USER' },
+                                  })
+                                }
+                              >
+                                일반 사용자
+                              </button>
+                              <button
+                                type="button"
+                                className={`${styles.typePill} ${form.type === 'LESSOR' ? styles.typePillActive : ''}`}
+                                onClick={() =>
+                                  handleChange({
+                                    target: { name: 'type', value: 'LESSOR' },
+                                  })
+                                }
+                              >
+                                임대인
+                              </button>
+                            </div>
                           </FormGroup>
-                        </Col>
-                        <Col md="6">
-                          <FormGroup>
-                            <InputGroup className="input-group-alternative">
-                              <InputGroupText>
-                                <i className="ni ni-lock-circle-open" />
-                              </InputGroupText>
-                              <Input
-                                name="passwordConfirm"
-                                placeholder="비밀번호 확인"
-                                type="password"
-                                value={form.passwordConfirm}
-                                onChange={handleChange}
-                                invalid={validated && !form.passwordConfirm}
-                              />
-                              <FormFeedback>
-                                비밀번호 확인을 입력해 주세요.
-                              </FormFeedback>
-                            </InputGroup>
-                          </FormGroup>
-                        </Col>
-                      </Row>
-                      <Row>
-                        <Col md="6">
-                          <FormGroup>
-                            <InputGroup className="input-group-alternative mb-3">
+                        </div>
+                      </div>
+
+                      <div className={styles.formSection}>
+                        <h4 className={styles.sectionTitle}>비밀번호 설정</h4>
+                        <Row>
+                          <Col md="6">
+                            <FormGroup>
+                              <InputGroup className="input-group-alternative">
+                                <InputGroupText>
+                                  <i className="ni ni-lock-circle-open" />
+                                </InputGroupText>
+                                <Input
+                                  name="password"
+                                  placeholder="비밀번호"
+                                  type="password"
+                                  value={form.password}
+                                  onChange={handleChange}
+                                  invalid={validated && !form.password}
+                                />
+                                <FormFeedback>
+                                  비밀번호를 입력해 주세요.
+                                </FormFeedback>
+                              </InputGroup>
+                              <small className="text-muted mt-2 d-block">
+                                8~16자 영문, 숫자, 특수문자를 모두 포함해야
+                                합니다.
+                              </small>
+                            </FormGroup>
+                          </Col>
+                          <Col md="6">
+                            <FormGroup>
+                              <InputGroup className="input-group-alternative">
+                                <InputGroupText>
+                                  <i className="ni ni-lock-circle-open" />
+                                </InputGroupText>
+                                <Input
+                                  name="passwordConfirm"
+                                  placeholder="비밀번호 확인"
+                                  type="password"
+                                  value={form.passwordConfirm}
+                                  onChange={handleChange}
+                                  invalid={validated && !form.passwordConfirm}
+                                />
+                                <FormFeedback>
+                                  비밀번호 확인을 입력해 주세요.
+                                </FormFeedback>
+                              </InputGroup>
+                            </FormGroup>
+                          </Col>
+                        </Row>
+                      </div>
+
+                      <div className={styles.formSection}>
+                        <h4 className={styles.sectionTitle}>
+                          기본정보 및 본인확인
+                        </h4>
+                        <div className={styles.sectionBody}>
+                          <FormGroup className={styles.narrowInputWrap}>
+                            <label className="form-control-label">
+                              <small>이름</small>
+                            </label>
+                            <InputGroup className="input-group-alternative mb-0">
                               <InputGroupText>
                                 <i className="ni ni-circle-08" />
                               </InputGroupText>
@@ -187,94 +220,107 @@ export default function Signup() {
                               <FormFeedback>이름을 입력해 주세요.</FormFeedback>
                             </InputGroup>
                           </FormGroup>
-                        </Col>
-                        <Col md="6">
-                          <FormGroup>
-                            <InputGroup className="input-group-alternative mb-3">
-                              <InputGroupText>
-                                <i className="ni ni-mobile-button" />
-                              </InputGroupText>
+
+                          <FormGroup className={styles.rrnWrap}>
+                            <label className="form-control-label">
+                              <small>주민등록번호</small>
+                            </label>
+                            <InputGroup className="input-group-alternative mb-0">
                               <Input
-                                name="phone"
-                                placeholder="전화번호"
+                                name="rrnFront"
+                                placeholder="앞 6자리"
                                 type="text"
-                                value={form.phone}
+                                maxLength={6}
+                                value={form.rrnFront}
                                 onChange={handleChange}
-                                invalid={validated && !form.phone}
+                                invalid={validated && !form.rrnFront}
                               />
-                              <FormFeedback>
-                                전화번호를 입력해 주세요.
-                              </FormFeedback>
+                              <InputGroupText>-</InputGroupText>
+                              <Input
+                                className={styles.rrnBackInput}
+                                name="rrnBack"
+                                placeholder="뒤 1자리"
+                                type="password"
+                                maxLength={1}
+                                value={form.rrnBack}
+                                onChange={handleChange}
+                                invalid={validated && !form.rrnBack}
+                              />
+                              <InputGroupText className={styles.rrnMask}>
+                                ******
+                              </InputGroupText>
                             </InputGroup>
                           </FormGroup>
-                        </Col>
-                      </Row>
-                      <Row>
-                        <Col md="6">
-                          <FormGroup>
-                            <label className="form-control-label d-block">
-                              <small>성별</small>
-                            </label>
-                            <div className="custom-control custom-radio custom-control-inline">
-                              <input
-                                type="radio"
-                                id="genderM"
-                                name="gender"
-                                className="custom-control-input"
-                                value="M"
-                                checked={form.gender === 'M'}
-                                onChange={handleChange}
-                              />
-                              <label
-                                className="custom-control-label"
-                                htmlFor="genderM"
-                              >
-                                남
-                              </label>
-                            </div>
-                            <div className="custom-control custom-radio custom-control-inline">
-                              <input
-                                type="radio"
-                                id="genderF"
-                                name="gender"
-                                className="custom-control-input"
-                                value="F"
-                                checked={form.gender === 'F'}
-                                onChange={handleChange}
-                              />
-                              <label
-                                className="custom-control-label"
-                                htmlFor="genderF"
-                              >
-                                여
-                              </label>
-                            </div>
-                          </FormGroup>
-                        </Col>
-                        <Col md="6">
-                          <FormGroup>
+
+                          <FormGroup className={styles.narrowInputWrap}>
                             <label className="form-control-label">
-                              <small>생년월일</small>
+                              <small>휴대폰번호</small>
                             </label>
-                            <Input
-                              name="birthDate"
-                              type="date"
-                              className="form-control-alternative"
-                              value={form.birthDate}
-                              onChange={handleChange}
-                              invalid={validated && !form.birthDate}
-                            />
-                            <FormFeedback>
-                              생년월일을 선택해 주세요.
-                            </FormFeedback>
+                            <div className={styles.inlineInputAction}>
+                              <InputGroup className="input-group-alternative mb-0">
+                                <InputGroupText>
+                                  <i className="ni ni-mobile-button" />
+                                </InputGroupText>
+                                <Input
+                                  name="phone"
+                                  placeholder="휴대폰번호"
+                                  type="text"
+                                  value={form.phone}
+                                  onChange={handleChange}
+                                  invalid={validated && !form.phone}
+                                />
+                                <FormFeedback>
+                                  휴대폰번호를 입력해 주세요.
+                                </FormFeedback>
+                              </InputGroup>
+                              <Button
+                                color={isPhoneVerified ? 'success' : 'info'}
+                                type="button"
+                                onClick={handleSendPhoneCode}
+                                className={styles.inlineActionBtn}
+                              >
+                                {isPhoneCodeSent ? '재발송' : '인증요청'}
+                              </Button>
+                            </div>
                           </FormGroup>
-                        </Col>
-                      </Row>
+
+                          {isPhoneCodeSent && (
+                            <FormGroup className={styles.narrowInputWrap}>
+                              <div className={styles.inlineInputAction}>
+                                <InputGroup className="input-group-alternative mb-0">
+                                  <InputGroupText>
+                                    <i className="ni ni-check-bold" />
+                                  </InputGroupText>
+                                  <Input
+                                    name="phoneCode"
+                                    placeholder="인증번호 6자리"
+                                    type="text"
+                                    value={form.phoneCode}
+                                    onChange={handleChange}
+                                  />
+                                </InputGroup>
+                                <Button
+                                  color={
+                                    isPhoneVerified ? 'success' : 'secondary'
+                                  }
+                                  type="button"
+                                  onClick={handleVerifyPhoneCode}
+                                  className={styles.inlineActionBtn}
+                                >
+                                  {isPhoneVerified ? '인증완료' : '확인'}
+                                </Button>
+                              </div>
+                            </FormGroup>
+                          )}
+                        </div>
+                      </div>
+
                       {error && (
                         <div className="text-danger text-center mt-2 mb-2">
                           <small>{error}</small>
                         </div>
                       )}
+
                       <div className="text-center">
                         <Button
                           className="mt-4"

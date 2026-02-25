@@ -1,5 +1,4 @@
-// src/app/router/routes.jsx
-import React from 'react';
+﻿import React from 'react';
 import { createBrowserRouter } from 'react-router-dom';
 
 import MainLayout from '../layouts/MainLayout';
@@ -7,6 +6,8 @@ import RequireAuth from './guards/RequireAuth';
 import RequireRole from './guards/RequireRole';
 import { ROLES } from '../../shared/constants/roles';
 import { ROUTES } from '../../shared/constants/routes';
+
+import Home from '../../shared/pages/Home';
 import Login from '../../features/member/pages/Login';
 import Signup from '../../features/member/pages/Signup';
 import Home from '../../shared/pages/Home';
@@ -32,14 +33,17 @@ import InformationWrite from '../../features/board/pages/information/Information
 import InformationUpdate from '../../features/board/pages/information/InformationUpdate';
 
 import MemberList from '../../features/member/pages/MemberList';
-// import MemberInfo from '../../features/member/pages/MemberInfo';
 
-import FacilityCategoryList from '../../features/facility/pages/category/FacilityCategoryList';
-import FacilityCategoryForm from './../../features/facility/pages/category/FacilityCategoryForm';
+import MyInfo from '../../features/user/pages/MyInfo';
+import MyInfoModify from '../../features/user/pages/MyInfoModify';
+import Withdrawn from '../../features/user/pages/withdrawn';
 
-import FacilityView from './../../features/facility/pages/facility/FacilityView';
-import FacilityForm from './../../features/facility/pages/facility/FacilityForm';
-
+import WishlistPage from '../../features/wishlist/pages/WishlistPage';
+import TourApply from '../../features/tour/pages/TourApply';
+import OccupyApply from '../../features/tour/pages/OccupyApply';
+import ContractCreate from '../../features/contract/pages/ContractCreate';
+import Statement from '../../features/contract/pages/Statement';
+import Completion from '../../features/contract/pages/Completion';
 import ReservationView from './../../features/facility/pages/reservation/ReservationView';
 import ReservationForm from './../../features/facility/pages/reservation/ReservationForm';
 
@@ -57,12 +61,29 @@ export const router = createBrowserRouter([
   {
     element: <MainLayout />,
     children: [
-      // 메인 홈
       { path: '/', element: <Home /> },
 
       { path: ROUTES.AUTH.LOGIN, element: <Login /> },
       { path: ROUTES.AUTH.SIGNUP, element: <Signup /> },
 
+      {
+        element: <RequireAuth />,
+        children: [
+          { path: ROUTES.MEMBER.MYPAGE, element: <WishlistPage /> },
+          { path: ROUTES.MEMBER.MY_INFO, element: <MyInfo /> },
+          { path: ROUTES.MEMBER.MY_INFO_EDIT, element: <MyInfoModify /> },
+          { path: ROUTES.MEMBER.MY_WITHDRAW, element: <Withdrawn /> },
+
+          { path: ROUTES.WISHLIST.LIST, element: <WishlistPage /> },
+
+          { path: ROUTES.TOUR.APPLY, element: <TourApply /> },
+          { path: ROUTES.TOUR.LIST, element: <OccupyApply /> },
+          { path: '/mypage/tour', element: <OccupyApply /> },
+
+          { path: ROUTES.CONTRACT.APPLY, element: <ContractCreate /> },
+          { path: ROUTES.CONTRACT.LIST, element: <Statement /> },
+          { path: ROUTES.CONTRACT.COMPLETION, element: <Completion /> },
+          { path: '/mypage/contracts', element: <Statement /> },
       { path: '/notices', element: <NoticeList /> },
       { path: '/notices/:noticeNo', element: <NoticeDetail /> },
 
@@ -113,9 +134,9 @@ export const router = createBrowserRouter([
         ],
       },
 
-      // 관리자만
       {
         element: <RequireRole allowedRoles={[ROLES.ADMIN]} />,
+        children: [{ path: ROUTES.ADMIN.MEMBERS, element: <MemberList /> }],
         children: [
           // { path: ROUTES.ADMIN.MEMBERS, element: <MemberList /> },
           { path: '/notices/new', element: <NoticeWrite /> },
@@ -140,3 +161,5 @@ export const router = createBrowserRouter([
     ],
   },
 ]);
+
+
