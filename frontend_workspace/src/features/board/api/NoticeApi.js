@@ -12,8 +12,7 @@ export async function fetchNoticeList(params) {
 }
 
 export async function searchNotice(req) {
-  const { data } = await apiJson().get('/api/notice/search', { params: req });
-  return data;
+  return apiJson().get('/api/notice/search', { params: req });
 }
 
 export function fetchNoticeDetail(postNo) {
