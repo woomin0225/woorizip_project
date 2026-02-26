@@ -1,7 +1,11 @@
 // src/features/board/hooks/useEventDetail.js
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { unwrapApi } from '../../../shared/utils/apiUnwrap';
-import { fetchEventDetail, deleteEvent } from '../api/EventApi';
+import {
+  fetchEventDetail,
+  deleteEvent,
+  increaseEventView,
+} from '../api/EventApi';
 import { useAuth } from '../../../app/providers/AuthProvider';
 
 export function useEventDetail({ postNo, nav }) {
@@ -16,7 +20,9 @@ export function useEventDetail({ postNo, nav }) {
     setLoading(true);
     setError('');
     try {
-      const resp = await fetchEventDetail(postNo);
+      await increaseEventView(postNo); // ① 조회수 증가
+
+      const resp = await fetchEventDetail(postNo); // ② 상세조회
       const dto = unwrapApi(resp);
       setEvent(dto || null);
     } catch (e) {
@@ -28,7 +34,12 @@ export function useEventDetail({ postNo, nav }) {
     }
   };
 
+  const mountedRef = useRef(false);
+
   useEffect(() => {
+    if (mountedRef.current) return;
+    mountedRef.current = true;
+
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [postNo]);

@@ -80,7 +80,6 @@ public class InformationController {
 			@PathVariable("postNo") int postNo) {
 		
 		PostDto dto = informationService.selectInformation(postNo);
-		informationService.updateAddReadCount(postNo);
 		
 		return ResponseEntity.ok(ApiResponse.ok("상세 조회 성공", dto));
 	}
@@ -344,6 +343,15 @@ public class InformationController {
 		return ResponseEntity.ok(
 				ApiResponse.ok("검색 성공", 
 						new PageResponse<>(list, req.page(), req.size(), total, totalPages)));
+	}
+	
+	// ============== 조회수 증가 ===================
+	@PatchMapping("/{postNo}/view")
+	public ResponseEntity<ApiResponse<Void>> increaseView(@PathVariable("postNo") int postNo) {
+
+		informationService.updateAddReadCount(postNo);
+
+		return ResponseEntity.ok(ApiResponse.ok("조회수 증가 성공", null));
 	}
 	
 	@InitBinder

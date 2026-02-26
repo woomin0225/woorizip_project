@@ -100,18 +100,21 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, EndpointPolicy.PUBLIC_GET).permitAll()
                 
                 .requestMatchers(HttpMethod.PATCH, "/api/notice/*/view").permitAll()
+                .requestMatchers(HttpMethod.PATCH, "/api/information/*/view").permitAll()
+                .requestMatchers(HttpMethod.PATCH, "/api/event/*/view").permitAll()
+                .requestMatchers(HttpMethod.PATCH, "/api/qna/*/view").permitAll()
+                
+				// qna write: USER or ADMIN
+				.requestMatchers(HttpMethod.POST, EndpointPolicy.QNA_WRITE).hasAnyRole("USER", "ADMIN")
+				.requestMatchers(HttpMethod.PUT, EndpointPolicy.QNA_WRITE).hasAnyRole("USER", "ADMIN")
+				.requestMatchers(HttpMethod.DELETE, EndpointPolicy.QNA_WRITE).hasAnyRole("USER", "ADMIN")
+				.requestMatchers(HttpMethod.PATCH, EndpointPolicy.QNA_WRITE).hasAnyRole("USER", "ADMIN")
 
                 // admin write: notice, information, event only
                 .requestMatchers(HttpMethod.POST, EndpointPolicy.ADMIN_WRITE).hasRole("ADMIN")
                 .requestMatchers(HttpMethod.PUT, EndpointPolicy.ADMIN_WRITE).hasRole("ADMIN")
                 .requestMatchers(HttpMethod.DELETE, EndpointPolicy.ADMIN_WRITE).hasRole("ADMIN")
                 .requestMatchers(HttpMethod.PATCH, EndpointPolicy.ADMIN_WRITE).hasRole("ADMIN")
-
-                // qna write: USER or ADMIN
-                .requestMatchers(HttpMethod.POST, EndpointPolicy.QNA_WRITE).hasAnyRole("USER","ADMIN")
-                .requestMatchers(HttpMethod.PUT, EndpointPolicy.QNA_WRITE).hasAnyRole("USER","ADMIN")
-                .requestMatchers(HttpMethod.DELETE, EndpointPolicy.QNA_WRITE).hasAnyRole("USER","ADMIN")
-                .requestMatchers(HttpMethod.PATCH, EndpointPolicy.QNA_WRITE).hasAnyRole("USER","ADMIN")
 
                 // replies write: USER or ADMIN
                 .requestMatchers(HttpMethod.POST, EndpointPolicy.REPLY_WRITE).hasAnyRole("USER","ADMIN")

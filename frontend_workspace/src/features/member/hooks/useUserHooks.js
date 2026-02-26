@@ -397,7 +397,19 @@ export function useLogin() {
         throw new Error('토큰 발급에 실패했습니다.');
       }
 
-      setTokens(data);
+      // JWT payload 추출 함수 추가
+      function parseJwtPayload(token) {
+        const base64 = token.split('.')[1];
+        const json = atob(base64);
+        return JSON.parse(json);
+      }
+
+      const payload = parseJwtPayload(data.accessToken);
+
+      setTokens({
+        ...data,
+        userId: payload.sub, // 대부분 sub에 아이디 들어있음
+      });
 
       alert('로그인 성공!');
       navigate('/');

@@ -3,7 +3,7 @@ import { apiJson, apiForm } from '../../../app/http/request';
 
 // Top3 ===================================
 export async function fetchEventTop3() {
-  const { data } = await apiJson.get('/api/event/top3');
+  const { data } = await apiJson().get('/api/event/top3');
   return data;
 }
 
@@ -30,6 +30,11 @@ export async function downloadEventFile(postNo, fileNo) {
   return apiJson().get(`/api/event/${postNo}/filedown/${fileNo}`, {
     responseType: 'blob',
   });
+}
+
+// 조회수 증가
+export function increaseEventView(postNo) {
+  return apiJson().patch(`/api/event/${postNo}/view`);
 }
 
 // ADMIN ===================================
