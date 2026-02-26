@@ -1,6 +1,7 @@
 // 건물 작성 및 수정 양식
 import ImageUploadField from "./ImageUploadField";
 import styles from "./HouseForm.module.css";
+import { PropTypes } from 'prop-types';
 
 export default function HouseForm({
   house,
@@ -11,6 +12,22 @@ export default function HouseForm({
   onSubmit,
   onSearchAddress,
 }) {
+  HouseForm.propTypes = {
+    house: PropTypes.shape({
+      houseName: PropTypes.string.isRequired,
+      houseZip: PropTypes.string.isRequired,
+      houseAddress: PropTypes.string.isRequired,
+      houseAddressDetail: PropTypes.string,
+      houseCompletionYear: PropTypes.number.isRequired,
+      houseFloors: PropTypes.number.isRequired,
+      houseHouseHolds: PropTypes.number.isRequired,
+      houseElevatorYn: PropTypes.bool.isRequired,
+      housePetYn: PropTypes.bool.isRequired,
+      houseFemaleLimit: PropTypes.bool.isRequired,
+      houseParkingMax: PropTypes.number.isRequired,
+      houseAbstract: PropTypes.string,
+    }),
+  };
   return (
     <form className={styles.form} onSubmit={onSubmit}>
       <div className={styles.row}>
