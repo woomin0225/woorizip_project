@@ -1,23 +1,105 @@
 /* 슬라이드 앨범 css */
-.sliderContainer { width: 500px; overflow: hidden; }
-.slides { display: flex; transition: transform 0.5s ease; }
-.slides img { width: 500px; flex-shrink: 0; }
-
-.card {
+.card{
   position: relative;
+  padding: 12px;
+  border-bottom: 1px solid rgba(0,0,0,0.08);
+  background: #fff;
 }
 
-.wishBtn {
+.body{
+  display: flex;
+  gap: 12px;
+}
+
+.thumb{
+  width: 160px;
+  flex: 0 0 160px;
+}
+
+.noImage{
+  width: 160px;
+  height: 120px;
+  background: #f3f4f6;
+  border: 1px solid rgba(0,0,0,0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(0,0,0,0.6);
+  font-size: 13px;
+}
+
+.thumbImg{
+  width: 160px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid rgba(0,0,0,0.08);
+}
+
+.thumbNav{
+  margin-top: 6px;
+  display: flex;
+  gap: 6px;
+}
+
+.photoCount{
+  margin-top: 6px;
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+.info{
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.titleRow{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.title{
+  font-weight: 600;
+  color: #111;
+  text-decoration: none;
+}
+
+.updated{
+  font-size: 12px;
+  opacity: 0.65;
+  white-space: nowrap;
+}
+
+.priceRow{
+  margin-top: 8px;
+  display: flex;
+  gap: 10px;
+  font-size: 14px;
+}
+
+.method{
+  font-weight: 600;
+}
+
+.metaRow{
+  margin-top: 8px;
+  display: flex;
+  gap: 10px;
+  font-size: 13px;
+  opacity: 0.8;
+  flex-wrap: wrap;
+}
+
+.wishBtn{
   position: absolute;
-  top: 8px;
-  right: 8px;
-  z-index: 5;
-  background: white;
-  border: 1px solid #ddd;
-  border-radius: 999px;
+  right: 10px;
+  top: 10px;
   width: 34px;
   height: 34px;
+  border-radius: 999px;
+  border: 1px solid rgba(0,0,0,0.12);
+  background: #fff;
   cursor: pointer;
-  font-size: 18px;
-  line-height: 32px;
 }

@@ -26,10 +26,10 @@ import QnaDetail from '../../features/board/pages/qna/QnaDetail';
 import QnaWrite from '../../features/board/pages/qna/QnaWrite';
 import QnaUpdate from '../../features/board/pages/qna/QnaUpdate';
 
-import InformationList from '../../features/board/pages/information/InformationList';
-import InformationDetail from '../../features/board/pages/information/InformationDetail';
-import InformationWrite from '../../features/board/pages/information/InformationWrite';
-import InformationUpdate from '../../features/board/pages/information/InformationUpdate';
+import InformationList from '../../features/board/pages/Information/InformationList';
+import InformationDetail from '../../features/board/pages/Information/InformationDetail';
+import InformationWrite from '../../features/board/pages/Information/InformationWrite';
+import InformationUpdate from '../../features/board/pages/Information/InformationUpdate';
 
 import MemberList from '../../features/member/pages/MemberList';
 
@@ -55,10 +55,14 @@ import HouseRegistration from '../../features/houseAndRoom/pages/house/HouseRegi
 import HouseSelection from '../../features/houseAndRoom/pages/house/HouseSelection';
 import RoomRegistration from '../../features/houseAndRoom/pages/room/RoomRegistration';
 import EstateModify from '../../features/houseAndRoom/pages/EstateModify';
+import Delete from '../../features/houseAndRoom/pages/Delete';
+
+import Empty from '../../shared/pages/Empty';
 
 export const router = createBrowserRouter([
   {
     element: <MainLayout />,
+    errorElement: <Empty />,
     children: [
       { path: '/', element: <Home /> },
 
@@ -125,19 +129,14 @@ export const router = createBrowserRouter([
             element: <ReservationForm />,
           },
 
-          { path: '/rooms/:roomNo/reviews/new', element: <ReviewCreate /> }, // 리뷰 등록 페이지
-          {
-            path: '/rooms/:roomNo/reviews/:reviewNo/edit',
-            element: <ReviewModify />,
-          }, // 리뷰 수정 페이지
-          { path: '/estate/manage', element: <Management /> },
-          { path: '/estate/modify', element: <EstateModify /> },
-          { path: '/estate/houses/new', element: <HouseRegistration /> },
-          { path: '/estate/houses/select', element: <HouseSelection /> },
-          {
-            path: '/estate/houses/:houseNo/rooms/new',
-            element: <RoomRegistration />,
-          },
+          { path: '/rooms/:roomNo/reviews/new', element: <ReviewCreate /> },  // 리뷰 등록 페이지
+          { path: '/rooms/:roomNo/reviews/:reviewNo/edit', element: <ReviewModify /> }, // 리뷰 수정 페이지
+          { path: "/estate/manage", element: <Management /> },
+          { path: "/estate/modify", element: <EstateModify/> },
+          { path: "/estate/houses/new", element: <HouseRegistration /> },
+          { path: "/estate/houses/select", element: <HouseSelection /> },
+          { path: "/estate/houses/:houseNo/rooms/new", element: <RoomRegistration /> },
+          { path: "/estate/delete", element: <Delete /> },
         ],
       },
 
@@ -164,6 +163,10 @@ export const router = createBrowserRouter([
             // element: <FacilityCategoryForm />,
           },
         ],
+      },
+      {
+        path: '*',
+        element: <Empty />
       },
     ],
   },
