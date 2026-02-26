@@ -57,9 +57,12 @@ import RoomRegistration from "../../features/houseAndRoom/pages/room/RoomRegistr
 import EstateModify from '../../features/houseAndRoom/pages/EstateModify';
 import Delete from '../../features/houseAndRoom/pages/Delete';
 
+import Empty from '../../shared/pages/Empty';
+
 export const router = createBrowserRouter([
   {
     element: <MainLayout />,
+    errorElement: <Empty />,
     children: [
       { path: '/', element: <Home /> },
 
@@ -160,6 +163,10 @@ export const router = createBrowserRouter([
             // element: <FacilityCategoryForm />,
           },
         ],
+      },
+      {
+        path: '*',
+        element: <Empty />
       },
     ],
   },
