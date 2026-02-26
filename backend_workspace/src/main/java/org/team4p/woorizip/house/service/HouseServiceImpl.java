@@ -1,11 +1,14 @@
 package org.team4p.woorizip.house.service;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
@@ -22,7 +25,9 @@ import org.team4p.woorizip.room.jpa.repository.RoomRepository;
 import org.team4p.woorizip.user.jpa.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class HouseServiceImpl implements HouseService {
@@ -30,7 +35,8 @@ public class HouseServiceImpl implements HouseService {
 	private final @Qualifier("houseRestTemplate") RestTemplate houseRestTemplate;
 	private final RoomRepository roomRepository;
 	private final UserRepository userRepository;
-
+	private @Value("${kakao.geocoding.api.uri}") String geoCodingApiUri;
+	
 	@Override
 	public List<HouseMarkerResponse> selectHouseMarkers(RoomSearchCondition cond) {
 		// 지도 내 건물 마커용 검색 결과 조회
@@ -83,10 +89,15 @@ public class HouseServiceImpl implements HouseService {
 		// 주소 -> 위도, 경도 전환
 		// geocoding 요청할 URI 구성
 		String uri = UriComponentsBuilder
-				.fromPath("/v2/local/search/address.json")
+				.fromUriString(geoCodingApiUri)
 				.queryParam("query", houseDto.getHouseAddress())
-				.build(true)
+				.build()
+				.encode(StandardCharsets.UTF_8)
 				.toUriString();
+		log.info("geocoding uri = {}", uri);
+		ResponseEntity<String> raw = houseRestTemplate.getForEntity(uri, String.class);
+		log.info("kakao status={}", raw.getStatusCode());
+		log.info("kakao body={}", raw.getBody());
 		// RestTemplate 사용해서 API 응답 요청
 		KakaoGeocodingResponse response = houseRestTemplate.getForObject(uri, KakaoGeocodingResponse.class);
 		
@@ -137,9 +148,10 @@ public class HouseServiceImpl implements HouseService {
 		// 위도/경도 업데이트
 		// geocoding 요청할 URI 구성
 		String uri = UriComponentsBuilder
-				.fromPath("/v2/local/search/address.json")
-				.queryParam("query", entity.getHouseAddress())
-				.build(true)
+				.fromUriString(geoCodingApiUri)
+				.queryParam("query", houseDto.getHouseAddress())
+				.build()
+				.encode(StandardCharsets.UTF_8)
 				.toUriString();
 		// RestTemplate 사용해서 API 응답 요청
 		KakaoGeocodingResponse response = houseRestTemplate.getForObject(uri, KakaoGeocodingResponse.class);
