@@ -65,3 +65,15 @@ export function extractRoleFromAccessToken(accessToken) {
 
   return null;
 }
+
+export function extractUserNoFromAccessToken(token) {
+  if (!token) return null;
+
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return payload.userNo || null;
+  } catch (e) {
+    console.error('JWT userNo parse error:', e);
+    return null;
+  }
+}

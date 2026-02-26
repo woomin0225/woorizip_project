@@ -27,7 +27,7 @@ export default function EventList() {
       {/* 관리자 등록 버튼 */}
       {hook.isAdmin && (
         <div style={{ textAlign: 'center', marginBottom: 20 }}>
-          <button onClick={() => nav('/events/new')}>이벤트 등록</button>
+          <button onClick={() => nav('/event/new')}>이벤트 등록</button>
         </div>
       )}
 
@@ -66,7 +66,7 @@ export default function EventList() {
           <EventListItem
             key={post.postNo}
             post={post}
-            onClick={() => nav(`/events/${post.postNo}`)}
+            onClick={() => nav(`/event/${post.postNo}`)}
           />
         ))}
       </div>

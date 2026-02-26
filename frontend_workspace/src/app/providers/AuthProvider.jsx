@@ -12,7 +12,10 @@ import React, {
 
 import { tokenStore } from '../http/tokenStore';
 import { subscribeAuthEvent, emitLogout } from '../http/authEvents';
-import { extractRoleFromAccessToken } from './utils/jwt';
+import {
+  extractRoleFromAccessToken,
+  extractUserNoFromAccessToken,
+} from './utils/jwt';
 import { ROLES } from '../../shared/constants/roles';
 
 const AuthContext = createContext(null);
@@ -48,6 +51,9 @@ export default function AuthProvider({ children }) {
   const [role, setRole] = useState(
     computeRoleFromStores(tokenStore.getAccess())
   );
+  const [userNo, setUserNo] = useState(
+    extractUserNoFromAccessToken(tokenStore.getAccess())
+  );
 
   const isAuthed = Boolean(accessToken);
   const isAdmin = useMemo(() => computeIsAdmin(role), [role]);
@@ -55,12 +61,14 @@ export default function AuthProvider({ children }) {
   // authEvents(로그아웃) 구독: 인터셉터에서 emitLogout() 발생 시 Provider 상태 동기화
   useEffect(() => {
     const unsubscribe = subscribeAuthEvent(() => {
+      const nextAccess = tokenStore.getAccess();
       // interceptors에서 tokenStore.clear()가 이미 수행되었을 수 있으므로
       // 상태를 tokenStore 기준으로 “재동기화”만 해도 안전
-      setAccessToken(tokenStore.getAccess());
+      setAccessToken(nextAccess);
       setRefreshToken(tokenStore.getRefresh());
       setUserId(tokenStore.getUserId?.() || null);
-      setRole(computeRoleFromStores(tokenStore.getAccess()));
+      setUserNo(extractUserNoFromAccessToken(nextAccess)); // 추가
+      setRole(computeRoleFromStores(nextAccess));
     });
     return unsubscribe;
   }, []);
@@ -88,6 +96,7 @@ export default function AuthProvider({ children }) {
     setAccessToken(nextAccess);
     setRefreshToken(tokenStore.getRefresh());
     setUserId(tokenStore.getUserId?.() || null);
+    setUserNo(extractUserNoFromAccessToken(nextAccess));
     setRole(r || computeRoleFromStores(nextAccess));
   }, []);
 
@@ -98,6 +107,7 @@ export default function AuthProvider({ children }) {
     setRefreshToken(null);
     setUserId(null);
     setRole(null);
+    setUserNo(null);
 
     // Provider에서 로그아웃을 수행한 경우에도 앱 전체에 브로드캐스트
     emitLogout();
@@ -110,6 +120,7 @@ export default function AuthProvider({ children }) {
       isAdmin,
       role,
       userId,
+      userNo,
       accessToken,
       refreshToken,
 
@@ -122,6 +133,7 @@ export default function AuthProvider({ children }) {
       isAdmin,
       role,
       userId,
+      userNo,
       accessToken,
       refreshToken,
       setTokens,
