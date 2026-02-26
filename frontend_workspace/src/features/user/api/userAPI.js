@@ -3,8 +3,29 @@ import { parseJwt } from '../../../app/providers/utils/jwt';
 
 const API_BASE_URL = getApiBaseUrl();
 
+function getNormalizedAccessToken() {
+  const raw = localStorage.getItem('accessToken');
+  if (!raw) return null;
+
+  let token = String(raw).trim();
+  if (token.startsWith('"') && token.endsWith('"')) {
+    token = token.slice(1, -1).trim();
+  }
+  if (token.startsWith('Bearer ')) {
+    token = token.slice('Bearer '.length).trim();
+  }
+  if (!token || token === 'null' || token === 'undefined') {
+    return null;
+  }
+
+  if (token !== raw) {
+    localStorage.setItem('accessToken', token);
+  }
+  return token;
+}
+
 function authHeader() {
-  const token = localStorage.getItem('accessToken');
+  const token = getNormalizedAccessToken();
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
@@ -30,7 +51,7 @@ async function request(path, options = {}) {
 }
 
 function getEmailFromAccessToken() {
-  const accessToken = localStorage.getItem('accessToken');
+  const accessToken = getNormalizedAccessToken();
   const payload = parseJwt(accessToken);
   if (!payload) return null;
 
@@ -65,6 +86,12 @@ export async function updateMyInfo(payload) {
   return request(`/api/user/${encodeURIComponent(email)}`, {
     method: 'PUT',
     body: JSON.stringify(payload),
+  });
+}
+
+export async function withdrawMyAccount() {
+  return request('/api/user/withdraw', {
+    method: 'PATCH',
   });
 }
 

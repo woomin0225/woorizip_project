@@ -1,1 +1,6 @@
-/* placeholder */
+.footerFixed {
+  position: relative;
+  z-index: 10;
+  background: #f7f8fb;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+}

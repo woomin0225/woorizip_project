@@ -6,18 +6,21 @@ export default function OAuth2RedirectHandler() {
   const location = useLocation();
 
   useEffect(() => {
-    // TODO: 백엔드 로직에 따라 URL의 쿼리 파라미터 이름(?token= 등)을 맞춰야 함
     const params = new URLSearchParams(location.search);
-    const token = params.get('token');
+    const rawToken = params.get('token');
     const error = params.get('error');
 
-    if (token) {
+    if (rawToken) {
+      let token = String(rawToken).trim();
+      if (token.startsWith('Bearer ')) {
+        token = token.slice('Bearer '.length).trim();
+      }
       localStorage.setItem('accessToken', token);
       alert('소셜 로그인 성공!');
-      navigate('/');
+      navigate('/', { replace: true });
     } else {
       alert(error || '소셜 로그인 처리에 실패했습니다.');
-      navigate('/login');
+      navigate('/login', { replace: true });
     }
   }, [navigate, location]);
 

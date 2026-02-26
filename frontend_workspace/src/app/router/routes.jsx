@@ -8,8 +8,10 @@ import { ROLES } from '../../shared/constants/roles';
 import { ROUTES } from '../../shared/constants/routes';
 
 import Home from '../../shared/pages/Home';
+import About from '../../shared/pages/About';
 import Login from '../../features/member/pages/Login';
 import Signup from '../../features/member/pages/Signup';
+import OAuth2RedirectHandler from '../../features/member/pages/OAuth2RedirectHandler';
 
 import NoticeList from '../../features/board/pages/notice/NoticeList';
 import NoticeDetail from '../../features/board/pages/notice/NoticeDetail';
@@ -36,6 +38,7 @@ import MemberList from '../../features/member/pages/MemberList';
 import MyInfo from '../../features/user/pages/MyInfo';
 import MyInfoModify from '../../features/user/pages/MyInfoModify';
 import Withdrawn from '../../features/user/pages/withdrawn';
+import MyPageHome from '../../features/user/pages/MyPageHome';
 
 import WishlistPage from '../../features/wishlist/pages/WishlistPage';
 import TourApply from '../../features/tour/pages/TourApply';
@@ -67,14 +70,16 @@ export const router = createBrowserRouter([
     errorElement: <RouteError />, // 에러확인용 임시
     children: [
       { path: '/', element: <Home /> },
+      { path: '/about', element: <About /> },
 
       { path: ROUTES.AUTH.LOGIN, element: <Login /> },
       { path: ROUTES.AUTH.SIGNUP, element: <Signup /> },
+      { path: '/oauth2/redirect', element: <OAuth2RedirectHandler /> },
 
       {
         element: <RequireAuth />,
         children: [
-          { path: ROUTES.MEMBER.MYPAGE, element: <WishlistPage /> },
+          { path: ROUTES.MEMBER.MYPAGE, element: <MyPageHome /> },
           { path: ROUTES.MEMBER.MY_INFO, element: <MyInfo /> },
           { path: ROUTES.MEMBER.MY_INFO_EDIT, element: <MyInfoModify /> },
           { path: ROUTES.MEMBER.MY_WITHDRAW, element: <Withdrawn /> },
@@ -83,6 +88,7 @@ export const router = createBrowserRouter([
 
           { path: ROUTES.TOUR.APPLY, element: <TourApply /> },
           { path: ROUTES.TOUR.LIST, element: <OccupyApply /> },
+          { path: '/rooms/:roomNo/tour', element: <TourApply /> },
           { path: '/mypage/tour', element: <OccupyApply /> },
 
           { path: ROUTES.CONTRACT.APPLY, element: <ContractCreate /> },

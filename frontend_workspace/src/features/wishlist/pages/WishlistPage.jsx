@@ -10,7 +10,13 @@ function getCurrentUserNo() {
   const fromStorage = localStorage.getItem('userNo') || localStorage.getItem('userId');
   if (fromStorage) return fromStorage;
 
-  const token = localStorage.getItem('accessToken');
+  const raw = localStorage.getItem('accessToken');
+  if (!raw) return null;
+  let token = String(raw).trim();
+  if (token.startsWith('"') && token.endsWith('"')) token = token.slice(1, -1).trim();
+  if (token.startsWith('Bearer ')) token = token.slice('Bearer '.length).trim();
+  if (!token || token === 'null' || token === 'undefined') return null;
+
   const payload = parseJwt(token);
   if (!payload) return null;
 

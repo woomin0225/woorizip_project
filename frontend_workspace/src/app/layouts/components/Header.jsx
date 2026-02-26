@@ -62,14 +62,14 @@ export default function Header() {
             })
             .then((res) => {
               const userDto = res?.data?.data; // ApiResponse<UserDto>에서 data
-              setIsLessor(userDto?.type === "LESSOR");
+              setIsLessor(userDto?.type === 'LESSOR');
             })
             .catch((err) => {
-              console.error("회원정보 조회 실패:", err);
+              console.error('회원정보 조회 실패:', err);
               setIsLessor(false);
             });
         }
-        
+
         const isAdmin =
           decodedToken.role === 'ADMIN' ||
           decodedToken.role === 'ROLE_ADMIN' ||
@@ -200,12 +200,15 @@ export default function Header() {
 
             <Nav className="align-items-lg-center ml-lg-auto" navbar>
               {isLoggedIn ? (
-                <NavItem className={`d-none d-lg-flex align-items-center ml-lg-4 ${styles.userArea}`}>
-                  <span className={styles.welcome}>{userName}님 환영합니다!</span>
-
-                  <div className={styles.userActions}>
+                <NavItem
+                  className={`d-none d-lg-flex ${styles.authSlot} ${styles.authSlotLoggedIn}`}
+                >
+                  <span className={styles.welcomeText}>
+                    {userName}님 환영합니다!
+                  </span>
+                  <div className={styles.authButtonsRow}>
                     <Button
-                      className="btn-neutral btn-icon"
+                      className={`btn-neutral btn-icon ${styles.loggedInButton}`}
                       color="default"
                       size="sm"
                       to={myPageRoute}
@@ -215,7 +218,7 @@ export default function Header() {
                     </Button>
 
                     <Button
-                      className="btn-warning btn-icon"
+                      className={`btn-info btn-icon ${styles.loggedInButton}`}
                       color="default"
                       size="sm"
                       onClick={handleLogout}
@@ -225,25 +228,29 @@ export default function Header() {
                   </div>
                 </NavItem>
               ) : (
-                <NavItem className="d-none d-lg-block ml-lg-4">
-                  <Button
-                    className="btn-neutral btn-icon mr-2"
-                    color="default"
-                    size="sm"
-                    to="/login"
-                    tag={Link}
-                  >
-                    <span className="nav-link-inner--text">로그인</span>
-                  </Button>
-                  <Button
-                    className="btn-info btn-icon"
-                    color="default"
-                    size="sm"
-                    to="/signup"
-                    tag={Link}
-                  >
-                    <span className="nav-link-inner--text">회원가입</span>
-                  </Button>
+                <NavItem
+                  className={`d-none d-lg-flex ${styles.authSlot} ${styles.authSlotLoggedOut}`}
+                >
+                  <div className={styles.authButtonsRow}>
+                    <Button
+                      className="btn-neutral btn-icon"
+                      color="default"
+                      size="sm"
+                      to="/login"
+                      tag={Link}
+                    >
+                      <span className="nav-link-inner--text">로그인</span>
+                    </Button>
+                    <Button
+                      className="btn-info btn-icon"
+                      color="default"
+                      size="sm"
+                      to="/signup"
+                      tag={Link}
+                    >
+                      <span className="nav-link-inner--text">회원가입</span>
+                    </Button>
+                  </div>
                 </NavItem>
               )}
             </Nav>
