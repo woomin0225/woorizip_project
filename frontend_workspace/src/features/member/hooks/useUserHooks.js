@@ -1,4 +1,5 @@
-﻿import { useState, useEffect, useCallback } from 'react';
+﻿import { useAuth } from '../../../app/providers/AuthProvider';
+import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 
 function parseJwtPayload(token) {
@@ -11,7 +12,7 @@ function parseJwtPayload(token) {
     const json = decodeURIComponent(
       atob(base64)
         .split('')
-        .map((c) => `%${(`00${c.charCodeAt(0).toString(16)}`).slice(-2)}`)
+        .map((c) => `%${`00${c.charCodeAt(0).toString(16)}`.slice(-2)}`)
         .join('')
     );
     return JSON.parse(json);
@@ -66,8 +67,10 @@ export function useSignup() {
     if (code === 1 || code === 2 || code === 5 || code === 6) century = 1900;
     if (code === 3 || code === 4 || code === 7 || code === 8) century = 2000;
     if (code === 9 || code === 0) century = 1800;
-    if (code === 1 || code === 3 || code === 5 || code === 7 || code === 9) gender = 'M';
-    if (code === 2 || code === 4 || code === 6 || code === 8 || code === 0) gender = 'F';
+    if (code === 1 || code === 3 || code === 5 || code === 7 || code === 9)
+      gender = 'M';
+    if (code === 2 || code === 4 || code === 6 || code === 8 || code === 0)
+      gender = 'F';
     if (!century || !gender) return null;
 
     const year = century + yy;
@@ -131,7 +134,9 @@ export function useSignup() {
 
       if (
         res.ok &&
-        (data.body === 'ok' || data.data === 'ok' || data.message?.includes('ok'))
+        (data.body === 'ok' ||
+          data.data === 'ok' ||
+          data.message?.includes('ok'))
       ) {
         alert('사용 가능한 아이디입니다.');
         setIsIdChecked(true);
@@ -264,7 +269,9 @@ export const useFindId = () => {
       });
       setFoundId(res.data.data);
     } catch (err) {
-      setError(err.response?.data?.message || '아이디 찾기 중 오류가 발생했습니다.');
+      setError(
+        err.response?.data?.message || '아이디 찾기 중 오류가 발생했습니다.'
+      );
     } finally {
       setLoading(false);
     }
@@ -357,6 +364,8 @@ export function useTourList() {
 }
 
 export function useLogin() {
+  const { setTokens } = useAuth();
+
   const [form, setForm] = useState({ emailId: '', password: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -388,16 +397,7 @@ export function useLogin() {
         throw new Error('토큰 발급에 실패했습니다.');
       }
 
-      localStorage.setItem('accessToken', data.accessToken);
-      if (data.refreshToken) {
-        localStorage.setItem('refreshToken', data.refreshToken);
-      }
-
-      const payload = parseJwtPayload(data.accessToken);
-      const userId = data.userId || data.userNo || payload?.userId || payload?.userNo;
-      if (userId) {
-        localStorage.setItem('userId', String(userId));
-      }
+      setTokens(data);
 
       alert('로그인 성공!');
       navigate('/');
@@ -512,7 +512,9 @@ export function useFindPassword() {
       console.log(`인증 요청: [${method}] ${targetValue}`);
 
       setTimeout(() => {
-        setMessage('인증이 완료되어 새로운 임시 비밀번호가 발급/전송 되었습니다.');
+        setMessage(
+          '인증이 완료되어 새로운 임시 비밀번호가 발급/전송 되었습니다.'
+        );
         setLoading(false);
       }, 1000);
     } catch {
