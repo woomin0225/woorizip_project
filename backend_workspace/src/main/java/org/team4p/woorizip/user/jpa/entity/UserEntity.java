@@ -52,6 +52,10 @@ public class UserEntity {
     @Column(name = "updated_at")
     private Date updatedAt;
 
+    @Temporal(TemporalType.TIMESTAMP)
+    @Column(name = "withdraw_at")
+    private Date withdrawAt;
+
     @Column(name = "deleted_yn", nullable = false, columnDefinition = "char(1)")
     private String deletedYn;
 
@@ -60,7 +64,6 @@ public class UserEntity {
         Date now = new Date();
         if (this.userNo == null) this.userNo = java.util.UUID.randomUUID().toString();
         if (this.createdAt == null) this.createdAt = now;
-        if (this.updatedAt == null) this.updatedAt = now;
         
         if (this.type == null) this.type = "USER";
         if (this.role == null) this.role = "USER";
@@ -73,8 +76,4 @@ public class UserEntity {
     }
 
 
-    @PreUpdate
-    public void preUpdate() {
-        this.updatedAt = new Date();
-    }
 }

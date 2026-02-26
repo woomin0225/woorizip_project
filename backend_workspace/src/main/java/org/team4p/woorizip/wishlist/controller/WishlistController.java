@@ -83,7 +83,7 @@ public class WishlistController {
      */
     @DeleteMapping("/delete/all/{userNo}")
     public ResponseEntity<ApiResponse<Void>> deleteAll(@PathVariable("userNo") String userNo) {
-        int result = wishlistService.deleteWishlist(userNo);
+        int result = wishlistService.deleteMyWishlist(userNo);
         if (result >= 0) {
             return ResponseEntity.ok(ApiResponse.ok("찜 전체 삭제 성공", null));
         }
