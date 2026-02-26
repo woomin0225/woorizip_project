@@ -21,14 +21,14 @@ export default function HouseForm({
       <div className={styles.row}>
         <label>우편번호</label>
         <div className={styles.inline}>
-          <input name="houseZip" value={house.houseZip || ""} onChange={onChange} readOnly />
+          <input name="houseZip" value={house.houseZip || ""} onChange={onChange} /*readOnly*/ />
           <button type="button" onClick={onSearchAddress}>주소검색</button>
         </div>
       </div>
 
       <div className={styles.row}>
         <label>주소</label>
-        <input name="houseAddress" value={house.houseAddress || ""} onChange={onChange} readOnly />
+        <input name="houseAddress" value={house.houseAddress || ""} onChange={onChange} /*readOnly*/ />
       </div>
 
       <div className={styles.row}>
