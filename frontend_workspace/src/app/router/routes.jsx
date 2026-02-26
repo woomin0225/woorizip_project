@@ -86,7 +86,7 @@ export const router = createBrowserRouter([
         ],
       },
       { path: '/notices', element: <NoticeList /> },
-      { path: '/notices/:noticeNo', element: <NoticeDetail /> },
+      { path: '/notices/:postNo', element: <NoticeDetail /> },
 
       { path: '/qna', element: <QnaList /> },
       { path: '/qna/:postNo', element: <QnaDetail /> },
