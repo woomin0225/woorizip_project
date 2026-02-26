@@ -22,6 +22,8 @@ public class QFacilityEntity extends EntityPathBase<FacilityEntity> {
 
     public static final QFacilityEntity facilityEntity = new QFacilityEntity("facilityEntity");
 
+    public final QFacilityCategoryEntity category;
+
     public final NumberPath<Integer> facilityCapacity = createNumber("facilityCapacity", Integer.class);
 
     public final TimePath<java.time.LocalTime> facilityCloseTime = createTime("facilityCloseTime", java.time.LocalTime.class);
@@ -76,6 +78,7 @@ public class QFacilityEntity extends EntityPathBase<FacilityEntity> {
 
     public QFacilityEntity(Class<? extends FacilityEntity> type, PathMetadata metadata, PathInits inits) {
         super(type, metadata, inits);
+        this.category = inits.isInitialized("category") ? new QFacilityCategoryEntity(forProperty("category")) : null;
         this.house = inits.isInitialized("house") ? new org.team4p.woorizip.house.jpa.entity.QHouseEntity(forProperty("house")) : null;
     }
 
