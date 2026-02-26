@@ -7,7 +7,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.team4p.woorizip.auth.security.principal.CustomUserPrincipal;
 import org.team4p.woorizip.common.api.ApiResponse;
 import org.team4p.woorizip.user.model.dto.UserDto;
 import org.team4p.woorizip.user.model.service.UserService;
@@ -78,11 +80,72 @@ public class UserController {
     @PutMapping("/{email}")
     public ResponseEntity<ApiResponse<Void>> updateUser(
             @PathVariable("email") String email,
+            @AuthenticationPrincipal CustomUserPrincipal principal,
             @RequestBody UserDto userDto) {
+        if (principal == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                                 .body(ApiResponse.fail("인증 정보가 없습니다.", null));
+        }
+
+        boolean isAdmin = principal.getAuthorities().stream()
+                .anyMatch(auth -> "ROLE_ADMIN".equals(auth.getAuthority()));
+        if (!isAdmin && !email.equals(principal.getEmailId())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                                 .body(ApiResponse.fail("본인 정보만 수정할 수 있습니다.", null));
+        }
+
         userDto.setEmailId(email);
         int result = userService.updateUser(userDto);
         return result > 0 ? ResponseEntity.ok(ApiResponse.ok("회원 정보 수정 성공", null))
                           : ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+    }
+
+    /**
+     * 회원 탈퇴 (soft delete)
+     * PATCH /user/{email}/withdraw
+     */
+    @PatchMapping("/{email}/withdraw")
+    public ResponseEntity<ApiResponse<Void>> withdrawUser(
+            @PathVariable("email") String email,
+            @AuthenticationPrincipal CustomUserPrincipal principal) {
+        if (principal == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                                 .body(ApiResponse.fail("인증 정보가 없습니다.", null));
+        }
+
+        boolean isAdmin = principal.getAuthorities().stream()
+                .anyMatch(auth -> "ROLE_ADMIN".equals(auth.getAuthority()));
+        if (!isAdmin && !email.equals(principal.getEmailId())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                                 .body(ApiResponse.fail("본인 계정만 탈퇴할 수 있습니다.", null));
+        }
+
+        int result = userService.withdrawUser(email);
+        if (result > 0) {
+            return ResponseEntity.ok(ApiResponse.ok("회원 탈퇴 처리 성공", null));
+        }
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                             .body(ApiResponse.fail("회원을 찾을 수 없습니다.", null));
+    }
+
+    /**
+     * 내 회원 탈퇴 (soft delete)
+     * PATCH /user/withdraw
+     */
+    @PatchMapping("/withdraw")
+    public ResponseEntity<ApiResponse<Void>> withdrawMe(
+            @AuthenticationPrincipal CustomUserPrincipal principal) {
+        if (principal == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                                 .body(ApiResponse.fail("인증 정보가 없습니다.", null));
+        }
+
+        int result = userService.withdrawUser(principal.getEmailId());
+        if (result > 0) {
+            return ResponseEntity.ok(ApiResponse.ok("회원 탈퇴 처리 성공", null));
+        }
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                             .body(ApiResponse.fail("회원을 찾을 수 없습니다.", null));
     }
 
     /**

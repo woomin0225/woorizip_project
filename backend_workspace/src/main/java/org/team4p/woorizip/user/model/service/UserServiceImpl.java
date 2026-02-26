@@ -84,11 +84,23 @@ public class UserServiceImpl implements UserService {
             if (userDto.getPassword() != null && !userDto.getPassword().isEmpty()) {
                 userEntity.setPassword(passwordEncoder.encode(userDto.getPassword()));
             }
+            userEntity.setUpdatedAt(new java.util.Date());
 
             return userRepository.save(userEntity) != null ? 1 : 0;
 
         } catch (Exception e) {
             log.error("회원 수정 중 오류 발생: {}", e.getMessage());
+            return 0;
+        }
+    }
+
+    @Override
+    @Transactional
+    public int withdrawUser(String emailId) {
+        try {
+            return userRepository.markWithdrawnByEmailId(emailId);
+        } catch (Exception e) {
+            log.error("회원 탈퇴 처리 중 오류 발생: {}", e.getMessage());
             return 0;
         }
     }

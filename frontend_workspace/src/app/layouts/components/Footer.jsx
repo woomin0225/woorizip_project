@@ -1,9 +1,10 @@
 import React from 'react';
 import { NavItem, NavLink, Nav, Container, Row, Col, Button } from 'reactstrap';
+import styles from './Footer.module.css';
 
 export default function Footer() {
   return (
-    <footer className="footer">
+    <footer className={`footer ${styles.footerFixed}`}>
       <Container>
         <Row className="align-items-center justify-content-md-between">
           <Col md="6">

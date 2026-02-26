@@ -120,6 +120,8 @@ public class HouseRepositoryCustomImpl implements HouseRepositoryCustom {
 			where.and(qhouseEntity.houseParkingMax.gt(0));
 		}
 		
+		where.and(qhouseEntity.deleted.isFalse());
+		
 		List<HouseEntity> rows = queryFactory.selectFrom(qhouseEntity)
 									.join(qroomEntity).on(qroomEntity.houseNo.eq(qhouseEntity.houseNo))
 									.where(where)
@@ -203,6 +205,8 @@ public class HouseRepositoryCustomImpl implements HouseRepositoryCustom {
 		if(cond.getHouseParking() != null && cond.getHouseParking() == true) {
 			where.and(qhouseEntity.houseParkingMax.gt(0));
 		}
+		
+		where.and(qhouseEntity.deleted.isFalse());
 		
 		Long min;
 		Long max;

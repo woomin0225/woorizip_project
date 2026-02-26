@@ -102,7 +102,6 @@ CREATE TABLE `tb_reviews` (
 CREATE TABLE `tb_wishlists` (
   `wish_no` CHAR(36) NOT NULL COMMENT '찜번호',
   `user_no` CHAR(36) NOT NULL COMMENT '회원번호',
-  `house_no` CHAR(36) NULL COMMENT '건물번호',
   `room_no` CHAR(36) NOT NULL COMMENT '방번호',
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '등록일시',
   PRIMARY KEY (`wish_no`)
@@ -288,7 +287,6 @@ ALTER TABLE `tb_tours` ADD CONSTRAINT `fk_tb_tours_user_no` FOREIGN KEY (`user_n
 ALTER TABLE `tb_reviews` ADD CONSTRAINT `fk_tb_reviews_room_no` FOREIGN KEY (`room_no`) REFERENCES `tb_rooms` (`room_no`);
 ALTER TABLE `tb_reviews` ADD CONSTRAINT `fk_tb_reviews_user_no` FOREIGN KEY (`user_no`) REFERENCES `tb_users` (`user_no`);
 ALTER TABLE `tb_wishlists` ADD CONSTRAINT `fk_tb_wishlists_user_no` FOREIGN KEY (`user_no`) REFERENCES `tb_users` (`user_no`) ON DELETE CASCADE;
-ALTER TABLE `tb_wishlists` ADD CONSTRAINT `fk_tb_wishlists_house_no` FOREIGN KEY (`house_no`) REFERENCES `tb_houses` (`house_no`) ON DELETE CASCADE;
 ALTER TABLE `tb_wishlists` ADD CONSTRAINT `fk_tb_wishlists_room_no` FOREIGN KEY (`room_no`) REFERENCES `tb_rooms` (`room_no`) ON DELETE CASCADE;
 ALTER TABLE `tb_posts` ADD CONSTRAINT `fk_tb_posts_board_type_no` FOREIGN KEY (`board_type_no`) REFERENCES `tb_board_type` (`board_type_no`);
 ALTER TABLE `tb_posts` ADD CONSTRAINT `fk_tb_posts_user_no` FOREIGN KEY (`user_no`) REFERENCES `tb_users` (`user_no`);

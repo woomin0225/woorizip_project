@@ -20,10 +20,34 @@
 }
 
 .menuTitle { margin: 0 0 14px; font-size: 1rem; font-weight: 700; color: #344767; }
+.sideNavWrap {
+  min-height: 62vh;
+  display: flex;
+  flex-direction: column;
+}
 .menuList { display: flex; flex-direction: column; gap: 8px; }
 .menuItem { display: block; padding: 10px 12px; border-radius: 8px; color: #344767; font-weight: 600; text-decoration: none; background: #f8f9fe; }
 .menuItem:hover { background: #eef2ff; text-decoration: none; }
 .active { background: #11cdef; color: #fff; }
+.withdrawWrap {
+  margin-top: auto;
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 12px;
+}
+.withdrawItem {
+  font-size: 0.8rem;
+  color: #8898aa;
+  text-decoration: none;
+}
+.withdrawItem:hover {
+  color: #f5365c;
+  text-decoration: none;
+}
+.withdrawActive {
+  color: #f5365c;
+  font-weight: 700;
+}
 
 .headerRow { margin-bottom: 18px; }
 .title { margin: 0; font-size: 1.6rem; color: #32325d; }
@@ -94,6 +118,87 @@
   color: #fff;
   background: #f5365c;
 }
+.dangerBtn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.warningBox {
+  border: 1px solid #f8d7da;
+  background: #fff5f6;
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+}
+.warningTitle {
+  margin: 0 0 8px;
+  color: #d63348;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+.warningList {
+  margin: 0;
+  padding-left: 18px;
+  color: #6b1a27;
+  font-size: 0.9rem;
+}
+.warningList li + li {
+  margin-top: 4px;
+}
+
+.surveyBox {
+  border: 1px solid #e9ecef;
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+}
+.surveyTitle {
+  margin: 0 0 10px;
+  color: #344767;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+.reasonGroup {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 12px;
+  margin-bottom: 12px;
+}
+.reasonItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: #525f7f;
+  font-size: 0.9rem;
+}
+.reasonTextarea {
+  width: 100%;
+  border: 1px solid #d2d6da;
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+  resize: vertical;
+}
+.reasonTextarea:focus {
+  outline: none;
+  border-color: #11cdef;
+}
+.confirmCheck {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  color: #525f7f;
+  font-size: 0.9rem;
+}
+.confirmCheck input {
+  margin-top: 3px;
+}
+.errorText {
+  color: #d63348;
+  font-size: 0.88rem;
+  margin: 0 0 12px;
+}
 
 .grid2 {
   display: grid;
@@ -122,7 +227,9 @@
 
 @media (max-width: 991px) {
   .mainCard { min-height: 0; }
+  .sideNavWrap { min-height: 0; }
   .grid2 { grid-template-columns: 1fr; }
+  .reasonGroup { grid-template-columns: 1fr; }
   .fieldRow { grid-template-columns: 1fr; }
   .compactForm { max-width: 100%; }
 }

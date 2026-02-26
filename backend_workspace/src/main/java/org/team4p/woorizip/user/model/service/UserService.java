@@ -21,6 +21,9 @@ public interface UserService {
     // 회원 정보 수정
     int updateUser(UserDto userDto);
 
+    // 회원 탈퇴 (soft delete)
+    int withdrawUser(String emailId);
+
     // 회원 수 조회
     int selectListCount();
 

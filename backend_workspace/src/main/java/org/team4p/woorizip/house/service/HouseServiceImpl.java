@@ -59,7 +59,7 @@ public class HouseServiceImpl implements HouseService {
 	public List<HouseDto> selectHousesByOwnerNo(String currentUser) {
 		// 임대인 회원 건물 목록 조회
 		String userNo = userRepository.findUserNoByEmailId(currentUser);
-		List<HouseEntity> rows = houseRepository.findAllByUserNoOrderByHouseName(userNo);
+		List<HouseEntity> rows = houseRepository.findAllByUserNoAndDeletedFalseOrderByHouseName(userNo);
 		List<HouseDto> list = new ArrayList<>();
 		rows.forEach(entity->list.add(entity.toDto()));
 		return list;
