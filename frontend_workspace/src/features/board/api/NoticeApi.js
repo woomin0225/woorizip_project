@@ -34,6 +34,11 @@ export async function downloadNoticeFile(postNo, fileNo) {
   });
 }
 
+// 조회수 증가
+export function increaseNoticeView(postNo) {
+  return apiJson().patch(`/api/notice/${postNo}/view`);
+}
+
 // ADMIN
 export async function createNotice(formData) {
   const { data } = await apiForm().post('/api/notice', formData);
