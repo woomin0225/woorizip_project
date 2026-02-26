@@ -152,7 +152,7 @@ export const router = createBrowserRouter([
         children: [
           // { path: ROUTES.ADMIN.MEMBERS, element: <MemberList /> },
           { path: '/notices/new', element: <NoticeWrite /> },
-          { path: '/notices/:noticeNo/edit', element: <NoticeUpdate /> },
+          { path: '/notices/:postNo/edit', element: <NoticeUpdate /> },
 
           { path: '/information/new', element: <InformationWrite /> },
           { path: '/information/:postNo/edit', element: <InformationUpdate /> },
