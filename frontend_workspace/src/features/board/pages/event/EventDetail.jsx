@@ -72,7 +72,7 @@ export default function EventDetail() {
           <tr>
             <th>첨부파일</th>
             <td>
-              {event.files && event.file.length > 0
+              {event.files && event.files.length > 0
                 ? event.files.map((f) => (
                     <div key={f.fileNo}>
                       <FileDownloadButton
@@ -89,7 +89,7 @@ export default function EventDetail() {
       </table>
 
       <div style={{ marginTop: 24, textAlign: 'center' }}>
-        <Link to="/events" style={{ marginRight: 10 }}>
+        <Link to="/event" style={{ marginRight: 10 }}>
           목록으로
         </Link>
 
@@ -97,7 +97,7 @@ export default function EventDetail() {
           <>
             <button
               type="button"
-              onClick={() => nav(`/events/${postNo}/edit`)}
+              onClick={() => nav(`/event/${postNo}/edit`)}
               style={{ marginRight: 10 }}
             >
               수정

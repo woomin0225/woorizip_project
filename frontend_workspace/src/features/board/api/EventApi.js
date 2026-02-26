@@ -8,16 +8,8 @@ export async function fetchEventTop3() {
 }
 
 // 목록 ===================================
-export async function fetchEventList({
-  page = 1,
-  size = 10,
-  sort = 'postNo',
-  direct = 'DESC',
-}) {
-  const { data } = await apiJson().get('/api/event', {
-    params: { page, size, sort, direct },
-  });
-  return data;
+export async function fetchEventList(params) {
+  return apiJson().get('/api/event', { params });
 }
 
 // 검색 ===================================
@@ -29,9 +21,8 @@ export async function searchEvent(req) {
 }
 
 // 상세 ===================================
-export async function fetchEventDetail(postNo) {
-  const { data } = await apiJson().get(`/api/event/${postNo}`);
-  return data;
+export function fetchEventDetail(postNo) {
+  return apiJson().get(`/api/event/${postNo}`);
 }
 
 // 파일 다운로드 ===================================

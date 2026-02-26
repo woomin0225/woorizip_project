@@ -41,7 +41,7 @@ export function useEventDetail({ postNo, nav }) {
       setDeleting(true);
       await deleteEvent(postNo);
       alert('삭제되었습니다.');
-      nav('/events');
+      nav('/event');
     } catch (e) {
       console.error(e);
       alert('삭제에 실패했습니다.');
