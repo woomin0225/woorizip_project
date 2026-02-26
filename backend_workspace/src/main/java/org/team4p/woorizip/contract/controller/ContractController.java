@@ -1,6 +1,6 @@
 package org.team4p.woorizip.contract.controller;
 
-import java.util.List;
+import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -10,9 +10,11 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.team4p.woorizip.auth.security.principal.CustomUserPrincipal;
 import org.team4p.woorizip.common.api.ApiResponse;
+import org.team4p.woorizip.common.api.PageResponse;
 import org.team4p.woorizip.contract.model.dto.ContractDto;
 import org.team4p.woorizip.contract.model.dto.request.ContractDecideRequest;
 import org.team4p.woorizip.contract.model.service.ContractService;
@@ -29,53 +31,44 @@ public class ContractController {
 
     private final ContractService contractService;
 
-    /**
-     * 계약 조회
-     * GET /contract/{contractNo}
-     */
     @GetMapping("/{contractNo}")
     public ResponseEntity<ApiResponse<ContractDto>> selectContract(@PathVariable("contractNo") String contractNo) {
         ContractDto contract = contractService.selectContract(contractNo);
         if (contract == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                                 .body(ApiResponse.fail("계약 정보를 찾을 수 없습니다.", null));
+                    .body(ApiResponse.fail("계약 정보를 찾을 수 없습니다.", null));
         }
         return ResponseEntity.ok(ApiResponse.ok("계약 조회 성공", contract));
     }
 
-    /**
-     * 계약 목록 조회
-     * GET /contract/{userNo}
-     */
     @GetMapping("/user/me")
-    public ResponseEntity<ApiResponse<List<ContractDto>>> selectListContract(
-            @AuthenticationPrincipal CustomUserPrincipal userPrincipal) {
-        List<ContractDto> list = contractService.selectListContract(userPrincipal.getUserNo());
-        return ResponseEntity.ok(ApiResponse.ok("내 계약 목록 조회 성공", list));
+    public ResponseEntity<ApiResponse<PageResponse<ContractDto>>> selectListContract(
+            @AuthenticationPrincipal CustomUserPrincipal userPrincipal,
+            @RequestParam(name = "page", defaultValue = "1") int page,
+            @RequestParam(name = "size", defaultValue = "8") int size) {
+        PageResponse<ContractDto> body = contractService.selectListContract(userPrincipal.getUserNo(), page, size);
+        return ResponseEntity.ok(ApiResponse.ok("내 계약 목록 조회 성공", body));
     }
 
-    /**
-     * 입주 신청
-     * POST /contract/insert/{roomNo}
-     */
     @PostMapping("/insert/{roomNo}")
     public ResponseEntity<ApiResponse<Void>> insertContract(
             @PathVariable("roomNo") String roomNo,
             @AuthenticationPrincipal CustomUserPrincipal userPrincipal,
             @RequestBody @Valid ContractDto contractDto) {
-        
-        contractDto.setRoomNo(roomNo); 
+
+        contractDto.setRoomNo(roomNo);
         contractDto.setUserNo(userPrincipal.getUserNo());
-        
+
         int result = contractService.insertContract(contractDto);
-        return result > 0 ? ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok("입주 신청 성공", null))
-                          : ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        if (result == -1) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(ApiResponse.fail("이미 신청된 입주 날짜입니다.", null));
+        }
+        return result > 0
+                ? ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok("입주 신청 성공", null))
+                : ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
     }
 
-    /**
-     * 계약 수정 요청 (임차인용)
-     * POST /api/contract/amendment/request/{originalContractNo}
-     */
     @PostMapping("/amendment/request/{originalContractNo}")
     public ResponseEntity<ApiResponse<Void>> requestAmendment(
             @PathVariable("originalContractNo") String originalNo,
@@ -85,20 +78,29 @@ public class ContractController {
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body(ApiResponse.fail("이미 진행 중인 수정 요청이 존재합니다.", null));
         }
-        return result > 0 ? ResponseEntity.ok(ApiResponse.ok("수정 요청이 완료되었습니다.", null))
-                          : ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        return result > 0
+                ? ResponseEntity.ok(ApiResponse.ok("수정 요청이 완료되었습니다.", null))
+                : ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
     }
 
-    /**
-     * 계약 수정 승인/거절 결정 (임대인용)
-     * POST /api/contract/amendment/decide/{amendmentNo}
-     */
     @PostMapping("/amendment/decide/{amendmentNo}")
     public ResponseEntity<ApiResponse<Void>> decideAmendment(
             @PathVariable("amendmentNo") String amendmentNo,
             @RequestBody ContractDecideRequest decideRequest) {
         int result = contractService.decideAmendment(amendmentNo, decideRequest.isApproved(), decideRequest.getReason());
-        return result > 0 ? ResponseEntity.ok(ApiResponse.ok("처리가 완료되었습니다.", null))
-                          : ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        return result > 0
+                ? ResponseEntity.ok(ApiResponse.ok("처리가 완료되었습니다.", null))
+                : ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+    }
+
+    @PostMapping("/cancel/{contractNo}")
+    public ResponseEntity<ApiResponse<Void>> cancelContract(
+            @PathVariable("contractNo") String contractNo,
+            @RequestBody(required = false) Map<String, String> body) {
+        String reason = body != null ? body.get("reason") : null;
+        int result = contractService.cancelContract(contractNo, reason);
+        return result > 0
+                ? ResponseEntity.ok(ApiResponse.ok("계약 취소 요청이 완료되었습니다.", null))
+                : ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.fail("계약 취소 요청 실패", null));
     }
 }

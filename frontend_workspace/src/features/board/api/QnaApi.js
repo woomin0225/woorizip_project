@@ -8,16 +8,8 @@ export async function fetchQnaTop3() {
 }
 
 // 목록 =========================================
-export async function fetchQnaList({
-  page = 1,
-  size = 10,
-  sort = 'postNo',
-  direct = 'DESC',
-}) {
-  const { data } = await apiJson().get('/api/qna', {
-    params: { page, size, sort, direct },
-  });
-  return data; // ApiResponse<PageResponse<PostDto>>
+export function fetchQnaList(params) {
+  return apiJson().get('/api/qna', { params });
 }
 
 // 검색 =========================================
@@ -29,9 +21,8 @@ export async function searchQna(req) {
 }
 
 // 상세 =========================================
-export async function fetchQnaDetail(postNo) {
-  const { data } = await apiJson().get(`/api/qna/${postNo}`);
-  return data; // ApiResponse<PostDto>
+export function fetchQnaDetail(postNo) {
+  return apiJson().get(`/api/qna/${postNo}`);
 }
 
 // 파일 다운로드 =========================================
@@ -45,20 +36,22 @@ export async function downloadQnaFile(postNo, fileNo) {
   });
 }
 
+// 조회수 증가
+export function increaseQnaView(postNo) {
+  return apiJson().patch(`/api/qna/${postNo}/view`);
+}
+
 // 등록 =========================================
-export async function createQna(formData) {
-  const { data } = await apiForm().post('/api/qna', formData);
-  return data;
+export function createQna(formData) {
+  return apiForm().post('/api/qna', formData);
 }
 
 // 수정 =========================================
-export async function updateQna(postNo, formData) {
-  const { data } = await apiForm().put(`/api/qna/${postNo}/update`, formData);
-  return data;
+export function updateQna(postNo, formData) {
+  return apiForm().put(`/api/qna/${postNo}/update`, formData);
 }
 
 // 삭제 =========================================
-export async function deleteQna(postNo) {
-  const { data } = await apiJson().delete(`/api/qna/${postNo}/delete`);
-  return data;
+export function deleteQna(postNo) {
+  return apiJson().delete(`/api/qna/${postNo}/delete`);
 }

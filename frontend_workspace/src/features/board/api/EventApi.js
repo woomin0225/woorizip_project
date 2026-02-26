@@ -3,21 +3,13 @@ import { apiJson, apiForm } from '../../../app/http/request';
 
 // Top3 ===================================
 export async function fetchEventTop3() {
-  const { data } = await apiJson.get('/api/event/top3');
+  const { data } = await apiJson().get('/api/event/top3');
   return data;
 }
 
 // 목록 ===================================
-export async function fetchEventList({
-  page = 1,
-  size = 10,
-  sort = 'postNo',
-  direct = 'DESC',
-}) {
-  const { data } = await apiJson().get('/api/event', {
-    params: { page, size, sort, direct },
-  });
-  return data;
+export async function fetchEventList(params) {
+  return apiJson().get('/api/event', { params });
 }
 
 // 검색 ===================================
@@ -29,9 +21,8 @@ export async function searchEvent(req) {
 }
 
 // 상세 ===================================
-export async function fetchEventDetail(postNo) {
-  const { data } = await apiJson().get(`/api/event/${postNo}`);
-  return data;
+export function fetchEventDetail(postNo) {
+  return apiJson().get(`/api/event/${postNo}`);
 }
 
 // 파일 다운로드 ===================================
@@ -39,6 +30,11 @@ export async function downloadEventFile(postNo, fileNo) {
   return apiJson().get(`/api/event/${postNo}/filedown/${fileNo}`, {
     responseType: 'blob',
   });
+}
+
+// 조회수 증가
+export function increaseEventView(postNo) {
+  return apiJson().patch(`/api/event/${postNo}/view`);
 }
 
 // ADMIN ===================================

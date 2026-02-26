@@ -5,7 +5,7 @@ import { unwrapApi } from '../../../shared/utils/apiUnwrap';
 import { useAuth } from '../../../app/providers/AuthProvider';
 
 export function useQnaUpdate({ postNo, nav }) {
-  const { isAuthed, user } = useAuth();
+  const { isAuthed, userNo } = useAuth();
 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -23,8 +23,10 @@ export function useQnaUpdate({ postNo, nav }) {
   const [ownerNo, setOwnerNo] = useState(null);
 
   const canEdit = useMemo(() => {
-    return isAuthed && user?.useNo && ownerNo === user.userNo;
-  }, [isAuthed, user, ownerNo]);
+    if (!isAuthed) return false;
+    if (!ownerNo || !userNo) return false;
+    return String(ownerNo) === String(userNo);
+  }, [isAuthed, userNo, ownerNo]);
 
   const load = async () => {
     if (!isAuthed) {
@@ -58,6 +60,8 @@ export function useQnaUpdate({ postNo, nav }) {
       setLoading(false);
     }
   };
+  console.log('ownerNo:', ownerNo, typeof ownerNo);
+  console.log('userNo:', userNo, typeof userNo);
 
   useEffect(() => {
     load();

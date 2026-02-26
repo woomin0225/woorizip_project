@@ -4,10 +4,10 @@ import PostListItem from './PostListItem';
 import PostSearchBar from './PostSearchBar';
 import PagingView from './../../../shared/components/PagingView/PagingView';
 
-
 export default function PostList({
   title,
   isAdmin,
+  isAuthed,
   content,
   pageResponse,
   loading,
@@ -38,7 +38,7 @@ export default function PostList({
         {title}
       </h2>
 
-      {isAdmin && (
+      {(isAdmin || isAuthed) && (
         <div style={{ textAlign: 'center', marginBottom: 18 }}>
           <button type="button" onClick={onClickWrite}>
             글 등록

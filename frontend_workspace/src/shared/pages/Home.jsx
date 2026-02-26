@@ -2,7 +2,6 @@ import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Container, Row, Col, Card, CardBody, CardHeader } from 'reactstrap';
 
-
 export default function Home() {
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -56,12 +55,11 @@ export default function Home() {
     }
     `}</style>
 
-      
       <main>
         {/* 1. 슬라이드 배너 영역 (하늘색 테마 배경 + 임시 윤곽선) */}
         <section
           className="section-profile-cover section-shaped my-0"
-          style={{ height: '450px' }}
+          style={{ height: '500px' }}
         >
           <div className="shape shape-style-1 bg-gradient-info">
             <span />
@@ -91,34 +89,44 @@ export default function Home() {
                 {' '}
                 <Row className="text-center justify-content-center m-0">
                   <Col xs="auto" className="quick-col">
-                    <div className="icon icon-shape bg-info text-white rounded-circle shadow quick-icon mx-auto">
-                      <i className="ni ni-building" />
-                    </div>
-                    <h6 className="mb-0 quick-title">방찾기</h6>
+                    <Link to="/rooms" className="text-decoration-none">
+                      <div className="icon icon-shape bg-info text-white rounded-circle shadow quick-icon mx-auto">
+                        <i className="ni ni-building" />
+                      </div>
+                      <h6 className="mb-0 quick-title">방찾기</h6>
+                    </Link>
                   </Col>
                   <Col xs="auto" className="quick-col">
-                    <div className="icon icon-shape bg-success text-white rounded-circle shadow quick-icon mx-auto">
-                      <i className="ni ni-notification-70" />
-                    </div>
-                    <h6 className="mb-0 quick-title">공지사항</h6>
+                    <Link to="/notices" className="text-decoration-none">
+                      <div className="icon icon-shape bg-success text-white rounded-circle shadow quick-icon mx-auto">
+                        <i className="ni ni-notification-70" />
+                      </div>
+                      <h6 className="mb-0 quick-title">공지사항</h6>
+                    </Link>
                   </Col>
                   <Col xs="auto" className="quick-col">
-                    <div className="icon icon-shape bg-warning text-white rounded-circle shadow quick-icon mx-auto">
-                      <i className="ni ni-calendar-grid-58" />
-                    </div>
-                    <h6 className="mb-0 quick-title">이벤트</h6>
+                    <Link to="/event" className="text-decoration-none">
+                      <div className="icon icon-shape bg-warning text-white rounded-circle shadow quick-icon mx-auto">
+                        <i className="ni ni-calendar-grid-58" />
+                      </div>
+                      <h6 className="mb-0 quick-title">이벤트</h6>
+                    </Link>
                   </Col>
                   <Col xs="auto" className="quick-col">
-                    <div className="icon icon-shape bg-danger text-white rounded-circle shadow quick-icon mx-auto">
-                      <i className="ni ni-books" />
-                    </div>
-                    <h6 className="mb-0 quick-title">정책안내</h6>
+                    <Link to="/information" className="text-decoration-none">
+                      <div className="icon icon-shape bg-danger text-white rounded-circle shadow quick-icon mx-auto">
+                        <i className="ni ni-books" />
+                      </div>
+                      <h6 className="mb-0 quick-title">정책안내</h6>
+                    </Link>
                   </Col>
                   <Col xs="auto" className="quick-col">
-                    <div className="icon icon-shape bg-primary text-white rounded-circle shadow quick-icon mx-auto">
-                      <i className="ni ni-chat-round" />
-                    </div>
-                    <h6 className="mb-0 quick-title">커뮤니티</h6>
+                    <Link to="/qna" className="text-decoration-none">
+                      <div className="icon icon-shape bg-primary text-white rounded-circle shadow quick-icon mx-auto">
+                        <i className="ni ni-chat-round" />
+                      </div>
+                      <h6 className="mb-0 quick-title">커뮤니티</h6>
+                    </Link>
                   </Col>
                 </Row>
               </CardBody>

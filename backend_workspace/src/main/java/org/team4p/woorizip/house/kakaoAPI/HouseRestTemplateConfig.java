@@ -12,11 +12,11 @@ import org.springframework.web.client.RestTemplate;
 @Configuration
 public class HouseRestTemplateConfig {
 	@Bean
-	public RestTemplate houseRestTemplate(RestTemplateBuilder builder, @Value("${kakao.rest-api-key}") String kakaoRestApiKey) {
+	public RestTemplate houseRestTemplate(RestTemplateBuilder builder, @Value("${kakaomap.rest-api-key}") String kakaomapRestApiKey) {
 		// https://developers.kakao.com/docs/latest/ko/local/dev-guide
 		return builder
 				.rootUri("https://dapi.kakao.com")
-				.defaultHeader(HttpHeaders.AUTHORIZATION, "KakaoAK "+kakaoRestApiKey)
+				.defaultHeader(HttpHeaders.AUTHORIZATION, "KakaoAK "+kakaomapRestApiKey)
 				.connectTimeout(Duration.ofSeconds(3))
 				.readTimeout(Duration.ofSeconds(3))
 				.build();

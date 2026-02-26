@@ -84,7 +84,6 @@ public class EventController {
 			@PathVariable("postNo") int postNo) {
 		
 		PostDto dto = eventService.selectEvent(postNo);
-		eventService.updateAddReadCount(postNo);
 		
 		return ResponseEntity.ok(ApiResponse.ok("상세 조회 성공", dto));
 	}
@@ -429,6 +428,15 @@ public class EventController {
 		return ResponseEntity.ok(
 				ApiResponse.ok("검색 성공", 
 						new PageResponse<>(list, req.page(), req.size(), total, totalPages)));
+	}
+	
+	// ============== 조회수 증가 ===================
+	@PatchMapping("/{postNo}/view")
+	public ResponseEntity<ApiResponse<Void>> increaseView(@PathVariable("postNo") int postNo) {
+
+		eventService.updateAddReadCount(postNo);
+
+		return ResponseEntity.ok(ApiResponse.ok("조회수 증가 성공", null));
 	}
 	
 	@InitBinder

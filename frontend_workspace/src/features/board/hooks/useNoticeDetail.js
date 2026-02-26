@@ -1,7 +1,11 @@
 // src/features/board/hooks/useNoticeDetail.js
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { unwrapApi } from '../../../shared/utils/apiUnwrap';
-import { fetchNoticeDetail, deleteNotice } from '../api/NoticeApi';
+import {
+  fetchNoticeDetail,
+  deleteNotice,
+  increaseNoticeView,
+} from '../api/NoticeApi';
 import { useAuth } from '../../../app/providers/AuthProvider';
 
 export function useNoticeDetail({ postNo, nav }) {
@@ -16,7 +20,9 @@ export function useNoticeDetail({ postNo, nav }) {
     setLoading(true);
     setError('');
     try {
-      const resp = await fetchNoticeDetail(postNo);
+      await increaseNoticeView(postNo); // ① 조회수 증가
+
+      const resp = await fetchNoticeDetail(postNo); // ② 상세조회
       const dto = unwrapApi(resp);
       setNotice(dto || null);
     } catch (e) {
@@ -28,7 +34,12 @@ export function useNoticeDetail({ postNo, nav }) {
     }
   };
 
+  const mountedRef = useRef(false);
+
   useEffect(() => {
+    if (mountedRef.current) return;
+    mountedRef.current = true;
+
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [postNo]);

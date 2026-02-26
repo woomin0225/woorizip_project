@@ -1,7 +1,15 @@
 // 삭제 확인 modal
 import styles from "./DeleteConfirmModal.module.css";
 
-export default function DeleteConfirmModal({ open, title = "삭제", message = "삭제할까요?", onCancel, onConfirm }) {
+export default function DeleteConfirmModal({
+  open,
+  title = "삭제",
+  message = "정말 삭제할까요?",
+  confirmText = "삭제",
+  cancelText = "취소",
+  onConfirm,
+  onCancel,
+}) {
   if (!open) return null;
 
   return (
@@ -9,9 +17,14 @@ export default function DeleteConfirmModal({ open, title = "삭제", message = "
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         <h3 className={styles.title}>{title}</h3>
         <p className={styles.msg}>{message}</p>
+
         <div className={styles.actions}>
-          <button className={styles.cancel} onClick={onCancel}>취소</button>
-          <button className={styles.confirm} onClick={onConfirm}>삭제</button>
+          <button type="button" className={styles.cancel} onClick={onCancel}>
+            {cancelText}
+          </button>
+          <button type="button" className={styles.confirm} onClick={onConfirm}>
+            {confirmText}
+          </button>
         </div>
       </div>
     </div>

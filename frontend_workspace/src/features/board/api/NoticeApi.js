@@ -7,26 +7,16 @@ export async function fetchNoticeTop3() {
   return data; // ApiResponse<List<NoticeDto>>
 }
 
-export async function fetchNoticeList({
-  page = 1,
-  size = 10,
-  sort = 'postNo',
-  direct = 'DESC',
-}) {
-  const { data } = await apiJson().get('/api/notice', {
-    params: { page, size, sort, direct },
-  });
-  return data; // ApiResponse<PageResponse<PostDto>>
+export async function fetchNoticeList(params) {
+  return apiJson().get('/api/notice', { params });
 }
 
 export async function searchNotice(req) {
-  const { data } = await apiJson().get('/api/notice/search', { params: req });
-  return data;
+  return apiJson().get('/api/notice/search', { params: req });
 }
 
-export async function fetchNoticeDetail(postNo) {
-  const { data } = await apiJson().get(`/api/notice/${postNo}`);
-  return data; // ApiResponse<PostDto>
+export function fetchNoticeDetail(postNo) {
+  return apiJson().get(`/api/notice/${postNo}`);
 }
 
 // (참고용: 토큰 없이 a href로 호출하면 실패 가능)
@@ -42,6 +32,11 @@ export async function downloadNoticeFile(postNo, fileNo) {
   return apiJson().get(`/api/notice/${postNo}/filedown/${fileNo}`, {
     responseType: 'blob',
   });
+}
+
+// 조회수 증가
+export function increaseNoticeView(postNo) {
+  return apiJson().patch(`/api/notice/${postNo}/view`);
 }
 
 // ADMIN

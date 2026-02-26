@@ -24,7 +24,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.team4p.woorizip.facility.dto.FacilityCategoryCreateRequestDTO;
 import org.team4p.woorizip.facility.dto.FacilityCreateRequestDTO;
 import org.team4p.woorizip.facility.dto.FacilityImageDTO;
-import org.team4p.woorizip.facility.dto.FacilityListResponseDTO;
 import org.team4p.woorizip.facility.dto.FacilityModifyRequestDTO;
 import org.team4p.woorizip.facility.jpa.entity.FacilityCategoryEntity;
 import org.team4p.woorizip.facility.jpa.entity.FacilityEntity;
@@ -54,7 +53,7 @@ class FacilityServiceTest {
 		// 가상 환경 설정
 		HouseEntity mockHouse = mock(HouseEntity.class);
 		lenient().when(mockHouse.getHouseNo()).thenReturn("HOUSE_001");
-		lenient().when(houseRepository.findAllByUserNoOrderByHouseName(anyString())).thenReturn(List.of(mockHouse));
+		lenient().when(houseRepository.findAllByUserNoAndDeletedFalseOrderByHouseName(anyString())).thenReturn(List.of(mockHouse));
 
 		Map<String, Boolean> options = new HashMap<>();
 		

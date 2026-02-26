@@ -43,6 +43,8 @@ public class QUserEntity extends EntityPathBase<UserEntity> {
 
     public final StringPath userNo = createString("userNo");
 
+    public final DateTimePath<java.util.Date> withdrawAt = createDateTime("withdrawAt", java.util.Date.class);
+
     public QUserEntity(String variable) {
         super(UserEntity.class, forVariable(variable));
     }

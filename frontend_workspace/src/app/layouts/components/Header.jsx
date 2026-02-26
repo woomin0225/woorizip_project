@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import Headroom from 'headroom.js';
 import { ROUTES } from './../../../shared/constants/routes';
 import logo from '../../../logo.png';
+import { axiosInstance } from '../../http/axiosInstance';
 
 import {
   Button,
@@ -21,7 +22,10 @@ import {
   DropdownItem,
 } from 'reactstrap';
 
+import styles from './Header.module.css';
+
 export default function Header() {
+  const [isLessor, setIsLessor] = useState(false);
   const [collapseClasses, setCollapseClasses] = useState('');
   const [userName, setUserName] = useState('');
   const navigate = useNavigate();
@@ -46,6 +50,25 @@ export default function Header() {
             .join('')
         );
         const decodedToken = JSON.parse(jsonPayload);
+
+        // ✅ LESSOR 여부 확인: /api/user/{emailId} 호출해서 type 체크
+        setIsLessor(false); // 기본값
+
+        const emailId = decodedToken.emailId || decodedToken.sub; // 보통 sub에 이메일 들어있음
+        if (emailId) {
+          axiosInstance
+            .get(`/api/user/${encodeURIComponent(emailId)}`, {
+              headers: { Authorization: `Bearer ${token}` },
+            })
+            .then((res) => {
+              const userDto = res?.data?.data; // ApiResponse<UserDto>에서 data
+              setIsLessor(userDto?.type === 'LESSOR');
+            })
+            .catch((err) => {
+              console.error('회원정보 조회 실패:', err);
+              setIsLessor(false);
+            });
+        }
 
         const isAdmin =
           decodedToken.role === 'ADMIN' ||
@@ -73,10 +96,10 @@ export default function Header() {
     };
   }, [token]);
 
-  useEffect(() => {
-    let headroom = new Headroom(document.getElementById('navbar-main'));
-    headroom.init();
-  }, []);
+  // useEffect(() => {
+  //   let headroom = new Headroom(document.getElementById('navbar-main'));
+  //   headroom.init();
+  // }, []);
 
   const handleLogout = () => {
     localStorage.removeItem('accessToken');
@@ -87,13 +110,13 @@ export default function Header() {
   };
 
   return (
-    <header className="header-global">
+    <header className={styles.headerGlobal}>
       <Navbar
-        className="navbar-main navbar-transparent navbar-light headroom"
+        className={`navbar-main navbar-light headroom ${styles.navbar}`}
         expand="lg"
         id="navbar-main"
       >
-        <Container>
+        <Container fluid className={styles.inner}>
           <NavbarBrand className="mr-lg-5" to="/" tag={Link}>
             <img src={logo} alt="우리집 로고" style={{ height: '40px' }} />
           </NavbarBrand>
@@ -166,20 +189,26 @@ export default function Header() {
                   공용시설
                 </NavLink>
               </NavItem>
+              {isLoggedIn && isLessor && (
+                <NavItem>
+                  <NavLink to="/estate/manage" tag={Link}>
+                    매물관리
+                  </NavLink>
+                </NavItem>
+              )}
             </Nav>
 
             <Nav className="align-items-lg-center ml-lg-auto" navbar>
               {isLoggedIn ? (
-                <NavItem className="d-none d-lg-flex flex-column align-items-end ml-lg-4">
-                  <span
-                    className="text-white mb-1 font-weight-bold"
-                    style={{ fontSize: '0.85rem' }}
-                  >
+                <NavItem
+                  className={`d-none d-lg-flex ${styles.authSlot} ${styles.authSlotLoggedIn}`}
+                >
+                  <span className={styles.welcomeText}>
                     {userName}님 환영합니다!
                   </span>
-                  <div>
+                  <div className={styles.authButtonsRow}>
                     <Button
-                      className="btn-neutral btn-icon"
+                      className={`btn-neutral btn-icon ${styles.loggedInButton}`}
                       color="default"
                       size="sm"
                       to={myPageRoute}
@@ -187,8 +216,9 @@ export default function Header() {
                     >
                       <span className="nav-link-inner--text">마이페이지</span>
                     </Button>
+
                     <Button
-                      className="btn-warning btn-icon ml-2"
+                      className={`btn-info btn-icon ${styles.loggedInButton}`}
                       color="default"
                       size="sm"
                       onClick={handleLogout}
@@ -198,25 +228,29 @@ export default function Header() {
                   </div>
                 </NavItem>
               ) : (
-                <NavItem className="d-none d-lg-block ml-lg-4">
-                  <Button
-                    className="btn-neutral btn-icon mr-2"
-                    color="default"
-                    size="sm"
-                    to="/login"
-                    tag={Link}
-                  >
-                    <span className="nav-link-inner--text">로그인</span>
-                  </Button>
-                  <Button
-                    className="btn-info btn-icon"
-                    color="default"
-                    size="sm"
-                    to="/signup"
-                    tag={Link}
-                  >
-                    <span className="nav-link-inner--text">회원가입</span>
-                  </Button>
+                <NavItem
+                  className={`d-none d-lg-flex ${styles.authSlot} ${styles.authSlotLoggedOut}`}
+                >
+                  <div className={styles.authButtonsRow}>
+                    <Button
+                      className="btn-neutral btn-icon"
+                      color="default"
+                      size="sm"
+                      to="/login"
+                      tag={Link}
+                    >
+                      <span className="nav-link-inner--text">로그인</span>
+                    </Button>
+                    <Button
+                      className="btn-info btn-icon"
+                      color="default"
+                      size="sm"
+                      to="/signup"
+                      tag={Link}
+                    >
+                      <span className="nav-link-inner--text">회원가입</span>
+                    </Button>
+                  </div>
                 </NavItem>
               )}
             </Nav>

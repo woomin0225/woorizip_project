@@ -12,6 +12,7 @@ export default function QnaList() {
     <PostList
       title="Q&A 게시글 목록"
       isAdmin={false} // Q&A는 일반 사용자도 사용 가능
+      isAuthed={hook.isAuthed}
       content={hook.content}
       pageResponse={hook.pageResponse}
       loading={hook.loading}

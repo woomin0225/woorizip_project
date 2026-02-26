@@ -1,1 +1,105 @@
-/* placeholder */
+.headerGlobal {
+  position: sticky;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  z-index: 1000;
+
+  /* 배경은 header가 담당 */
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+
+  /* 여기 padding은 제거! (키 커지는 주범) */
+  padding: 0 !important;
+}
+
+/* Navbar는 투명 + 높이를 고정 + 가운데 정렬 */
+.navbar {
+  background: #ffffff !important;
+  width: 100%;
+
+  /* 헤더 키를 여기서 결정 */
+  min-height: 64px;
+  padding: 0 !important;
+  display: flex;
+  align-items: center;
+}
+
+/* 내부 컨텐츠 폭 제한 */
+.inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 16px;
+
+  /* 한 줄 정렬 안정화 */
+  display: flex;
+  align-items: center;
+}
+
+/* 브랜드(로고) 기본 패딩 제거 */
+:global(#navbar-main .navbar-brand) {
+  padding: 0 !important;
+  margin: 0 !important;
+  display: flex;
+  align-items: center;
+}
+
+/* 메뉴/버튼도 같은 기준선에 오게 */
+:global(#navbar-main .navbar-nav) {
+  align-items: center !important;
+}
+
+/* nav-link 위아래 과한 padding 제거 */
+:global(#navbar-main .nav-link) {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  line-height: 64px; /* ✅ 헤더 높이랑 맞춰서 한 줄로 */
+}
+
+/* 버튼 크기 살짝 컴팩트 */
+:global(#navbar-main .btn) {
+  padding: 6px 12px !important;
+  font-size: 0.9rem !important;
+}
+
+.authSlot {
+  width: 240px;
+  min-height: 56px;
+  margin-left: 1.5rem;
+  display: flex;
+}
+
+.authSlotLoggedOut {
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.authSlotLoggedIn {
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 6px;
+}
+
+.welcomeText {
+  margin: 0;
+  color: #6b7280;
+  font-size: 0.78rem;
+  line-height: 1;
+  font-weight: 500;
+}
+
+.authButtonsRow {
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+:global(#navbar-main) .loggedInButton {
+  padding: 2px 5px !important;
+  font-size: 0.7rem !important;
+}

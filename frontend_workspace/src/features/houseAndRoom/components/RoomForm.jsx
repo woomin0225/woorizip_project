@@ -1,6 +1,7 @@
 // 방 작성 및 수정 양식
 import ImageUploadField from "./ImageUploadField";
 import styles from "./RoomForm.module.css";
+import { PropTypes } from 'prop-types';
 
 const OPTIONS = ["WiFi", "냉장고", "세탁기", "에어컨", "침대", "책상", "옷장", "TV", "신발장"];
 
@@ -18,6 +19,24 @@ export default function RoomForm({
   onRemoveImage,
   onSubmit,
 }) {
+  RoomForm.propTypes = {
+    room: PropTypes.shape({
+      roomName: PropTypes.string.isRequired,
+      houseNo: PropTypes.string.isRequired,
+      roomMethod: PropTypes.string.isRequired,
+      roomDeposit: PropTypes.number.isRequired,
+      roomMonthly: PropTypes.number,
+      roomArea: PropTypes.number.isRequired,
+      roomFacing: PropTypes.string.isRequired,
+      roomAvailableDate: PropTypes.any.isRequired,
+      roomAbstract: PropTypes.string,
+      roomRoomCount: PropTypes.number.isRequired,
+      roomBathCount: PropTypes.number.isRequired,
+      roomEmptyYn: PropTypes.bool,
+      roomStatus: PropTypes.string,
+      roomOptions: PropTypes.string,
+    }),
+  };
   const isJeonse = room.roomMethod === "L";
   const isWolse = room.roomMethod === "M";
 

@@ -1,9 +1,10 @@
 // src/features/board/hooks/useInformationDetail.js
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { unwrapApi } from '../../../shared/utils/apiUnwrap';
 import {
   fetchInformationDetail,
   deleteInformation,
+  increaseInformationView,
 } from '../api/InformationApi';
 import { useAuth } from '../../../app/providers/AuthProvider';
 
@@ -19,7 +20,9 @@ export function useInformationDetail({ postNo, nav }) {
     setLoading(true);
     setError('');
     try {
-      const resp = await fetchInformationDetail(postNo);
+      await increaseInformationView(postNo); // ① 조회수 증가
+
+      const resp = await fetchInformationDetail(postNo); // ② 상세조회
       const dto = unwrapApi(resp);
       setInformation(dto || null);
     } catch (e) {
@@ -31,7 +34,12 @@ export function useInformationDetail({ postNo, nav }) {
     }
   };
 
+  const mountedRef = useRef(false);
+
   useEffect(() => {
+    if (mountedRef.current) return;
+    mountedRef.current = true;
+
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [postNo]);
