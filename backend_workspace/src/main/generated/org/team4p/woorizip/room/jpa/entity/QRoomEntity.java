@@ -29,7 +29,7 @@ public class QRoomEntity extends EntityPathBase<RoomEntity> {
 
     public final NumberPath<Double> roomArea = createNumber("roomArea", Double.class);
 
-    public final DateTimePath<java.time.LocalDateTime> roomAvailableDate = createDateTime("roomAvailableDate", java.time.LocalDateTime.class);
+    public final DatePath<java.time.LocalDate> roomAvailableDate = createDate("roomAvailableDate", java.time.LocalDate.class);
 
     public final NumberPath<Integer> roomBathCount = createNumber("roomBathCount", Integer.class);
 
