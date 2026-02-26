@@ -1,5 +1,141 @@
-﻿.page { padding: 140px 0 60px; }
-.title { margin: 0 0 16px; color: #32325d; }
-.input { width: 100%; margin-bottom: 10px; border: 1px solid #d2d6da; border-radius: 8px; padding: 10px 12px; }
-.btn { border: 0; border-radius: 8px; background: #11cdef; color: #fff; font-weight: 700; padding: 10px 14px; }
-.msg { margin-top: 10px; color: #525f7f; }
+.page {
+  padding: 140px 0 60px;
+}
+
+.title {
+  margin: 0 0 16px;
+  color: #32325d;
+}
+
+.roomSummary {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+  padding: 14px;
+  background: #f9fbfd;
+}
+
+.roomImageWrap {
+  width: 100%;
+}
+
+.roomImage {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid #dfe3e8;
+  background: #fff;
+}
+
+.noImage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 180px;
+  border-radius: 10px;
+  border: 1px solid #dfe3e8;
+  background: #fff;
+  color: #8898aa;
+}
+
+.roomInfo h3 {
+  margin: 0 0 8px;
+  color: #32325d;
+  font-size: 1.1rem;
+}
+
+.roomInfo p {
+  margin: 0;
+  color: #525f7f;
+  line-height: 1.5;
+}
+
+.metaRow {
+  margin-top: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.metaRow span {
+  display: inline-block;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 0.85rem;
+  color: #344767;
+  background: #eaf2ff;
+}
+
+.label {
+  display: block;
+  margin: 14px 0 6px;
+  color: #344767;
+  font-weight: 600;
+}
+
+.input {
+  width: 100%;
+  border: 1px solid #d2d6da;
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.timeSlots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.timeBtn {
+  border: 1px solid #d2d6da;
+  border-radius: 8px;
+  background: #fff;
+  color: #344767;
+  font-weight: 600;
+  padding: 8px 12px;
+}
+
+.timeBtnActive {
+  border-color: #11cdef;
+  background: #11cdef;
+  color: #fff;
+}
+
+.textarea {
+  width: 100%;
+  min-height: 120px;
+  border: 1px solid #d2d6da;
+  border-radius: 8px;
+  padding: 10px 12px;
+  resize: vertical;
+}
+
+.btn {
+  margin-top: 14px;
+  border: 0;
+  border-radius: 8px;
+  background: #11cdef;
+  color: #fff;
+  font-weight: 700;
+  padding: 10px 14px;
+}
+
+.btn:disabled {
+  opacity: 0.7;
+}
+
+.msg {
+  margin-top: 10px;
+  color: #525f7f;
+}
+
+@media (max-width: 992px) {
+  .roomSummary {
+    grid-template-columns: 1fr;
+  }
+}
