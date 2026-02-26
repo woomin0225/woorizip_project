@@ -172,6 +172,9 @@ public class RoomRepositoryCustomImpl implements RoomRepositoryCustom {
 		if(cond.getHouseParking() != null && cond.getHouseParking() == true) {
 			where.and(qhouseEntity.houseParkingMax.gt(0));
 		}
+		
+		where.and(qhouseEntity.deleted.isFalse());
+		
 		return where;
 	}
 	

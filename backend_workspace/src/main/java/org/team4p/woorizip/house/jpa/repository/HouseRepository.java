@@ -10,6 +10,6 @@ import org.team4p.woorizip.house.jpa.entity.HouseEntity;
 @Repository
 public interface HouseRepository extends JpaRepository<HouseEntity, String>, HouseRepositoryCustom {
 	String findUserNoByHouseNo(String houseId);
-	List<HouseEntity> findAllByUserNoOrderByHouseName(String userNo);
+	List<HouseEntity> findAllByUserNoAndDeletedFalseOrderByHouseName(String userNo);
 	Optional<HouseEntity> findByUserNo(String userNo);
 }

@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import Headroom from 'headroom.js';
 import { ROUTES } from './../../../shared/constants/routes';
 import logo from '../../../logo.png';
+import { axiosInstance } from '../../http/axiosInstance';
 
 import {
   Button,
@@ -24,6 +25,7 @@ import {
 import styles from './Header.module.css';
 
 export default function Header() {
+  const [isLessor, setIsLessor] = useState(false);
   const [collapseClasses, setCollapseClasses] = useState('');
   const [userName, setUserName] = useState('');
   const navigate = useNavigate();
@@ -49,6 +51,25 @@ export default function Header() {
         );
         const decodedToken = JSON.parse(jsonPayload);
 
+        // ✅ LESSOR 여부 확인: /api/user/{emailId} 호출해서 type 체크
+        setIsLessor(false); // 기본값
+
+        const emailId = decodedToken.emailId || decodedToken.sub; // 보통 sub에 이메일 들어있음
+        if (emailId) {
+          axiosInstance
+            .get(`/api/user/${encodeURIComponent(emailId)}`, {
+              headers: { Authorization: `Bearer ${token}` },
+            })
+            .then((res) => {
+              const userDto = res?.data?.data; // ApiResponse<UserDto>에서 data
+              setIsLessor(userDto?.type === "LESSOR");
+            })
+            .catch((err) => {
+              console.error("회원정보 조회 실패:", err);
+              setIsLessor(false);
+            });
+        }
+        
         const isAdmin =
           decodedToken.role === 'ADMIN' ||
           decodedToken.role === 'ROLE_ADMIN' ||
@@ -168,18 +189,21 @@ export default function Header() {
                   공용시설
                 </NavLink>
               </NavItem>
+              {isLoggedIn && isLessor && (
+                <NavItem>
+                  <NavLink to="/estate/manage" tag={Link}>
+                    매물관리
+                  </NavLink>
+                </NavItem>
+              )}
             </Nav>
 
             <Nav className="align-items-lg-center ml-lg-auto" navbar>
               {isLoggedIn ? (
-                <NavItem className="d-none d-lg-flex flex-column align-items-end ml-lg-4">
-                  <span
-                    className="text-white mb-1 font-weight-bold"
-                    style={{ fontSize: '0.85rem' }}
-                  >
-                    {userName}님 환영합니다!
-                  </span>
-                  <div>
+                <NavItem className={`d-none d-lg-flex align-items-center ml-lg-4 ${styles.userArea}`}>
+                  <span className={styles.welcome}>{userName}님 환영합니다!</span>
+
+                  <div className={styles.userActions}>
                     <Button
                       className="btn-neutral btn-icon"
                       color="default"
@@ -189,8 +213,9 @@ export default function Header() {
                     >
                       <span className="nav-link-inner--text">마이페이지</span>
                     </Button>
+
                     <Button
-                      className="btn-warning btn-icon ml-2"
+                      className="btn-warning btn-icon"
                       color="default"
                       size="sm"
                       onClick={handleLogout}

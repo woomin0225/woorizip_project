@@ -81,7 +81,7 @@ public class FacilityServiceImpl implements FacilityService {
 		if(!isLessor) throw new ForbiddenException("시설 등록 권한이 없습니다.");
 		
 		// userNo로 houseList 추출
-		List<HouseEntity> houseList = houseRepository.findAllByUserNoOrderByHouseName(userNo);
+		List<HouseEntity> houseList = houseRepository.findAllByUserNoAndDeletedFalseOrderByHouseName(userNo);
 
 		// houseNo 매칭
 		HouseEntity selectedHouse = null;

@@ -58,11 +58,13 @@ import EstateModify from '../../features/houseAndRoom/pages/EstateModify';
 import Delete from '../../features/houseAndRoom/pages/Delete';
 
 import Empty from '../../shared/pages/Empty';
+import RouteError from './../../shared/pages/RouteError';
 
 export const router = createBrowserRouter([
   {
     element: <MainLayout />,
-    errorElement: <Empty />,
+    // errorElement: <Empty />,
+    errorElement: <RouteError />, // 에러확인용 임시
     children: [
       { path: '/', element: <Home /> },
 

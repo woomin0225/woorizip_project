@@ -1,9 +1,12 @@
 package org.team4p.woorizip.user.jpa.repository;
 
-import org.team4p.woorizip.user.jpa.entity.UserEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.team4p.woorizip.user.jpa.entity.UserEntity;
 
 public interface UserRepository
         extends JpaRepository<UserEntity, String>, UserRepositoryCustom {
-	String findUserNoByEmailId(String email);
+	@Query("select u.userNo from UserEntity u where u.emailId = :emailId")
+    String findUserNoByEmailId(@Param("emailId") String emailId);
 }
