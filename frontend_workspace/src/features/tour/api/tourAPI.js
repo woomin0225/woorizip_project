@@ -43,7 +43,17 @@ export async function createTour(roomNo, payload) {
   return request(`/api/tour/insert/${roomNo}`, { method: 'POST', body: JSON.stringify(payload) });
 }
 
-export async function getTourList() {
-  const data = await request('/api/tour/list/me');
-  return Array.isArray(data) ? data : [];
+export async function getTourPage(page = 1, size = 8) {
+  const data = await request(`/api/tour/list/me?page=${page}&size=${size}`);
+  return {
+    content: Array.isArray(data?.content) ? data.content : [],
+    page: Number(data?.page || page),
+    size: Number(data?.size || size),
+    totalElements: Number(data?.totalElements || 0),
+    totalPages: Number(data?.totalPages || 0),
+  };
+}
+
+export async function updateTour(tourNo, payload) {
+  return request(`/api/tour/update/${tourNo}`, { method: 'POST', body: JSON.stringify(payload) });
 }

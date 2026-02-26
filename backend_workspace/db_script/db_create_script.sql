@@ -306,6 +306,25 @@ ALTER TABLE `tb_fm_images` ADD CONSTRAINT `fk_tb_fm_images_facility_no` FOREIGN 
 ALTER TABLE `tb_fm_rsvn` ADD CONSTRAINT `fk_tb_fm_rsvn_facility_no` FOREIGN KEY (`facility_no`) REFERENCES `tb_fm_list` (`facility_no`);
 ALTER TABLE `tb_fm_rsvn` ADD CONSTRAINT `fk_tb_fm_rsvn_user_no` FOREIGN KEY (`user_no`) REFERENCES `tb_users` (`user_no`);
 
+-- Tour/Contract 중복 신청 차단용 active flag + unique slot index
+ALTER TABLE `tb_tours`
+  ADD COLUMN `active_flag` TINYINT GENERATED ALWAYS AS (
+    CASE
+      WHEN `status` IN ('PENDING', 'APPROVED') THEN 1
+      ELSE 0
+    END
+  ) STORED,
+  ADD UNIQUE KEY `uk_tb_tours_room_slot_active` (`room_no`, `visit_date`, `visit_time`, `active_flag`);
+
+ALTER TABLE `tb_contracts`
+  ADD COLUMN `active_flag` TINYINT GENERATED ALWAYS AS (
+    CASE
+      WHEN `status` IN ('APPLIED', 'APPROVED', 'PAID', 'ACTIVE', 'AMENDMENT_REQUESTED') THEN 1
+      ELSE 0
+    END
+  ) STORED,
+  ADD UNIQUE KEY `uk_tb_contracts_room_date_active` (`room_no`, `move_in_date`, `active_flag`);
+
 desc `tb_users`;
 desc `tb_contracts`;
 desc `tb_tours`;

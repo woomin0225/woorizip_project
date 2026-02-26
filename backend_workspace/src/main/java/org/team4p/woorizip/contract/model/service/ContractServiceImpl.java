@@ -2,9 +2,15 @@ package org.team4p.woorizip.contract.model.service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.team4p.woorizip.common.api.PageResponse;
 import org.team4p.woorizip.contract.jpa.entity.ContractEntity;
 import org.team4p.woorizip.contract.jpa.repository.ContractRepository;
 import org.team4p.woorizip.contract.model.dto.ContractDto;
@@ -18,6 +24,9 @@ import lombok.extern.slf4j.Slf4j;
 @Transactional(readOnly = true)
 public class ContractServiceImpl implements ContractService {
 
+    private static final Set<String> ACTIVE_CONTRACT_STATUSES =
+            Set.of("APPLIED", "APPROVED", "PAID", "ACTIVE", "AMENDMENT_REQUESTED");
+
     private final ContractRepository contractRepository;
 
     @Override
@@ -27,27 +36,48 @@ public class ContractServiceImpl implements ContractService {
     }
 
     @Override
-    public List<ContractDto> selectListContract(String userNo) {
-        List<ContractEntity> list = contractRepository.findByUserNo(userNo);
-        return toList(list);
+    public PageResponse<ContractDto> selectListContract(String userNo, int page, int size) {
+        int safePage = Math.max(page, 1);
+        int safeSize = Math.max(size, 1);
+        Pageable pageable = PageRequest.of(safePage - 1, safeSize);
+        Page<ContractEntity> resultPage = contractRepository.findByUserNoOrderByMoveInDateDesc(userNo, pageable);
+
+        List<ContractDto> content = toList(resultPage.getContent());
+        return new PageResponse<>(
+                content,
+                safePage,
+                safeSize,
+                resultPage.getTotalElements(),
+                resultPage.getTotalPages()
+        );
     }
 
     @Override
     @Transactional
     public int insertContract(ContractDto contractDto) {
-    	contractDto.setStatus("APPLIED");
+        contractDto.setStatus("APPLIED");
+        ContractEntity entity = contractDto.toEntity();
+
+        boolean alreadyReserved = contractRepository.existsByRoomNoAndMoveInDateAndStatusIn(
+                entity.getRoomNo(),
+                entity.getMoveInDate(),
+                ACTIVE_CONTRACT_STATUSES
+        );
+        if (alreadyReserved) {
+            return -1;
+        }
+
         try {
-            ContractEntity entity = contractDto.toEntity();
             return contractRepository.save(entity) != null ? 1 : 0;
+        } catch (DataIntegrityViolationException e) {
+            log.warn("입주 신청 중복 차단: roomNo={}, moveInDate={}", entity.getRoomNo(), entity.getMoveInDate());
+            return -1;
         } catch (Exception e) {
             log.error("계약 등록 중 오류 발생: {}", e.getMessage());
             return 0;
         }
     }
 
-    /**
-     * 사용자 계약 수정 요청
-     */
     @Override
     @Transactional
     public int requestAmendment(String originalNo, ContractDto amendmentDto) {
@@ -59,15 +89,11 @@ public class ContractServiceImpl implements ContractService {
         entity.setParentContractNo(originalNo);
         entity.setStatus("AMENDMENT_REQUESTED");
         entity.setContractNo(null);
-        
-        contractRepository.save(entity);
 
+        contractRepository.save(entity);
         return 1;
     }
 
-    /**
-     * 임대인의 승인/거절
-     */
     @Override
     @Transactional
     public int decideAmendment(String amendmentNo, boolean approved, String reason) {
@@ -85,13 +111,22 @@ public class ContractServiceImpl implements ContractService {
             amendment.setStatus("REJECTED");
             amendment.setRejectionReason(reason);
         }
-        
+
         return 1;
     }
 
-    /**
-     * Entity 리스트를 DTO 리스트로 변환
-     */
+    @Override
+    @Transactional
+    public int cancelContract(String contractNo, String reason) {
+        ContractEntity target = contractRepository.findById(contractNo).orElse(null);
+        if (target == null) {
+            return 0;
+        }
+        target.setStatus("REJECTED");
+        target.setRejectionReason(reason);
+        return 1;
+    }
+
     private List<ContractDto> toList(List<ContractEntity> list) {
         List<ContractDto> dtos = new ArrayList<>();
         if (list != null) {

@@ -1,6 +1,6 @@
 package org.team4p.woorizip.tour.model.service;
 
-import java.util.List;
+import org.team4p.woorizip.common.api.PageResponse;
 import org.team4p.woorizip.tour.model.dto.TourDto;
 
 public interface TourService {
@@ -9,7 +9,7 @@ public interface TourService {
     TourDto selectTour(String tourNo);
 
     // 투어 목록 조회
-    List<TourDto> selectListTour(String userNo);
+    PageResponse<TourDto> selectListTour(String userNo, int page, int size);
 
     // 투어 추가
     int insertTour(TourDto tourDto);

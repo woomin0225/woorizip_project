@@ -92,6 +92,7 @@ export const router = createBrowserRouter([
           { path: '/mypage/tour', element: <OccupyApply /> },
 
           { path: ROUTES.CONTRACT.APPLY, element: <ContractCreate /> },
+          { path: '/rooms/:roomNo/contract', element: <ContractCreate /> },
           { path: ROUTES.CONTRACT.LIST, element: <Statement /> },
           { path: ROUTES.CONTRACT.COMPLETION, element: <Completion /> },
           { path: '/mypage/contracts', element: <Statement /> },
