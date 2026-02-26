@@ -99,7 +99,7 @@ public class SecurityConfig {
                 // PUBLIC GET
                 .requestMatchers(HttpMethod.GET, EndpointPolicy.PUBLIC_GET).permitAll()
                 
-                
+                .requestMatchers(HttpMethod.PATCH, "/api/notice/*/view").permitAll()
 
                 // admin write: notice, information, event only
                 .requestMatchers(HttpMethod.POST, EndpointPolicy.ADMIN_WRITE).hasRole("ADMIN")
