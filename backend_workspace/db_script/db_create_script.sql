@@ -178,7 +178,7 @@ CREATE TABLE `tb_houses` (
   `house_image_count` TINYINT NOT NULL COMMENT '첨부사진갯수',
   `house_lat` DECIMAL(10, 8) COMMENT '지도API사용을 위한 위도(-90 - 90, 소수점 8자리)',
   `house_lng` DECIMAL(11, 8) COMMENT '지도API사용을 위한 경도(-180 - 180, 소수점 8자리)',
-  `deleted` BOOLEAN NOT NULL DEFAULT 0 COMMENT '건물 삭제여부',
+  `deleted` BOOLEAN DEFAULT 0 COMMENT '건물 삭제여부',
   `deleted_at` TIMESTAMP COMMENT '건물 삭제 일시',
   PRIMARY KEY (`house_no`),
   UNIQUE KEY `uk_tb_houses_house_name` (`house_name`)

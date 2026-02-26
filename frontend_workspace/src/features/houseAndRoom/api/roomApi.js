@@ -15,11 +15,11 @@ export async function searchRooms(cond, page=0, size=10){
 export async function createRoom(houseNo, roomDto, newImages = []){
     const fd = new FormData();
 
-    fd.append('houseNo', houseNo);
-
     roomDto.forEach(([key, value])=>{
         fd.append(key, value);
     });
+    
+    fd.set('houseNo', houseNo);
 
     (newImages ?? []).forEach((file)=>{
         if(file) fd.append('newImages', file);

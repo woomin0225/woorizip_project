@@ -74,10 +74,10 @@ VALUES
 ('room27', '703호', 'house10','lessor1', 180000000, NULL,   'L', 35.00, '남서향', '2026-04-01', '성수 커먼, 전세 매물',             2, 1, 1, 'ACTIVE', '',                    5, 0, NULL, NULL);
 
 -- 4. 찜 (위시리스트)
-INSERT INTO `tb_wishlists` (`wish_no`, `user_no`, `house_no`, `room_no`) 
+INSERT INTO `tb_wishlists` (`wish_no`, `user_no`, `room_no`, `created_at`) 
 VALUES 
-('wish1', 'user1', 'house1', 'room1'),
-('wish2', 'user1', 'house2', 'room3');
+('wish1', 'user1', 'room1', '2026-02-26'),
+('wish2', 'user1', 'room3', '2026-02-25');
 
 -- 5. 투어 신청
 INSERT INTO `tb_tours` (`tour_no`, `room_no`, `user_no`, `visit_date`, `visit_time`, `status`, `message`) 
