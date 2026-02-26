@@ -17,22 +17,6 @@ export function useEventWrite({ navigate }) {
   const [submitting, setSubmitting] = useState(false);
 
   /* =========================
-     권한 체크
-  ========================= */
-  useEffect(() => {
-    if (!isAuthed) {
-      alert('로그인이 필요합니다.');
-      navigate('/login', { replace: true });
-      return;
-    }
-
-    if (!isAdmin) {
-      alert('관리자만 이벤트 등록이 가능합니다.');
-      navigate('/events', { replace: true });
-    }
-  }, [isAuthed, isAdmin, navigate]);
-
-  /* =========================
      입력 변경
   ========================= */
   const onChange = (e) => {
@@ -79,7 +63,7 @@ export function useEventWrite({ navigate }) {
       const res = await createEvent(data);
 
       alert(res?.message || '이벤트 등록 성공');
-      navigate('/events', { replace: true });
+      navigate('/event', { replace: true });
     } catch (error) {
       console.error(error);
       alert('이벤트 등록에 실패했습니다.');

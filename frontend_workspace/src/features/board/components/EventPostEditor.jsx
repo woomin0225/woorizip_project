@@ -35,7 +35,7 @@ export default function EventPostEditor({
   };
 
   return (
-    <form onSubmit={onSubmit} style={{ padding: 24 }}>
+    <div style={{ padding: 24 }}>
       <h2 style={{ textAlign: 'center', marginBottom: 24 }}>
         {isUpdate ? '이벤트 수정' : '이벤트 등록'}
       </h2>
@@ -132,6 +132,6 @@ export default function EventPostEditor({
           취소
         </button>
       </div>
-    </form>
+    </div>
   );
 }
