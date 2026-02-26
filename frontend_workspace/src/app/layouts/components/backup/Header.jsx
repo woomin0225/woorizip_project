@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import Headroom from 'headroom.js';
 import { ROUTES } from './../../../shared/constants/routes';
 import logo from '../../../logo.png';
+import { axiosInstance } from '../../http/axiosInstance';
 
 import {
   Button,
@@ -26,6 +27,7 @@ export default function Header() {
   const [userName, setUserName] = useState('');
   const navigate = useNavigate();
   const [myPageRoute, setMyPageRoute] = useState(ROUTES.MEMBER.MYPAGE);
+  const [isLessor, setIsLessor] = useState(false);
 
   const token = localStorage.getItem('accessToken');
   const isLoggedIn = !!token;
@@ -46,6 +48,25 @@ export default function Header() {
             .join('')
         );
         const decodedToken = JSON.parse(jsonPayload);
+
+        // LESSOR 여부 확인: /api/user/{emailId} 호출해서 type 체크
+        setIsLessor(false); // 기본값
+
+        const emailId = decodedToken.emailId || decodedToken.sub; // sub에 이메일 들어있음
+        if (emailId) {
+          axiosInstance
+            .get(`/api/user/${encodeURIComponent(emailId)}`, {
+              headers: { Authorization: `Bearer ${token}` },
+            })
+            .then((res) => {
+              const userDto = res?.data?.data; // ApiResponse<UserDto>에서 data
+              setIsLessor(userDto?.type === "LESSOR");
+            })
+            .catch((err) => {
+              console.error("회원정보 조회 실패:", err);
+              setIsLessor(false);
+            });
+        }
 
         const isAdmin =
           decodedToken.role === 'ADMIN' ||
@@ -166,6 +187,13 @@ export default function Header() {
                   공용시설
                 </NavLink>
               </NavItem>
+              {isLoggedIn && isLessor && (
+                <NavItem>
+                  <NavLink to="/estate/manage" tag={Link}>
+                    매물관리
+                  </NavLink>
+                </NavItem>
+              )}
             </Nav>
 
             <Nav className="align-items-lg-center ml-lg-auto" navbar>
