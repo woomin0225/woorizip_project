@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
+import styles from './MapPanel.module.css';
 
 function MarkerPopup({ rooms, onClose }) {
   return (
@@ -176,7 +177,7 @@ export default function MapPanel({ markers = [],
   }, [popup]);
 
   return (
-    <div style={{ position: "relative", height: 500 }}>
+    <div className={styles.mapWrap} id="map" style={{ position: "relative", height: 500 }}>
       <div ref={mapDivRef} style={{ width: "100%", height: "100%", background: "#f7f7f7" }} />
 
       {loadingMarkers && (

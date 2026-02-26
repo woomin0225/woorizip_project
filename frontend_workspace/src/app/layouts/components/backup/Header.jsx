@@ -21,8 +21,6 @@ import {
   DropdownItem,
 } from 'reactstrap';
 
-import styles from './Header.module.css';
-
 export default function Header() {
   const [collapseClasses, setCollapseClasses] = useState('');
   const [userName, setUserName] = useState('');
@@ -75,10 +73,10 @@ export default function Header() {
     };
   }, [token]);
 
-  // useEffect(() => {
-  //   let headroom = new Headroom(document.getElementById('navbar-main'));
-  //   headroom.init();
-  // }, []);
+  useEffect(() => {
+    let headroom = new Headroom(document.getElementById('navbar-main'));
+    headroom.init();
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem('accessToken');
@@ -89,13 +87,13 @@ export default function Header() {
   };
 
   return (
-    <header className={styles.headerGlobal}>
+    <header className="header-global">
       <Navbar
-        className={`navbar-main navbar-light headroom ${styles.navbar}`}
+        className="navbar-main navbar-transparent navbar-light headroom"
         expand="lg"
         id="navbar-main"
       >
-        <Container fluid className={styles.inner}>
+        <Container>
           <NavbarBrand className="mr-lg-5" to="/" tag={Link}>
             <img src={logo} alt="우리집 로고" style={{ height: '40px' }} />
           </NavbarBrand>

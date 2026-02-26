@@ -1,1 +1,97 @@
-/* placeholder */
+.wrap {
+  padding: 16px;
+}
+.title {
+  margin: 0 0 12px 0;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 14px;
+}
+
+.left,
+.right {
+  border: 1px solid #eee;
+  border-radius: 12px;
+  padding: 12px;
+  background: #fff;
+}
+
+.blockTitle {
+  font-weight: 900;
+  margin-bottom: 10px;
+}
+
+.list {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.btn,
+.selectedBtn {
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 10px;
+  background: #fff;
+  cursor: pointer;
+  text-align: left;
+}
+.selectedBtn {
+  border-color: #6b5b95;
+  box-shadow: 0 0 0 2px rgba(107, 91, 149, 0.15);
+}
+
+.dangerBtn {
+  width: 100%;
+  border: none;
+  background: #ffdddd;
+  border-radius: 10px;
+  padding: 12px;
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.roomList {
+  display: grid;
+  gap: 10px;
+}
+
+.roomRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  border: 1px solid #eee;
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.roomName {
+  font-weight: 800;
+}
+.roomSub {
+  color: #666;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.smallDangerBtn {
+  border: none;
+  background: #ffdddd;
+  border-radius: 10px;
+  padding: 10px 12px;
+  cursor: pointer;
+  height: fit-content;
+  font-weight: 800;
+}
+
+.empty {
+  color: #666;
+  padding: 8px 0;
+}
+.loading {
+  margin-top: 10px;
+  color: #666;
+}
