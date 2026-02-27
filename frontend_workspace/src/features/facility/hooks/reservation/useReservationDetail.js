@@ -1,6 +1,7 @@
 // src/features/facility/hooks/reservation/useReservationDetail.js
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { getReservationDetail } from '../../api/reservationApi';
+import { unwrapApi } from '../../../../shared/utils/apiUnwrap';
 
 export const useReservationDetail = (reservationNo) => {
   const [reservationDetails, setReservationDetails] = useState(null);

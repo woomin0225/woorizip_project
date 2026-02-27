@@ -1,18 +1,13 @@
 // src/features/facility/hooks/facility/usefacilityForm.js
 import { useState, useEffect, useCallback } from 'react';
-import {
-  createFacility,
-  modifyFacility,
-  getFacilityDetail,
-  getFacilityCategories,
-} from '../../api/facilityApi';
-import { unwrapApi } from '../../../../shared//utils/apiUnwrap';
+import { createFacility, modifyFacility, getFacilityDetail, getFacilityCategories } from '../../api/facilityApi';
+import { unwrapApi } from '../../../../shared/utils/apiUnwrap';
 
 const schema = {
   houseNo: '',
   facilityCode: '',
   facilityName: '',
-  facilityOptionInfo: {},
+  facilityOptionInfo: {}, 
   facilityLocation: '',
   facilityCapacity: '',
   facilityOpenTime: '',
@@ -24,10 +19,9 @@ const schema = {
 };
 
 export function useFacilityForm(facilityNo = null) {
-  const [values, setValues] = useState(initialSchema);
+  const [values, setValues] = useState(schema);
   const [categories, setCategories] = useState([]);
-  const [optionInfoes, setOptionInfoes] = useState({});
-  const [options, setOptions] = useState([]);
+  const [defaultOptions, setDefaultOptions] = useState([]);
   const [error, setError] = useState(null);
   const [images, setImages] = useState([]);
   const [existingImages, setExistingImages] = useState([]);
@@ -43,14 +37,14 @@ export function useFacilityForm(facilityNo = null) {
         setCategories(data || []);
       } catch (err) {
         setError(err);
-        console.error('카테고리 로딩 실패', err);
+        console.error(err.message);
       }
     };
     fetchCategories();
   }, []);
 
   useEffect(() => {
-    if (updateMode) {
+    if (updateMode && facilityNo) {
       const loadData = async () => {
         setLoading(true);
         try {
@@ -64,10 +58,10 @@ export function useFacilityForm(facilityNo = null) {
                 ? JSON.parse(data.facilityOptionInfo)
                 : data.facilityOptionInfo || {},
           });
-          setExistingImages(data.facilityImages || []);
+          setExistingImages(data.images || []);
         } catch (err) {
           setError(err);
-          console.error('시설 정보 로딩 실패');
+          console.error(err.message);
         } finally {
           setLoading(false);
         }
@@ -75,6 +69,26 @@ export function useFacilityForm(facilityNo = null) {
       loadData();
     }
   }, [facilityNo, updateMode]);
+
+  useEffect(() => {
+    if (values.facilityCode && categories.length > 0) {
+      const selectedCat = categories.find((c) => c.facilityCode === values.facilityCode);
+      
+      if (selectedCat && selectedCat.facilityOptions) {
+        setDefaultOptions(selectedCat.facilityOptions);
+        
+        setValues((prev) => {
+          const updatedOptionInfo = { ...prev.facilityOptionInfo };
+          selectedCat.facilityOptions.forEach((opt) => {
+            if (!(opt in updatedOptionInfo)) {
+              updatedOptionInfo[opt] = false;
+            }
+          });
+          return { ...prev, facilityOptionInfo: updatedOptionInfo };
+        });
+      }
+    }
+  }, [values.facilityCode, categories]);
 
   const handleChange = useCallback((e) => {
     const { name, value, type, checked } = e.target;
@@ -84,8 +98,29 @@ export function useFacilityForm(facilityNo = null) {
     }));
   }, []);
 
+  const handleOptionChange = useCallback((optionKey, isChecked) => {
+    setValues((prev) => ({
+      ...prev,
+      facilityOptionInfo: {
+        ...prev.facilityOptionInfo,
+        [optionKey]: isChecked,
+      },
+    }));
+  }, []);
+
+  const addCustomOption = useCallback((customText) => {
+    if (!customText.trim()) return;
+    setValues((prev) => ({
+      ...prev,
+      facilityOptionInfo: {
+        ...prev.facilityOptionInfo,
+        [customText.trim()]: true,
+      },
+    }));
+  }, []);
+
   const onSubmit = async (e, navigate) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     setSubmitting(true);
 
     const formData = new FormData();
@@ -93,8 +128,9 @@ export function useFacilityForm(facilityNo = null) {
     Object.keys(values).forEach((key) => {
       const value = values[key];
 
-      if (key === 'facilityOptionInfo' && typeof value === 'object') {
+      if (key === 'facilityOptionInfo') {
         formData.append(key, JSON.stringify(value));
+      } else if (key === 'images' || key === 'facilityImages' || key === 'displayOptionList') {
       } else {
         formData.append(key, value || '');
       }
@@ -109,23 +145,24 @@ export function useFacilityForm(facilityNo = null) {
         ? await modifyFacility(facilityNo, formData)
         : await createFacility(formData);
 
-      unwrapApi({ data: response });
       alert(response.message);
       navigate('/facilities');
     } catch (err) {
       setError(err);
-      console.error(err);
-      alert(err.message);
+      console.error(err.message);
     } finally {
       setSubmitting(false);
     }
   };
 
   return {
-    error,
     values,
     setValues,
+    categories,
+    defaultOptions,
     handleChange,
+    handleOptionChange,
+    addCustomOption,
     images,
     setImages,
     existingImages,
@@ -133,5 +170,6 @@ export function useFacilityForm(facilityNo = null) {
     submitting,
     onSubmit,
     updateMode,
+    error
   };
 }

@@ -1,6 +1,7 @@
 // src/features/facility/hooks/facility/useFacilityList.js
 import { useState, useCallback, useEffect } from 'react';
 import { getFacilityList } from '../../api/facilityApi';
+import { unwrapApi } from '../../../../shared/utils/apiUnwrap';
 
 export const useFacilityList = (houseNo) => {
   const [facilities, setFacilities] = useState([]);
@@ -18,7 +19,7 @@ export const useFacilityList = (houseNo) => {
       setFacilities(data || []);
     } catch (err) {
       setError(err);
-      console.error('시설 목록 로딩 실패:', err);
+      console.error(err.message);
     } finally {
       setLoading(false);
     }

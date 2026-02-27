@@ -29,12 +29,13 @@ export const useReservationList = (facilityNo) => {
     const fetchReservations = async () => {
       setLoading(true);
       try {
-        const data = await getReservationList(query);
+        const res = await getReservationList(query);
+        const data = unwrapApi(res);
         setResponse(data);
         setError(null);
       } catch (err) {
         setError(err);
-        console.error('예약 목록 로딩 실패', err);
+        console.error(err.message);
       } finally {
         setLoading(false);
       }
@@ -43,22 +44,17 @@ export const useReservationList = (facilityNo) => {
   }, [query]);
 
   const pageResponse = useMemo(() => {
-    const apiBody = unwrapApi(response); 
-    if (!apiBody) return null;
-    return { ...apiBody, page: query.page };
+    if(!response) return null;
+    return {...response, page: query.page}
   }, [response, query.page]);
 
   const reservationList = pageResponse?.content || [];
 
   return {
       query, 
-      setQuery, 
-      response,
-      setResponse,
+      setQuery,
       loading,
-      setLoading,
       error,
-      setError,
       setPage, 
       pageResponse, 
       reservationList
