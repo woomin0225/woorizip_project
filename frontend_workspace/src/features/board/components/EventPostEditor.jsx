@@ -15,6 +15,11 @@ export default function EventPostEditor({
 
   onSubmit,
   onCancel,
+  newFiles = [],
+  setNewFiles,
+  existingFiles = [],
+  deleteFileNos = [],
+  toggleDeleteFile,
 }) {
   const fileInputRef = useRef(null);
   const isUpdate = mode === 'update';
@@ -75,6 +80,62 @@ export default function EventPostEditor({
         {bannerFile
           ? `선택된 파일: ${bannerFile.name}`
           : '이미지를 드래그하거나 클릭하여 업로드하세요'}
+      </div>
+
+      {/* 🔵 첨부파일 업로드 (multiple) */}
+      <div style={{ marginBottom: 30 }}>
+        <label style={{ display: 'block', marginBottom: 6 }}>첨부파일</label>
+
+        <input
+          type="file"
+          multiple
+          onChange={(e) =>
+            setNewFiles((prev) => [
+              ...prev,
+              ...Array.from(e.target.files || []),
+            ])
+          }
+          disabled={submitting}
+        />
+
+        {/* 새 파일 목록 */}
+        {newFiles.length > 0 && (
+          <ul style={{ marginTop: 10 }}>
+            {newFiles.map((file, idx) => (
+              <li key={idx}>
+                {file.name}
+                <button
+                  type="button"
+                  onClick={() =>
+                    setNewFiles((prev) => prev.filter((_, i) => i !== idx))
+                  }
+                  style={{ marginLeft: 10 }}
+                >
+                  ❌
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {/* 수정 모드일 때 기존 파일 */}
+        {isUpdate && existingFiles.length > 0 && (
+          <div style={{ marginTop: 15 }}>
+            <div>기존 첨부파일</div>
+            {existingFiles.map((file) => (
+              <div key={file.fileNo}>
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={deleteFileNos.includes(file.fileNo)}
+                    onChange={() => toggleDeleteFile(file.fileNo)}
+                  />
+                  {file.originalFileName}
+                </label>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <input

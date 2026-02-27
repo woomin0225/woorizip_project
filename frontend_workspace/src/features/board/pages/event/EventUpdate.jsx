@@ -35,21 +35,22 @@ export default function EventUpdate() {
   if (!canEdit) return <div>{errMsg || '권한 없음'}</div>;
 
   return (
-    <div style={{ padding: 24 }}>
-      <h2 style={{ textAlign: 'center', marginBottom: 24 }}>이벤트 수정</h2>
-
-      <form onSubmit={handleSubmit}>
-        <EventPostEditor
-          mode={mode}
-          form={form}
-          onChange={onChange}
-          bannerFile={bannerFile}
-          setBannerFile={setBannerFile}
-          submitting={submitting}
-          onSubmit={handleSubmit}
-          onCancel={() => navigate(`/events/${postNo}`)}
-        />
-      </form>
-    </div>
+    <form onSubmit={handleSubmit}>
+      <EventPostEditor
+        mode={mode}
+        form={form}
+        onChange={onChange}
+        bannerFile={bannerFile}
+        setBannerFile={setBannerFile}
+        existingFiles={existingFiles}
+        deleteFileNos={deleteFileNos}
+        toggleDeleteFile={toggleDeleteFile}
+        newFiles={newFiles}
+        setNewFiles={setNewFiles}
+        submitting={submitting}
+        onSubmit={handleSubmit}
+        onCancel={() => navigate(`/event/${postNo}`)}
+      />
+    </form>
   );
 }
