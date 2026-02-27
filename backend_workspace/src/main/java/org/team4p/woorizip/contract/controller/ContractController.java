@@ -17,9 +17,11 @@ import org.team4p.woorizip.common.api.ApiResponse;
 import org.team4p.woorizip.common.api.PageResponse;
 import org.team4p.woorizip.contract.model.dto.ContractDto;
 import org.team4p.woorizip.contract.model.dto.request.ContractDecideRequest;
+import org.team4p.woorizip.contract.model.dto.request.ContractElectronicCreateRequest;
+import org.team4p.woorizip.contract.model.dto.request.ContractPaymentRequest;
+import org.team4p.woorizip.contract.model.dto.request.ContractSignatureVerifyRequest;
 import org.team4p.woorizip.contract.model.service.ContractService;
 
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -51,28 +53,27 @@ public class ContractController {
     }
 
     @PostMapping("/insert/{roomNo}")
-    public ResponseEntity<ApiResponse<Void>> insertContract(
+    public ResponseEntity<ApiResponse<ContractDto>> insertContract(
             @PathVariable("roomNo") String roomNo,
             @AuthenticationPrincipal CustomUserPrincipal userPrincipal,
-            @RequestBody @Valid ContractDto contractDto) {
+            @RequestBody ContractDto contractDto) {
 
         contractDto.setRoomNo(roomNo);
         contractDto.setUserNo(userPrincipal.getUserNo());
 
-        int result = contractService.insertContract(contractDto);
-        if (result == -1) {
+        try {
+            ContractDto created = contractService.insertContract(contractDto);
+            return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok("입주 신청 성공", created));
+        } catch (IllegalStateException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body(ApiResponse.fail("이미 신청된 입주 날짜입니다.", null));
+                    .body(ApiResponse.fail(e.getMessage(), null));
         }
-        return result > 0
-                ? ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok("입주 신청 성공", null))
-                : ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
     }
 
     @PostMapping("/amendment/request/{originalContractNo}")
     public ResponseEntity<ApiResponse<Void>> requestAmendment(
             @PathVariable("originalContractNo") String originalNo,
-            @RequestBody @Valid ContractDto amendmentDto) {
+            @RequestBody ContractDto amendmentDto) {
         int result = contractService.requestAmendment(originalNo, amendmentDto);
         if (result == -1) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
@@ -102,5 +103,41 @@ public class ContractController {
         return result > 0
                 ? ResponseEntity.ok(ApiResponse.ok("계약 취소 요청이 완료되었습니다.", null))
                 : ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.fail("계약 취소 요청 실패", null));
+    }
+
+    @PostMapping("/e-contract/{contractNo}")
+    public ResponseEntity<ApiResponse<ContractDto>> createElectronicContract(
+            @PathVariable("contractNo") String contractNo,
+            @RequestBody(required = false) ContractElectronicCreateRequest request) {
+        try {
+            ContractDto updated = contractService.createElectronicContract(contractNo, request);
+            return ResponseEntity.ok(ApiResponse.ok("전자계약서 생성 완료(개발모드)", updated));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.fail(e.getMessage(), null));
+        }
+    }
+
+    @PostMapping("/signature/verify/{contractNo}")
+    public ResponseEntity<ApiResponse<ContractDto>> verifyElectronicSignature(
+            @PathVariable("contractNo") String contractNo,
+            @RequestBody(required = false) ContractSignatureVerifyRequest request) {
+        try {
+            ContractDto updated = contractService.verifyElectronicSignature(contractNo, request);
+            return ResponseEntity.ok(ApiResponse.ok("전자서명 검증 완료(개발모드)", updated));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.fail(e.getMessage(), null));
+        }
+    }
+
+    @PostMapping("/payment/{contractNo}")
+    public ResponseEntity<ApiResponse<ContractDto>> requestContractPayment(
+            @PathVariable("contractNo") String contractNo,
+            @RequestBody(required = false) ContractPaymentRequest request) {
+        try {
+            ContractDto updated = contractService.requestContractPayment(contractNo, request);
+            return ResponseEntity.ok(ApiResponse.ok("결제 승인 완료(개발모드)", updated));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.fail(e.getMessage(), null));
+        }
     }
 }

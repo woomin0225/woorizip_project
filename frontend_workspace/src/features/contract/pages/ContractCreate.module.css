@@ -241,6 +241,23 @@
   font-size: 0.88rem;
 }
 
+.checkText {
+  display: inline-flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.linkBtn {
+  border: 0;
+  background: transparent;
+  color: #0d8ea7;
+  text-decoration: underline;
+  font-size: 0.82rem;
+  padding: 0;
+  cursor: pointer;
+}
+
 .actionRow {
   display: flex;
   justify-content: flex-end;
@@ -270,6 +287,64 @@
 .primaryBtn:disabled {
   opacity: 0.65;
   cursor: not-allowed;
+}
+
+.docModalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.46);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1200;
+  padding: 16px;
+}
+
+.docModalContent {
+  width: min(980px, 100%);
+  max-height: calc(100vh - 32px);
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #dfe4ea;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.docModalHeader {
+  padding: 12px 14px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.docModalHeader h4 {
+  margin: 0;
+  font-size: 1rem;
+  color: #172b4d;
+}
+
+.docFrame {
+  width: 100%;
+  min-height: 420px;
+  border: 0;
+}
+
+.docFrameWrap {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  flex: 1;
+  overflow: auto;
+  padding: 8px 14px;
+}
+
+.docModalActions {
+  padding: 10px 14px;
+  border-top: 1px solid #e9ecef;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-shrink: 0;
+  background: #fff;
 }
 
 @media (max-width: 991px) {

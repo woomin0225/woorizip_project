@@ -3,6 +3,9 @@ package org.team4p.woorizip.contract.model.service;
 import java.util.List;
 import org.team4p.woorizip.common.api.PageResponse;
 import org.team4p.woorizip.contract.model.dto.ContractDto;
+import org.team4p.woorizip.contract.model.dto.request.ContractElectronicCreateRequest;
+import org.team4p.woorizip.contract.model.dto.request.ContractPaymentRequest;
+import org.team4p.woorizip.contract.model.dto.request.ContractSignatureVerifyRequest;
 
 public interface ContractService {
 
@@ -19,7 +22,7 @@ public interface ContractService {
     /**
      * 계약 등록 (입주 신청)
      */
-    int insertContract(ContractDto contractDto);
+    ContractDto insertContract(ContractDto contractDto);
 
     /**
      * 계약 정보 수정
@@ -30,5 +33,11 @@ public interface ContractService {
     int decideAmendment(String amendmentNo, boolean approved, String reason);
 
     int cancelContract(String contractNo, String reason);
+
+    ContractDto createElectronicContract(String contractNo, ContractElectronicCreateRequest request);
+
+    ContractDto verifyElectronicSignature(String contractNo, ContractSignatureVerifyRequest request);
+
+    ContractDto requestContractPayment(String contractNo, ContractPaymentRequest request);
     
 }

@@ -45,6 +45,27 @@
   font-size: 0.84rem;
 }
 
+.noticeBox {
+  border: 1px solid #dbeafe;
+  background: #f8fbff;
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 12px;
+}
+
+.noticeTitle {
+  margin: 0 0 6px;
+  color: #1e3a8a;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.noticeDesc {
+  margin: 0 0 8px;
+  color: #334155;
+  font-size: 0.84rem;
+}
+
 .buttonRow {
   display: flex;
   flex-wrap: wrap;
