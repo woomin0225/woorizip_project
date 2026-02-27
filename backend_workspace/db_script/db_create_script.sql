@@ -290,7 +290,9 @@ ALTER TABLE `tb_wishlists` ADD CONSTRAINT `fk_tb_wishlists_user_no` FOREIGN KEY 
 ALTER TABLE `tb_wishlists` ADD CONSTRAINT `fk_tb_wishlists_room_no` FOREIGN KEY (`room_no`) REFERENCES `tb_rooms` (`room_no`) ON DELETE CASCADE;
 ALTER TABLE `tb_posts` ADD CONSTRAINT `fk_tb_posts_board_type_no` FOREIGN KEY (`board_type_no`) REFERENCES `tb_board_type` (`board_type_no`);
 ALTER TABLE `tb_posts` ADD CONSTRAINT `fk_tb_posts_user_no` FOREIGN KEY (`user_no`) REFERENCES `tb_users` (`user_no`);
-ALTER TABLE `tb_comments` ADD CONSTRAINT `fk_tb_comments_post_no` FOREIGN KEY (`post_no`) REFERENCES `tb_posts` (`post_no`);
+-- 오류 생기면 기존 FK키 삭제 : 
+-- ALTER TABLE `tb_comments` DROP FOREIGN KEY `fk_tb_comments_post_no`;
+ALTER TABLE `tb_comments` ADD CONSTRAINT `fk_tb_comments_post_no` FOREIGN KEY (`post_no`) REFERENCES `tb_posts` (`post_no`) ON DELETE CASCADE;
 ALTER TABLE `tb_comments` ADD CONSTRAINT `fk_tb_comments_parent_comment_no` FOREIGN KEY (`parent_comment_no`) REFERENCES `tb_comments` (`comment_no`) ON DELETE CASCADE;
 ALTER TABLE `tb_comments` ADD CONSTRAINT `fk_tb_comments_user_no` FOREIGN KEY (`user_no`) REFERENCES `tb_users` (`user_no`);
 ALTER TABLE `tb_files` ADD CONSTRAINT `fk_tb_files_post_no` FOREIGN KEY (`post_no`) REFERENCES `tb_posts` (`post_no`) ON DELETE CASCADE;
