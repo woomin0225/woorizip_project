@@ -2,7 +2,7 @@
 import { apiJson, apiForm } from '../../../app/http/request';
 
 // 시설 목록 조회
-export async function getFacilityList(houseNo = "") {
+export async function getFacilityList(houseNo = '') {
   const url = houseNo ? `/api/facilities/${houseNo}` : '/api/facilities';
   const { data } = await apiJson().get(url);
   return data;
@@ -16,7 +16,7 @@ export async function createFacility(formData) {
 
 // 시설 카테고리 등록
 export async function createFacilityCategory(categoryData) {
-  const { data } = await apiJson().post('/api/facilities/categories', categoryData);
+  const { data } = await apiJson().post('/api/facilities/categories');
   return data;
 }
 
@@ -28,18 +28,23 @@ export async function getFacilityCategories() {
 
 // 시설 카테고리 수정
 export async function modifyFacilityCategory(facilityCode, categoryData) {
-  const { data } = await apiJson().patch(`/api/facilities/categories/${facilityCode}`, categoryData);
+  const { data } = await apiJson().patch(
+    `/api/facilities/categories/${facilityCode}`
+  );
   return data;
 }
 
 // 시설 상세 조회
 export async function getFacilityDetail(facilityNo) {
   const { data } = await apiJson().get(`/api/facilities/${facilityNo}`);
-  return data; 
+  return data;
 }
 
 // 시설 정보 수정
 export async function modifyFacility(facilityNo, formData) {
-  const { data } = await apiForm().patch(`/api/facilities/${facilityNo}`, formData);
+  const { data } = await apiForm().patch(
+    `/api/facilities/${facilityNo}`,
+    formData
+  );
   return data;
 }

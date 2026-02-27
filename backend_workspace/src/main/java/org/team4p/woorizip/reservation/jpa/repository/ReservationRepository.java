@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.team4p.woorizip.reservation.jpa.entity.ReservationEntity;
@@ -11,10 +12,14 @@ import org.team4p.woorizip.reservation.jpa.entity.ReservationEntity;
 import jakarta.transaction.Transactional;
 
 public interface ReservationRepository  extends JpaRepository<ReservationEntity, String> {
-	// 임대인 예약 목록 조회용 메서드
-	List<ReservationEntity> findByFacility_FacilityNo(String facilityNo);
+	// 임차인 예약 목록 페이지 조회용 메서드
+	long countByUser_UserNo(String userNo);
+	// 임대인/관리자 예약 목록 페이지 조회용 메서드
+	long countByFacility_FacilityNo(String facilityNo);
 	// 임차인 예약 목록 조회용 메서드
-	List<ReservationEntity> findByUser_UserNo(String userNo);
+	List<ReservationEntity> findByUser_UserNo(String userNo, Pageable pageable);
+	// 임대인/ 관리자 예약 목록 조회용 메서드
+	List<ReservationEntity> findByFacility_FacilityNo(String facilityNo, Pageable pageable);
 	// 신규 예약 시 예약 횟수 검증용 메서드
 	long countByUser_UserNoAndFacility_FacilityNoAndReservationDate(
 		    String user, 

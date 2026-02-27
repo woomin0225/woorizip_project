@@ -3,7 +3,6 @@ package org.team4p.woorizip.facility.controller;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -43,11 +42,12 @@ public class FacilityController {
 	
 	// 시설 목록 조회
 	@GetMapping({"", "/{houseNo}"})
-	public ResponseEntity<List<FacilityListResponseDTO>> getFacilityList(
+	public ResponseEntity<ApiResponse<List<FacilityListResponseDTO>>> getFacilityList(
 			@PathVariable(value = "houseNo", required = false) String houseNo,
 			@AuthenticationPrincipal CustomUserPrincipal principal) {
 		String currentUserNo = (principal != null) ? principal.getUserNo() : null;
-		return ResponseEntity.ok(facilityService.getFacilityList(houseNo, currentUserNo));
+		List<FacilityListResponseDTO> body = facilityService.getFacilityList(houseNo, currentUserNo);
+		return ResponseEntity.ok(ApiResponse.ok("시설 목록 조회 성공", body));
 	}
 	
 	// 시설 신규 등록
@@ -75,8 +75,7 @@ public class FacilityController {
 	    }
 		String currentUserNo = (principal != null) ? principal.getUserNo() : null;
 		facilityService.createFacility(dto, currentUserNo);
-        return ResponseEntity.status(HttpStatus.CREATED)
-                             .body(ApiResponse.ok("새로운 시설이 정상적으로 등록되었습니다.", "facilityCreateSuccess"));
+        return ResponseEntity.ok(ApiResponse.ok("새로운 시설이 성공적으로 등록되었습니다.", "facilityCreateSuccess"));
 	}
 	
 	// 시설 카테고리 등록
@@ -85,16 +84,15 @@ public class FacilityController {
 	public ResponseEntity<ApiResponse<String>> createFacilityCategory(
 			@Valid @RequestBody FacilityCategoryCreateRequestDTO dto) {
 		facilityService.createCategory(dto);
-		return ResponseEntity.status(HttpStatus.CREATED)
-				.body(ApiResponse.ok("새로운 시설 카테고리가 정상적으로 등록되었습니다.", "facilityCategoryCreateSuccess"));
+		return ResponseEntity.ok(ApiResponse.ok("새로운 시설 카테고리가 정상적으로 등록되었습니다.", "facilityCategoryCreateSuccess"));
 		}
 		
 	// 시설 카테고리 조회
 	@GetMapping("/categories")
 	@PreAuthorize("hasRole('ADMIN')")
-	public ResponseEntity<List<FacilityCategoryDTO>> getFacilityCategory() {
+	public ResponseEntity<ApiResponse<List<FacilityCategoryDTO>>> getFacilityCategory() {
 		List<FacilityCategoryDTO> category = facilityService.getFacilityCategory();
-		return ResponseEntity.ok(category);
+		return ResponseEntity.ok(ApiResponse.ok("시설 카테고리 목록 조회 성공", category));
 	}
 		
 	// 시설 카테고리 수정
@@ -109,9 +107,9 @@ public class FacilityController {
 	
 	// 시설 상세 조회
 	@GetMapping("/detail/{facilityNo}")
-	public ResponseEntity<FacilityDetailResponseDTO> getFacilityDetails(@PathVariable(value = "facilityNo") String facilityNo) {
-		FacilityDetailResponseDTO response = facilityService.getFacilityDetails(facilityNo);
-        return ResponseEntity.ok(response);
+	public ResponseEntity<ApiResponse<FacilityDetailResponseDTO>> getFacilityDetails(@PathVariable(value = "facilityNo") String facilityNo) {
+		FacilityDetailResponseDTO body = facilityService.getFacilityDetails(facilityNo);
+        return ResponseEntity.ok(ApiResponse.ok("시설 정보 조회 성공", body));
 	}
 	
 	// 시설 정보 수정
