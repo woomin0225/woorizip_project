@@ -6,9 +6,9 @@ public record ErrorResponse(
         String code,
         String message,
         String path,
-        Instant timestamp
+        String timestamp
 ) {
     public static ErrorResponse of(String code, String message, String path) {
-        return new ErrorResponse(code, message, path, Instant.now());
+        return new ErrorResponse(code, message, path, Instant.now().toString());
     }
 }

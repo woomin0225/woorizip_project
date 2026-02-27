@@ -18,8 +18,8 @@ function CommentItem({ comment, onReply, onEdit, onDelete }) {
     setIsEditing(false);
   };
 
-  const { userId } = useAuth();
-  const isMyComment = userId === comment.userNo;
+  const { userNo } = useAuth();
+  const isMyComment = userNo === comment.userNo;
 
   return (
     <div
@@ -31,8 +31,13 @@ function CommentItem({ comment, onReply, onEdit, onDelete }) {
       {/* 댓글 내용 */}
       {!isEditing ? (
         <div>
+          <div>
+            <strong>{comment.userNo}</strong>
+            <span style={{ marginLeft: '10px' }}>
+              {comment.commentCreatedAt}
+            </span>
+          </div>
           <p>{comment.commentContent}</p>
-          <small>{comment.commentCreatedAt}</small>
 
           <div style={{ marginTop: '5px' }}>
             <button onClick={() => setIsReplying(!isReplying)}>답글</button>

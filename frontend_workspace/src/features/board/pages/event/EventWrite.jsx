@@ -20,21 +20,19 @@ export default function EventWrite() {
   } = useEventWrite({ navigate });
 
   return (
-    <div style={{ padding: 24 }}>
-      <h2 style={{ textAlign: 'center', marginBottom: 24 }}>이벤트 등록</h2>
-
-      <form onSubmit={handleSubmit}>
-        <EventPostEditor
-          mode={mode}
-          form={form}
-          onChange={onChange}
-          bannerFile={bannerFile}
-          setBannerFile={setBannerFile}
-          submitting={submitting}
-          onSubmit={handleSubmit}
-          onCancel={() => navigate('/events')}
-        />
-      </form>
-    </div>
+    <form onSubmit={handleSubmit}>
+      <EventPostEditor
+        mode={mode}
+        form={form}
+        onChange={onChange}
+        bannerFile={bannerFile}
+        setBannerFile={setBannerFile}
+        newFiles={newFiles}
+        setNewFiles={setNewFiles}
+        submitting={submitting}
+        onSubmit={handleSubmit}
+        onCancel={() => navigate('/event')}
+      />
+    </form>
   );
 }
