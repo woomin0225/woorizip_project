@@ -155,13 +155,21 @@ public class HouseServiceImpl implements HouseService {
 		entity.setHouseAbstract(houseDto.getHouseAbstract());
 		
 		// 위도/경도 업데이트
+		// 주소 -> 위도, 경도 전환
 		// geocoding 요청할 URI 구성
 		String uri = UriComponentsBuilder
 				.fromUriString(geoCodingApiUri)
-				.queryParam("query", houseDto.getHouseAddress())
+				.queryParam("query", houseDto.getHouseAddress().trim())
+				.queryParam("analyze_type", "similar")
+				.queryParam("page", 0)
+				.queryParam("size", 1)
 				.build()
-				.encode(StandardCharsets.UTF_8)
+//				.encode(StandardCharsets.UTF_8)
 				.toUriString();
+		log.info("geocoding uri = {}", uri);
+		ResponseEntity<String> raw = houseRestTemplate.getForEntity(uri, String.class);
+		log.info("kakao status={}", raw.getStatusCode());
+		log.info("kakao body={}", raw.getBody());
 		// RestTemplate 사용해서 API 응답 요청
 		KakaoGeocodingResponse response = houseRestTemplate.getForObject(uri, KakaoGeocodingResponse.class);
 		

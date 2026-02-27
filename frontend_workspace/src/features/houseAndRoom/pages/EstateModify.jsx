@@ -102,7 +102,7 @@ export default function EstateModify() {
     });
   }
 
-  // HouseForm onChange는 기존 구현을 그대로 재사용(너가 이미 만들어둔 방식)
+  // HouseForm onChange
   function handleHouseChange(e) {
     const { name, value } = e.target;
     setHouse((cur) => {
@@ -129,6 +129,8 @@ export default function EstateModify() {
       const boolFields = new Set(["roomEmptyYn"]);
       if (boolFields.has(name)) return { ...cur, [name]: value === "true" };
 
+      if (name == 'roomMethod' && value == 'L') return { ...cur, [name]: value, roomMonthly: 0};
+
       return { ...cur, [name]: value };
     });
   }
@@ -138,9 +140,22 @@ export default function EstateModify() {
     if (!selectedHouseNo || !house) return;
     if (saving) return;
 
+    // 사용자가 직접 수정하지 않을 정보는 보내지 않기. Dto에서 @Null
+    const payload = {
+      ...house,
+      userNo: null,
+      houseCreatedAt: null,
+      houseUpdatedAt: null,
+      houseImageCount: null,
+      houseLat: null,
+      houseLng: null,
+      deleted: null,
+      deletedAt: null,
+    };
+
     setSaving(true);
     try {
-      await modifyHouse(selectedHouseNo, Object.entries(house), deleteHouseImageNos, newHouseImages);
+      await modifyHouse(selectedHouseNo, Object.entries(payload), deleteHouseImageNos, newHouseImages);
       alert("건물 수정 성공");
 
       // 리프레시: 변경 후 재조회
@@ -151,7 +166,7 @@ export default function EstateModify() {
       setNewHouseImages([]);
     } catch (err) {
       console.error(err);
-      alert("건물 수정 실패(콘솔 확인)");
+      alert("건물 수정 실패");
     } finally {
       setSaving(false);
     }
@@ -162,9 +177,19 @@ export default function EstateModify() {
     if (!selectedRoomNo || !room) return;
     if (saving) return;
 
+    const payload = {
+      ...room,
+        userNo: null,
+        roomCreatedAt: null,
+        roomUpdatedAt: null,
+        roomImageCount: null,
+        deleted: null,
+        deletedAt: null,
+    };
+
     setSaving(true);
     try {
-      await modifyRoom(selectedRoomNo, Object.entries(room), deleteRoomImageNos, newRoomImages);
+      await modifyRoom(selectedRoomNo, Object.entries(payload), deleteRoomImageNos, newRoomImages);
       alert("방 수정 성공");
 
       const [r, imgs] = await Promise.all([getRoom(selectedRoomNo), getRoomImages(selectedRoomNo)]);

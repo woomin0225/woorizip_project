@@ -58,6 +58,8 @@ export async function modifyRoom(roomNo, roomDto, deleteImageNos=[], newImages=[
     const fd = new FormData();
 
     roomDto.forEach(([key, value])=>{
+        if(value === null || value === undefined) return;   //forEach에서 return은 continue역할
+        if(value === "null") return;
         fd.append(key, value);
     });
 

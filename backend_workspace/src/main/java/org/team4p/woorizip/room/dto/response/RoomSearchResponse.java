@@ -26,5 +26,5 @@ public class RoomSearchResponse {
 	private Boolean roomEmptyYn;
 	private Integer roomImageCount;
 	
-	private List<String> imageNames = null;
+	private List<String> imageNames;
 }
