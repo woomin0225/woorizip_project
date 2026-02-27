@@ -40,9 +40,6 @@ export async function getFacilityDetail(facilityNo) {
 
 // 시설 정보 수정
 export async function modifyFacility(facilityNo, formData) {
-  const { data } = await apiForm().patch(
-    `/api/facilities/${facilityNo}`,
-    formData
-  );
+  const { data } = await apiForm().patch(`/api/facilities/${facilityNo}`,formData);
   return data;
 }

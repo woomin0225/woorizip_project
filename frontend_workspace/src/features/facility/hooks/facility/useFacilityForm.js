@@ -1,4 +1,4 @@
-// src/features/facility/hooks/facility/usefacilityForm.js
+// src/features/facility/hooks/facility/useFacilityForm.js
 import { useState, useEffect, useCallback } from 'react';
 import { createFacility, modifyFacility, getFacilityDetail, getFacilityCategories } from '../../api/facilityApi';
 import { unwrapApi } from '../../../../shared/utils/apiUnwrap';
@@ -15,7 +15,7 @@ const schema = {
   facilityRsvnRequiredYn: false,
   maxRsvnPerDay: '',
   facilityRsvnUnitMinutes: '',
-  facilityMaxDurationMinutes: '',
+  facilityMaxDurationMinutes: ''
 };
 
 export function useFacilityForm(facilityNo = null) {
