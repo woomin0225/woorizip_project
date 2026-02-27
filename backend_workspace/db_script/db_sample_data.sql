@@ -62,7 +62,7 @@ VALUES
 ('house_s029', '코하우스송파29', 'lessor1', NOW(), NULL, '05836', '서울 송파구 중대로 135', '1~10층', 2013, 10, 150, 1, 0, 0, 18, '송파 동부권 실속형.', 0, 37.49800000, 127.11700000, 0, NULL),
 ('house_s030', '코하우스마포30', 'lessor1', NOW(), NULL, '04051', '서울 마포구 와우산로 94', 'B동 2~8층', 2011, 8, 130, 1, 1, 0, 10, '홍대/상수 인근 코리빙.', 0, 37.55130000, 126.92550000, 0, NULL);
 
--- 3. 방 (room_created_at은 해당 house의 house_created_at 이후로, room_updated_at은 오늘로)
+-- 3. 방
 INSERT INTO `tb_rooms`
 (`room_no`, `room_name`, `house_no`, `user_no`, `room_created_at`, `room_updated_at`,
  `room_deposit`, `room_monthly`, `room_method`, `room_area`, `room_facing`, `room_available_date`,
