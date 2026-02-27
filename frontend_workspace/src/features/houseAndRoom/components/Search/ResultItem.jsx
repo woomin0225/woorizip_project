@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import styles from './ResultItem.module.css';
 
@@ -49,113 +49,113 @@ export default function ResultItem({
   roomSearchResponse,
   wished = false,
   onToggleWish,
-}) {
-  // ✅ Hook은 항상 호출되어야 함 (early return 금지)
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [isWished, setIsWished] = useState(!!wished);
+  }) {
+    // ✅ Hook은 항상 호출되어야 함 (early return 금지)
+    const [currentIndex, setCurrentIndex] = useState(0);
+    const [isWished, setIsWished] = useState(!!wished);
 
-  // ✅ roomSearchResponse가 없을 수도 있다고 가정하고 "안전한 room" 준비
-  const room = roomSearchResponse ?? {};
+    // ✅ roomSearchResponse가 없을 수도 있다고 가정하고 "안전한 room" 준비
+    const room = roomSearchResponse ?? {};
 
-  // ✅ images도 안전하게 (null/undefined 대비)
-  const images = useMemo(
-    () => (room.imageNames ?? []).filter(Boolean),
-    [room.imageNames]
-  );
-  const total = images.length;
+    // ✅ images도 안전하게 (null/undefined 대비)
+    const images = useMemo(
+      () => (room.imageNames ?? []).filter(Boolean),
+      [room.imageNames]
+    );
+    const total = images.length;
 
-  function prevClick() {
-    setCurrentIndex((i) => Math.max(0, i - 1));
-  }
-  function nextClick() {
-    setCurrentIndex((i) => Math.min(Math.max(total - 1, 0), i + 1));
-  }
+    function prevClick() {
+      setCurrentIndex((i) => Math.max(0, i - 1));
+    }
+    function nextClick() {
+      setCurrentIndex((i) => Math.min(Math.max(total - 1, 0), i + 1));
+    }
 
-  // function toggleWish(e) {
-  //   e.stopPropagation();
-  //   e.preventDefault();
-  //   const next = !isWished;
-  //   setIsWished(next);
-  //   if (onToggleWish && room.roomNo) onToggleWish(room.roomNo, next);
-  // }
-  async function toggleWish(e) {
-    e.stopPropagation();
-    e.preventDefault();
+    // function toggleWish(e) {
+    //   e.stopPropagation();
+    //   e.preventDefault();
+    //   const next = !isWished;
+    //   setIsWished(next);
+    //   if (onToggleWish && room.roomNo) onToggleWish(room.roomNo, next);
+    // }
+    async function toggleWish(e) {
+      e.stopPropagation();
+      e.preventDefault();
 
-    const next = !isWished;
-    setIsWished(next);
+      const next = !isWished;
+      setIsWished(next);
 
-    if (!onToggleWish || !room.roomNo) return;
-    const ok = await onToggleWish(room.roomNo, next);
-    if (!ok) setIsWished(!next);
-  }
-  // -- 우민 수정
+      if (!onToggleWish || !room.roomNo) return;
+      const ok = await onToggleWish(room.roomNo, next);
+      if (!ok) setIsWished(!next);
+    }
+    // -- 우민 수정
 
-  function imgUrl(imageName) {
-    if (!imageName) return '#';
-    if (imageName.startsWith('http')) return imageName;
-    return `/upload_files/room_image/${imageName}`;
-  }
+    function imgUrl(imageName) {
+      if (!imageName) return '#';
+      if (imageName.startsWith('http')) return imageName;
+      return `http://localhost:8080/upload/room_image/${imageName}`;
+    }
 
-  // ✅ roomSearchResponse가 진짜 없으면 렌더만 비워주기
-  if (!roomSearchResponse) return null;
+    // ✅ roomSearchResponse가 진짜 없으면 렌더만 비워주기
+    if (!roomSearchResponse) return null;
 
-  return (
-    <div className={styles.card}>
-      <button className={styles.wishBtn} onClick={toggleWish} aria-label="찜">
-        {isWished ? '★' : '☆'}
-      </button>
+    return (
+      <div className={styles.card}>
+        <button className={styles.wishBtn} onClick={toggleWish} aria-label="찜">
+          {isWished ? '★' : '☆'}
+        </button>
 
-      <div className={styles.body}>
-        <div className={styles.thumb}>
-          {images.length === 0 ? (
-            <div className={styles.noImage}>Empty</div>
-          ) : (
-            <img
-              className={styles.thumbImg}
-              src={imgUrl(images[currentIndex])}
-              alt="room"
-            />
-          )}
+        <div className={styles.body}>
+          <div className={styles.thumb}>
+            {images.length === 0 ? (
+              <div className={styles.noImage}>Empty</div>
+            ) : (
+              <img
+                className={styles.thumbImg}
+                src={imgUrl(images[currentIndex])}
+                alt="room"
+              />
+            )}
 
-          {images.length > 1 && (
-            <div className={styles.thumbNav}>
-              <button onClick={prevClick} disabled={currentIndex === 0}>
-                ◀
-              </button>
-              <button onClick={nextClick} disabled={currentIndex >= total - 1}>
-                ▶
-              </button>
+            {images.length > 1 && (
+              <div className={styles.thumbNav}>
+                <button onClick={prevClick} disabled={currentIndex === 0}>
+                  ◀
+                </button>
+                <button onClick={nextClick} disabled={currentIndex >= total - 1}>
+                  ▶
+                </button>
+              </div>
+            )}
+
+            <div className={styles.photoCount}>
+              {room.roomImageCount ?? images.length}개 사진
             </div>
-          )}
-
-          <div className={styles.photoCount}>
-            {room.roomImageCount ?? images.length}개 사진
-          </div>
-        </div>
-
-        <div className={styles.info}>
-          <div className={styles.titleRow}>
-            <Link className={styles.title} to={`/rooms/${room.roomNo}`}>
-              {room.roomName}
-            </Link>
           </div>
 
-          <div className={styles.priceRow}>
-            <span className={styles.method}>
-              {methodLabel(room.roomMethod)}
-            </span>
-            <span>{priceText(room)}</span>
-          </div>
+          <div className={styles.info}>
+            <div className={styles.titleRow}>
+              <Link className={styles.title} to={`/rooms/${room.roomNo}`}>
+                {room.roomName}
+              </Link>
+            </div>
 
-          <div className={styles.metaRow}>
-            <span>{room.roomArea}㎡</span>
-            <span>{room.roomFacing}</span>
-            <span>{occupancyLabel(room.roomRoomCount)}</span>
-            <span>{room.roomEmptyYn ? '공실' : '거주중'}</span>
+            <div className={styles.priceRow}>
+              <span className={styles.method}>
+                {methodLabel(room.roomMethod)}
+              </span>
+              <span>{priceText(room)}</span>
+            </div>
+
+            <div className={styles.metaRow}>
+              <span>{room.roomArea}㎡</span>
+              <span>{room.roomFacing}</span>
+              <span>{occupancyLabel(room.roomRoomCount)}</span>
+              <span>{room.roomEmptyYn ? '공실' : '거주중'}</span>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  );
+    );
 }
