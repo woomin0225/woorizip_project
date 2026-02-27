@@ -12,7 +12,7 @@ import styles from './ApplicationDetail.module.css';
 function statusLabel(status) {
   switch (String(status || '').toUpperCase()) {
     case 'PENDING':
-      return '요청중';
+      return '승인됨';
     case 'APPROVED':
       return '승인됨';
     case 'REJECTED':

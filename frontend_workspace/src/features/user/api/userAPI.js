@@ -80,6 +80,16 @@ export async function getMyInfo() {
   return request(`/api/user/${encodeURIComponent(email)}`);
 }
 
+export async function getUserByUserNo(userNo) {
+  if (!userNo) throw new Error('사용자 번호가 없습니다.');
+  return request(`/api/user/no/${encodeURIComponent(userNo)}`);
+}
+
+export function isLessorType(type) {
+  const normalized = String(type || '').toUpperCase();
+  return normalized === 'LESSOR' || normalized === 'LANDLORD';
+}
+
 export async function updateMyInfo(payload) {
   const email = getCurrentUserEmail();
   if (!email) throw new Error('로그인 사용자 이메일 정보가 없습니다.');

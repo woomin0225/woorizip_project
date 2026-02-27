@@ -53,6 +53,33 @@
   background: #f2fbff;
 }
 
+.listHeaderLessor {
+  grid-template-columns: 1.8fr 1fr 0.9fr 0.9fr 138px;
+}
+
+.listRowLessor {
+  grid-template-columns: 1.8fr 1fr 0.9fr 0.9fr 138px;
+}
+
+.actionStack {
+  display: grid;
+  gap: 4px;
+}
+
+.rejectBtn {
+  border-color: #f5365c;
+  color: #f5365c;
+}
+
+.rejectBtn:hover {
+  background: #fff3f5;
+}
+
+.smallBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 @media (max-width: 991px) {
   .listHeader {
     display: none;
@@ -68,7 +95,7 @@
   }
 
   .smallBtn {
-    max-width: 72px;
+    max-width: 100%;
   }
 
   .oneLine {

@@ -110,7 +110,7 @@ export default function TourApply() {
     try {
       setIsSubmitting(true);
       await createTour(roomNo, payload);
-      setMessage('투어 신청이 완료되었습니다. 방찾기 목록으로 이동합니다.');
+      setMessage('투어 신청이 완료되어 승인됨 상태로 반영됩니다. 방찾기 목록으로 이동합니다.');
       setForm((prev) => ({ ...prev, inquiry: '' }));
       setTimeout(() => {
         navigate('/rooms');
