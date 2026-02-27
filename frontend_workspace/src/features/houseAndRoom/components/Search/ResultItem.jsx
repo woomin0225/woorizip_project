@@ -64,11 +64,6 @@ export default function ResultItem({
   );
   const total = images.length;
 
-  useEffect(() => {
-    setCurrentIndex(0);
-    setIsWished(!!wished);
-  }, [room.roomNo, wished]);
-
   function prevClick() {
     setCurrentIndex((i) => Math.max(0, i - 1));
   }
