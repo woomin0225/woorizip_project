@@ -52,7 +52,6 @@ public class SecurityConfig {
         provider.setPasswordEncoder(passwordEncoder);
         return provider;
     }
-
 	
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http, JwtTokenProvider jwt) throws Exception {
@@ -78,6 +77,7 @@ public class SecurityConfig {
                         "/*.js", "/*.css", "/*.map",
                         "/*.png", "/*.jpg", "/*.jpeg", "/*.gif", "/*.svg", "/*.webp", "/*.ico"
                 ).permitAll()
+                .requestMatchers("/upload/**").permitAll()
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
                 // auth endpoints
