@@ -99,11 +99,15 @@ export default function TourApply() {
       return;
     }
 
-    const tourDate = `${selectedDate} ${selectedTime}`;
+    const payload = {
+      visitDate: selectedDate,
+      visitTime: `${selectedTime}:00`,
+      message: (form.inquiry || '').trim() || `투어 신청자: ${form.name} (${form.phone})`,
+    };
 
     try {
       setIsSubmitting(true);
-      await createTour(roomNo, { tourDate });
+      await createTour(roomNo, payload);
       setMessage('투어 신청이 완료되었습니다.');
       setForm((prev) => ({ ...prev, inquiry: '' }));
     } catch (e2) {

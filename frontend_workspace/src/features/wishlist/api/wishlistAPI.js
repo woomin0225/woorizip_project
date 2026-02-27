@@ -46,6 +46,21 @@ export async function getWishlistByUser(userNo, page = 1, size = 20) {
   return [];
 }
 
+export async function getWishlistPageByUser(userNo, page = 1, size = 8) {
+  const data = await request(`/api/wishlist/${userNo}?page=${page}&size=${size}`);
+  return {
+    content: Array.isArray(data?.content) ? data.content : [],
+    page: Number(data?.page || page),
+    size: Number(data?.size || size),
+    totalElements: Number(data?.totalElements || 0),
+    totalPages: Number(data?.totalPages || 0),
+  };
+}
+
+export async function addWishlist(roomNo) {
+  return request(`/api/wishlist/add/${roomNo}`, { method: 'POST' });
+}
+
 export async function deleteWishlist(wishNo) {
   return request(`/api/wishlist/delete/${wishNo}`, { method: 'DELETE' });
 }

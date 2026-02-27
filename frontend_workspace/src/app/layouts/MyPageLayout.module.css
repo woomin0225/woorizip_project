@@ -11,12 +11,30 @@
   position: relative;
   z-index: 5;
   margin-top: 0;
-  padding: 120px 0 40px;
+  padding: 120px 0 44px;
   min-height: calc(100vh - 120px);
 }
 
+.contentSection :global(.container) {
+  max-width: 1240px;
+}
+
+.contentSection :global(.col-lg-3) {
+  flex: 0 0 24%;
+  max-width: 24%;
+}
+
+.contentSection :global(.col-lg-9) {
+  flex: 0 0 76%;
+  max-width: 76%;
+}
+
+.contentSection :global(.col-lg-3) .mainCard {
+  margin-left: -4px;
+}
+
 .mainCard {
-  min-height: 72vh;
+  min-height: 74vh;
 }
 
 .menuTitle { margin: 0 0 14px; font-size: 1rem; font-weight: 700; color: #344767; }
@@ -213,17 +231,91 @@
   border-radius: 12px;
   padding: 12px;
   background: #fff;
-  min-height: 180px;
+  min-height: 186px;
 }
 .thumb {
-  width: 120px;
-  min-width: 120px;
+  width: 124px;
+  min-width: 124px;
   border-radius: 10px;
   background: linear-gradient(135deg, #9ad7ff, #d2f1ff);
 }
 .itemTitle { margin: 0; font-size: 0.95rem; color: #344767; }
 .meta { margin: 8px 0 4px; font-size: 0.86rem; color: #5e72e4; }
 .desc { margin: 0; font-size: 0.86rem; color: #525f7f; }
+
+.sectionBlock {
+  margin-top: 16px;
+}
+.sectionTitle {
+  margin: 0 0 8px;
+  font-size: 1.02rem;
+  color: #344767;
+}
+.listHeader {
+  display: grid;
+  grid-template-columns: 92px 1fr 1.4fr 110px 1.6fr 170px;
+  gap: 10px;
+  align-items: center;
+  border: 1px solid #e9ecef;
+  border-bottom: 0;
+  border-radius: 10px 10px 0 0;
+  background: #f8f9fe;
+  padding: 10px 12px;
+  font-size: 0.83rem;
+  font-weight: 700;
+  color: #525f7f;
+}
+.listRow {
+  display: grid;
+  grid-template-columns: 92px 1fr 1.4fr 110px 1.6fr 170px;
+  gap: 10px;
+  align-items: center;
+  border: 1px solid #e9ecef;
+  border-top: 0;
+  background: #fff;
+  padding: 11px 12px;
+  font-size: 0.88rem;
+  color: #344767;
+}
+.listRow:last-of-type {
+  border-radius: 0 0 10px 10px;
+}
+.listRowActive {
+  background: #f2fbff;
+}
+.rowClickable {
+  cursor: pointer;
+}
+.actionCell {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.oneLine {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.pager {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+}
+.contractPreview {
+  margin-top: 18px;
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+  padding: 12px;
+}
+.contractFrame {
+  width: 100%;
+  min-height: 430px;
+  border: 0;
+  border-radius: 8px;
+  background: #f8f9fe;
+}
 
 @media (max-width: 991px) {
   .mainCard { min-height: 0; }
@@ -232,4 +324,32 @@
   .reasonGroup { grid-template-columns: 1fr; }
   .fieldRow { grid-template-columns: 1fr; }
   .compactForm { max-width: 100%; }
+  .contentSection :global(.col-lg-3),
+  .contentSection :global(.col-lg-9) {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+  .contentSection :global(.col-lg-3) .mainCard {
+    margin-left: 0;
+  }
+  .listHeader {
+    display: none;
+  }
+  .listRow {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 10px;
+    border-top: 1px solid #e9ecef;
+    border-radius: 10px;
+    margin-bottom: 8px;
+  }
+  .actionCell {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+  }
+  .oneLine {
+    white-space: normal;
+  }
+  .contractFrame {
+    min-height: 300px;
+  }
 }

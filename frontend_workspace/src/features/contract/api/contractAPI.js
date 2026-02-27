@@ -39,11 +39,31 @@ async function request(path, options = {}) {
   return json?.data ?? json;
 }
 
-export async function getMyContracts() {
-  const data = await request('/api/contract/user/me');
-  return Array.isArray(data) ? data : [];
+export async function getMyContractsPage(page = 1, size = 8) {
+  const data = await request(`/api/contract/user/me?page=${page}&size=${size}`);
+  return {
+    content: Array.isArray(data?.content) ? data.content : [],
+    page: Number(data?.page || page),
+    size: Number(data?.size || size),
+    totalElements: Number(data?.totalElements || 0),
+    totalPages: Number(data?.totalPages || 0),
+  };
 }
 
 export async function applyContract(roomNo, payload) {
   return request(`/api/contract/insert/${roomNo}`, { method: 'POST', body: JSON.stringify(payload) });
+}
+
+export async function requestContractAmendment(contractNo, payload) {
+  return request(`/api/contract/amendment/request/${contractNo}`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function cancelContract(contractNo, reason = '') {
+  return request(`/api/contract/cancel/${contractNo}`, {
+    method: 'POST',
+    body: JSON.stringify({ reason }),
+  });
 }

@@ -65,19 +65,41 @@
   font-size: 0.9rem !important;
 }
 
-.userArea {
-  gap: 10px;
-}
-
-.welcome {
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: #111;           /* 흰 헤더에서 보이게 */
-  white-space: nowrap;   /* 줄바꿈 방지 */
-}
-
-.userActions {
+.authSlot {
+  width: 240px;
+  min-height: 56px;
+  margin-left: 1.5rem;
   display: flex;
+}
+
+.authSlotLoggedOut {
   align-items: center;
-  gap: 8px;              /* 버튼 간격 */
+  justify-content: flex-end;
+}
+
+.authSlotLoggedIn {
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 6px;
+}
+
+.welcomeText {
+  margin: 0;
+  color: #6b7280;
+  font-size: 0.78rem;
+  line-height: 1;
+  font-weight: 500;
+}
+
+.authButtonsRow {
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+:global(#navbar-main) .loggedInButton {
+  padding: 2px 5px !important;
+  font-size: 0.7rem !important;
 }

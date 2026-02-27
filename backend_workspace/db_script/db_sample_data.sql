@@ -74,10 +74,11 @@ VALUES
 ('room27', '703호', 'house10','lessor1', 180000000, NULL,   'L', 35.00, '남서향', '2026-04-01', '성수 커먼, 전세 매물',             2, 1, 1, 'ACTIVE', '',                    5, 0, NULL, NULL);
 
 -- 4. 찜 (위시리스트)
-INSERT INTO `tb_wishlists` (`wish_no`, `user_no`, `room_no`, `created_at`) 
+-- tb_wishlists 스키마에는 house_no 컬럼이 없음
+INSERT INTO `tb_wishlists` (`wish_no`, `user_no`, `room_no`) 
 VALUES 
-('wish1', 'user1', 'room1', '2026-02-26'),
-('wish2', 'user1', 'room3', '2026-02-25');
+('wish1', 'user1', 'room1'),
+('wish2', 'user1', 'room3');
 
 -- 5. 투어 신청
 INSERT INTO `tb_tours` (`tour_no`, `room_no`, `user_no`, `visit_date`, `visit_time`, `status`, `message`) 
@@ -147,10 +148,11 @@ VALUES
 (3, '운동시설', '{"treadmill": true, "weights": true}');
 
 -- 16. 부대시설 목록 (tb_fm_list)
-INSERT INTO `tb_fm_list` (`facility_no`, `house_no`, `facility_code`, `facility_name`, `facility_option_info`, `facility_location`, `facility_open_time`, `facility_close_time`, `facility_rsvn_required_yn`, `max_rsvn_per_day`, `facility_rsvn_unit_minutes`, `facility_max_duration_minutes`, `facility_created_at`, `facility_capacity`) 
+-- facility_status는 NOT NULL이라 반드시 명시
+INSERT INTO `tb_fm_list` (`facility_no`, `house_no`, `facility_code`, `facility_name`, `facility_option_info`, `facility_location`, `facility_open_time`, `facility_close_time`, `facility_status`, `facility_rsvn_required_yn`, `max_rsvn_per_day`, `facility_rsvn_unit_minutes`, `facility_max_duration_minutes`, `facility_created_at`, `facility_capacity`) 
 VALUES 
-('fac1', 'house1', 3, '입주민 전용 헬스장', '{"treadmill": true, "weights": true}', 1, '06:00:00', '23:00:00', 0, 2, 30, 60, '2026-01-01 00:00:01', 30),
-('fac2', 'house1', 1, '공용 스터디 라운지', '{"wifi": true, "coffee": true}', 2, '00:00:00', '23:59:59', 1, null, null, null,  '2026-01-01 00:00:02', 10);
+('fac1', 'house1', 3, '입주민 전용 헬스장', '{"treadmill": true, "weights": true}', 1, '06:00:00', '23:00:00', 'AVAILABLE', 0, 2, 30, 60, '2026-01-01 00:00:01', 30),
+('fac2', 'house1', 1, '공용 스터디 라운지', '{"wifi": true, "coffee": true}', 2, '00:00:00', '23:59:59', 'AVAILABLE', 1, NULL, NULL, NULL,  '2026-01-01 00:00:02', 10);
 
 -- 17. 부대시설 사진 (tb_fm_images)
 INSERT INTO `tb_fm_images` (`facility_image_no`, `facility_no`, `facility_original_image_name`, `facility_stored_image_name`) 

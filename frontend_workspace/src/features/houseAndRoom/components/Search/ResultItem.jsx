@@ -1,21 +1,21 @@
-import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
-import styles from "./ResultItem.module.css";
+import { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
+import styles from './ResultItem.module.css';
 
 // ===== 표시용 포맷 함수들 =====
 function methodLabel(method) {
-  if (method === "M") return "월세";
-  if (method === "L") return "전세";
-  return method ?? "";
+  if (method === 'M') return '월세';
+  if (method === 'L') return '전세';
+  return method ?? '';
 }
 
 function formatMoneyKRW(value) {
-  if (value === null || value === undefined) return "";
+  if (value === null || value === undefined) return '';
   const n = Number(value);
   if (Number.isNaN(n)) return String(value);
 
   const EOK = 100_000_000; // 1억
-  const MAN = 10_000;      // 1만
+  const MAN = 10_000; // 1만
 
   const eok = Math.floor(n / EOK);
   const rest = n % EOK;
@@ -31,20 +31,25 @@ function priceText(room) {
   const deposit = formatMoneyKRW(room?.roomDeposit);
   const monthly = formatMoneyKRW(room?.roomMonthly);
 
-  if (method === "M") return `보증금 ${deposit}${monthly ? ` / 월세 ${monthly}` : ""}`;
-  if (method === "L") return `전세 ${deposit}`;
-  return [deposit, monthly].filter(Boolean).join(" / ");
+  if (method === 'M')
+    return `보증금 ${deposit}${monthly ? ` / 월세 ${monthly}` : ''}`;
+  if (method === 'L') return `전세 ${deposit}`;
+  return [deposit, monthly].filter(Boolean).join(' / ');
 }
 
 function occupancyLabel(roomCount) {
   const n = Number(roomCount);
-  if (!n || Number.isNaN(n)) return "";
-  if (n <= 1) return "1인용";
-  if (n === 2) return "2인용";
+  if (!n || Number.isNaN(n)) return '';
+  if (n <= 1) return '1인용';
+  if (n === 2) return '2인용';
   return `${n}인용`;
 }
 
-export default function ResultItem({ roomSearchResponse, wished = false, onToggleWish }) {
+export default function ResultItem({
+  roomSearchResponse,
+  wished = false,
+  onToggleWish,
+}) {
   // ✅ Hook은 항상 호출되어야 함 (early return 금지)
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isWished, setIsWished] = useState(!!wished);
@@ -53,7 +58,10 @@ export default function ResultItem({ roomSearchResponse, wished = false, onToggl
   const room = roomSearchResponse ?? {};
 
   // ✅ images도 안전하게 (null/undefined 대비)
-  const images = useMemo(() => (room.imageNames ?? []).filter(Boolean), [room.imageNames]);
+  const images = useMemo(
+    () => (room.imageNames ?? []).filter(Boolean),
+    [room.imageNames]
+  );
   const total = images.length;
 
   useEffect(() => {
@@ -68,17 +76,29 @@ export default function ResultItem({ roomSearchResponse, wished = false, onToggl
     setCurrentIndex((i) => Math.min(Math.max(total - 1, 0), i + 1));
   }
 
-  function toggleWish(e) {
+  // function toggleWish(e) {
+  //   e.stopPropagation();
+  //   e.preventDefault();
+  //   const next = !isWished;
+  //   setIsWished(next);
+  //   if (onToggleWish && room.roomNo) onToggleWish(room.roomNo, next);
+  // }
+  async function toggleWish(e) {
     e.stopPropagation();
     e.preventDefault();
+
     const next = !isWished;
     setIsWished(next);
-    if (onToggleWish && room.roomNo) onToggleWish(room.roomNo, next);
+
+    if (!onToggleWish || !room.roomNo) return;
+    const ok = await onToggleWish(room.roomNo, next);
+    if (!ok) setIsWished(!next);
   }
+  // -- 우민 수정
 
   function imgUrl(imageName) {
-    if (!imageName) return "#";
-    if (imageName.startsWith("http")) return imageName;
+    if (!imageName) return '#';
+    if (imageName.startsWith('http')) return imageName;
     return `/upload_files/room_image/${imageName}`;
   }
 
@@ -88,7 +108,7 @@ export default function ResultItem({ roomSearchResponse, wished = false, onToggl
   return (
     <div className={styles.card}>
       <button className={styles.wishBtn} onClick={toggleWish} aria-label="찜">
-        {isWished ? "★" : "☆"}
+        {isWished ? '★' : '☆'}
       </button>
 
       <div className={styles.body}>
@@ -96,13 +116,21 @@ export default function ResultItem({ roomSearchResponse, wished = false, onToggl
           {images.length === 0 ? (
             <div className={styles.noImage}>Empty</div>
           ) : (
-            <img className={styles.thumbImg} src={imgUrl(images[currentIndex])} alt="room" />
+            <img
+              className={styles.thumbImg}
+              src={imgUrl(images[currentIndex])}
+              alt="room"
+            />
           )}
 
           {images.length > 1 && (
             <div className={styles.thumbNav}>
-              <button onClick={prevClick} disabled={currentIndex === 0}>◀</button>
-              <button onClick={nextClick} disabled={currentIndex >= total - 1}>▶</button>
+              <button onClick={prevClick} disabled={currentIndex === 0}>
+                ◀
+              </button>
+              <button onClick={nextClick} disabled={currentIndex >= total - 1}>
+                ▶
+              </button>
             </div>
           )}
 
@@ -119,7 +147,9 @@ export default function ResultItem({ roomSearchResponse, wished = false, onToggl
           </div>
 
           <div className={styles.priceRow}>
-            <span className={styles.method}>{methodLabel(room.roomMethod)}</span>
+            <span className={styles.method}>
+              {methodLabel(room.roomMethod)}
+            </span>
             <span>{priceText(room)}</span>
           </div>
 
@@ -127,7 +157,7 @@ export default function ResultItem({ roomSearchResponse, wished = false, onToggl
             <span>{room.roomArea}㎡</span>
             <span>{room.roomFacing}</span>
             <span>{occupancyLabel(room.roomRoomCount)}</span>
-            <span>{room.roomEmptyYn ? "공실" : "거주중"}</span>
+            <span>{room.roomEmptyYn ? '공실' : '거주중'}</span>
           </div>
         </div>
       </div>
