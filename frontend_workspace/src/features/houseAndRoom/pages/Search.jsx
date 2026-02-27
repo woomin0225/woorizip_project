@@ -17,9 +17,8 @@ import styles from './Search.module.css';
 const PAGE_SIZE = 10;
 
 function getCurrentUserNo() {
-  const fromStorage =
-    localStorage.getItem('userNo') || localStorage.getItem('userId');
-  if (fromStorage) return fromStorage;
+  const storedUserNo = localStorage.getItem('userNo');
+  if (storedUserNo) return storedUserNo;
 
   const raw = localStorage.getItem('accessToken');
   if (!raw) return null;
@@ -32,7 +31,7 @@ function getCurrentUserNo() {
   const payload = parseJwt(token);
   if (!payload) return null;
 
-  return payload.userNo || payload.userId || null;
+  return payload.userNo || null;
 }
 
 export default function Search() {

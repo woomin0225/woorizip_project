@@ -4,6 +4,7 @@ import Headroom from 'headroom.js';
 import { ROUTES } from './../../../shared/constants/routes';
 import logo from '../../../logo.png';
 import { axiosInstance } from '../../http/axiosInstance';
+import { useAuth } from '../../providers/AuthProvider';
 
 import {
   Button,
@@ -25,6 +26,7 @@ import {
 import styles from './Header.module.css';
 
 export default function Header() {
+  const { clearTokens } = useAuth();
   const [isLessor, setIsLessor] = useState(false);
   const [collapseClasses, setCollapseClasses] = useState('');
   const [userName, setUserName] = useState('');
@@ -112,8 +114,9 @@ export default function Header() {
   // }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem('accessToken');
+    clearTokens();
     localStorage.removeItem('userName');
+    localStorage.removeItem('userNo');
     alert('로그아웃 되었습니다.');
     navigate('/');
     window.location.reload();

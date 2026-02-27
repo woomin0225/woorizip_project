@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import styles from './ResultItem.module.css';
 
@@ -52,7 +52,6 @@ export default function ResultItem({
 }) {
   // ✅ Hook은 항상 호출되어야 함 (early return 금지)
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [isWished, setIsWished] = useState(!!wished);
 
   // ✅ roomSearchResponse가 없을 수도 있다고 가정하고 "안전한 room" 준비
   const room = roomSearchResponse ?? {};
@@ -63,11 +62,6 @@ export default function ResultItem({
     [room.imageNames]
   );
   const total = images.length;
-
-  useEffect(() => {
-    setCurrentIndex(0);
-    setIsWished(!!wished);
-  }, [room.roomNo, wished]);
 
   function prevClick() {
     setCurrentIndex((i) => Math.max(0, i - 1));
@@ -87,12 +81,8 @@ export default function ResultItem({
     e.stopPropagation();
     e.preventDefault();
 
-    const next = !isWished;
-    setIsWished(next);
-
     if (!onToggleWish || !room.roomNo) return;
-    const ok = await onToggleWish(room.roomNo, next);
-    if (!ok) setIsWished(!next);
+    await onToggleWish(room.roomNo, !wished);
   }
   // -- 우민 수정
 
@@ -108,7 +98,7 @@ export default function ResultItem({
   return (
     <div className={styles.card}>
       <button className={styles.wishBtn} onClick={toggleWish} aria-label="찜">
-        {isWished ? '★' : '☆'}
+        {wished ? '★' : '☆'}
       </button>
 
       <div className={styles.body}>

@@ -4,8 +4,10 @@ import { Container, Row, Col, Card, CardBody } from 'reactstrap';
 import MyPageSideNav from '../components/MyPageSideNav';
 import { withdrawMyAccount } from '../api/userAPI';
 import styles from '../../../app/layouts/MyPageLayout.module.css';
+import { useAuth } from '../../../app/providers/AuthProvider';
 
-export default function Withdrawn() {
+export default function Withdraw() {
+  const { clearTokens } = useAuth();
   const navigate = useNavigate();
   const [reason, setReason] = useState('');
   const [detail, setDetail] = useState('');
@@ -38,8 +40,9 @@ export default function Withdrawn() {
       await withdrawMyAccount();
 
       alert('회원탈퇴가 완료되었습니다.');
-      localStorage.removeItem('accessToken');
+      clearTokens();
       localStorage.removeItem('userName');
+      localStorage.removeItem('userNo');
       localStorage.removeItem('email');
       localStorage.removeItem('emailId');
       navigate('/');

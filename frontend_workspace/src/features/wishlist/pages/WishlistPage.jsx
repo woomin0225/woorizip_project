@@ -8,8 +8,8 @@ import WishlistTable from '../components/WishlistTable';
 import styles from '../../../app/layouts/MyPageLayout.module.css';
 
 function getCurrentUserNo() {
-  const fromStorage = localStorage.getItem('userNo') || localStorage.getItem('userId');
-  if (fromStorage) return fromStorage;
+  const storedUserNo = localStorage.getItem('userNo');
+  if (storedUserNo) return storedUserNo;
 
   const raw = localStorage.getItem('accessToken');
   if (!raw) return null;
@@ -21,7 +21,7 @@ function getCurrentUserNo() {
   const payload = parseJwt(token);
   if (!payload) return null;
 
-  return payload.userNo || payload.userId || null;
+  return payload.userNo || null;
 }
 
 function pickImageName(x) {
