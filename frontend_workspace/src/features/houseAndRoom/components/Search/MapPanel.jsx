@@ -275,7 +275,7 @@ export default function MapPanel({ markers = [],
   }, [popup]);
 
   return (
-    <div className={styles.mapWrap} id="map" style={{ position: "relative", height: 500 }}>
+    <div className={styles.mapWrap} id="map">
       <div ref={mapDivRef} style={{ width: "100%", height: "100%", background: "#f7f7f7" }} />
 
       {loadingMarkers && (
