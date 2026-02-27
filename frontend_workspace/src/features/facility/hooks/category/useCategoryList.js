@@ -1,6 +1,6 @@
 // src/features/facility/hooks/category/useCategoryList.js
 import { useState, useCallback, useEffect } from 'react';
-import { getFacilityList } from '../../api/facilityApi';
+import { getFacilityCategories } from '../../api/facilityApi';
 
 export const useCategoryList = () => {
   const [categories, setCategories] = useState([]);
