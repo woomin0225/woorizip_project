@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.team4p.woorizip.common.exception.ForbiddenException;
@@ -35,7 +36,7 @@ public class ReservationServiceImpl implements ReservationService {
 	private final ReservationRepository reservationRepository;
 	private final UserRepository userRepository;
 	private final LesseeValidator lesseeValidator;
-
+	
 	// 예약 신규 등록
 	@Override
 	@Transactional
@@ -78,33 +79,43 @@ public class ReservationServiceImpl implements ReservationService {
 		reservationRepository.save(reservation);
 	}
 
-	// 예약 상세 조회
-	@Override
-	@Transactional(readOnly = true)
-	public ReservationDetailResponseDTO getReservationDetails(String reservationNo) {
-		return reservationRepository.findById(reservationNo)
-				.map(ReservationDetailResponseDTO::from)
-				.orElseThrow(() -> new NotFoundException("예약 정보를 찾을 수 없습니다."));
-	}
+	// 예약 목록 페이지 조회
+    @Override
+    public int selectListCount(String userNo, String facilityNo) {
+    	// 임차인 (본인 예약)
+        if (facilityNo == null || facilityNo.isEmpty()) {
+            return (int) reservationRepository.countByUser_UserNo(userNo);
+        }
+        
+        // 임대인/관리자 (특정 시설의 전체 예약)
+        return (int) reservationRepository.countByFacility_FacilityNo(facilityNo);
+    }
 
-	// 예약 목록 조회
-	@Override
-	@Transactional(readOnly = true)
-	public List<ReservationListResponseDTO> getReservationList(String userNo, String facilityNo) {
-		// 임차인
-	    if (facilityNo == null) {
-	        return reservationRepository.findByUser_UserNo(userNo)
-	        		.stream()
-	                .map(ReservationListResponseDTO::from)
-	                .collect(Collectors.toList());
-	    }
+    // 예약 목록 조회
+    @Override
+    public List<ReservationListResponseDTO> selectList(Pageable pageable, String userNo, String facilityNo) {
+    	// 임차인 (시설 번호가 없으면 본인 예약만 조회)
+        if (facilityNo == null || facilityNo.isEmpty()) {
+            return reservationRepository.findByUser_UserNo(userNo, pageable)
+                    .stream()
+                    .map(ReservationListResponseDTO::from)
+                    .collect(Collectors.toList());
+        }
 
-	    // 임대인, 관리자
-	    return reservationRepository.findByFacility_FacilityNo(facilityNo)
-	    		.stream()
-	            .map(ReservationListResponseDTO::from)
-	            .collect(Collectors.toList());
-	}
+        // 임대인/관리자 (특정 시설의 전체 예약 조회)
+        return reservationRepository.findByFacility_FacilityNo(facilityNo, pageable)
+                .stream()
+                .map(ReservationListResponseDTO::from)
+                .collect(Collectors.toList());
+    }
+
+    // 예약 상세 조회
+    @Override
+    public ReservationDetailResponseDTO selectReservation(String reservationNo) {
+        return reservationRepository.findById(reservationNo)
+                .map(ReservationDetailResponseDTO::from)
+                .orElseThrow(() -> new NotFoundException("예약 정보를 찾을 수 없습니다."));
+    }
 
 	// 예약 내용 수정
 	@Override
