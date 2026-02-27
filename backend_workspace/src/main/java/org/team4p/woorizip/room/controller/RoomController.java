@@ -127,6 +127,8 @@ public class RoomController {
 		String currentUser = auth.getName().toString();
 		roomService.updateRoom(roomDto, currentUser);
 		
+		int prevCount = roomImageService.countRoomImageNumber(roomNo);
+		
 		// 삭제 사진 처리 : DB삭제 -> 저장소 삭제
 		int deleteCount = 0;
 		if(deleteImageNos != null && deleteImageNos.size() > 0) {
@@ -143,7 +145,9 @@ public class RoomController {
 		
 		// 사진 갯수 반영
 		int count = roomImageService.countRoomImageNumber(roomNo);	//기존 갯수
-		roomService.updateRoomImageCount(roomNo, (count-deleteCount+addCount));	//기존 갯수 - 삭제 갯수 - 추가 갯수
+		if(count == prevCount - deleteCount + addCount) {
+			roomService.updateRoomImageCount(roomNo, count);	//기존 갯수 - 삭제 갯수 - 추가 갯수
+		}
 		
 		return ResponseEntity.status(200).body(ApiResponse.ok("방 정보 수정 성공", null));
 	}
