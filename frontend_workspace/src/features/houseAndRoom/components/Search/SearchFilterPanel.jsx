@@ -1,12 +1,39 @@
 import { useState } from "react";
 import styles from "./SearchFilterPanel.module.css";
 
+const OPTION_LIST = ["WiFi", "냉장고", "세탁기", "에어컨", "침대", "책상", "옷장", "TV", "신발장"];
+
+function parseOptions(value) {
+  if (!value) return [];
+  if (Array.isArray(value)) return value;
+  if (typeof value === "string") {
+    return value.split(",").map(v => v.trim()).filter(Boolean);
+  }
+  return [];
+}
+
 export default function SearchFilterPanel({
   cond,
   handleCondChange,
   handleOptionsChange,
   clickSearch,
 }) {
+  const selectedSet = new Set(parseOptions(cond?.options));
+
+  function toggleOption(opt) {
+    const next = new Set(selectedSet);
+    if (next.has(opt)) next.delete(opt);
+    else next.add(opt);
+
+    const nextArr = Array.from(next);
+    const nextValue = nextArr.length ? nextArr.join(",") : null;
+
+    handleOptionsChange({
+      ...cond,
+      options: nextValue,
+    });
+  }
+  
   const [showOptions, setShowOptions] = useState(false);
 
   function optionChecked(value) {
@@ -120,37 +147,9 @@ export default function SearchFilterPanel({
       {/* 접기/펼치기: 옵션 + 건물 체크 */}
       {showOptions && (
         <div className={styles.advanced}>
-          {/* 옵션 */}
-          <div className={styles.group}>
-            <label className={styles.advLabel}>옵션</label>
-            <div className={styles.checks}>
-              <label className={styles.check}>
-                <input
-                  type="checkbox"
-                  value="WiFi"
-                  checked={optionChecked("WiFi")}
-                  onChange={handleOptionsChange}
-                />
-                WiFi
-              </label>
-
-              <label className={styles.check}>
-                <input
-                  type="checkbox"
-                  value="냉장고"
-                  checked={optionChecked("냉장고")}
-                  onChange={handleOptionsChange}
-                />
-                냉장고
-              </label>
-
-              {/* 여기 계속 추가 가능 */}
-            </div>
-          </div>
-
           {/* 건물 조건 */}
           <div className={styles.group}>
-            <label className={styles.advLabel}>건물</label>
+            <label className={styles.advLabel}>조건</label>
             <div className={styles.checks}>
               <label className={styles.check}>
                 <input
@@ -191,6 +190,23 @@ export default function SearchFilterPanel({
                 />
                 주차가능
               </label>
+            </div>
+          </div>
+
+          {/* 옵션 */}
+          <div className={styles.group}>
+            <label className={styles.advLabel}>옵션</label>
+            <div className={styles.optionGrid}>
+              {OPTION_LIST.map((opt) => (
+                <label key={opt} className={styles.optionItem}>
+                  <input
+                    type="checkbox"
+                    checked={selectedSet.has(opt)}
+                    onChange={() => toggleOption(opt)}
+                  />
+                  <span>{opt}</span>
+                </label>
+              ))}
             </div>
           </div>
         </div>
