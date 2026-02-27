@@ -76,8 +76,12 @@
   border-bottom: 1px solid rgba(0,0,0,0.06);
 }
 
+/* 방 목록 버튼: 가로 배치 + 줄바꿈 */
 .roomList {
-  max-height: 220px; /* 방 목록 길면 스크롤 */
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px;
+  max-height: 220px;
   overflow: auto;
   padding-right: 4px;
 }
