@@ -69,3 +69,15 @@
   margin: 12px 0 8px 0;
   font-weight: 900;
 }
+
+.roomPanel {
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+}
+
+.roomList {
+  max-height: 220px; /* 방 목록 길면 스크롤 */
+  overflow: auto;
+  padding-right: 4px;
+}
