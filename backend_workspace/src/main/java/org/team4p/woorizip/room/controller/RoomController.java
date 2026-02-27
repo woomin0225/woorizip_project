@@ -199,4 +199,14 @@ public class RoomController {
 		
 		return ResponseEntity.status(200).body(ApiResponse.ok("입주일자 변경 완료", null));
 	}
+	
+	@PatchMapping("/{roomNo}/emptyyn")
+	public ResponseEntity<ApiResponse<Void>> modifyRoomEmptyYn(@PathVariable String roomNo, Authentication auth){
+		// 방 공실 여부 변경
+		
+		String currentUser = auth.getName().toString();
+		roomService.updateRoomEmptyYn(roomNo, currentUser);
+		
+		return ResponseEntity.status(200).body(ApiResponse.ok("공실여부 변경 완료", null));
+	}
 }

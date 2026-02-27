@@ -178,12 +178,11 @@ public class RoomServiceImpl implements RoomService {
 		
 		RoomEntity roomEntity = optional.get();
 		
-		roomEntity.setRoomAvailableDate(date);
-		
 		// 소유권 검사
 		if(!roomEntity.getUserNo().equals(userRepository.findUserNoByEmailId(currentUser))) throw new ForbiddenException("입주일자 변경 가능 권한이 없습니다.");
 		
-		return roomRepository.save(roomEntity).toDto();
+		roomEntity.setRoomAvailableDate(date);
+		return roomEntity.toDto();
 	}
 
 	@Override
@@ -235,6 +234,23 @@ public class RoomServiceImpl implements RoomService {
 		RoomEntity entity = row.get();
 		
 		entity.setRoomImageCount(imageCount);
+	}
+
+	@Override
+	public RoomDto updateRoomEmptyYn(String roomNo, String currentUser) {
+		// 방 공실 여부 변경
+		
+		// 해당 방 조회
+		Optional<RoomEntity> optional = roomRepository.findById(roomNo);
+		if(!optional.isPresent()) throw new NotFoundException("존재하지 않는 방입니다.");
+		
+		RoomEntity roomEntity = optional.get();
+		
+		// 소유권 검사
+		if(!roomEntity.getUserNo().equals(userRepository.findUserNoByEmailId(currentUser))) throw new ForbiddenException("입주일자 변경 가능 권한이 없습니다.");
+		
+		roomEntity.setRoomEmptyYn(!roomEntity.getRoomEmptyYn());
+		return roomEntity.toDto();
 	}
 
 }
