@@ -3,24 +3,82 @@ import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 import styles from './MapPanel.module.css';
 
-function MarkerPopup({ rooms, onClose }) {
+function houseImgUrl(imageName) {
+  if (!imageName) return null;
+  if (imageName.startsWith('http')) return imageName;
+  // ✅ 백엔드 경로에 맞게 필요하면 house_image 폴더명만 조정
+  return `http://localhost:8080/upload/house_image/${imageName}`;
+}
+
+function MarkerPopup({ house, rooms, onClose }) {
+  // console.log(house);
+  const name = house?.houseName ?? '건물';
+  const address =
+    house?.houseAddressDetail
+      ? `${house?.houseAddress ?? ''} ${house.houseAddressDetail}`
+      : (house?.houseAddress ?? '');
+
+  const imgName =
+    (Array.isArray(house?.imageNames) ? house.imageNames[0] : null)
+
+  const imgSrc = houseImgUrl(imgName);
+
   return (
     <div style={{
       background: "white",
       border: "1px solid #ddd",
-      borderRadius: 8,
-      padding: 8,
-      width: 260,
-      maxHeight: 220,
+      borderRadius: 10,
+      padding: 10,
+      width: 300,
+      maxHeight: 320,
       overflow: "auto",
-      boxShadow: "0 4px 12px rgba(0,0,0,0.12)"
+      boxShadow: "0 6px 16px rgba(0,0,0,0.16)"
     }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-        <b>방 목록</b>
-        <button onClick={onClose}>X</button>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
+        <div style={{ fontWeight: 800 }}>{name}</div>
+        <button onClick={onClose} style={{ border: "none", background: "transparent", cursor: "pointer" }}>✕</button>
       </div>
 
-      {rooms.length === 0 && <div style={{ fontSize: 13 }}>표시할 방이 없습니다.</div>}
+      <div style={{ fontSize: 12, color: "#555", marginTop: 4, lineHeight: 1.35 }}>
+        {address || "주소 정보 없음"}
+      </div>
+
+      <div style={{ marginTop: 10 }}>
+        {imgSrc ? (
+          <img
+            src={imgSrc}
+            alt="건물 사진"
+            style={{
+              width: "100%",
+              height: 140,
+              objectFit: "cover",
+              borderRadius: 10,
+              background: "#f2f2f2"
+            }}
+            onError={(e) => { e.currentTarget.style.display = "none"; }}
+          />
+        ) : (
+          <div style={{
+            width: "100%",
+            height: 140,
+            borderRadius: 10,
+            background: "#f2f2f2",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            color: "#888",
+            fontSize: 12
+          }}>
+            사진 없음
+          </div>
+        )}
+      </div>
+
+      <div style={{ marginTop: 10, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <b style={{ fontSize: 13 }}>방 목록</b>
+      </div>
+
+      {rooms.length === 0 && <div style={{ fontSize: 13, marginTop: 6 }}>표시할 방이 없습니다.</div>}
 
       {rooms.map((r) => (
         <div key={r.roomNo} style={{ padding: "6px 0", borderTop: "1px solid #eee" }}>
@@ -167,6 +225,9 @@ export default function MapPanel({ markers = [],
         if (onMarkerClick) {
           onMarkerClickRef.current?.({
             houseNo: mk.houseNo,
+            houseName: mk.houseName,
+            houseAddress: mk.houseAddress,
+            imageNames: mk.imageNames,
             houseLat: mk.houseLat,
             houseLng: mk.houseLng,
           });
@@ -225,7 +286,7 @@ export default function MapPanel({ markers = [],
 
       {/* 마커 위 팝업(Portal로 렌더링 -> Link 사용 가능) */}
       {overlayEl && popup && createPortal(
-        <MarkerPopup rooms={popup.rooms || []} onClose={onClosePopup} />,
+        <MarkerPopup rooms={popup.rooms || []} onClose={onClosePopup} house={popup.house}/>,
         overlayEl
       )}
     </div>

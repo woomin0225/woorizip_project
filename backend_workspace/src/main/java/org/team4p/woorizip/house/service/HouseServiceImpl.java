@@ -1,6 +1,5 @@
 package org.team4p.woorizip.house.service;
 
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -17,6 +16,8 @@ import org.team4p.woorizip.common.exception.ForbiddenException;
 import org.team4p.woorizip.common.exception.NotFoundException;
 import org.team4p.woorizip.house.dto.HouseDto;
 import org.team4p.woorizip.house.dto.response.HouseMarkerResponse;
+import org.team4p.woorizip.house.image.jpa.entity.HouseImageEntity;
+import org.team4p.woorizip.house.image.jpa.repository.HouseImageRepository;
 import org.team4p.woorizip.house.jpa.entity.HouseEntity;
 import org.team4p.woorizip.house.jpa.repository.HouseRepository;
 import org.team4p.woorizip.house.kakaoAPI.KakaoGeocodingResponse;
@@ -35,6 +36,7 @@ public class HouseServiceImpl implements HouseService {
 	private final @Qualifier("houseRestTemplate") RestTemplate houseRestTemplate;
 	private final RoomRepository roomRepository;
 	private final UserRepository userRepository;
+	private final HouseImageRepository houseImageRepository;
 	private @Value("${kakao.geocoding.api.uri}") String geoCodingApiUri;
 	
 	@Override
@@ -50,8 +52,14 @@ public class HouseServiceImpl implements HouseService {
 		Long minMonthly = getOrZero(map, "minMonthly");
 		Long maxMonthly = getOrZero(map, "maxMonthly");
 		
+		List<String> imageNames = new ArrayList<>();
+		for(HouseEntity item : rows) {
+			List<HouseImageEntity> imageRows = houseImageRepository.findAllByHouseNo(item.getHouseNo());
+			imageRows.forEach(entity->imageNames.add(entity.getHouseStoredImageName()));
+		}
+		
 		List<HouseMarkerResponse> list = new ArrayList<>();
-		rows.forEach(entity->list.add(new HouseMarkerResponse(entity, minDeposit, maxDeposit, minMonthly, maxMonthly)));
+		rows.forEach(entity->list.add(new HouseMarkerResponse(entity, minDeposit, maxDeposit, minMonthly, maxMonthly, imageNames)));
 		return list;
 	}
 	

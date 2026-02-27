@@ -57,6 +57,9 @@ export default function ResultItem({
     // ✅ roomSearchResponse가 없을 수도 있다고 가정하고 "안전한 room" 준비
     const room = roomSearchResponse ?? {};
 
+    const houseName = room.houseName;
+    const houseAddress = room.houseAddress;
+    
     // ✅ images도 안전하게 (null/undefined 대비)
     const images = useMemo(
       () => (room.imageNames ?? []).filter(Boolean),
@@ -136,9 +139,14 @@ export default function ResultItem({
 
           <div className={styles.info}>
             <div className={styles.titleRow}>
-              <Link className={styles.title} to={`/rooms/${room.roomNo}`}>
-                {room.roomName}
-              </Link>
+              <div className={styles.titleCol}>
+                {houseName && (
+                  <div className={styles.houseName}>{houseName}</div>
+                )}
+                <Link className={styles.title} to={`/rooms/${room.roomNo}`}>
+                  {room.roomName}
+                </Link>
+              </div>
             </div>
 
             <div className={styles.priceRow}>
@@ -153,6 +161,11 @@ export default function ResultItem({
               <span>{room.roomFacing}</span>
               <span>{occupancyLabel(room.roomRoomCount)}</span>
               <span>{room.roomEmptyYn ? '공실' : '거주중'}</span>
+            </div>
+            <div>
+              {houseAddress && (
+                <span className={styles.houseName}>{houseAddress}</span>
+              )}
             </div>
           </div>
         </div>
