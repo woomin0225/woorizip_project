@@ -1,4 +1,4 @@
-// src/features/facility/hooks/facility/usefacilityDetail.js
+// src/features/facility/hooks/facility/useFacilityDetail.js
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { getFacilityDetail } from '../../api/facilityApi';
 import { unwrapApi } from '../../../../shared/utils/apiUnwrap';
