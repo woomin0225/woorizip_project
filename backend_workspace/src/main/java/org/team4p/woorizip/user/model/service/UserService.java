@@ -14,6 +14,7 @@ public interface UserService {
 
     // 회원 정보 조회
     UserDto selectUser(UserDto userDto);
+    UserDto selectUserByUserNo(String userNo);
 
     // 회원 가입
     int insertUser(UserDto userDto);

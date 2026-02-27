@@ -47,6 +47,12 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public UserDto selectUserByUserNo(String userNo) {
+        UserEntity userEntity = userRepository.findById(userNo).orElse(null);
+        return userEntity != null ? UserDto.fromEntity(userEntity) : null;
+    }
+
+    @Override
     @Transactional
     public int insertUser(UserDto userDto) {
         try {

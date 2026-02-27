@@ -78,6 +78,7 @@ public class SecurityConfig {
                         "/*.png", "/*.jpg", "/*.jpeg", "/*.gif", "/*.svg", "/*.webp", "/*.ico"
                 ).permitAll()
                 .requestMatchers("/upload/**").permitAll()
+                .requestMatchers("/contract-docs/**").permitAll()
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
                 // auth endpoints

@@ -62,6 +62,16 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.ok("회원 정보 조회 성공", user));
     }
 
+    @GetMapping("/no/{user_no}")
+    public ResponseEntity<ApiResponse<UserDto>> selectUserByUserNo(@PathVariable("user_no") String userNo) {
+        UserDto user = userService.selectUserByUserNo(userNo);
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                                 .body(ApiResponse.fail("회원을 찾을 수 없습니다.", null));
+        }
+        return ResponseEntity.ok(ApiResponse.ok("회원 정보 조회 성공", user));
+    }
+
     /**
      * 회원 가입
      * POST /user/signup
