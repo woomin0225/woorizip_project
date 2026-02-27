@@ -31,7 +31,7 @@ public class ReservationController {
 	private final ReservationService reservationService;
 
 	// 예약 신규 등록
-	@PostMapping("api/facilities/{facilityNo}/reservations")
+	@PostMapping("/api/facilities/{facilityNo}/reservations")
 	public ResponseEntity<ApiResponse<String>> createReservation(
 			@Valid @RequestBody ReservationCreateRequestDTO dto,
 			@AuthenticationPrincipal CustomUserPrincipal principal,
@@ -62,7 +62,7 @@ public class ReservationController {
 	}
 
 	// 예약 내용 수정
-	@PatchMapping("api/reservations/{reservationNo}")
+	@PatchMapping("/api/reservations/{reservationNo}")
 	public ResponseEntity<ApiResponse<String>> modifyReservation(
 			@PathVariable(value="reservationNo")  String reservationNo,
 			@Valid @RequestBody ReservationModifyRequestDTO dto,
