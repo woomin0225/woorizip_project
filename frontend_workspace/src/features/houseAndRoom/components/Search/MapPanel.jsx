@@ -59,13 +59,30 @@ export default function MapPanel({ markers = [],
     }
 
     function initMap() {
+      // if (!mapRef.current) return;  // null 방지
       if (mapRef.current) return; // StrictMode useEffect 2번 실행 방지
 
       const kakao = window.kakao;
 
-      const center = new kakao.maps.LatLng(37.5547, 126.9706); // 서울역 근처
-      const map = new kakao.maps.Map(mapDivRef.current, { center, level: 5 });
+      const center = new kakao.maps.LatLng(37.5252, 126.9976);  // 서울 다 보이게
+      const map = new kakao.maps.Map(mapDivRef.current, { center, level: 8 });  // 낮을수록 확대
       mapRef.current = map;
+
+      // 지도 최초 렌더한 후 bound 잡기
+      let fired = false;
+      kakao.maps.event.addListener(map, "idle", () => {
+        if(fired) return;
+        fired = true;
+        const b = map.getBounds();
+        const sw = b.getSouthWest();
+        const ne = b.getNorthEast();
+        onChangeBbox({
+          swLat: sw.getLat(),
+          swLng: sw.getLng(),
+          neLat: ne.getLat(),
+          neLng: ne.getLng(),
+        });
+      });
 
       // 컨테이너 크기 계산 꼬임 방지(가끔 빈 화면 해결)
       setTimeout(() => {
@@ -73,28 +90,42 @@ export default function MapPanel({ markers = [],
         map.setCenter(center);
       }, 0);
       
-      // bounds_changed: 팝업 닫기 + bbox 상위 전달(디바운스)
-      kakao.maps.event.addListener(map, "bounds_changed", () => {
-        if (onClosePopup) onClosePopup(); // ✅ 지도 움직이면 목록 사라짐
+      // 지도 안정화 후에 api 호출되도록. 잦은 호출 방지
+      let timer = null;
+      let lastBbox = null; // (선택) 동일 bbox 중복 방지
 
-        if (debounceRef.current) clearTimeout(debounceRef.current);
-        debounceRef.current = setTimeout(() => {
+      kakao.maps.event.addListener(map, "idle", () => {
+        if (timer) clearTimeout(timer);
+
+        timer = setTimeout(() => {
           const b = map.getBounds();
           const sw = b.getSouthWest();
           const ne = b.getNorthEast();
-
-          onChangeBbox({
+          const next = {
             swLat: sw.getLat(),
             swLng: sw.getLng(),
             neLat: ne.getLat(),
             neLng: ne.getLng(),
-          });
-        }, 250);
+          };
+
+          // (선택) bbox가 거의 같으면 호출 안 함
+          const same =
+            lastBbox &&
+            Math.abs(lastBbox.swLat - next.swLat) < 1e-6 &&
+            Math.abs(lastBbox.swLng - next.swLng) < 1e-6 &&
+            Math.abs(lastBbox.neLat - next.neLat) < 1e-6 &&
+            Math.abs(lastBbox.neLng - next.neLng) < 1e-6;
+
+          if (!same) {
+            lastBbox = next;
+            onChangeBbox(next);
+          }
+        }, 600); // ✅ 250 → 600~800ms 추천
       });
     }
 
     if (window.kakao && window.kakao.maps) {
-      initMap();
+      window.kakao.maps.load(initMap);
       return;
     }
 
