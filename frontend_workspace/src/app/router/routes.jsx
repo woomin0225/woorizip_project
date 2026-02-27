@@ -30,10 +30,10 @@ import QnaDetail from '../../features/board/pages/qna/QnaDetail';
 import QnaWrite from '../../features/board/pages/qna/QnaWrite';
 import QnaUpdate from '../../features/board/pages/qna/QnaUpdate';
 
-import InformationList from '../../features/board/pages/Information/InformationList';
-import InformationDetail from '../../features/board/pages/Information/InformationDetail';
-import InformationWrite from '../../features/board/pages/Information/InformationWrite';
-import InformationUpdate from '../../features/board/pages/Information/InformationUpdate';
+import InformationList from '../../features/board/pages/information/InformationList';
+import InformationDetail from '../../features/board/pages/information/InformationDetail';
+import InformationWrite from '../../features/board/pages/information/InformationWrite';
+import InformationUpdate from '../../features/board/pages/information/InformationUpdate';
 
 import MemberList from '../../features/member/pages/MemberList';
 
@@ -95,7 +95,10 @@ export const router = createBrowserRouter([
 
           { path: ROUTES.TOUR.APPLY, element: <TourApply /> },
           { path: ROUTES.TOUR.LIST, element: <OccupyApply /> },
-          { path: '/mypage/applications/:kind/:id', element: <ApplicationDetail /> },
+          {
+            path: '/mypage/applications/:kind/:id',
+            element: <ApplicationDetail />,
+          },
           { path: '/rooms/:roomNo/tour', element: <TourApply /> },
           { path: '/mypage/tour', element: <OccupyApply /> },
 
