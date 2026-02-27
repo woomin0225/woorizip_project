@@ -1,1 +1,1 @@
-// placeholder
+// src/features/facility/components/detail/ReservationDetail.jsx

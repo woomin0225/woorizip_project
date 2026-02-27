@@ -1,4 +1,4 @@
-// src/features/facility/components/HouseList.jsx
+// src/features/facility/components/list/HouseList.jsx
 import styles from './HouseList.module.css';
 
 const HouseList = ({ houses, selectedHouseNo, onHouseChange }) => {

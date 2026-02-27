@@ -1,4 +1,4 @@
-// src/features/facility/components/FacilityList.jsx
+// src/features/facility/components/list/FacilityList.jsx
 
 import React from 'react';
 import { Container, Row, Col } from 'reactstrap';

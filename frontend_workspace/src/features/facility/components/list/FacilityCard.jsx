@@ -1,4 +1,4 @@
-// src/features/facility/components/FacilityCards.jsx
+// src/features/facility/components/list/FacilityCard.jsx
 
 import React from "react";
 import { Button } from "reactstrap";
