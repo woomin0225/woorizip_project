@@ -146,7 +146,7 @@ export function useFacilityForm(facilityNo = null) {
         : await createFacility(formData);
 
       alert(response.message);
-      navigate('/facilities');
+      navigate(`/facility/view/${houseNo}/${response.facilityNo}`);
     } catch (err) {
       setError(err);
       console.error(err.message);

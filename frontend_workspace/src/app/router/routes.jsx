@@ -135,7 +135,7 @@ export const router = createBrowserRouter([
           { path: '/qna/:postNo/edit', element: <QnaUpdate /> },
           // { path: ROUTES.MEMBER.MYPAGE, element: <MemberInfo /> },
           {
-            path: ROUTES.USER.FACILITY,
+            path: ROUTES.USER.FACILITY_VIEW,
             // element: <FacilityView />,
           },
           {
@@ -143,7 +143,7 @@ export const router = createBrowserRouter([
             // element: <FacilityForm />,
           },
           {
-            path: ROUTES.USER.RESERVATION,
+            path: ROUTES.USER.RESERVATION_VIEW,
             element: <ReservationView />,
           },
           {

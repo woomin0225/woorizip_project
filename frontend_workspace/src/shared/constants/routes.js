@@ -33,9 +33,9 @@
   },
 
   USER: {
-    FACILITY: '/facilities/list/:houseNo/:facilityNo',
-    FACILITY_FORM: '/facilities/form/:facilityNo',
-    RESERVATION: '/reservation/list/:houseNo',
-    RESERVATION_FORM: '/reservation/new/:facilityNo/',
+    FACILITY_VIEW: '/facility/view/:houseNo?/:facilityNo?',
+    FACILITY_FORM: '/facility/form/:houseNo/:facilityNo?',
+    RESERVATION_VIEW: '/reservation/view/:facilityNo?/:reservationNo?',
+    RESERVATION_FORM: '/reservation/form/:facilityNo/:reservationNo?'
   },
 };
