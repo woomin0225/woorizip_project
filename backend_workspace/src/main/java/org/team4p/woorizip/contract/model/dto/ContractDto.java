@@ -46,6 +46,8 @@ public class ContractDto {
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private Timestamp paymentDate;
 
+    private String rejectionReason;
+
     private RoomRepository roomRepository;
     /**
      * DTO -> Entity 변환
@@ -60,6 +62,7 @@ public class ContractDto {
                 .status(status)
                 .contractUrl(contractUrl)
                 .paymentDate(paymentDate)
+                .rejectionReason(rejectionReason)
                 .build();
     }
 
@@ -78,6 +81,7 @@ public class ContractDto {
                 .status(entity.getStatus())
                 .contractUrl(entity.getContractUrl())
                 .paymentDate(entity.getPaymentDate())
+                .rejectionReason(entity.getRejectionReason())
                 .build();
     }
 }

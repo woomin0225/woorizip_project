@@ -1,5 +1,6 @@
 package org.team4p.woorizip.tour.model.service;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -70,7 +71,7 @@ public class TourServiceImpl implements TourService {
         try {
             return tourRepository.save(entity) != null ? 1 : 0;
         } catch (DataIntegrityViolationException e) {
-            log.warn("투어 슬롯 중복 신청 차단: roomNo={}, visitDate={}, visitTime={}",
+            log.warn("투어 신청 중복 요청 차단: roomNo={}, visitDate={}, visitTime={}",
                     entity.getRoomNo(), entity.getVisitDate(), entity.getVisitTime());
             return -1;
         } catch (Exception e) {
@@ -83,7 +84,46 @@ public class TourServiceImpl implements TourService {
     @Transactional
     public int updateTour(TourDto tourDto) {
         try {
-            return tourRepository.save(tourDto.toEntity()) != null ? 1 : 0;
+            TourEntity existing = tourRepository.findById(String.valueOf(tourDto.getTourNo())).orElse(null);
+            if (existing == null) {
+                return 0;
+            }
+
+            String targetRoomNo = tourDto.getRoomNo() != null ? tourDto.getRoomNo() : existing.getRoomNo();
+            LocalDate targetVisitDate = tourDto.getVisitDate() != null ? tourDto.getVisitDate() : existing.getVisitDate();
+            String targetVisitTime = tourDto.getVisitTime() != null ? tourDto.getVisitTime() : existing.getVisitTime();
+
+            boolean alreadyReserved = tourRepository.existsByRoomNoAndVisitDateAndVisitTimeAndStatusInAndTourNoNot(
+                    targetRoomNo,
+                    targetVisitDate,
+                    targetVisitTime,
+                    ACTIVE_TOUR_STATUSES,
+                    existing.getTourNo()
+            );
+            if (alreadyReserved) {
+                return -1;
+            }
+
+            existing.setRoomNo(targetRoomNo);
+            existing.setVisitDate(targetVisitDate);
+            existing.setVisitTime(targetVisitTime);
+            if (tourDto.getMessage() != null) {
+                existing.setMessage(tourDto.getMessage());
+            }
+            if (tourDto.getStatus() != null) {
+                existing.setStatus(tourDto.getStatus());
+            }
+            if (tourDto.getCanceledAt() != null) {
+                existing.setCanceledAt(tourDto.getCanceledAt());
+            }
+            if (tourDto.getCanceledReason() != null) {
+                existing.setCanceledReason(tourDto.getCanceledReason());
+            }
+
+            return tourRepository.save(existing) != null ? 1 : 0;
+        } catch (DataIntegrityViolationException e) {
+            log.warn("투어 수정 중복 요청 차단: tourNo={}", tourDto.getTourNo());
+            return -1;
         } catch (Exception e) {
             log.error("투어 수정 중 오류 발생: {}", e.getMessage());
             return 0;

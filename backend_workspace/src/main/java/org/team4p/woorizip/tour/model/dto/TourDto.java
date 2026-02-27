@@ -1,5 +1,6 @@
 package org.team4p.woorizip.tour.model.dto;
 
+import java.time.LocalDate;
 import java.util.Date;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import org.team4p.woorizip.tour.jpa.entity.TourEntity;
@@ -26,7 +27,7 @@ public class TourDto {
     private String roomNo;
 
     @JsonFormat(pattern = "yyyy-MM-dd")
-    private Date visitDate;
+    private LocalDate visitDate;
 
     @JsonFormat(pattern = "HH:mm:ss")
     private String visitTime;
@@ -36,7 +37,7 @@ public class TourDto {
 
     private String status;
 
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Asia/Seoul")
     private Date canceledAt;
 
     private String canceledReason;
