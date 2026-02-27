@@ -85,6 +85,12 @@ public class RoomServiceImpl implements RoomService {
 		// userNo 조립
 		roomDto.setUserNo(userNo);
 		
+		// imageCount 기본값 설정
+		roomDto.setRoomImageCount(0);
+		
+		// delete 기본값 설정
+		roomDto.setDeleted(false);
+		
 		// DB에 저장
 		return roomRepository.save(roomDto.toEntity()).toDto();
 	}

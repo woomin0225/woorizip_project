@@ -35,7 +35,9 @@ import org.team4p.woorizip.room.service.RoomService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/rooms")
 @RequiredArgsConstructor
@@ -63,6 +65,7 @@ public class RoomController {
 			) {
 		// 방 등록
 		roomDto.setHouseNo(houseNo);
+		log.info("houseNo={}", houseNo);
 		roomDto.setRoomNo(null);
 		
 		String currentUser = auth.getName().toString();

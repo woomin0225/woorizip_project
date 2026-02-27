@@ -50,6 +50,8 @@ export async function modifyHouse(houseNo, houseDto, deleteImageNos = [], newIma
     const fd = new FormData();
 
     houseDto.forEach(([key, value])=>{
+        if(value === null || value === undefined) return;   //forEach에서 return은 continue역할
+        if(value === "null") return;
         fd.append(key, value);
     });
 
