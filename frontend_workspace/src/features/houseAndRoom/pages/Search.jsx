@@ -1,5 +1,4 @@
-// import { useState } from 'react';
-import { useEffect, useMemo, useState } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import SearchFilterPanel from './../components/Search/SearchFilterPanel';
 import MapPanel from '../components/Search/MapPanel';
 import ResultList from './../components/Search/ResultList';
@@ -46,10 +45,10 @@ export default function Search() {
     maxTax: null,
 
     // 서울역 중심 기본 bbox
-    swLat: 37.54121,
-    swLng: 126.95368,
-    neLat: 37.56819,
-    neLng: 126.98772,
+    swLat: 37.4531,
+    swLng: 126.8446,
+    neLat: 37.5973,
+    neLng: 127.1505,
 
     options: '',
     roomRoomCount: 1,
@@ -65,6 +64,17 @@ export default function Search() {
 
   // 마지막으로 “검색 버튼/정렬 버튼”으로 확정된 조건(검색에만 사용)
   const [appliedCond, setAppliedCond] = useState(null);
+
+  useEffect(() => {
+    // 페이지 첫 진입 시 1회 자동 검색
+    const first = { ...initialCond };
+
+    setCond(first);              // (선택) 화면 입력값도 초기값으로 맞추고 싶으면
+    setAppliedCond(first);       // 정렬/더보기 기준도 초기화
+
+    runSearch(first, bbox);      // 이게 실제 검색 트리거
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // bounding box
   const [bbox, setBbox] = useState({
@@ -216,11 +226,32 @@ export default function Search() {
     runSearch(nextApplied, bbox);
   };
 
+
+  const bboxRef = useRef(bbox);
+
+  useEffect(() => {
+    bboxRef.current = bbox;
+  }, [bbox]);
   // 지도 bbox 변경: 검색한 뒤(appliedCond 있을 때)만 재검색
   const handleChangeBbox = (nextBbox) => {
+    // 동일 bbox면 무시
+    const prev = bboxRef.current;
+    const same =
+      prev &&
+      Math.abs(prev.swLat - nextBbox.swLat) < 1e-6 &&
+      Math.abs(prev.swLng - nextBbox.swLng) < 1e-6 &&
+      Math.abs(prev.neLat - nextBbox.neLat) < 1e-6 &&
+      Math.abs(prev.neLng - nextBbox.neLng) < 1e-6;
+    if (same) return;
+    
     setBbox(nextBbox);
 
-    if (!appliedCond) return;
+    if (!appliedCond) {
+      const first = { ...cond };
+      setAppliedCond(first);
+      runSearch(first, nextBbox);
+      return;
+    }
     runSearch(appliedCond, nextBbox);
   };
 

@@ -13,6 +13,12 @@ import java.io.IOException;
 public class JwtExceptionFilter extends OncePerRequestFilter {
 
     private final ObjectMapper om = new ObjectMapper();
+    
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+    	String uri = request.getRequestURI();
+    	return uri.startsWith("/upload/");
+    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,

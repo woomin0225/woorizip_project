@@ -31,6 +31,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String uri = request.getRequestURI();
         String method = request.getMethod();
+        
+        	if (uri.startsWith("/upload/")) return true;
 
         if (HttpMethod.OPTIONS.matches(method)) return true;
 
@@ -47,9 +49,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 uri.startsWith("/api/information") || 
                 uri.startsWith("/api/event") || 
                 uri.startsWith("/api/qna") ||
-                uri.startsWith("/api/boards") ||
-                uri.startsWith("/api/houses") ||
-                uri.startsWith("/api/rooms")
+                uri.startsWith("/api/boards")
         )) {
             return true;
         }
@@ -68,6 +68,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain chain) throws ServletException, IOException {
+    	
+    	String uri = request.getRequestURI();
+
+    	if (uri.startsWith("/upload/")) {
+    	    chain.doFilter(request, response);
+    	    return;
+    	}
 
         String auth = request.getHeader("Authorization");
         if (auth == null || auth.isBlank() || !auth.startsWith("Bearer ")) {

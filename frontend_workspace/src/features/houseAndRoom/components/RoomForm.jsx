@@ -74,7 +74,6 @@ export default function RoomForm({
             name="roomDeposit"
             value={room.roomDeposit ?? ""}
             onChange={onChange}
-            disabled={isWolse && !!room.roomMethod}
             placeholder="0"
           />
         </div>

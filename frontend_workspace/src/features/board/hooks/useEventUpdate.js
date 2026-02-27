@@ -124,7 +124,7 @@ export function useEventUpdate({ postNo, navigate }) {
       setSubmitting(true);
       await updateEvent(postNo, data);
       alert('이벤트 수정 성공');
-      navigate(`/events/${postNo}`);
+      navigate(`/event/${postNo}`);
     } catch (e) {
       console.error(e);
       alert('이벤트 수정 실패');
