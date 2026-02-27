@@ -11,6 +11,8 @@ import Home from '../../shared/pages/Home';
 import About from '../../shared/pages/About';
 import Login from '../../features/member/pages/Login';
 import Signup from '../../features/member/pages/Signup';
+import FindId from '../../features/member/pages/FindId';
+import FindPassword from '../../features/member/pages/FindPassword';
 import OAuth2RedirectHandler from '../../features/member/pages/OAuth2RedirectHandler';
 
 import NoticeList from '../../features/board/pages/notice/NoticeList';
@@ -43,9 +45,12 @@ import MyPageHome from '../../features/user/pages/MyPageHome';
 import WishlistPage from '../../features/wishlist/pages/WishlistPage';
 import TourApply from '../../features/tour/pages/TourApply';
 import OccupyApply from '../../features/tour/pages/OccupyApply';
+import ApplicationDetail from '../../features/tour/pages/ApplicationDetail';
 import ContractCreate from '../../features/contract/pages/ContractCreate';
 import Statement from '../../features/contract/pages/Statement';
 import Completion from '../../features/contract/pages/Completion';
+import PaymentSuccess from '../../features/contract/pages/PaymentSuccess';
+import PaymentFail from '../../features/contract/pages/PaymentFail';
 import ReservationView from './../../features/facility/pages/reservation/ReservationView';
 import ReservationForm from './../../features/facility/pages/reservation/ReservationForm';
 
@@ -74,6 +79,8 @@ export const router = createBrowserRouter([
 
       { path: ROUTES.AUTH.LOGIN, element: <Login /> },
       { path: ROUTES.AUTH.SIGNUP, element: <Signup /> },
+      { path: '/find-id', element: <FindId /> },
+      { path: '/find-password', element: <FindPassword /> },
       { path: '/oauth2/redirect', element: <OAuth2RedirectHandler /> },
 
       {
@@ -88,6 +95,10 @@ export const router = createBrowserRouter([
 
           { path: ROUTES.TOUR.APPLY, element: <TourApply /> },
           { path: ROUTES.TOUR.LIST, element: <OccupyApply /> },
+          {
+            path: '/mypage/applications/:kind/:id',
+            element: <ApplicationDetail />,
+          },
           { path: '/rooms/:roomNo/tour', element: <TourApply /> },
           { path: '/mypage/tour', element: <OccupyApply /> },
 
@@ -95,6 +106,8 @@ export const router = createBrowserRouter([
           { path: '/rooms/:roomNo/contract', element: <ContractCreate /> },
           { path: ROUTES.CONTRACT.LIST, element: <Statement /> },
           { path: ROUTES.CONTRACT.COMPLETION, element: <Completion /> },
+          { path: '/contract/payment/success', element: <PaymentSuccess /> },
+          { path: '/contract/payment/fail', element: <PaymentFail /> },
           { path: '/mypage/contracts', element: <Statement /> },
         ],
       },

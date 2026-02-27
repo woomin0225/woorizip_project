@@ -1,5 +1,5 @@
 ﻿import React, { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import Headroom from 'headroom.js';
 import { ROUTES } from './../../../shared/constants/routes';
 import logo from '../../../logo.png';
@@ -29,6 +29,7 @@ export default function Header() {
   const [collapseClasses, setCollapseClasses] = useState('');
   const [userName, setUserName] = useState('');
   const navigate = useNavigate();
+  const location = useLocation();
   const [myPageRoute, setMyPageRoute] = useState(ROUTES.MEMBER.MYPAGE);
 
   const token = localStorage.getItem('accessToken');
@@ -95,6 +96,15 @@ export default function Header() {
       window.removeEventListener('storage', syncUserState);
     };
   }, [token]);
+
+  useEffect(() => {
+    // Route change can leave navbar-collapse overlay classes behind on mobile.
+    setCollapseClasses('');
+    const collapseEl = document.querySelector('.navbar-collapse');
+    if (!collapseEl) return;
+    collapseEl.classList.remove('show', 'collapsing', 'collapsing-out');
+    collapseEl.style.height = '';
+  }, [location.pathname]);
 
   // useEffect(() => {
   //   let headroom = new Headroom(document.getElementById('navbar-main'));

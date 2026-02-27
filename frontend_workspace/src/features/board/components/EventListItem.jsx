@@ -5,7 +5,7 @@ export default function EventListItem({ post, onClick }) {
   const banner = post?.bannerImage;
 
   const imageUrl = banner
-    ? `/upload/event/banner/${banner.updatedFileName}`
+    ? `http://localhost:8080/upload/event/banner/${banner.updatedFileName}`
     : null;
 
   return (
@@ -58,7 +58,7 @@ export default function EventListItem({ post, onClick }) {
           fontSize: 15,
         }}
       >
-        {post.title}
+        {post.postTitle}
       </div>
 
       {/* 등록일 */}

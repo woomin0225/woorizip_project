@@ -1,6 +1,6 @@
 ﻿import { useAuth } from '../../../app/providers/AuthProvider';
 import { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
+import { findId as findIdApi } from '../api/authApi';
 
 function parseJwtPayload(token) {
   if (!token) return null;
@@ -263,15 +263,32 @@ export const useFindId = () => {
     setError(null);
 
     try {
-      const res = await axios.post('http://localhost:8080/api/user/find-id', {
-        name: form.name,
-        phone: form.phone,
-      });
-      setFoundId(res.data.data);
+      const name = String(form.name || '').trim();
+      const rawPhone = String(form.phone || '').trim();
+      const normalizedPhone = rawPhone.replace(/\D/g, '');
+      const phoneCandidates = [...new Set([rawPhone, normalizedPhone].filter(Boolean))];
+
+      let lastError = null;
+      for (const phone of phoneCandidates) {
+        try {
+          const emailId = await findIdApi({ name, phone });
+          setFoundId(emailId);
+          return;
+        } catch (apiError) {
+          lastError = apiError;
+          const isNotFound =
+            apiError?.status === 404 ||
+            String(apiError?.message || '').includes('일치하는 회원 정보가 없습니다');
+
+          if (!isNotFound) {
+            throw apiError;
+          }
+        }
+      }
+
+      throw lastError || new Error('일치하는 회원 정보가 없습니다.');
     } catch (err) {
-      setError(
-        err.response?.data?.message || '아이디 찾기 중 오류가 발생했습니다.'
-      );
+      setError(err?.message || '아이디 찾기 중 오류가 발생했습니다.');
     } finally {
       setLoading(false);
     }

@@ -19,6 +19,8 @@ public final class EndpointPolicy {
     public static final String[] PUBLIC_POST = {
     		"/api/user/signup",
             "/api/user/check-id",
+            "/api/user/find-id",
+            "/api/user/find-password",
             "/auth/login"
     };
 

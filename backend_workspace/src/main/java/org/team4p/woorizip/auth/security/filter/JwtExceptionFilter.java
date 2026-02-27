@@ -1,6 +1,8 @@
 package org.team4p.woorizip.auth.security.filter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import jakarta.servlet.*;
 import jakarta.servlet.http.*;
 import org.team4p.woorizip.auth.dto.response.ErrorResponse;
@@ -12,7 +14,15 @@ import java.io.IOException;
 
 public class JwtExceptionFilter extends OncePerRequestFilter {
 
-    private final ObjectMapper om = new ObjectMapper();
+    private final ObjectMapper om = new ObjectMapper()
+            .registerModule(new JavaTimeModule())
+            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String uri = request.getRequestURI();
+        return uri.startsWith("/upload/");
+    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,

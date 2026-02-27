@@ -24,86 +24,74 @@ export default function EventDetail() {
   const banner = event.bannerImage;
 
   const bannerUrl = banner
-    ? `/upload/event/banner/${banner.updatedFileName}`
+    ? `http://localhost:8080/upload/event/banner/${banner.updatedFileName}`
     : null;
 
   return (
-    <div style={{ padding: 24 }}>
-      <h2 style={{ textAlign: 'center', marginBottom: 30 }}>이벤트 상세</h2>
+    <div style={{ maxWidth: 900, margin: '0 auto', padding: 24 }}>
+      <h2 style={{ textAlign: 'center', marginBottom: 40 }}>이벤트 상세</h2>
 
-      {/* 배너 이미지 */}
+      {/* 🔵 제목 */}
+      <h3 style={{ marginBottom: 20 }}>{title}</h3>
+
+      {/* 🔵 대표 이미지 */}
       {bannerUrl && (
-        <div style={{ textAlign: 'center', marginBottom: 30 }}>
+        <div style={{ marginBottom: 40 }}>
           <img
             src={bannerUrl}
             alt="event banner"
-            style={{ maxWidth: '100%', height: 'auto' }}
+            style={{
+              width: '100%',
+              borderRadius: 8,
+              boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+            }}
           />
         </div>
       )}
 
-      <table
-        width="100%"
-        border="1"
-        cellPadding="8"
-        style={{ borderCollapse: 'collapse' }}
-      >
-        <tbody>
-          <tr>
-            <th width="20%">제목</th>
-            <td>{title}</td>
-          </tr>
-          <tr>
-            <th>작성자</th>
-            <td>{writer}</td>
-          </tr>
-          <tr>
-            <th>조회수</th>
-            <td>{readcount}</td>
-          </tr>
-          <tr>
-            <th>등록일</th>
-            <td>{enrollDate}</td>
-          </tr>
-          <tr>
-            <th>내용</th>
-            <td dangerouslySetInnerHTML={{ __html: contentHtml }} />
-          </tr>
-          <tr>
-            <th>첨부파일</th>
-            <td>
-              {event.files && event.files.length > 0
-                ? event.files.map((f) => (
-                    <div key={f.fileNo}>
-                      <FileDownloadButton
-                        postNo={postNo}
-                        file={f}
-                        downloadFn={downloadEventFile}
-                      />
-                    </div>
-                  ))
-                : '첨부파일이 없습니다.'}
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      {/* 🔵 내용 */}
+      <div
+        style={{
+          padding: 20,
+          border: '1px solid #ddd',
+          minHeight: 200,
+          marginBottom: 30,
+        }}
+        dangerouslySetInnerHTML={{ __html: contentHtml }}
+      />
 
-      <div style={{ marginTop: 24, textAlign: 'center' }}>
+      {/* 🔵 첨부파일 */}
+      {event.files && event.files.length > 0 && (
+        <div style={{ marginBottom: 30 }}>
+          <h4>첨부파일</h4>
+          {event.files.map((f) => (
+            <div key={f.fileNo}>
+              <FileDownloadButton
+                postNo={postNo}
+                file={f}
+                downloadFn={downloadEventFile}
+              />
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* 🔵 버튼 */}
+      <div style={{ textAlign: 'center' }}>
         <Link to="/event" style={{ marginRight: 10 }}>
-          목록으로
+          목록
         </Link>
 
         {isAdmin && (
           <>
             <button
-              type="button"
               onClick={() => nav(`/event/${postNo}/edit`)}
               style={{ marginRight: 10 }}
             >
               수정
             </button>
 
-            <button type="button" onClick={handleDelete} disabled={deleting}>
+            <button onClick={handleDelete} disabled={deleting}>
               {deleting ? '삭제 중...' : '삭제'}
             </button>
           </>

@@ -178,7 +178,7 @@ CREATE TABLE `tb_houses` (
   `house_image_count` TINYINT NOT NULL COMMENT '첨부사진갯수',
   `house_lat` DECIMAL(10, 8) COMMENT '지도API사용을 위한 위도(-90 - 90, 소수점 8자리)',
   `house_lng` DECIMAL(11, 8) COMMENT '지도API사용을 위한 경도(-180 - 180, 소수점 8자리)',
-  `deleted` BOOLEAN NOT NULL DEFAULT 0 COMMENT '건물 삭제여부',
+  `deleted` BOOLEAN DEFAULT 0 COMMENT '건물 삭제여부',
   `deleted_at` TIMESTAMP COMMENT '건물 삭제 일시',
   PRIMARY KEY (`house_no`),
   UNIQUE KEY `uk_tb_houses_house_name` (`house_name`)
@@ -199,8 +199,8 @@ CREATE TABLE `tb_rooms` (
   `user_no` CHAR(36) NOT NULL COMMENT '임대인',
   `room_created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '방등록날짜',
   `room_updated_at` TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '방수정날짜',
-  `room_deposit` INT NOT NULL COMMENT '보증금',
-  `room_monthly` INT COMMENT '세액',
+  `room_deposit` BIGINT NOT NULL COMMENT '보증금',
+  `room_monthly` BIGINT COMMENT '세액',
   `room_method` ENUM('M', 'L') NOT NULL COMMENT '월전세구분(월세M, 전세L)',
   `room_area` DECIMAL(5, 2) NOT NULL COMMENT '면적',
   `room_facing` ENUM('북향', '동향', '남향', '서향', '북동향', '남동향', '남서향', '북서향') NOT NULL COMMENT '방 방향',
@@ -290,7 +290,9 @@ ALTER TABLE `tb_wishlists` ADD CONSTRAINT `fk_tb_wishlists_user_no` FOREIGN KEY 
 ALTER TABLE `tb_wishlists` ADD CONSTRAINT `fk_tb_wishlists_room_no` FOREIGN KEY (`room_no`) REFERENCES `tb_rooms` (`room_no`) ON DELETE CASCADE;
 ALTER TABLE `tb_posts` ADD CONSTRAINT `fk_tb_posts_board_type_no` FOREIGN KEY (`board_type_no`) REFERENCES `tb_board_type` (`board_type_no`);
 ALTER TABLE `tb_posts` ADD CONSTRAINT `fk_tb_posts_user_no` FOREIGN KEY (`user_no`) REFERENCES `tb_users` (`user_no`);
-ALTER TABLE `tb_comments` ADD CONSTRAINT `fk_tb_comments_post_no` FOREIGN KEY (`post_no`) REFERENCES `tb_posts` (`post_no`);
+-- 오류 생기면 기존 FK키 삭제 : 
+-- ALTER TABLE `tb_comments` DROP FOREIGN KEY `fk_tb_comments_post_no`;
+ALTER TABLE `tb_comments` ADD CONSTRAINT `fk_tb_comments_post_no` FOREIGN KEY (`post_no`) REFERENCES `tb_posts` (`post_no`) ON DELETE CASCADE;
 ALTER TABLE `tb_comments` ADD CONSTRAINT `fk_tb_comments_parent_comment_no` FOREIGN KEY (`parent_comment_no`) REFERENCES `tb_comments` (`comment_no`) ON DELETE CASCADE;
 ALTER TABLE `tb_comments` ADD CONSTRAINT `fk_tb_comments_user_no` FOREIGN KEY (`user_no`) REFERENCES `tb_users` (`user_no`);
 ALTER TABLE `tb_files` ADD CONSTRAINT `fk_tb_files_post_no` FOREIGN KEY (`post_no`) REFERENCES `tb_posts` (`post_no`) ON DELETE CASCADE;

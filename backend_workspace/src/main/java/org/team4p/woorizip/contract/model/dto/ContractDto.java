@@ -8,7 +8,6 @@ import org.team4p.woorizip.room.jpa.repository.RoomRepository;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -26,10 +25,8 @@ public class ContractDto {
 
     private String contractNo;
 
-    @NotBlank(message = "사용자 번호는 필수입니다.")
     private String userNo;
 
-    @NotBlank(message = "방 번호는 필수입니다.")
     private String roomNo;
 
     @NotNull(message = "입주 날짜는 필수입니다.")
@@ -46,6 +43,8 @@ public class ContractDto {
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private Timestamp paymentDate;
 
+    private String rejectionReason;
+
     private RoomRepository roomRepository;
     /**
      * DTO -> Entity 변환
@@ -60,6 +59,7 @@ public class ContractDto {
                 .status(status)
                 .contractUrl(contractUrl)
                 .paymentDate(paymentDate)
+                .rejectionReason(rejectionReason)
                 .build();
     }
 
@@ -78,6 +78,7 @@ public class ContractDto {
                 .status(entity.getStatus())
                 .contractUrl(entity.getContractUrl())
                 .paymentDate(entity.getPaymentDate())
+                .rejectionReason(entity.getRejectionReason())
                 .build();
     }
 }

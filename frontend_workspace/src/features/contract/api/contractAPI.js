@@ -50,6 +50,10 @@ export async function getMyContractsPage(page = 1, size = 8) {
   };
 }
 
+export async function getContract(contractNo) {
+  return request(`/api/contract/${contractNo}`);
+}
+
 export async function applyContract(roomNo, payload) {
   return request(`/api/contract/insert/${roomNo}`, { method: 'POST', body: JSON.stringify(payload) });
 }
@@ -65,5 +69,28 @@ export async function cancelContract(contractNo, reason = '') {
   return request(`/api/contract/cancel/${contractNo}`, {
     method: 'POST',
     body: JSON.stringify({ reason }),
+  });
+}
+
+// 아래 3개는 백엔드 연동 포인트용 템플릿입니다.
+// 실제 엔드포인트 스펙이 정해지면 path/payload를 맞춰서 연결하면 됩니다.
+export async function createElectronicContract(contractNo, payload) {
+  return request(`/api/contract/e-contract/${contractNo}`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function verifyElectronicSignature(contractNo, payload) {
+  return request(`/api/contract/signature/verify/${contractNo}`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function requestContractPayment(contractNo, payload) {
+  return request(`/api/contract/payment/${contractNo}`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
   });
 }

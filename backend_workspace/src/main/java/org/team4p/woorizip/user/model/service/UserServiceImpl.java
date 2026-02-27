@@ -28,7 +28,15 @@ public class UserServiceImpl implements UserService {
     
     @Override
     public String selectFindId(UserDto userDto) {
-        UserEntity user = userRepository.findByNameAndPhone(userDto.getName(), userDto.getPhone());
+        String name = userDto.getName() != null ? userDto.getName().trim() : null;
+        String rawPhone = userDto.getPhone() != null ? userDto.getPhone().trim() : null;
+        String normalizedPhone = rawPhone != null ? rawPhone.replaceAll("\\D", "") : null;
+
+        UserEntity user = userRepository.findByNameAndPhone(name, rawPhone);
+        if (user == null && normalizedPhone != null && !normalizedPhone.equals(rawPhone)) {
+            user = userRepository.findByNameAndPhone(name, normalizedPhone);
+        }
+
         return (user != null) ? user.getEmailId() : null;
     }
 
