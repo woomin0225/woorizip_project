@@ -81,8 +81,14 @@ public class ReservationServiceImpl implements ReservationService {
 
 	// 예약 목록 페이지 조회
     @Override
-    public int selectListCount() {
-        return (int) reservationRepository.count();
+    public int selectListCount(String userNo, String facilityNo) {
+    	// 임차인 (본인 예약)
+        if (facilityNo == null || facilityNo.isEmpty()) {
+            return (int) reservationRepository.countByUser_UserNo(userNo);
+        }
+        
+        // 임대인/관리자 (특정 시설의 전체 예약)
+        return (int) reservationRepository.countByFacility_FacilityNo(facilityNo);
     }
 
     // 예약 목록 조회

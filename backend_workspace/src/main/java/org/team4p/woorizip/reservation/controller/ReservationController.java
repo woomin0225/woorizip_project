@@ -51,7 +51,7 @@ public class ReservationController {
 	public ResponseEntity<ApiResponse<PageResponse<ReservationListResponseDTO>>> getReservationList(
 			@RequestParam(name = "page", defaultValue = "1") int page,
             @RequestParam(name = "size", defaultValue = "10") int size,
-            @RequestParam(name = "sort", defaultValue = "boardNum") String sort,
+            @RequestParam(name = "sort", defaultValue = "reservationDate,reservationStartTime") String sort,
             @RequestParam(name = "direct", defaultValue = "DESC") String direct,
 			@AuthenticationPrincipal CustomUserPrincipal principal,
 			@PathVariable(value = "facilityNo", required = false) String facilityNo) {
@@ -61,9 +61,10 @@ public class ReservationController {
         if (size < 1) size = 10;
 
         Sort.Direction direction = "ASC".equalsIgnoreCase(direct) ? Sort.Direction.ASC : Sort.Direction.DESC;
-        Pageable pageable = PageRequest.of(page - 1, size, direction, sort);
+        String[] sortFields = sort.split(",");
+        Pageable pageable = PageRequest.of(page - 1, size, direction, sortFields);
 
-        long totalElements = reservationService.selectListCount();
+        long totalElements = reservationService.selectListCount(currentUserNo, facilityNo);
         int totalPages = (totalElements == 0) ? 0 : (int) Math.ceil((double) totalElements / size);
 
         List<ReservationListResponseDTO> list = reservationService.selectList(pageable, currentUserNo, facilityNo);
