@@ -116,7 +116,6 @@ export default function ResultItem({ roomSearchResponse, wished = false, onToggl
             <Link className={styles.title} to={`/rooms/${room.roomNo}`}>
               {room.roomName}
             </Link>
-            <span className={styles.updated}>{room.roomUpdatedAt ?? ""}</span>
           </div>
 
           <div className={styles.priceRow}>
