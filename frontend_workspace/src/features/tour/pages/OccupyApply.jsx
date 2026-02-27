@@ -1,8 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Container, Row, Col, Card, CardBody } from 'reactstrap';
 import MyPageSideNav from '../../user/components/MyPageSideNav';
-import { getTourPage, updateTour } from '../api/tourAPI';
-import { cancelContract, getMyContractsPage, requestContractAmendment } from '../../contract/api/contractAPI';
+import { getTourPage } from '../api/tourAPI';
+import { getMyContractsPage } from '../../contract/api/contractAPI';
 import layoutStyles from '../../../app/layouts/MyPageLayout.module.css';
 import styles from './OccupyApply.module.css';
 
@@ -38,16 +39,6 @@ function fmtTime(v) {
   return String(v).slice(0, 5);
 }
 
-function toSqlDateTimeString(d) {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  const hh = String(d.getHours()).padStart(2, '0');
-  const mm = String(d.getMinutes()).padStart(2, '0');
-  const ss = String(d.getSeconds()).padStart(2, '0');
-  return `${y}-${m}-${day} ${hh}:${mm}:${ss}`;
-}
-
 function getRoomName(item) {
   const abstractValue = [
     item?.roomAbstract,
@@ -65,6 +56,7 @@ function getRoomName(item) {
 }
 
 export default function OccupyApply() {
+  const navigate = useNavigate();
   const [tourItems, setTourItems] = useState([]);
   const [tourPage, setTourPage] = useState(1);
   const [tourTotalPages, setTourTotalPages] = useState(0);
@@ -103,78 +95,6 @@ export default function OccupyApply() {
     () => Array.from({ length: contractTotalPages }, (_, i) => i + 1),
     [contractTotalPages]
   );
-
-  const onTourEdit = async (item) => {
-    const nextDate = window.prompt('변경할 방문일(YYYY-MM-DD)', fmtDate(item.visitDate));
-    if (!nextDate) return;
-    const nextTime = window.prompt('변경할 방문시간(HH:mm)', fmtTime(item.visitTime) || '14:00');
-    if (!nextTime) return;
-    const nextMessage = window.prompt('문의사항', item.message || '');
-    try {
-      await updateTour(item.tourNo, {
-        roomNo: item.roomNo,
-        userNo: item.userNo,
-        visitDate: nextDate,
-        visitTime: `${nextTime}:00`,
-        message: nextMessage || '투어 일정 변경 요청',
-        status: item.status || 'PENDING',
-      });
-      await loadTours(tourPage);
-    } catch (e) {
-      setError(e.message || '투어 일정 수정 실패');
-    }
-  };
-
-  const onTourCancel = async (item) => {
-    const reason = window.prompt('취소 사유를 입력해 주세요.', item.canceledReason || '');
-    if (reason === null) return;
-    try {
-      await updateTour(item.tourNo, {
-        roomNo: item.roomNo,
-        userNo: item.userNo,
-        visitDate: item.visitDate,
-        visitTime: item.visitTime,
-        message: item.message || '',
-        status: 'REJECTED',
-        canceledReason: reason || '사용자 취소',
-        canceledAt: toSqlDateTimeString(new Date()),
-      });
-      await loadTours(tourPage);
-    } catch (e) {
-      setError(e.message || '투어 취소 실패');
-    }
-  };
-
-  const onContractAmend = async (item) => {
-    const nextDate = window.prompt('변경할 입주 희망일(YYYY-MM-DD)', fmtDate(item.moveInDate));
-    if (!nextDate) return;
-    const nextTerm = window.prompt('변경할 계약 개월 수', String(item.termMonths || 12));
-    if (!nextTerm) return;
-
-    try {
-      await requestContractAmendment(item.contractNo, {
-        userNo: item.userNo,
-        roomNo: item.roomNo,
-        moveInDate: nextDate,
-        termMonths: Number(nextTerm),
-        contractUrl: item.contractUrl || '',
-      });
-      await loadContracts(contractPage);
-    } catch (e) {
-      setError(e.message || '수정 요청 실패');
-    }
-  };
-
-  const onContractCancel = async (item) => {
-    const reason = window.prompt('취소 사유를 입력해 주세요.', '');
-    if (reason === null) return;
-    try {
-      await cancelContract(item.contractNo, reason || '사용자 취소 요청');
-      await loadContracts(contractPage);
-    } catch (e) {
-      setError(e.message || '취소 요청 실패');
-    }
-  };
 
   return (
     <>
@@ -215,8 +135,7 @@ export default function OccupyApply() {
                           <span>방문일</span>
                           <span>시간</span>
                           <span>상태</span>
-                          <span>수정</span>
-                          <span>취소</span>
+                          <span>상세</span>
                         </div>
                         {tourItems.map((item) => (
                           <div key={item.tourNo} className={styles.listRow}>
@@ -225,13 +144,16 @@ export default function OccupyApply() {
                             <span>{fmtTime(item.visitTime)}</span>
                             <span>{statusLabel(item.status)}</span>
                             <span>
-                              <button type="button" className={styles.smallBtn} onClick={() => onTourEdit(item)}>
-                                수정
-                              </button>
-                            </span>
-                            <span>
-                              <button type="button" className={styles.smallBtn} onClick={() => onTourCancel(item)}>
-                                취소
+                              <button
+                                type="button"
+                                className={styles.smallBtn}
+                                onClick={() =>
+                                  navigate(`/mypage/applications/tour/${item.tourNo}`, {
+                                    state: { item, kind: 'tour' },
+                                  })
+                                }
+                              >
+                                상세
                               </button>
                             </span>
                           </div>
@@ -278,11 +200,10 @@ export default function OccupyApply() {
                       <>
                         <div className={styles.listHeader}>
                           <span>방</span>
-                          <span>방문일</span>
-                          <span>시간</span>
+                          <span>입주일</span>
+                          <span>기간</span>
                           <span>상태</span>
-                          <span>수정</span>
-                          <span>취소</span>
+                          <span>상세</span>
                         </div>
                         {contractItems.map((item) => (
                           <div key={item.contractNo} className={styles.listRow}>
@@ -291,13 +212,16 @@ export default function OccupyApply() {
                             <span>{item.termMonths ? `${item.termMonths}개월` : '-'}</span>
                             <span>{statusLabel(item.status)}</span>
                             <span>
-                              <button type="button" className={styles.smallBtn} onClick={() => onContractAmend(item)}>
-                                수정
-                              </button>
-                            </span>
-                            <span>
-                              <button type="button" className={styles.smallBtn} onClick={() => onContractCancel(item)}>
-                                취소
+                              <button
+                                type="button"
+                                className={styles.smallBtn}
+                                onClick={() =>
+                                  navigate(`/mypage/applications/contract/${item.contractNo}`, {
+                                    state: { item, kind: 'contract' },
+                                  })
+                                }
+                              >
+                                상세
                               </button>
                             </span>
                           </div>

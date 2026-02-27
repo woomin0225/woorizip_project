@@ -1,0 +1,85 @@
+.calendar {
+  width: 100%;
+  border: 1px solid #dfe4ea;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+  padding: 10px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.monthText {
+  color: #2b2d42;
+  font-size: 0.94rem;
+  font-weight: 700;
+}
+
+.navBtn {
+  width: 30px;
+  height: 30px;
+  border: 1px solid #d0d7e2;
+  border-radius: 8px;
+  background: #fff;
+  color: #52607a;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.weekRow {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+  margin-bottom: 4px;
+}
+
+.weekLabel {
+  text-align: center;
+  color: #7b8ca8;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.dayBtn {
+  border: 1px solid transparent;
+  border-radius: 8px;
+  min-height: 32px;
+  background: transparent;
+  color: #2f3c57;
+  font-size: 0.82rem;
+}
+
+.dayBtn:hover:not(:disabled) {
+  border-color: #8fdff0;
+  background: #eefbff;
+}
+
+.outsideDay {
+  color: #b2bccd;
+}
+
+.today {
+  border-color: #c6d0e3;
+}
+
+.selected {
+  border-color: #11cdef;
+  background: #11cdef;
+  color: #fff;
+  font-weight: 700;
+}
+
+.dayBtn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}

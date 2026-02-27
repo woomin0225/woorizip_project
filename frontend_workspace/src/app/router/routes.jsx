@@ -43,6 +43,7 @@ import MyPageHome from '../../features/user/pages/MyPageHome';
 import WishlistPage from '../../features/wishlist/pages/WishlistPage';
 import TourApply from '../../features/tour/pages/TourApply';
 import OccupyApply from '../../features/tour/pages/OccupyApply';
+import ApplicationDetail from '../../features/tour/pages/ApplicationDetail';
 import ContractCreate from '../../features/contract/pages/ContractCreate';
 import Statement from '../../features/contract/pages/Statement';
 import Completion from '../../features/contract/pages/Completion';
@@ -88,6 +89,7 @@ export const router = createBrowserRouter([
 
           { path: ROUTES.TOUR.APPLY, element: <TourApply /> },
           { path: ROUTES.TOUR.LIST, element: <OccupyApply /> },
+          { path: '/mypage/applications/:kind/:id', element: <ApplicationDetail /> },
           { path: '/rooms/:roomNo/tour', element: <TourApply /> },
           { path: '/mypage/tour', element: <OccupyApply /> },
 
