@@ -153,7 +153,7 @@ public class RoomController {
 	}
 	
 	@PostMapping("/{roomNo}/reviews")
-	public ResponseEntity<ApiResponse<Void>> createRoomReview(@Valid @RequestBody ReviewDto reviewDto, @PathVariable("roomNo") String roomNo, Authentication auth){
+	public ResponseEntity<ApiResponse<Void>> createRoomReview(@PathVariable("roomNo") String roomNo, @Valid @RequestBody ReviewDto reviewDto, Authentication auth){
 		// 방 리뷰 등록
 		reviewDto.setRoomNo(roomNo);
 		
