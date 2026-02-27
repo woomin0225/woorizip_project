@@ -42,6 +42,12 @@ export default function MapPanel({ markers = [],
     onMarkerClick,
     popup,
     onClosePopup, }) {
+
+  const onChangeBboxRef = useRef(onChangeBbox);
+  const onMarkerClickRef = useRef(onMarkerClick);
+  useEffect(() => { onChangeBboxRef.current = onChangeBbox; }, [onChangeBbox]);
+  useEffect(() => { onMarkerClickRef.current = onMarkerClick; }, [onMarkerClick]);
+
   const mapDivRef = useRef(null);
   const mapRef = useRef(null);
   const markerObjsRef = useRef([]);
@@ -76,7 +82,7 @@ export default function MapPanel({ markers = [],
         const b = map.getBounds();
         const sw = b.getSouthWest();
         const ne = b.getNorthEast();
-        onChangeBbox({
+        onChangeBboxRef.current?.({
           swLat: sw.getLat(),
           swLng: sw.getLng(),
           neLat: ne.getLat(),
@@ -118,7 +124,7 @@ export default function MapPanel({ markers = [],
 
           if (!same) {
             lastBbox = next;
-            onChangeBbox(next);
+            onChangeBboxRef.current?.(next);
           }
         }, 600); // ✅ 250 → 600~800ms 추천
       });
@@ -135,7 +141,7 @@ export default function MapPanel({ markers = [],
     script.onerror = () => console.error("카카오 지도 SDK 로드 실패 (키/도메인/네트워크 확인)");
     script.onload = () => window.kakao.maps.load(initMap);
     document.head.appendChild(script);
-  }, [KAKAO_KEY, onChangeBbox, onClosePopup]);
+  }, [KAKAO_KEY]);
 
   // markers 렌더 + 클릭 이벤트
   useEffect(() => {
@@ -159,7 +165,7 @@ export default function MapPanel({ markers = [],
 
       kakao.maps.event.addListener(marker, "click", () => {
         if (onMarkerClick) {
-          onMarkerClick({
+          onMarkerClickRef.current?.({
             houseNo: mk.houseNo,
             houseLat: mk.houseLat,
             houseLng: mk.houseLng,

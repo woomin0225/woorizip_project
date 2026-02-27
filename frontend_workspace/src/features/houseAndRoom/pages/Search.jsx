@@ -38,7 +38,7 @@ function getCurrentUserNo() {
 export default function Search() {
   const initialCond = {
     keyword: '',
-    roomType: '',
+    roomType: 'L',
     minDeposit: null,
     maxDeposit: null,
     minTax: null,
@@ -206,6 +206,8 @@ export default function Search() {
       setLoadingRooms(false);
       setLoadingMarkers(false);
     }
+    const merged = { ...firstCond, ...firstBbox };
+    console.log("SEARCH merged:", merged);
   }
 
   // 검색 버튼

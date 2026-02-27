@@ -52,7 +52,6 @@ export default function SearchFilterPanel({
             value={cond.roomType}
             onChange={handleCondChange}
           >
-            <option value="">전체</option>
             <option value="L">전세</option>
             <option value="M">월세</option>
           </select>
