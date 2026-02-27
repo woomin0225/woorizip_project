@@ -1,5 +1,6 @@
 package org.team4p.woorizip.tour.jpa.entity;
 
+import java.time.LocalDate;
 import java.util.Date;
 import jakarta.persistence.*;
 import lombok.*;
@@ -23,9 +24,8 @@ public class TourEntity {
     @Column(name = "room_no", nullable = false, length = 36)
     private String roomNo;
 
-    @Temporal(TemporalType.DATE)
     @Column(name = "visit_date", nullable = false)
-    private Date visitDate;
+    private LocalDate visitDate;
 
     @Column(name = "visit_time", nullable = false)
     private String visitTime;

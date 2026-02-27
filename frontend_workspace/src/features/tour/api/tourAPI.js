@@ -54,6 +54,10 @@ export async function getTourPage(page = 1, size = 8) {
   };
 }
 
+export async function getTour(tourNo) {
+  return request(`/api/tour/${tourNo}`);
+}
+
 export async function updateTour(tourNo, payload) {
   return request(`/api/tour/update/${tourNo}`, { method: 'POST', body: JSON.stringify(payload) });
 }

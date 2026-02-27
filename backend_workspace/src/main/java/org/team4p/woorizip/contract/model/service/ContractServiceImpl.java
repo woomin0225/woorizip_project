@@ -1,6 +1,7 @@
 package org.team4p.woorizip.contract.model.service;
 
 import java.util.ArrayList;
+import java.sql.Timestamp;
 import java.util.List;
 import java.util.Set;
 
@@ -14,6 +15,9 @@ import org.team4p.woorizip.common.api.PageResponse;
 import org.team4p.woorizip.contract.jpa.entity.ContractEntity;
 import org.team4p.woorizip.contract.jpa.repository.ContractRepository;
 import org.team4p.woorizip.contract.model.dto.ContractDto;
+import org.team4p.woorizip.contract.model.dto.request.ContractElectronicCreateRequest;
+import org.team4p.woorizip.contract.model.dto.request.ContractPaymentRequest;
+import org.team4p.woorizip.contract.model.dto.request.ContractSignatureVerifyRequest;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -54,7 +58,7 @@ public class ContractServiceImpl implements ContractService {
 
     @Override
     @Transactional
-    public int insertContract(ContractDto contractDto) {
+    public ContractDto insertContract(ContractDto contractDto) {
         contractDto.setStatus("APPLIED");
         ContractEntity entity = contractDto.toEntity();
 
@@ -64,17 +68,18 @@ public class ContractServiceImpl implements ContractService {
                 ACTIVE_CONTRACT_STATUSES
         );
         if (alreadyReserved) {
-            return -1;
+            throw new IllegalStateException("이미 신청된 입주 날짜입니다.");
         }
 
         try {
-            return contractRepository.save(entity) != null ? 1 : 0;
+            ContractEntity saved = contractRepository.save(entity);
+            return ContractDto.fromEntity(saved);
         } catch (DataIntegrityViolationException e) {
             log.warn("입주 신청 중복 차단: roomNo={}, moveInDate={}", entity.getRoomNo(), entity.getMoveInDate());
-            return -1;
+            throw new IllegalStateException("이미 신청된 입주 날짜입니다.");
         } catch (Exception e) {
             log.error("계약 등록 중 오류 발생: {}", e.getMessage());
-            return 0;
+            throw new IllegalStateException("입주 신청 처리 중 오류가 발생했습니다.");
         }
     }
 
@@ -125,6 +130,54 @@ public class ContractServiceImpl implements ContractService {
         target.setStatus("REJECTED");
         target.setRejectionReason(reason);
         return 1;
+    }
+
+    @Override
+    @Transactional
+    public ContractDto createElectronicContract(String contractNo, ContractElectronicCreateRequest request) {
+        ContractEntity target = contractRepository.findById(contractNo)
+                .orElseThrow(() -> new IllegalArgumentException("계약 정보를 찾을 수 없습니다."));
+
+        if (target.getContractUrl() == null || target.getContractUrl().isBlank()) {
+            target.setContractUrl("https://sandbox.eformsign.com/mock/contracts/" + contractNo);
+        }
+        if ("APPLIED".equalsIgnoreCase(target.getStatus())) {
+            target.setStatus("APPROVED");
+        }
+        return ContractDto.fromEntity(target);
+    }
+
+    @Override
+    @Transactional
+    public ContractDto verifyElectronicSignature(String contractNo, ContractSignatureVerifyRequest request) {
+        ContractEntity target = contractRepository.findById(contractNo)
+                .orElseThrow(() -> new IllegalArgumentException("계약 정보를 찾을 수 없습니다."));
+
+        String signerName = request != null ? request.getSignerName() : null;
+        if (signerName == null || signerName.trim().isEmpty()) {
+            throw new IllegalArgumentException("전자서명자 이름은 필수입니다.");
+        }
+
+        if ("APPLIED".equalsIgnoreCase(target.getStatus())) {
+            target.setStatus("APPROVED");
+        }
+        return ContractDto.fromEntity(target);
+    }
+
+    @Override
+    @Transactional
+    public ContractDto requestContractPayment(String contractNo, ContractPaymentRequest request) {
+        ContractEntity target = contractRepository.findById(contractNo)
+                .orElseThrow(() -> new IllegalArgumentException("계약 정보를 찾을 수 없습니다."));
+
+        Long amount = request != null ? request.getAmount() : null;
+        if (amount == null || amount <= 0) {
+            throw new IllegalArgumentException("결제 금액은 1원 이상이어야 합니다.");
+        }
+
+        target.setStatus("PAID");
+        target.setPaymentDate(new Timestamp(System.currentTimeMillis()));
+        return ContractDto.fromEntity(target);
     }
 
     private List<ContractDto> toList(List<ContractEntity> list) {

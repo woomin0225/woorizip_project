@@ -1,0 +1,157 @@
+.headerRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.headerActions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.detailCard {
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+  background: #fff;
+  padding: 14px;
+  margin-bottom: 14px;
+}
+
+.detailRow {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px dashed #edf2f7;
+}
+
+.detailRow:last-child {
+  border-bottom: 0;
+}
+
+.label {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #525f7f;
+}
+
+.value {
+  font-size: 0.84rem;
+  color: #344767;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.actionCard {
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+  background: #fff;
+  padding: 14px;
+}
+
+.actionGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  align-items: start;
+}
+
+.cardTitle {
+  margin: 0 0 8px;
+  font-size: 0.95rem;
+  color: #172b4d;
+  font-weight: 700;
+}
+
+.formLabel {
+  display: block;
+  margin: 8px 0 5px;
+  font-size: 0.78rem;
+  color: #525f7f;
+  font-weight: 700;
+}
+
+.datePreview {
+  margin: 8px 0 4px;
+  color: #61708b;
+  font-size: 0.78rem;
+}
+
+.input,
+.textarea {
+  width: 100%;
+  border: 1px solid #dfe4ea;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 0.84rem;
+  color: #344767;
+  background: #fff;
+}
+
+.textarea {
+  min-height: 84px;
+  resize: none;
+}
+
+.primaryBtn,
+.dangerBtn {
+  margin-top: 9px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 7px 12px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.primaryBtn {
+  color: #fff;
+  background: #11cdef;
+}
+
+.dangerBtn {
+  color: #fff;
+  background: #f5365c;
+}
+
+.primaryBtn:disabled,
+.dangerBtn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.error,
+.notice {
+  margin: 0 0 10px;
+  font-size: 0.82rem;
+}
+
+.error {
+  color: #f5365c;
+}
+
+.notice {
+  color: #2dce89;
+}
+
+.hint {
+  margin: 10px 0 0;
+  font-size: 0.78rem;
+  color: #8898aa;
+}
+
+@media (max-width: 991px) {
+  .actionGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .detailRow {
+    grid-template-columns: 1fr;
+    gap: 3px;
+  }
+}

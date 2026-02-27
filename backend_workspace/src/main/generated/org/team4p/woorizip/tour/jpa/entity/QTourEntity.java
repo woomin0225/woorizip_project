@@ -33,7 +33,7 @@ public class QTourEntity extends EntityPathBase<TourEntity> {
 
     public final StringPath userNo = createString("userNo");
 
-    public final DatePath<java.util.Date> visitDate = createDate("visitDate", java.util.Date.class);
+    public final DatePath<java.time.LocalDate> visitDate = createDate("visitDate", java.time.LocalDate.class);
 
     public final StringPath visitTime = createString("visitTime");
 

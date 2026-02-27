@@ -1,9 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Container, Row, Col, Card, CardBody } from 'reactstrap';
 import { createTour } from '../api/tourAPI';
 import { getRoom, getRoomImages } from '../../houseAndRoom/api/roomApi';
 import { getMyInfo } from '../../user/api/userAPI';
+import InlineCalendar from '../../../shared/components/InlineCalendar';
 import styles from './TourApply.module.css';
 
 function getTodayLocalIso() {
@@ -16,6 +17,7 @@ function getTodayLocalIso() {
 
 export default function TourApply() {
   const { roomNo } = useParams();
+  const navigate = useNavigate();
   const [message, setMessage] = useState('');
   const [room, setRoom] = useState(null);
   const [thumb, setThumb] = useState('');
@@ -108,8 +110,11 @@ export default function TourApply() {
     try {
       setIsSubmitting(true);
       await createTour(roomNo, payload);
-      setMessage('투어 신청이 완료되었습니다.');
+      setMessage('투어 신청이 완료되었습니다. 방찾기 목록으로 이동합니다.');
       setForm((prev) => ({ ...prev, inquiry: '' }));
+      setTimeout(() => {
+        navigate('/rooms');
+      }, 1200);
     } catch (e2) {
       setMessage(e2.message || '투어 신청 실패');
     } finally {
@@ -147,16 +152,17 @@ export default function TourApply() {
 
                 <form onSubmit={onSubmit}>
                   <label className={styles.label}>투어 희망 날짜</label>
-                  <input
-                    className={styles.input}
-                    type="date"
+                  <InlineCalendar
                     value={selectedDate}
-                    min={minDate}
-                    onChange={(e) => {
-                      setSelectedDate(e.target.value);
+                    minDate={minDate}
+                    onChange={(nextDate) => {
+                      setSelectedDate(nextDate);
                       setSelectedTime('');
                     }}
                   />
+                  <p className={styles.datePreview}>
+                    선택 날짜: {selectedDate || '날짜를 선택해 주세요.'}
+                  </p>
 
                   {selectedDate && (
                     <>

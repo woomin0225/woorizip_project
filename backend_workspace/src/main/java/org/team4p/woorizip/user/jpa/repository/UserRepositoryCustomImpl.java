@@ -33,9 +33,11 @@ public class UserRepositoryCustomImpl implements UserRepositoryCustom {
                 .selectFrom(userEntity)
                 .where(
                     userEntity.name.eq(name),
-                    userEntity.phone.eq(phone)
+                    userEntity.phone.eq(phone),
+                    userEntity.deletedYn.eq("N")
                 )
-                .fetchOne();
+                .orderBy(userEntity.createdAt.desc(), userEntity.userNo.desc())
+                .fetchFirst();
     }
 
     @Override

@@ -72,6 +72,10 @@ public class TourController {
             @RequestBody TourDto tourDto) {
         tourDto.setTourNo(tourNo);
         int result = tourService.updateTour(tourDto);
+        if (result == -1) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(ApiResponse.fail("이미 신청된 투어 시간입니다.", null));
+        }
         return result > 0
                 ? ResponseEntity.ok(ApiResponse.ok("투어 수정 성공", null))
                 : ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
