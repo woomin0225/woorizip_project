@@ -6,7 +6,7 @@
   max-width: 1520px;
   margin: 0 auto;
   padding: 16px;
-}
+}/*max-width + margin: 0 auto + width: 100% 가 모니터크기에 맞추는 필수 스타일옵션*/
 
 .sidebar {
   border: 1px solid #eee;
