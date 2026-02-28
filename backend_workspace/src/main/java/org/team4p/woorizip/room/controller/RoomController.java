@@ -74,10 +74,10 @@ public class RoomController {
 		// 이미지 등록 : 이미지 파일 저장 실패하면 DB에도 등록 안됨. DB에 저장 실패하면 파일저장소에서 삭제됨
 		// 사진 첨부 있는지 확인
 		if (newImages != null && !newImages.isEmpty()) {	// 사진 있으면
-			int imageCount = roomImageService.insertRoomImage(newImages, roomDto.getRoomNo());
+			int imageCount = roomImageService.insertRoomImage(newImages, savedRoomDto.getRoomNo());
 			
 			// 사진 갯수 반영
-			roomService.updateRoomImageCount(savedRoomDto.getHouseNo(), imageCount);
+			roomService.updateRoomImageCount(savedRoomDto.getRoomNo(), imageCount);
 		}
 		
 		return ResponseEntity.status(201).body(ApiResponse.ok("방 등록 성공", null));
