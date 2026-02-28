@@ -210,7 +210,7 @@ export default function EstateModify() {
       <h2 className={styles.title}>목록조회 / 수정</h2>
 
       <div className={styles.layout}>
-        {/* 좌측: 내 건물 + 방 목록 */}
+        {/* 좌측: 내 건물 */}
         <aside className={styles.left}>
           <div className={styles.blockTitle}>내 건물</div>
           <div className={styles.list}>
@@ -224,24 +224,35 @@ export default function EstateModify() {
               </button>
             ))}
           </div>
-
-          <div className={styles.blockTitle} style={{ marginTop: 14 }}>이 건물의 방</div>
-          <div className={styles.list}>
-            {rooms.map((r) => (
-              <button
-                key={r.roomNo}
-                className={r.roomNo === selectedRoomNo ? styles.selectedBtn : styles.btn}
-                onClick={() => { setTab("ROOM"); setSelectedRoomNo(r.roomNo); }}
-                disabled={!selectedHouseNo}
-              >
-                {r.roomName ?? r.roomNo} {r.roomEmptyYn === false ? "(거주중)" : ""}
-              </button>
-            ))}
-          </div>
         </aside>
 
         {/* 우측: 수정 탭 */}
         <main className={styles.right}>
+          {/* 우측 상단: 이 건물의 방 목록 */}
+          <div className={styles.roomPanel}>
+            <div className={styles.blockTitle}>이 건물의 방</div>
+
+            {!selectedHouseNo && (
+              <div className={styles.empty}>왼쪽에서 건물을 선택하세요.</div>
+            )}
+
+            {selectedHouseNo && (
+              <div className={`${styles.list} ${styles.roomList}`}>
+                {rooms.map((r) => (
+                  <button
+                    key={r.roomNo}
+                    className={r.roomNo === selectedRoomNo ? styles.selectedBtn : styles.btn}
+                    onClick={() => {
+                      setTab("ROOM");
+                      setSelectedRoomNo(r.roomNo);
+                    }}
+                  >
+                    {r.roomName ?? r.roomNo} {r.roomEmptyYn === false ? "(거주중)" : ""}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
           <div className={styles.tabs}>
             <button className={tab === "HOUSE" ? styles.tabActive : styles.tab} onClick={() => setTab("HOUSE")}>
               건물 수정
@@ -259,7 +270,7 @@ export default function EstateModify() {
                   <div className={styles.sectionTitle}>기존 건물 사진 삭제 선택</div>
                   <ExistingImagePicker
                     items={houseImages}
-                    baseUrl="/upload_files/house_image"
+                    baseUrl="http://localhost:8080/upload/house_image"
                     selectedIds={deleteHouseImageNos}
                     onToggle={toggleDeleteHouseImage}
                   />
@@ -281,13 +292,13 @@ export default function EstateModify() {
 
           {tab === "ROOM" && (
             <>
-              {!selectedRoomNo && <div className={styles.empty}>왼쪽에서 방을 선택하세요.</div>}
+              {!selectedRoomNo && <div className={styles.empty}>위에서 방을 선택하세요.</div>}
               {selectedRoomNo && room && (
                 <>
                   <div className={styles.sectionTitle}>기존 방 사진 삭제 선택</div>
                   <ExistingImagePicker
                     items={roomImages}
-                    baseUrl="/upload_files/room_image"
+                    baseUrl="http://localhost:8080/upload/room_image"
                     selectedIds={deleteRoomImageNos}
                     onToggle={toggleDeleteRoomImage}
                   />

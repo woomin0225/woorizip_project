@@ -52,9 +52,13 @@ export default function ResultItem({
 }) {
   // ✅ Hook은 항상 호출되어야 함 (early return 금지)
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isWished, setIsWished] = useState(!!wished);
 
   // ✅ roomSearchResponse가 없을 수도 있다고 가정하고 "안전한 room" 준비
   const room = roomSearchResponse ?? {};
+
+  const houseName = room.houseName;
+  const houseAddress = room.houseAddress;
 
   // ✅ images도 안전하게 (null/undefined 대비)
   const images = useMemo(
@@ -81,15 +85,19 @@ export default function ResultItem({
     e.stopPropagation();
     e.preventDefault();
 
+    const next = !isWished;
+    setIsWished(next);
+
     if (!onToggleWish || !room.roomNo) return;
-    await onToggleWish(room.roomNo, !wished);
+    const ok = await onToggleWish(room.roomNo, next);
+    if (!ok) setIsWished(!next);
   }
   // -- 우민 수정
 
   function imgUrl(imageName) {
     if (!imageName) return '#';
     if (imageName.startsWith('http')) return imageName;
-    return `/upload_files/room_image/${imageName}`;
+    return `http://localhost:8080/upload/room_image/${imageName}`;
   }
 
   // ✅ roomSearchResponse가 진짜 없으면 렌더만 비워주기
@@ -98,7 +106,7 @@ export default function ResultItem({
   return (
     <div className={styles.card}>
       <button className={styles.wishBtn} onClick={toggleWish} aria-label="찜">
-        {wished ? '★' : '☆'}
+        {isWished ? '★' : '☆'}
       </button>
 
       <div className={styles.body}>
@@ -131,9 +139,12 @@ export default function ResultItem({
 
         <div className={styles.info}>
           <div className={styles.titleRow}>
-            <Link className={styles.title} to={`/rooms/${room.roomNo}`}>
-              {room.roomName}
-            </Link>
+            <div className={styles.titleCol}>
+              {houseName && <div className={styles.houseName}>{houseName}</div>}
+              <Link className={styles.title} to={`/rooms/${room.roomNo}`}>
+                {room.roomName}
+              </Link>
+            </div>
           </div>
 
           <div className={styles.priceRow}>
@@ -148,6 +159,11 @@ export default function ResultItem({
             <span>{room.roomFacing}</span>
             <span>{occupancyLabel(room.roomRoomCount)}</span>
             <span>{room.roomEmptyYn ? '공실' : '거주중'}</span>
+          </div>
+          <div>
+            {houseAddress && (
+              <span className={styles.houseName}>{houseAddress}</span>
+            )}
           </div>
         </div>
       </div>

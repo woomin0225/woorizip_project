@@ -37,7 +37,7 @@ function getCurrentUserNo() {
 export default function Search() {
   const initialCond = {
     keyword: '',
-    roomType: '',
+    roomType: 'L',
     minDeposit: null,
     maxDeposit: null,
     minTax: null,
@@ -205,6 +205,8 @@ export default function Search() {
       setLoadingRooms(false);
       setLoadingMarkers(false);
     }
+    const merged = { ...firstCond, ...firstBbox };
+    // console.log("SEARCH merged:", merged);
   }
 
   // 검색 버튼
@@ -313,21 +315,25 @@ export default function Search() {
   }
 
   // 마커 클릭: 해당 house 방 목록을 “작게” 띄우기
-  async function handleMarkerClick(house) {
-    // 기존 팝업 닫고 새로 열기
+  async function handleMarkerClick(mk) {
+    // mk 안에 houseNo / houseLat / houseLng / houseName / houseAddress... 등이 들어있다고 가정
     setMarkerPopup(null);
 
-    // 필터 반영하고 싶으면 appliedCond 우선
-    const base = appliedCond ?? cond;
+    const base = appliedCond ?? cond;  // ✅ 현재 적용된 검색조건 사용
 
-    // getRoomsInHouseMarker가 Slice를 주든 List를 주든 대응
-    const slice = await getRoomsInHouseMarker(house.houseNo, base, 0, 10);
+    // ✅ houseNo로 해당 건물의 방 리스트 조회
+    const slice = await getRoomsInHouseMarker(mk.houseNo, base, 0, 10);
+    // console.log("건물의 방 조회(조건부, slice)", slice);
     const list = slice?.content ?? [];
+    // console.log("건물의 방 조회(조건부, content)", list);
 
+    // ✅ markerPopup에 house(=mk)를 같이 넣어 MapPanel 팝업에서 건물정보 표시
     setMarkerPopup({
-      houseNo: house.houseNo,
-      lat: house.houseLat,
-      lng: house.houseLng,
+      house: mk,
+      houseNo: mk.houseNo,
+      lat: mk.houseLat,
+      lng: mk.houseLng,
+      imageNames: mk.imageNames,
       rooms: list,
     });
   }

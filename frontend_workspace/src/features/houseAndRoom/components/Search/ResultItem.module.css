@@ -103,3 +103,18 @@
   background: #fff;
   cursor: pointer;
 }
+
+.titleCol{
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.houseName{
+  font-size: 12px;
+  opacity: 0.7;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

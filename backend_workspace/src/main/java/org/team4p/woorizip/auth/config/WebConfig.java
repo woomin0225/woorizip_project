@@ -28,6 +28,10 @@ public class WebConfig implements WebMvcConfigurer {
 
         registry.addResourceHandler("/contract-docs/**")
                 .addResourceLocations(toResourceLocation(uploadProperties.contractDocDirPath()))
+                .addResourceLocations(
+                		"file:///Users/joosung/upload_files/",
+                		"file:/"+uploadProperties.uploadDir()
+                	)
                 .setCachePeriod(3600);
     }
 }

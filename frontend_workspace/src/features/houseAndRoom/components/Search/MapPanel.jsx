@@ -3,31 +3,111 @@ import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 import styles from './MapPanel.module.css';
 
-function MarkerPopup({ rooms, onClose }) {
+function formatMoneyKRW(value) {
+  if (value === null || value === undefined) return '';
+  const n = Number(value);
+  if (Number.isNaN(n)) return String(value);
+
+  const EOK = 100_000_000; // 1억
+  const MAN = 10_000; // 1만
+
+  const eok = Math.floor(n / EOK);
+  const rest = n % EOK;
+  const man = Math.round(rest / MAN);
+
+  if (eok > 0 && man > 0) return `${eok}억 ${man}만`;
+  if (eok > 0) return `${eok}억`;
+  return `${Math.round(n / MAN)}만`;
+}
+
+function houseImgUrl(imageName) {
+  if (!imageName) return null;
+  if (imageName.startsWith('http')) return imageName;
+  // ✅ 백엔드 경로에 맞게 필요하면 house_image 폴더명만 조정
+  return `http://localhost:8080/upload/house_image/${imageName}`;
+}
+
+function MarkerPopup({ house, rooms, onClose, onEnter, onLeave }) {
+  // console.log(house);
+  const name = house?.houseName ?? '건물';
+  const address =
+    house?.houseAddressDetail
+      ? `${house?.houseAddress ?? ''} ${house.houseAddressDetail}`
+      : (house?.houseAddress ?? '');
+  // console.log(house)
+  const imgName =
+    (Array.isArray(house?.imageNames) ? house.imageNames[0] : null)
+
+  const imgSrc = houseImgUrl(imgName);
+
   return (
-    <div style={{
-      background: "white",
-      border: "1px solid #ddd",
-      borderRadius: 8,
-      padding: 8,
-      width: 260,
-      maxHeight: 220,
-      overflow: "auto",
-      boxShadow: "0 4px 12px rgba(0,0,0,0.12)"
-    }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-        <b>방 목록</b>
-        <button onClick={onClose}>X</button>
+    <div 
+      onMouseEnter={onEnter}
+      onMouseLeave={onLeave}
+      onWheel={(e) => e.stopPropagation()}   // (보조) wheel 이벤트가 맵으로 번지는 것 방지
+      style={{
+        background: "white",
+        border: "1px solid #ddd",
+        borderRadius: 10,
+        padding: 10,
+        width: 300,
+        maxHeight: 500,
+        overflow: "auto",
+        boxShadow: "0 6px 16px rgba(0,0,0,0.16)"
+      }}
+    >
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
+        <div style={{ fontWeight: 800, fontSize: 18 }}>{name}</div>
+        <button onClick={onClose} style={{ border: "none", background: "transparent", cursor: "pointer" }}>✕</button>
       </div>
 
-      {rooms.length === 0 && <div style={{ fontSize: 13 }}>표시할 방이 없습니다.</div>}
+      <div style={{ fontSize: 14, color: "#555", marginTop: 4, lineHeight: 1.35 }}>
+        {address || "주소 정보 없음"}
+      </div>
+
+      <div style={{ marginTop: 10 }}>
+        {imgSrc ? (
+          <img
+            src={imgSrc}
+            alt="건물 사진"
+            style={{
+              width: "100%",
+              height: 150,
+              objectFit: "cover",
+              borderRadius: 10,
+              background: "#f2f2f2"
+            }}
+            onError={(e) => { e.currentTarget.style.display = "none"; }}
+          />
+        ) : (
+          <div style={{
+            width: "100%",
+            height: 140,
+            borderRadius: 10,
+            background: "#f2f2f2",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            color: "#888",
+            fontSize: 12
+          }}>
+            사진 없음
+          </div>
+        )}
+      </div>
+
+      <div style={{ marginTop: 10, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <b style={{ fontSize: 13 }}>방 목록</b>
+      </div>
+
+      {rooms.length === 0 && <div style={{ fontSize: 13, marginTop: 6 }}>표시할 방이 없습니다.</div>}
 
       {rooms.map((r) => (
         <div key={r.roomNo} style={{ padding: "6px 0", borderTop: "1px solid #eee" }}>
           <Link to={`/rooms/${r.roomNo}`} onClick={onClose} style={{ textDecoration: "none" }}>
-            <div style={{ fontWeight: 600, fontSize: 13 }}>{r.roomName}</div>
-            <div style={{ fontSize: 12, color: "#555" }}>
-              {r.roomMethod} / {r.roomDeposit ?? 0} / {r.roomMonthly ?? 0}
+            <div style={{ fontWeight: 600, fontSize: 18 }}>{r.roomName}</div>
+            <div style={{ fontSize: 14, color: "#555" }}>
+              {r.roomMethod == "L" ? "전세" : "월세"} {r.roomDeposit ? "|보증금:"+formatMoneyKRW(r.roomDeposit)+"원" : ""} {r.roomMonthly ? "|월세:"+r.roomMonthly+"원" : ""}
             </div>
           </Link>
         </div>
@@ -42,6 +122,12 @@ export default function MapPanel({ markers = [],
     onMarkerClick,
     popup,
     onClosePopup, }) {
+
+  const onChangeBboxRef = useRef(onChangeBbox);
+  const onMarkerClickRef = useRef(onMarkerClick);
+  useEffect(() => { onChangeBboxRef.current = onChangeBbox; }, [onChangeBbox]);
+  useEffect(() => { onMarkerClickRef.current = onMarkerClick; }, [onMarkerClick]);
+
   const mapDivRef = useRef(null);
   const mapRef = useRef(null);
   const markerObjsRef = useRef([]);
@@ -51,6 +137,25 @@ export default function MapPanel({ markers = [],
   const [overlayEl, setOverlayEl] = useState(null);
 
   const KAKAO_KEY = process.env.REACT_APP_KAKAO_MAP_KEY;
+
+  const disableMapWheelZoom = () => {
+    const map = mapRef.current;
+    if (!map) return;
+    // ✅ 팝업 위에서는 지도 휠줌 끄기
+    if (typeof map.setZoomable === "function") map.setZoomable(false);
+  };
+
+  const enableMapWheelZoom = () => {
+    const map = mapRef.current;
+    if (!map) return;
+    // ✅ 팝업에서 벗어나면 다시 켜기
+    if (typeof map.setZoomable === "function") map.setZoomable(true);
+  };
+
+  const handleClosePopup = () => {
+    enableMapWheelZoom();
+    onClosePopup?.();
+  };
 
   useEffect(() => {
     if (!KAKAO_KEY) {
@@ -76,7 +181,7 @@ export default function MapPanel({ markers = [],
         const b = map.getBounds();
         const sw = b.getSouthWest();
         const ne = b.getNorthEast();
-        onChangeBbox({
+        onChangeBboxRef.current?.({
           swLat: sw.getLat(),
           swLng: sw.getLng(),
           neLat: ne.getLat(),
@@ -118,7 +223,7 @@ export default function MapPanel({ markers = [],
 
           if (!same) {
             lastBbox = next;
-            onChangeBbox(next);
+            onChangeBboxRef.current?.(next);
           }
         }, 600); // ✅ 250 → 600~800ms 추천
       });
@@ -135,7 +240,7 @@ export default function MapPanel({ markers = [],
     script.onerror = () => console.error("카카오 지도 SDK 로드 실패 (키/도메인/네트워크 확인)");
     script.onload = () => window.kakao.maps.load(initMap);
     document.head.appendChild(script);
-  }, [KAKAO_KEY, onChangeBbox, onClosePopup]);
+  }, [KAKAO_KEY]);
 
   // markers 렌더 + 클릭 이벤트
   useEffect(() => {
@@ -159,8 +264,11 @@ export default function MapPanel({ markers = [],
 
       kakao.maps.event.addListener(marker, "click", () => {
         if (onMarkerClick) {
-          onMarkerClick({
+          onMarkerClickRef.current?.({
             houseNo: mk.houseNo,
+            houseName: mk.houseName,
+            houseAddress: mk.houseAddress,
+            imageNames: mk.imageNames,
             houseLat: mk.houseLat,
             houseLng: mk.houseLng,
           });
@@ -189,11 +297,43 @@ export default function MapPanel({ markers = [],
     if (!popup) return;
 
     const el = document.createElement("div");
+    const pos = new kakao.maps.LatLng(popup.lat, popup.lng);
+
+    // ✅ 기본값(중앙 + 위로 뜨게)
+    let xAnchor = 0.5;
+    let yAnchor = 1.1;
+
+    // ✅ 현재 지도 bounds 안에서 마커가 어느 위치에 있는지 비율로 계산
+    try {
+      const b = map.getBounds();
+      const sw = b.getSouthWest();
+      const ne = b.getNorthEast();
+
+      const rx = (popup.lng - sw.getLng()) / (ne.getLng() - sw.getLng()); // 0(왼쪽) ~ 1(오른쪽)
+      const ry = (popup.lat - sw.getLat()) / (ne.getLat() - sw.getLat()); // 0(아래) ~ 1(위)
+
+      // ✅ 좌/우 끝이면 팝업이 “안쪽”으로 붙게
+      if (rx < 0.25) xAnchor = 0.0;      // 마커 기준으로 오른쪽으로 펼쳐짐
+      else if (rx > 0.75) xAnchor = 1.0; // 마커 기준으로 왼쪽으로 펼쳐짐
+      else xAnchor = 0.5;
+
+      // ✅ 위쪽 끝이면 아래로, 아래쪽 끝이면 위로
+      if (ry > 0.75) yAnchor = 0.0;      // 마커 기준 아래로 펼쳐짐
+      else yAnchor = 1.1;                // 기본: 위로 펼쳐짐
+
+      // (선택) 너무 끝이면 살짝 가운데로 이동(팝업 잘림 방지)
+      const needPan = rx < 0.12 || rx > 0.88 || ry < 0.12 || ry > 0.88;
+      if (needPan) setTimeout(() => map.panTo(pos), 0);
+    } catch (e) {
+      // bounds 계산 실패해도 기본 anchor로 뜨게
+    }
+
     const overlay = new kakao.maps.CustomOverlay({
-      position: new kakao.maps.LatLng(popup.lat, popup.lng),
+      position: pos,
       content: el,
-      yAnchor: 1.2,
-      xAnchor: 0.5,
+      xAnchor,
+      yAnchor,
+      clickable: true, // ✅ 팝업 안 링크 클릭 안정
     });
     overlay.setMap(map);
 
@@ -208,7 +348,7 @@ export default function MapPanel({ markers = [],
   }, [popup]);
 
   return (
-    <div className={styles.mapWrap} id="map" style={{ position: "relative", height: 500 }}>
+    <div className={styles.mapWrap} id="map">
       <div ref={mapDivRef} style={{ width: "100%", height: "100%", background: "#f7f7f7" }} />
 
       {loadingMarkers && (
@@ -219,7 +359,13 @@ export default function MapPanel({ markers = [],
 
       {/* 마커 위 팝업(Portal로 렌더링 -> Link 사용 가능) */}
       {overlayEl && popup && createPortal(
-        <MarkerPopup rooms={popup.rooms || []} onClose={onClosePopup} />,
+        <MarkerPopup
+          rooms={popup.rooms || []}
+          house={popup.house}
+          onClose={handleClosePopup}
+          onEnter={disableMapWheelZoom}
+          onLeave={enableMapWheelZoom}
+        />,
         overlayEl
       )}
     </div>
