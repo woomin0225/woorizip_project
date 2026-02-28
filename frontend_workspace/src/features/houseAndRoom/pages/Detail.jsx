@@ -14,7 +14,7 @@ import RoomOptionList from './../components/Detail/RoomOptionList';
 import FacilityList from './../components/Detail/FacilityList';
 import ReviewList from './../components/Detail/ReviewList';
 
-import { tokenStore } from '../../../app/http/tokenStore';
+import { useAuth } from '../../../app/providers/AuthProvider';
 
 import { getRoom, getRoomImages, getRoomReviews } from './../api/roomApi';
 import { getHouse, getHouseImages, getRoomByHouseNo } from './../api/houseApi';
@@ -38,6 +38,7 @@ function toUrl(base, name) {
 }
 
 export default function Detail() {
+  const { userNo: currentUserNo } = useAuth();
   const { roomNo: routeRoomNo } = useParams();
   const [selectedRoomNo, setSelectedRoomNo] = useState(routeRoomNo || '');
 
@@ -54,8 +55,6 @@ export default function Detail() {
   const [reviewPage, setReviewPage] = useState(null);
 
   const [loading, setLoading] = useState(false);
-
-  const currentUserNo = useMemo(() => tokenStore.getUserId(), []);
 
   const refreshReviews = async () => {
     if (!selectedRoomNo) return;

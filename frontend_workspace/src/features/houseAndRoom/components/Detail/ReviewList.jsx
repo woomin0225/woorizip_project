@@ -71,7 +71,7 @@ const navigate = useNavigate();
             key={r.reviewNo}
             review={r}
             isMine={isMine}
-            onEdit={(r) => {navigate(`/rooms/${roomNo}/reviews/${r.reviewNo}/edit`, {state: {r}})}}
+            onEdit={(r) => {navigate(`/rooms/${roomNo}/reviews/${r.reviewNo}/edit`, {state: { review: r }})}}
             onDelete={requestDelete}
           />
         );

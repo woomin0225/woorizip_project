@@ -181,7 +181,7 @@ public class RoomController {
 	public ResponseEntity<ApiResponse<Void>> ModifyRoomReview(
 			@PathVariable("roomNo") String roomNo,
 			@PathVariable("reviewNo") int reviewNo,
-			@Valid @ModelAttribute ReviewDto reviewDto,
+			@Valid @RequestBody ReviewDto reviewDto,
 			Authentication auth
 			){
 		// 방 리뷰 수정
