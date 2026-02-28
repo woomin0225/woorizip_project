@@ -10,6 +10,7 @@ import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.Date;
 import java.util.Optional;
+import java.util.Locale;
 import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -83,6 +84,23 @@ public class ContractServiceImpl implements ContractService {
     }
 
     @Override
+    public PageResponse<ContractDto> selectListContractByOwner(String ownerUserNo, int page, int size) {
+        int safePage = Math.max(page, 1);
+        int safeSize = Math.max(size, 1);
+        Pageable pageable = PageRequest.of(safePage - 1, safeSize);
+        Page<ContractEntity> resultPage = contractRepository.findByRoomOwnerNoOrderByMoveInDateDesc(ownerUserNo, pageable);
+
+        List<ContractDto> content = toList(resultPage.getContent());
+        return new PageResponse<>(
+                content,
+                safePage,
+                safeSize,
+                resultPage.getTotalElements(),
+                resultPage.getTotalPages()
+        );
+    }
+
+    @Override
     @Transactional
     public ContractDto insertContract(ContractDto contractDto) {
         contractDto.setStatus("APPLIED");
@@ -128,11 +146,14 @@ public class ContractServiceImpl implements ContractService {
     @Override
     @Transactional
     public int decideAmendment(String amendmentNo, boolean approved, String reason) {
-        ContractEntity amendment = contractRepository.findById(amendmentNo)
-                .orElseThrow(() -> new RuntimeException("데이터를 찾을 수 없습니다."));
-
-        ContractEntity original = contractRepository.findById(amendment.getParentContractNo())
-                .orElseThrow(() -> new RuntimeException("연결된 원본 계약서를 찾을 수 없습니다."));
+        ContractEntity amendment = contractRepository.findById(amendmentNo).orElse(null);
+        if (amendment == null) {
+            return 0;
+        }
+        ContractEntity original = contractRepository.findById(amendment.getParentContractNo()).orElse(null);
+        if (original == null) {
+            return 0;
+        }
 
         if (approved) {
             original.updateFromAmendment(amendment);
@@ -206,6 +227,24 @@ public class ContractServiceImpl implements ContractService {
         target.setStatus("PAID");
         target.setPaymentDate(new Timestamp(System.currentTimeMillis()));
         return ContractDto.fromEntity(target);
+    }
+
+    @Override
+    @Transactional
+    public int updateStatus(String contractNo, String status, String reason) {
+        ContractEntity target = contractRepository.findById(contractNo).orElse(null);
+        if (target == null) return 0;
+
+        String normalized = status == null ? "" : status.trim().toUpperCase(Locale.ROOT);
+        if (normalized.isBlank()) return 0;
+
+        target.setStatus(normalized);
+        if ("REJECTED".equals(normalized)) {
+            target.setRejectionReason(reason != null ? reason.trim() : "");
+        } else {
+            target.setRejectionReason(null);
+        }
+        return 1;
     }
 
     private List<ContractDto> toList(List<ContractEntity> list) {

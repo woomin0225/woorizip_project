@@ -1,6 +1,7 @@
 package org.team4p.woorizip.tour.jpa.repository;
 
 import static org.team4p.woorizip.tour.jpa.entity.QTourEntity.tourEntity;
+import static org.team4p.woorizip.room.jpa.entity.QRoomEntity.roomEntity;
 
 import java.time.LocalDate;
 import java.util.Collection;
@@ -45,6 +46,27 @@ public class TourRepositoryCustomImpl implements TourRepositoryCustom {
                 .select(tourEntity.count())
                 .from(tourEntity)
                 .where(tourEntity.userNo.eq(userNo))
+                .fetchOne();
+
+        return new PageImpl<>(content, pageable, total == null ? 0L : total);
+    }
+
+    @Override
+    public Page<TourEntity> findByRoomOwnerNoOrderByVisitDateDesc(String ownerUserNo, Pageable pageable) {
+        List<TourEntity> content = queryFactory
+                .selectFrom(tourEntity)
+                .join(roomEntity).on(roomEntity.roomNo.eq(tourEntity.roomNo))
+                .where(roomEntity.userNo.eq(ownerUserNo))
+                .orderBy(tourEntity.visitDate.desc(), tourEntity.visitTime.desc())
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetch();
+
+        Long total = queryFactory
+                .select(tourEntity.count())
+                .from(tourEntity)
+                .join(roomEntity).on(roomEntity.roomNo.eq(tourEntity.roomNo))
+                .where(roomEntity.userNo.eq(ownerUserNo))
                 .fetchOne();
 
         return new PageImpl<>(content, pageable, total == null ? 0L : total);

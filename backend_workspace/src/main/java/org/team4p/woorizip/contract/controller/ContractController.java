@@ -24,6 +24,7 @@ import org.team4p.woorizip.contract.model.service.ContractService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import java.util.Locale;
 
 @Slf4j
 @RestController
@@ -50,6 +51,15 @@ public class ContractController {
             @RequestParam(name = "size", defaultValue = "8") int size) {
         PageResponse<ContractDto> body = contractService.selectListContract(userPrincipal.getUserNo(), page, size);
         return ResponseEntity.ok(ApiResponse.ok("내 계약 목록 조회 성공", body));
+    }
+
+    @GetMapping("/list/owner")
+    public ResponseEntity<ApiResponse<PageResponse<ContractDto>>> selectOwnerListContract(
+            @AuthenticationPrincipal CustomUserPrincipal userPrincipal,
+            @RequestParam(name = "page", defaultValue = "1") int page,
+            @RequestParam(name = "size", defaultValue = "8") int size) {
+        PageResponse<ContractDto> body = contractService.selectListContractByOwner(userPrincipal.getUserNo(), page, size);
+        return ResponseEntity.ok(ApiResponse.ok("임대인 계약 목록 조회 성공", body));
     }
 
     @PostMapping("/insert/{roomNo}")
@@ -112,7 +122,7 @@ public class ContractController {
         try {
             ContractDto updated = contractService.createElectronicContract(contractNo, request);
             return ResponseEntity.ok(ApiResponse.ok("전자계약서 생성 완료(개발모드)", updated));
-        } catch (IllegalArgumentException e) {
+        } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.fail(e.getMessage(), null));
         }
     }
@@ -124,7 +134,7 @@ public class ContractController {
         try {
             ContractDto updated = contractService.verifyElectronicSignature(contractNo, request);
             return ResponseEntity.ok(ApiResponse.ok("전자서명 검증 완료(개발모드)", updated));
-        } catch (IllegalArgumentException e) {
+        } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.fail(e.getMessage(), null));
         }
     }
@@ -136,8 +146,48 @@ public class ContractController {
         try {
             ContractDto updated = contractService.requestContractPayment(contractNo, request);
             return ResponseEntity.ok(ApiResponse.ok("결제 승인 완료(개발모드)", updated));
-        } catch (IllegalArgumentException e) {
+        } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.fail(e.getMessage(), null));
+        }
+    }
+
+    @PostMapping("/decision/{contractNo}")
+    public ResponseEntity<ApiResponse<Void>> decideContract(
+            @PathVariable("contractNo") String contractNo,
+            @RequestBody(required = false) Map<String, String> body) {
+        try {
+            String status = body != null ? body.get("status") : null;
+            String currentStatus = body != null ? body.get("currentStatus") : null;
+            String reason = body != null ? body.get("reason") : null;
+            String normalizedStatus = status == null ? "" : status.trim().toUpperCase(Locale.ROOT);
+            String normalizedCurrentStatus = currentStatus == null ? "" : currentStatus.trim().toUpperCase(Locale.ROOT);
+
+            if (normalizedStatus.isBlank()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.fail("상태값이 없습니다.", null));
+            }
+
+            if ("AMENDMENT_REQUESTED".equals(normalizedCurrentStatus)) {
+                int result = contractService.decideAmendment(
+                        contractNo,
+                        "APPROVED".equals(normalizedStatus),
+                        "REJECTED".equals(normalizedStatus) ? reason : null
+                );
+                return result > 0
+                        ? ResponseEntity.ok(ApiResponse.ok("수정요청 승인/거절 처리 완료", null))
+                        : ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.fail("수정요청 처리 실패", null));
+            }
+
+            if (!"APPROVED".equals(normalizedStatus) && !"REJECTED".equals(normalizedStatus)) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.fail("지원하지 않는 상태값입니다.", null));
+            }
+
+            int result = contractService.updateStatus(contractNo, normalizedStatus, reason);
+            return result > 0
+                    ? ResponseEntity.ok(ApiResponse.ok("입주 신청 승인/거절 처리 완료", null))
+                    : ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.fail("입주 신청 처리 실패", null));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.fail("입주 신청 승인/거절 처리 중 오류", null));
         }
     }
 }

@@ -19,6 +19,8 @@ import org.team4p.woorizip.tour.model.service.TourService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import java.util.Locale;
+import java.util.Map;
 
 @Slf4j
 @RestController
@@ -45,6 +47,15 @@ public class TourController {
             @RequestParam(name = "size", defaultValue = "8") int size) {
         PageResponse<TourDto> body = tourService.selectListTour(userPrincipal.getUserNo(), page, size);
         return ResponseEntity.ok(ApiResponse.ok("내 투어 목록 조회 성공", body));
+    }
+
+    @GetMapping("/list/owner")
+    public ResponseEntity<ApiResponse<PageResponse<TourDto>>> selectOwnerListTour(
+            @AuthenticationPrincipal CustomUserPrincipal userPrincipal,
+            @RequestParam(name = "page", defaultValue = "1") int page,
+            @RequestParam(name = "size", defaultValue = "8") int size) {
+        PageResponse<TourDto> body = tourService.selectListTourByOwner(userPrincipal.getUserNo(), page, size);
+        return ResponseEntity.ok(ApiResponse.ok("임대인 투어 목록 조회 성공", body));
     }
 
     @PostMapping("/insert/{roomNo}")
@@ -79,5 +90,44 @@ public class TourController {
         return result > 0
                 ? ResponseEntity.ok(ApiResponse.ok("투어 수정 성공", null))
                 : ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+    }
+
+    @PostMapping("/decision/{tourNo}")
+    public ResponseEntity<ApiResponse<Void>> decideTour(
+            @PathVariable("tourNo") String tourNo,
+            @RequestBody(required = false) Map<String, String> body) {
+        try {
+            TourDto existing = tourService.selectTour(tourNo);
+            if (existing == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(ApiResponse.fail("투어 정보를 찾을 수 없습니다.", null));
+            }
+
+            String requestedStatus = body != null ? body.get("status") : null;
+            String normalizedStatus = requestedStatus != null
+                    ? requestedStatus.trim().toUpperCase(Locale.ROOT)
+                    : String.valueOf(existing.getStatus()).toUpperCase(Locale.ROOT);
+            String reason = body != null ? body.get("reason") : null;
+            if (reason == null || reason.isBlank()) {
+                reason = body != null ? body.get("rejectionReason") : null;
+            }
+
+            existing.setStatus(normalizedStatus);
+            if ("REJECTED".equals(normalizedStatus)) {
+                existing.setCanceledReason(reason != null ? reason.trim() : "");
+            }
+
+            int result = tourService.updateTour(existing);
+            if (result == -1) {
+                return ResponseEntity.status(HttpStatus.CONFLICT)
+                        .body(ApiResponse.fail("이미 신청된 투어 시간입니다.", null));
+            }
+            return result > 0
+                    ? ResponseEntity.ok(ApiResponse.ok("투어 승인/거절 처리 성공", null))
+                    : ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.fail("투어 승인/거절 처리 실패", null));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.fail("투어 승인/거절 처리 중 오류", null));
+        }
     }
 }

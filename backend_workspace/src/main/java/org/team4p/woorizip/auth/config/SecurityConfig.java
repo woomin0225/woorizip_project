@@ -83,7 +83,13 @@ public class SecurityConfig {
 
                 // auth endpoints
                 .requestMatchers("/auth/**").permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/user/find-id", "/api/user/find-password").permitAll()
+                .requestMatchers(
+                    HttpMethod.POST,
+                    "/api/user/find-id",
+                    "/api/user/password/send-code",
+                    "/api/user/password/verify-code",
+                    "/api/user/find-password"
+                ).permitAll()
 
                 .requestMatchers(HttpMethod.POST, EndpointPolicy.PUBLIC_POST).permitAll()
                 

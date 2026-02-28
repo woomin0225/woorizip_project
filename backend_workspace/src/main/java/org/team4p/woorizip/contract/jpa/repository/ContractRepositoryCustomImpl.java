@@ -4,6 +4,9 @@ import static org.team4p.woorizip.contract.jpa.entity.QContractEntity.contractEn
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 import org.team4p.woorizip.contract.jpa.entity.ContractEntity;
 import org.team4p.woorizip.contract.jpa.entity.QContractEntity;
@@ -45,6 +48,27 @@ public class ContractRepositoryCustomImpl implements ContractRepositoryCustom {
                 .where(contractEntity.userNo.eq(userNo))
                 .orderBy(contractEntity.moveInDate.desc())
                 .fetch();
+    }
+
+    @Override
+    public Page<ContractEntity> findByRoomOwnerNoOrderByMoveInDateDesc(String ownerUserNo, Pageable pageable) {
+        List<ContractEntity> content = queryFactory
+                .selectFrom(contractEntity)
+                .join(room).on(room.roomNo.eq(contractEntity.roomNo))
+                .where(room.userNo.eq(ownerUserNo))
+                .orderBy(contractEntity.moveInDate.desc())
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetch();
+
+        Long total = queryFactory
+                .select(Wildcard.count)
+                .from(contractEntity)
+                .join(room).on(room.roomNo.eq(contractEntity.roomNo))
+                .where(room.userNo.eq(ownerUserNo))
+                .fetchOne();
+
+        return new PageImpl<>(content, pageable, total == null ? 0L : total);
     }
 
     /**

@@ -56,7 +56,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         if (HttpMethod.POST.matches(method) && (
                 uri.equals("/api/user/signup") || 
-                uri.equals("/api/user/check-id")
+                uri.equals("/api/user/check-id") ||
+                uri.equals("/api/user/find-id") ||
+                uri.equals("/api/user/password/send-code") ||
+                uri.equals("/api/user/password/verify-code") ||
+                uri.equals("/api/user/find-password")
         )) {
             return true;
         }
