@@ -66,7 +66,7 @@ public record SearchRequest(
             case "title", "content", "writer" -> keyword != null && !keyword.isBlank();
             case "date" -> begin != null && !begin.isBlank() && end != null && !end.isBlank();            
             case "age" -> age != null && age > 0;
-            default -> true; // 타입만 정해지고 조건은 서버에서 처리하고 싶다면 true
+            default -> false; // 타입만 정해지고 조건은 서버에서 처리하고 싶다면 true
         };
     }
 }

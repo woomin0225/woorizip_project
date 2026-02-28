@@ -14,10 +14,9 @@ export async function fetchEventList(params) {
 
 // 검색 ===================================
 export async function searchEvent(req) {
-  const { data } = await apiJson().get('/api/event/search', {
+  return apiJson().get('/api/event/search', {
     params: req,
   });
-  return data;
 }
 
 // 상세 ===================================
