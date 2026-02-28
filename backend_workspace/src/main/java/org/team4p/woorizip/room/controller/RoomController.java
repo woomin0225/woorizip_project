@@ -117,7 +117,7 @@ public class RoomController {
 	public ResponseEntity<ApiResponse<Void>> modifyRoom(
 			@PathVariable("roomNo") String roomNo,
 			@Valid @ModelAttribute RoomDto roomDto,
-			@RequestPart(value="deleteImageNos", required=false) List<Integer> deleteImageNos,
+			@RequestParam(value="deleteImageNos", required=false) List<Integer> deleteImageNos,
 			@RequestPart(value="newImages", required=false) List<MultipartFile> newImages,
 			Authentication auth
 			){
@@ -126,6 +126,8 @@ public class RoomController {
 		roomDto.setRoomNo(roomNo);
 		String currentUser = auth.getName().toString();
 		roomService.updateRoom(roomDto, currentUser);
+		
+		int prevCount = roomImageService.countRoomImageNumber(roomNo);
 		
 		// 삭제 사진 처리 : DB삭제 -> 저장소 삭제
 		int deleteCount = 0;
@@ -143,13 +145,15 @@ public class RoomController {
 		
 		// 사진 갯수 반영
 		int count = roomImageService.countRoomImageNumber(roomNo);	//기존 갯수
-		roomService.updateRoomImageCount(roomNo, (count-deleteCount+addCount));	//기존 갯수 - 삭제 갯수 - 추가 갯수
+		if(count == prevCount - deleteCount + addCount) {
+			roomService.updateRoomImageCount(roomNo, count);	//기존 갯수 - 삭제 갯수 - 추가 갯수
+		}
 		
 		return ResponseEntity.status(200).body(ApiResponse.ok("방 정보 수정 성공", null));
 	}
 	
 	@PostMapping("/{roomNo}/reviews")
-	public ResponseEntity<ApiResponse<Void>> createRoomReview(@Valid @RequestBody ReviewDto reviewDto, @PathVariable("roomNo") String roomNo, Authentication auth){
+	public ResponseEntity<ApiResponse<Void>> createRoomReview(@PathVariable("roomNo") String roomNo, @Valid @RequestBody ReviewDto reviewDto, Authentication auth){
 		// 방 리뷰 등록
 		reviewDto.setRoomNo(roomNo);
 		
@@ -177,7 +181,7 @@ public class RoomController {
 	public ResponseEntity<ApiResponse<Void>> ModifyRoomReview(
 			@PathVariable("roomNo") String roomNo,
 			@PathVariable("reviewNo") int reviewNo,
-			@Valid @ModelAttribute ReviewDto reviewDto,
+			@Valid @RequestBody ReviewDto reviewDto,
 			Authentication auth
 			){
 		// 방 리뷰 수정
@@ -198,5 +202,15 @@ public class RoomController {
 		roomService.updateRoomAvailability(roomNo, date, currentUser);
 		
 		return ResponseEntity.status(200).body(ApiResponse.ok("입주일자 변경 완료", null));
+	}
+	
+	@PatchMapping("/{roomNo}/emptyyn")
+	public ResponseEntity<ApiResponse<Void>> modifyRoomEmptyYn(@PathVariable String roomNo, Authentication auth){
+		// 방 공실 여부 변경
+		
+		String currentUser = auth.getName().toString();
+		roomService.updateRoomEmptyYn(roomNo, currentUser);
+		
+		return ResponseEntity.status(200).body(ApiResponse.ok("공실여부 변경 완료", null));
 	}
 }

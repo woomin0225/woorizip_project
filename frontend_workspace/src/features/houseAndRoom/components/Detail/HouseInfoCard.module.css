@@ -1,15 +1,23 @@
 .wrap {
   display: grid;
-  gap: 6px;
+  grid-template-columns: repeat(2, minmax(0, 1fr)); /* 2열 */
+  gap: 8px;                                         /* Detail.infoGrid와 맞춤 */
   color: #333;
 }
-.abstract {
-  margin-top: 6px;
+
+.fullRow{
+  grid-column: 1 / -1; /* 2칸 전체 */
+}
+
+.abstractBox {
+  grid-column: 1 / -1;   /* 2칸 전체 */
+  margin-top: 10px;
   padding: 10px;
   border: 1px solid #eee;
   border-radius: 10px;
   color: #444;
 }
+
 .empty {
   color: #666;
 }

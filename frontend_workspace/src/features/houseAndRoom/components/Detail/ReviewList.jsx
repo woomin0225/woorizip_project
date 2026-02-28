@@ -57,7 +57,6 @@ const navigate = useNavigate();
       <div className={styles.header}>
         <div className={styles.title}>리뷰</div>
 
-        {/* 라우트는 나중에 추가할 예정이므로 Link 뼈대만 */}
         <Link to={`/rooms/${roomNo}/reviews/new`} className={styles.writeLink}>
           리뷰 작성
         </Link>
@@ -72,7 +71,7 @@ const navigate = useNavigate();
             key={r.reviewNo}
             review={r}
             isMine={isMine}
-            onEdit={(r) => {navigate(`/rooms/${roomNo}/reviews/${r.reviewNo}/edit`, {state: {r}})}}
+            onEdit={(r) => {navigate(`/rooms/${roomNo}/reviews/${r.reviewNo}/edit`, {state: { review: r }})}}
             onDelete={requestDelete}
           />
         );

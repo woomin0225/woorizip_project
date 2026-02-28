@@ -98,3 +98,9 @@ export async function modifyRoomAvailability(roomNo, date){
     const {data} = await apiJson().patch(`/api/rooms/${roomNo}/availability`, date);  // date: LocalDate
     return unwrap(data);    // Void
 }
+
+// 방 공실여부 변경 PATCH
+export async function modifyRoomEmptyYn(roomNo){
+    const {data} = await apiJson().patch(`/api/rooms/${roomNo}/emptyyn`);
+    return unwrap(data);
+}
