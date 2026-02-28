@@ -2,7 +2,9 @@ package org.team4p.woorizip.reservation.controller;
 
 import java.util.List;
 
-import org.springframework.http.HttpStatus;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -10,9 +12,11 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.team4p.woorizip.auth.security.principal.CustomUserPrincipal;
 import org.team4p.woorizip.common.api.ApiResponse;
+import org.team4p.woorizip.common.api.PageResponse;
 import org.team4p.woorizip.reservation.dto.ReservationCreateRequestDTO;
 import org.team4p.woorizip.reservation.dto.ReservationDetailResponseDTO;
 import org.team4p.woorizip.reservation.dto.ReservationListResponseDTO;
@@ -31,38 +35,54 @@ public class ReservationController {
 	private final ReservationService reservationService;
 
 	// 예약 신규 등록
-	@PostMapping("api/facilities/{facilityNo}/reservations")
+	@PostMapping("/api/facilities/{facilityNo}/reservations")
 	public ResponseEntity<ApiResponse<String>> createReservation(
 			@Valid @RequestBody ReservationCreateRequestDTO dto,
 			@AuthenticationPrincipal CustomUserPrincipal principal,
 			@PathVariable(value="facilityNo") String facilityNo) {
 		String currentUserNo = (principal != null) ? principal.getUserNo() : null;
 		reservationService.createReservation(dto, currentUserNo, facilityNo);
-		return ResponseEntity
-				.status(HttpStatus.CREATED)
-				.body(ApiResponse.ok("귀하의 예약이 정상적으로 등록되었습니다.", "ReservationCreateSuccess"));
-	}
-
-	// 예약 상세 조회
-	@GetMapping("api/reservations/{reservationNo}")
-	public ResponseEntity<ReservationDetailResponseDTO> getReservationDetails(
-			@PathVariable(value="reservationNo") String reservationNo) {
-		ReservationDetailResponseDTO response = reservationService.getReservationDetails(reservationNo);
-		return ResponseEntity.ok(response);
+		return ResponseEntity.ok(ApiResponse.ok("예약이 성공적으로 등록되었습니다.", "reservationCreateSuccess"));
 
 	}
 
 	// 예약 목록 조회
 	@GetMapping({"/api/reservations", "/api/facilities/{facilityNo}/reservations"})
-	public ResponseEntity<List<ReservationListResponseDTO>> getReservationList(
+	public ResponseEntity<ApiResponse<PageResponse<ReservationListResponseDTO>>> getReservationList(
+			@RequestParam(name = "page", defaultValue = "1") int page,
+            @RequestParam(name = "size", defaultValue = "10") int size,
+            @RequestParam(name = "sort", defaultValue = "reservationDate,reservationStartTime") String sort,
+            @RequestParam(name = "direct", defaultValue = "DESC") String direct,
 			@AuthenticationPrincipal CustomUserPrincipal principal,
 			@PathVariable(value = "facilityNo", required = false) String facilityNo) {
 		String currentUserNo = (principal != null) ? principal.getUserNo() : null;
-		return ResponseEntity.ok(reservationService.getReservationList(currentUserNo, facilityNo));
+		
+        if (page < 1) page = 1;
+        if (size < 1) size = 10;
+
+        Sort.Direction direction = "ASC".equalsIgnoreCase(direct) ? Sort.Direction.ASC : Sort.Direction.DESC;
+        String[] sortFields = sort.split(",");
+        Pageable pageable = PageRequest.of(page - 1, size, direction, sortFields);
+
+        long totalElements = reservationService.selectListCount(currentUserNo, facilityNo);
+        int totalPages = (totalElements == 0) ? 0 : (int) Math.ceil((double) totalElements / size);
+
+        List<ReservationListResponseDTO> list = reservationService.selectList(pageable, currentUserNo, facilityNo);
+
+        PageResponse<ReservationListResponseDTO> body = new PageResponse<>(list, page, size, totalElements, totalPages);
+        return ResponseEntity.ok(ApiResponse.ok("예약 목록 조회 성공", body));
+	}
+
+	// 예약 상세 조회
+	@GetMapping("api/reservations/{reservationNo}")
+	public ResponseEntity<ApiResponse<ReservationDetailResponseDTO>> getReservationDetails(
+			@PathVariable(value="reservationNo") String reservationNo) {
+		ReservationDetailResponseDTO body = reservationService.selectReservation(reservationNo);
+		return ResponseEntity.ok(ApiResponse.ok("예약 정보 조회 성공", body));
 	}
 
 	// 예약 내용 수정
-	@PatchMapping("api/reservations/{reservationNo}")
+	@PatchMapping("/api/reservations/{reservationNo}")
 	public ResponseEntity<ApiResponse<String>> modifyReservation(
 			@PathVariable(value="reservationNo")  String reservationNo,
 			@Valid @RequestBody ReservationModifyRequestDTO dto,
