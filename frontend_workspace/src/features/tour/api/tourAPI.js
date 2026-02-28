@@ -34,8 +34,18 @@ async function request(path, options = {}) {
     ...options,
   });
   const text = await response.text();
-  const json = text ? JSON.parse(text) : null;
-  if (!response.ok) throw new Error(json?.message || 'Tour request failed');
+  let json = null;
+
+  try {
+    json = text ? JSON.parse(text) : null;
+  } catch (_) {
+    json = { message: text || 'Tour request failed' };
+  }
+
+  if (!response.ok) {
+    const message = json?.message || text || 'Tour request failed';
+    throw new Error(`[${response.status}] ${message}`);
+  }
   return json?.data ?? json;
 }
 
@@ -53,10 +63,6 @@ async function requestCandidates(candidates = [], options = {}) {
 
 function normalizeTourStatus(item) {
   if (!item || typeof item !== 'object') return item;
-  const status = String(item.status || '').toUpperCase();
-  if (status === 'PENDING') {
-    return { ...item, status: 'APPROVED' };
-  }
   return item;
 }
 
@@ -78,9 +84,12 @@ export async function getTourPage(page = 1, size = 8) {
 
 export async function getOwnerTourPage(page = 1, size = 8) {
   const data = await requestCandidates([
+    `/api/tour/owner/me?page=${page}&size=${size}`,
+    `/api/tour/lessor/me?page=${page}&size=${size}`,
     `/api/tour/list/owner?page=${page}&size=${size}`,
     `/api/tour/owner/list?page=${page}&size=${size}`,
     `/api/tour/list/lessor?page=${page}&size=${size}`,
+    `/api/tour/lessor/list?page=${page}&size=${size}`,
   ]);
   return {
     content: Array.isArray(data?.content) ? data.content.map(normalizeTourStatus) : [],

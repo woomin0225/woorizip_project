@@ -74,6 +74,20 @@ function getCurrentUserEmail() {
   );
 }
 
+function getUserTypeFromAccessToken() {
+  const accessToken = getNormalizedAccessToken();
+  const payload = parseJwt(accessToken);
+  if (!payload) return null;
+
+  return (
+    payload.type ||
+    payload.userType ||
+    payload.user_type ||
+    payload.memberType ||
+    null
+  );
+}
+
 export async function getMyInfo() {
   const email = getCurrentUserEmail();
   if (!email) throw new Error('로그인 사용자 이메일 정보가 없습니다.');
@@ -88,6 +102,16 @@ export async function getUserByUserNo(userNo) {
 export function isLessorType(type) {
   const normalized = String(type || '').toUpperCase();
   return normalized === 'LESSOR' || normalized === 'LANDLORD';
+}
+
+export function getIsLessorHint() {
+  const tokenType = getUserTypeFromAccessToken();
+  if (tokenType) return isLessorType(tokenType);
+
+  const cachedType = localStorage.getItem('userType') || sessionStorage.getItem('userType');
+  if (cachedType) return isLessorType(cachedType);
+
+  return null;
 }
 
 export async function updateMyInfo(payload) {

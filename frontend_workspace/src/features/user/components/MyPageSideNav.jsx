@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import styles from '../../../app/layouts/MyPageLayout.module.css';
-import { getMyInfo, isLessorType } from '../api/userAPI';
+import { getIsLessorHint, getMyInfo, isLessorType } from '../api/userAPI';
 
 const BASE_MENUS = [
   { label: '마이페이지', to: '/mypage' },
@@ -16,13 +16,18 @@ const WITHDRAW_MENU = { label: '회원탈퇴', to: '/mypage/withdraw' };
 
 export default function MyPageSideNav() {
   const location = useLocation();
-  const [isLessor, setIsLessor] = React.useState(false);
+  const [isLessor, setIsLessor] = React.useState(() => getIsLessorHint());
   const withdrawActive = location.pathname === WITHDRAW_MENU.to;
   const menus = React.useMemo(
     () =>
       BASE_MENUS.map((menu) => ({
         ...menu,
-        label: isLessor && menu.lessorLabel ? menu.lessorLabel : menu.label,
+        label:
+          menu.lessorLabel && isLessor === null
+            ? '신청/승인현황'
+            : isLessor && menu.lessorLabel
+              ? menu.lessorLabel
+              : menu.label,
       })),
     [isLessor]
   );
@@ -32,11 +37,16 @@ export default function MyPageSideNav() {
     getMyInfo()
       .then((info) => {
         if (!mounted) return;
-        setIsLessor(isLessorType(info?.type));
+        const nextIsLessor = isLessorType(info?.type);
+        setIsLessor(nextIsLessor);
+        if (info?.type) {
+          localStorage.setItem('userType', String(info.type));
+          sessionStorage.setItem('userType', String(info.type));
+        }
       })
       .catch(() => {
         if (!mounted) return;
-        setIsLessor(false);
+        setIsLessor((prev) => (prev === null ? false : prev));
       });
     return () => {
       mounted = false;

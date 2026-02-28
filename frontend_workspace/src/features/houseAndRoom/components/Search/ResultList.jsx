@@ -1,7 +1,23 @@
 import ResultItem from "./ResultItem";
 import styles from "./ResultList.module.css";
 
-export default function ResultList({ slice=[], criterion, onLoadMore, onChangeCriterion, hasNext, loading, wishMap, onToggleWish }){
+export default function ResultList({
+  slice = [],
+  criterion,
+  onLoadMore,
+  onChangeCriterion,
+  hasNext,
+  loading,
+  wishMap,
+  onToggleWish,
+  passVerified = false,
+  passVerifying = false,
+  passVerifiedPhone = "",
+  passVerifiedAt = "",
+  passError = "",
+  onRequestPassVerification,
+  onResetPassVerification,
+}) {
   function searchLatest() {
     onChangeCriterion("LATEST");
   }
@@ -21,6 +37,13 @@ export default function ResultList({ slice=[], criterion, onLoadMore, onChangeCr
           roomSearchResponse={room}
           wished={!!wishMap?.[room.roomNo]}
           onToggleWish={onToggleWish}
+          passVerified={passVerified}
+          passVerifying={passVerifying}
+          passVerifiedPhone={passVerifiedPhone}
+          passVerifiedAt={passVerifiedAt}
+          passError={passError}
+          onRequestPassVerification={onRequestPassVerification}
+          onResetPassVerification={onResetPassVerification}
         />
       ))}
 

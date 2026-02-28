@@ -17,7 +17,7 @@ const PAGE_SIZE = 8;
 function statusLabel(status) {
   switch (String(status || '').toUpperCase()) {
     case 'PENDING':
-      return '승인됨';
+      return '승인대기';
     case 'APPROVED':
       return '승인됨';
     case 'REJECTED':
@@ -116,12 +116,28 @@ export default function OccupyApply() {
   useEffect(() => {
     if (!userTypeLoaded) return;
     (async () => {
-      try {
-        setError('');
-        setNotice('');
-        await Promise.all([loadTours(1), loadContracts(1)]);
-      } catch (e) {
-        setError(e.message || (isLessor ? '승인현황 조회 실패' : '신청현황 조회 실패'));
+      setError('');
+      setNotice('');
+
+      const [tourResult, contractResult] = await Promise.allSettled([loadTours(1), loadContracts(1)]);
+      const errors = [];
+
+      if (tourResult.status === 'rejected') {
+        setTourItems([]);
+        setTourPage(1);
+        setTourTotalPages(0);
+        errors.push(`투어: ${tourResult.reason?.message || '조회 실패'}`);
+      }
+
+      if (contractResult.status === 'rejected') {
+        setContractItems([]);
+        setContractPage(1);
+        setContractTotalPages(0);
+        errors.push(`입주: ${contractResult.reason?.message || '조회 실패'}`);
+      }
+
+      if (errors.length > 0) {
+        setError(`${isLessor ? '승인현황' : '신청현황'} 일부 조회 실패 (${errors.join(' / ')})`);
       }
     })();
   }, [isLessor, loadTours, loadContracts, userTypeLoaded]);

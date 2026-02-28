@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Container, Row, Col, Card, CardBody } from 'reactstrap';
 import MyPageSideNav from '../components/MyPageSideNav';
-import { getMyInfo, isLessorType } from '../api/userAPI';
+import { getIsLessorHint, getMyInfo, isLessorType } from '../api/userAPI';
 import styles from '../../../app/layouts/MyPageLayout.module.css';
 
 const BASE_QUICK_MENUS = [
@@ -35,14 +35,23 @@ const BASE_QUICK_MENUS = [
 ];
 
 export default function MyPageHome() {
-  const [isLessor, setIsLessor] = React.useState(false);
+  const [isLessor, setIsLessor] = React.useState(() => getIsLessorHint());
   const quickMenus = React.useMemo(
     () =>
       BASE_QUICK_MENUS.map((menu) => ({
         ...menu,
-        title: isLessor && menu.lessorTitle ? menu.lessorTitle : menu.title,
+        title:
+          menu.lessorTitle && isLessor === null
+            ? '신청/승인현황'
+            : isLessor && menu.lessorTitle
+              ? menu.lessorTitle
+              : menu.title,
         description:
-          isLessor && menu.lessorDescription ? menu.lessorDescription : menu.description,
+          menu.lessorDescription && isLessor === null
+            ? '투어/입주 신청 상태 확인'
+            : isLessor && menu.lessorDescription
+              ? menu.lessorDescription
+              : menu.description,
       })),
     [isLessor]
   );
@@ -52,11 +61,16 @@ export default function MyPageHome() {
     getMyInfo()
       .then((info) => {
         if (!mounted) return;
-        setIsLessor(isLessorType(info?.type));
+        const nextIsLessor = isLessorType(info?.type);
+        setIsLessor(nextIsLessor);
+        if (info?.type) {
+          localStorage.setItem('userType', String(info.type));
+          sessionStorage.setItem('userType', String(info.type));
+        }
       })
       .catch(() => {
         if (!mounted) return;
-        setIsLessor(false);
+        setIsLessor((prev) => (prev === null ? false : prev));
       });
     return () => {
       mounted = false;
