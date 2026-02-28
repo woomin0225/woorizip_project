@@ -46,20 +46,26 @@ public class HouseServiceImpl implements HouseService {
 		cond.adjustment();
 		
 		List<HouseEntity> rows = houseRepository.searchHouses(cond);
-		Map<String, Long> map= houseRepository.searchPriceOfHouses(cond);
-		Long minDeposit = getOrZero(map, "minDeposit");
-		Long maxDeposit = getOrZero(map, "maxDeposit");
-		Long minMonthly = getOrZero(map, "minMonthly");
-		Long maxMonthly = getOrZero(map, "maxMonthly");
-		
-		List<String> imageNames = new ArrayList<>();
-		for(HouseEntity item : rows) {
-			List<HouseImageEntity> imageRows = houseImageRepository.findAllByHouseNo(item.getHouseNo());
-			imageRows.forEach(entity->imageNames.add(entity.getHouseStoredImageName()));
-		}
-		
+//		log.info("List<HouseEntity>={}",rows);
 		List<HouseMarkerResponse> list = new ArrayList<>();
-		rows.forEach(entity->list.add(new HouseMarkerResponse(entity, minDeposit, maxDeposit, minMonthly, maxMonthly, imageNames)));
+		for(HouseEntity item : rows) {
+			// 각 건물의 이미지이름(stored) 리스트로 만들기
+			List<String> imageNames = new ArrayList<>();
+//			log.info("HOUSENO={}",item.getHouseNo());
+			List<HouseImageEntity> imageRows = houseImageRepository.findAllByHouseNo(item.getHouseNo());
+			
+			imageRows.forEach(entity->imageNames.add(entity.getHouseStoredImageName()));
+			
+			// 검색조건 하의 각 건물들의 최소/최대가격
+			Map<String, Long> map= houseRepository.searchPriceOfHouses(cond, item.getHouseNo());
+			Long minDeposit = getOrZero(map, "minDeposit");
+			Long maxDeposit = getOrZero(map, "maxDeposit");
+			Long minMonthly = getOrZero(map, "minMonthly");
+			Long maxMonthly = getOrZero(map, "maxMonthly");
+			
+			list.add(new HouseMarkerResponse(item, minDeposit, maxDeposit, minMonthly, maxMonthly, imageNames));
+		}		
+		
 		return list;
 	}
 	

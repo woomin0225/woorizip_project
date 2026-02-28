@@ -17,7 +17,7 @@ function MarkerPopup({ house, rooms, onClose }) {
     house?.houseAddressDetail
       ? `${house?.houseAddress ?? ''} ${house.houseAddressDetail}`
       : (house?.houseAddress ?? '');
-
+console.log(house)
   const imgName =
     (Array.isArray(house?.imageNames) ? house.imageNames[0] : null)
 
@@ -256,11 +256,43 @@ export default function MapPanel({ markers = [],
     if (!popup) return;
 
     const el = document.createElement("div");
+    const pos = new kakao.maps.LatLng(popup.lat, popup.lng);
+
+    // ✅ 기본값(중앙 + 위로 뜨게)
+    let xAnchor = 0.5;
+    let yAnchor = 1.1;
+
+    // ✅ 현재 지도 bounds 안에서 마커가 어느 위치에 있는지 비율로 계산
+    try {
+      const b = map.getBounds();
+      const sw = b.getSouthWest();
+      const ne = b.getNorthEast();
+
+      const rx = (popup.lng - sw.getLng()) / (ne.getLng() - sw.getLng()); // 0(왼쪽) ~ 1(오른쪽)
+      const ry = (popup.lat - sw.getLat()) / (ne.getLat() - sw.getLat()); // 0(아래) ~ 1(위)
+
+      // ✅ 좌/우 끝이면 팝업이 “안쪽”으로 붙게
+      if (rx < 0.25) xAnchor = 0.0;      // 마커 기준으로 오른쪽으로 펼쳐짐
+      else if (rx > 0.75) xAnchor = 1.0; // 마커 기준으로 왼쪽으로 펼쳐짐
+      else xAnchor = 0.5;
+
+      // ✅ 위쪽 끝이면 아래로, 아래쪽 끝이면 위로
+      if (ry > 0.75) yAnchor = 0.0;      // 마커 기준 아래로 펼쳐짐
+      else yAnchor = 1.1;                // 기본: 위로 펼쳐짐
+
+      // (선택) 너무 끝이면 살짝 가운데로 이동(팝업 잘림 방지)
+      const needPan = rx < 0.12 || rx > 0.88 || ry < 0.12 || ry > 0.88;
+      if (needPan) setTimeout(() => map.panTo(pos), 0);
+    } catch (e) {
+      // bounds 계산 실패해도 기본 anchor로 뜨게
+    }
+
     const overlay = new kakao.maps.CustomOverlay({
-      position: new kakao.maps.LatLng(popup.lat, popup.lng),
+      position: pos,
       content: el,
-      yAnchor: 1.2,
-      xAnchor: 0.5,
+      xAnchor,
+      yAnchor,
+      clickable: true, // ✅ 팝업 안 링크 클릭 안정
     });
     overlay.setMap(map);
 

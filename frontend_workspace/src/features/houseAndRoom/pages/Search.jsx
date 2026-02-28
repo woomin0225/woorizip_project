@@ -334,6 +334,7 @@ export default function Search() {
       houseNo: mk.houseNo,
       lat: mk.houseLat,
       lng: mk.houseLng,
+      imageNames: mk.imageNames,
       rooms: list,
     });
   }
