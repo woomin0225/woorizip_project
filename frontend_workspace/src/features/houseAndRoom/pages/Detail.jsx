@@ -152,11 +152,15 @@ export default function Detail() {
     <div className={styles.wrap}>
       {/* 좌측 */}
       <aside className={styles.sidebar}>
-        <HouseRoomsPreview rooms={houseRooms} selectedRoomNo={selectedRoomNo} onSelect={onSelectRoom} />
+        <div className={styles.sidebarSticky}>
+          <div className={styles.roomListWrap}>
+            <HouseRoomsPreview rooms={houseRooms} selectedRoomNo={selectedRoomNo} onSelect={onSelectRoom} />
+          </div>
 
-        <div className={styles.sideButtons}>
-          <TourApplyButton roomNo={selectedRoomNo} />
-          <ContractApplyButton roomNo={selectedRoomNo} />
+          <div className={styles.sideButtons}>
+            <TourApplyButton roomNo={selectedRoomNo} />
+            <ContractApplyButton roomNo={selectedRoomNo} />
+          </div>
         </div>
       </aside>
 

@@ -4,7 +4,7 @@ import styles from './HouseRoomsPreview.module.css';
 
 export default function HouseRoomsPreview({ rooms = [], selectedRoomNo, onSelect }) {
   return (
-    <div>
+    <div className={styles.container}>
       <div className={styles.title}>방 목록</div>
 
       <div className={styles.list}>
