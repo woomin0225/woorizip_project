@@ -270,7 +270,7 @@ export default function EstateModify() {
                   <div className={styles.sectionTitle}>기존 건물 사진 삭제 선택</div>
                   <ExistingImagePicker
                     items={houseImages}
-                    baseUrl="/upload_files/house_image"
+                    baseUrl="http://localhost:8080/upload/house_image"
                     selectedIds={deleteHouseImageNos}
                     onToggle={toggleDeleteHouseImage}
                   />
@@ -292,13 +292,13 @@ export default function EstateModify() {
 
           {tab === "ROOM" && (
             <>
-              {!selectedRoomNo && <div className={styles.empty}>왼쪽에서 방을 선택하세요.</div>}
+              {!selectedRoomNo && <div className={styles.empty}>위에서 방을 선택하세요.</div>}
               {selectedRoomNo && room && (
                 <>
                   <div className={styles.sectionTitle}>기존 방 사진 삭제 선택</div>
                   <ExistingImagePicker
                     items={roomImages}
-                    baseUrl="/upload_files/room_image"
+                    baseUrl="http://localhost:8080/upload/room_image"
                     selectedIds={deleteRoomImageNos}
                     onToggle={toggleDeleteRoomImage}
                   />

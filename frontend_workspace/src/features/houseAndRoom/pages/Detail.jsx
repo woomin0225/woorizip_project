@@ -25,12 +25,8 @@ function pickImageName(x) {
   if (!x) return null;
   if (typeof x === 'string') return x;
   return (
-    x.imageName ||
-    x.storedImageName ||
-    x.fileName ||
-    x.roomImageName ||
-    x.houseImageName ||
-    x.name ||
+    x.roomStoredImageName ||
+    x.houseStoredImageName ||
     null
   );
 }
@@ -108,11 +104,13 @@ export default function Detail() {
 
     (async () => {
       try {
+        // console.log(room.houseNo)
         const [houseDto, roomsInHouse, houseImgs] = await Promise.all([
           getHouse(room.houseNo),
           getRoomByHouseNo(room.houseNo),
           getHouseImages(room.houseNo),
         ]);
+        // console.log(houseImgs)
 
         setHouse(houseDto);
         setHouseRooms(roomsInHouse || []);
@@ -125,11 +123,11 @@ export default function Detail() {
 
   // 업로드 경로(UploadProperties 기준)
   const houseImageUrls = useMemo(
-    () => houseImageNames.map((n) => toUrl('/upload_files/house_image', n)).filter(Boolean),
+    () => houseImageNames.map((n) => toUrl(`http://localhost:8080/upload/house_image`, n)).filter(Boolean),
     [houseImageNames]
   );
   const roomImageUrls = useMemo(
-    () => roomImageNames.map((n) => toUrl('/upload_files/room_image', n)).filter(Boolean),
+    () => roomImageNames.map((n) => toUrl(`http://localhost:8080/upload/room_image`, n)).filter(Boolean),
     [roomImageNames]
   );
 

@@ -117,7 +117,7 @@ public class RoomController {
 	public ResponseEntity<ApiResponse<Void>> modifyRoom(
 			@PathVariable("roomNo") String roomNo,
 			@Valid @ModelAttribute RoomDto roomDto,
-			@RequestPart(value="deleteImageNos", required=false) List<Integer> deleteImageNos,
+			@RequestParam(value="deleteImageNos", required=false) List<Integer> deleteImageNos,
 			@RequestPart(value="newImages", required=false) List<MultipartFile> newImages,
 			Authentication auth
 			){
