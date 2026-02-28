@@ -22,6 +22,8 @@ import org.team4p.woorizip.board.post.jpa.entity.PostEntity;
 import org.team4p.woorizip.board.post.jpa.repository.PostRepository;
 import org.team4p.woorizip.board.post.model.dto.PostDto;
 import org.team4p.woorizip.common.exception.NotFoundException;
+import org.team4p.woorizip.user.jpa.entity.UserEntity;
+import org.team4p.woorizip.user.jpa.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,6 +37,7 @@ public class QnaServiceImpl implements QnaService {
 	private final PostRepository postRepository;
 	private final FileRepository fileRepository;
 	private final CommentRepository commentRepository;
+	private final UserRepository userRepository;
 	
 	private static final String BOARD_TYPE_NO = "Q1";
 	
@@ -42,7 +45,15 @@ public class QnaServiceImpl implements QnaService {
 	private ArrayList<PostDto> toList(Page<PostEntity> page) {
 		ArrayList<PostDto> list = new ArrayList<>();
 		for(PostEntity entity : page.getContent()) {
-			list.add(PostDto.fromEntity(entity));
+			PostDto dto = PostDto.fromEntity(entity);
+			
+			UserEntity user = userRepository.findById(entity.getUserNo()).orElse(null);
+			
+			if(user == null || "Y".equals(user.getDeletedYn())) {
+				dto.setUserNo("알 수 없는 사용자");
+			}
+			
+			list.add(dto);
 		}
 		
 		return list;
@@ -94,6 +105,11 @@ public class QnaServiceImpl implements QnaService {
 						new NotFoundException("해당 Q&A 게시글이 존재하지 않습니다."));
 		
 		PostDto dto = PostDto.fromEntity(entity);
+		UserEntity user = userRepository.findById(entity.getUserNo()).orElse(null);
+		
+		if(user == null || "Y".equals(user.getDeletedYn())) {
+			dto.setUserNo("알 수 없는 사용자");
+		}
 		dto.setFiles(getFiles(entity.getPostNo()));
 		
 		//댓글 전체 조회 

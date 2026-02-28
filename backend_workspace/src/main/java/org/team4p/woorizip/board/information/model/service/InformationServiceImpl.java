@@ -17,6 +17,8 @@ import org.team4p.woorizip.board.post.jpa.entity.PostEntity;
 import org.team4p.woorizip.board.post.jpa.repository.PostRepository;
 import org.team4p.woorizip.board.post.model.dto.PostDto;
 import org.team4p.woorizip.common.exception.NotFoundException;
+import org.team4p.woorizip.user.jpa.entity.UserEntity;
+import org.team4p.woorizip.user.jpa.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +31,7 @@ public class InformationServiceImpl implements InformationService {
 
 	private final PostRepository postRepository;
 	private final FileRepository fileRepository;
+	private final UserRepository userRepository;
 
 	// 정책・정보 타입 고정
 	private static final String BOARD_TYPE_NO = "I1";
@@ -38,6 +41,12 @@ public class InformationServiceImpl implements InformationService {
 		ArrayList<PostDto> list = new ArrayList<>();
 		for (PostEntity entity : page) {
 			PostDto dto = PostDto.fromEntity(entity);
+			UserEntity user = userRepository.findById(entity.getUserNo()).orElse(null);
+
+			if(user == null || "Y".equals(user.getDeletedYn())) {
+				dto.setUserNo("알 수 없는 사용자");
+			}
+	        
 			dto.setFiles(getFiles(entity.getPostNo()));
 			list.add(dto);
 		}
@@ -84,6 +93,12 @@ public class InformationServiceImpl implements InformationService {
 				.filter(entity -> BOARD_TYPE_NO.equals(entity.getBoardTypeNo()))
 				.map(entity -> {
 					PostDto dto = PostDto.fromEntity(entity);
+					UserEntity user = userRepository.findById(entity.getUserNo()).orElse(null);
+			        
+			        if(user == null || "Y".equals(user.getDeletedYn())) {
+			        		dto.setUserNo("알 수 없는 사용자");
+			        }
+			        
 					dto.setFiles(getFiles(entity.getPostNo()));
 					return dto;
 				})
