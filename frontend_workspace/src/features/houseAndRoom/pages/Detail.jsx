@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
 import styles from './Detail.module.css';
@@ -41,6 +41,8 @@ export default function Detail() {
   const { userNo: currentUserNo } = useAuth();
   const { roomNo: routeRoomNo } = useParams();
   const [selectedRoomNo, setSelectedRoomNo] = useState(routeRoomNo || '');
+  const roomNameSectionRef = useRef(null);
+  const shouldScrollToRoomRef = useRef(false);
 
   const [room, setRoom] = useState(null);
   const [house, setHouse] = useState(null);
@@ -65,6 +67,12 @@ export default function Detail() {
   useEffect(() => {
     if (routeRoomNo) setSelectedRoomNo(routeRoomNo);
   }, [routeRoomNo]);
+
+  useEffect(() => {
+    if (!selectedRoomNo || !shouldScrollToRoomRef.current) return;
+    roomNameSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    shouldScrollToRoomRef.current = false;
+  }, [selectedRoomNo]);
 
   // 방 선택 → 방/방이미지 로드 + 리뷰 0페이지
   useEffect(() => {
@@ -131,6 +139,11 @@ export default function Detail() {
   );
 
   function onSelectRoom(nextRoomNo) {
+    if (String(nextRoomNo) === String(selectedRoomNo)) {
+      roomNameSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return;
+    }
+    shouldScrollToRoomRef.current = true;
     setSelectedRoomNo(nextRoomNo);
     // 라우트 작업 이후: navigate(`/rooms/${nextRoomNo}`)
   }
@@ -181,7 +194,7 @@ export default function Detail() {
               <HouseMiniMap lat={house?.houseLat} lng={house?.houseLng} />
             </section>
 
-            <section className={styles.section}>
+            <section className={styles.section} ref={roomNameSectionRef}>
               <br/>
               <br/>
               <h3 className={styles.sectionTitle}>🛋️ {room?.roomName}</h3>
