@@ -165,42 +165,48 @@ export default function Detail() {
 
             {/* 1) 건물이미지 */}
             <section className={styles.section}>
-              <h3 className={styles.sectionTitle}>건물 사진</h3>
+              {/* <h3 className={styles.sectionTitle}>건물 사진</h3> */}
               <ImageGallery images={houseImageUrls} />
             </section>
 
             {/* 2) 건물정보 */}
             <section className={styles.section}>
-              <h3 className={styles.sectionTitle}>건물 정보</h3>
+              {/* <h3 className={styles.sectionTitle}>{house?.houseName}</h3> */}
               <HouseInfoCard house={house} />
             </section>
 
             {/* 3) 작은지도(주변 아이콘은 숨김) */}
             <section className={styles.section}>
-              <h3 className={styles.sectionTitle}>위치</h3>
+              <h3 className={styles.sectionTitle}>📍 위치</h3>
               <HouseMiniMap lat={house?.houseLat} lng={house?.houseLng} />
+            </section>
+
+            <section className={styles.section}>
+              <br/>
+              <br/>
+              <h3 className={styles.sectionTitle}>🛋️ {room?.roomName}</h3>
             </section>
 
             {/* 4) 방이미지 */}
             <section className={styles.section}>
-              <h3 className={styles.sectionTitle}>방 사진</h3>
+              {/* <h3 className={styles.sectionTitle}>방 사진</h3> */}
               <ImageGallery images={roomImageUrls} />
             </section>
 
             {/* 5) 방정보 (공실여부 포함) */}
             <section className={styles.section}>
-              <h3 className={styles.sectionTitle}>방 정보</h3>
+              {/* <h3 className={styles.sectionTitle}>방 정보</h3> */}
               <div className={styles.infoGrid}>
-                <div>호실: {room?.roomName ?? '-'}</div>
-                <div>공실여부: {room?.roomEmptyYn ? '공실' : '거주중'}</div>
-                <div>거래: {room?.roomMethod ?? '-'}</div>
-                <div>보증금: {room?.roomDeposit ?? '-'}</div>
-                <div>월세: {room?.roomMonthly ?? '-'}</div>
-                <div>면적: {room?.roomArea ?? '-'}</div>
-                <div>방향: {room?.roomFacing ?? '-'}</div>
-                <div>방 수: {room?.roomRoomCount ?? '-'}</div>
-                <div>욕실 수: {room?.roomBathCount ?? '-'}</div>
-                <div>입주가능일: {room?.roomAvailableDate ?? '-'}</div>
+                {/* <div>🛋️ 호실: {room?.roomName ?? '-'}</div> */}
+                <div>🔑 공실여부: {room?.roomEmptyYn ? '공실' : '거주중'}</div>
+                <div>✍️ 거래: {(room?.roomMethod == 'L' ? '전세' : (room?.roomMethod == 'M' ? '월세' : '-'))}</div>
+                <div>💰 보증금: {room?.roomDeposit ?? '-'}</div>
+                <div>💰 월세: {room?.roomMonthly ?? '-'}</div>
+                <div>📐 면적: {room?.roomArea ?? '-'}</div>
+                <div>🧭 방향: {room?.roomFacing ?? '-'}</div>
+                <div>🛏️ 방 수: {room?.roomRoomCount ?? '-'}</div>
+                <div>🚽 욕실 수: {room?.roomBathCount ?? '-'}</div>
+                <div>📆 입주가능일: {room?.roomAvailableDate ?? '-'}</div>
               </div>
 
               <div className={styles.abstractBox}>{room?.roomAbstract || '소개 내용이 없습니다.'}</div>
@@ -220,7 +226,9 @@ export default function Detail() {
 
             {/* 8) 리뷰(Page + 숫자 페이지네이션) */}
             <section className={styles.section}>
-              <h3 className={styles.sectionTitle}>리뷰</h3>
+              <br/>
+              <br/>
+              {/* <h3 className={styles.sectionTitle}>리뷰</h3> */}
               <ReviewList
                 page={reviewPage}
                 currentUserNo={currentUserNo}

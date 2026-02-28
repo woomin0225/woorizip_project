@@ -9,23 +9,21 @@ function stars(n) {
 export default function ReviewItem({ review, isMine, onEdit, onDelete }) {
   return (
     <div className={styles.row}>
-      <div className={styles.top}>
-        <div className={styles.stars}>{stars(review.rating)}</div>
+      <div className={styles.stars}>{stars(review.rating)}</div>
 
-        <div className={styles.meta}>
-          <span>{review.userNo}</span>
-          <span>{review.reviewCreatedAt}</span>
-        </div>
-
-        {isMine && (
-          <div className={styles.actions}>
-            <button onClick={() => onEdit?.(review)}>수정</button>
-            <button onClick={() => onDelete?.(review)}>삭제</button>
-          </div>
-        )}
+      <div className={styles.meta}>
+        <span>작성자: {review.userNo}</span>
+        <span>작성일: {review.reviewCreatedAt.substr(0, 10)}</span>
       </div>
 
       <div className={styles.content}>{review.reviewContent}</div>
+
+      {isMine && (
+        <div className={styles.actions}>
+          <button onClick={() => onEdit?.(review)}>수정</button>
+          <button onClick={() => onDelete?.(review)}>삭제</button>
+        </div>
+      )}
     </div>
   );
 }

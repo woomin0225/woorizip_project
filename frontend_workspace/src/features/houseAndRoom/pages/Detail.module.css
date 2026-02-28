@@ -2,6 +2,9 @@
   display: grid;
   grid-template-columns: 240px 1fr;
   gap: 16px;
+  width: 100%;
+  max-width: 1520px;
+  margin: 0 auto;
   padding: 16px;
 }
 
