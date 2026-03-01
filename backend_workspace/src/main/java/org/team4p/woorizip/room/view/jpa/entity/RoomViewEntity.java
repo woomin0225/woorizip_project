@@ -23,7 +23,7 @@ public class RoomViewEntity {
 	@EmbeddedId
 	private RoomViewId id;
 	@Column(name="view_count", nullable=false)
-	private Integer viewCount;
+	private Long viewCount;
 	@Column(name="updated_at")
 	private LocalDateTime updatedAt;
 }

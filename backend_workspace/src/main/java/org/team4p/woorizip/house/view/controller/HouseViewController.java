@@ -18,18 +18,15 @@ public class HouseViewController {
 	private final HouseViewService hvService;
 
 	private int parseHours(String period) {
-		return switch (period) {
-			case "DAY1" -> 24;
-			case "DAY7" -> 24 * 7;
-			case "DAY30" -> 24 * 30;
-			default -> 24 * 7;
-		};
+		if(period.startsWith("DAY")) return 7 * 24;
+		
+		return Integer.parseInt(period.substring(3))*24;
 	}
 
 	@GetMapping("/popular")
 	public List<HouseViewResponse> getPopularHouses(
-			@RequestParam(defaultValue = "DAY1") String period,
-			@RequestParam(defaultValue = "10") Integer limit
+			@RequestParam(name="period", defaultValue = "DAY1") String period,
+			@RequestParam(name="limit", defaultValue = "10") Integer limit
 			) {
 		int hours = parseHours(period);
 		return hvService.selectPopularHousesLastHours(hours, limit);

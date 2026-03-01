@@ -6,9 +6,9 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.team4p.woorizip.room.image.jpa.entity.RoomImageEntity;
 import org.team4p.woorizip.room.image.jpa.repository.RoomImageRepository;
 import org.team4p.woorizip.room.view.dto.RoomViewResponse;
 import org.team4p.woorizip.room.view.jpa.repository.RoomViewRepository;
@@ -38,7 +38,9 @@ public class RoomViewServiceImpl implements RoomViewService {
 		
 		String imageName = null;
 		for(RoomViewResponse res : list) {
-			 imageName = riRepository.findTop1ByRoomNoOrderByRoomImageNoAsc(res.getRoomNo());
+			 RoomImageEntity row = riRepository.findTop1ByRoomNoOrderByRoomImageNoAsc(res.getRoomNo());
+			 if(row == null) continue;
+			 imageName = row.getRoomStoredImageName();
 			 res.setRepImageName(imageName);
 		}
 		

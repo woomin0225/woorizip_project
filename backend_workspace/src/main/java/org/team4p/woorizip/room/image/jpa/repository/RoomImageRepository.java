@@ -8,5 +8,5 @@ import org.team4p.woorizip.room.image.jpa.entity.RoomImageEntity;
 public interface RoomImageRepository extends JpaRepository<RoomImageEntity, Integer>, RoomImageRepositoryCustom {
 	List<RoomImageEntity> findAllByRoomNoOrderByRoomImageNo(String roomNo);
 	int countByRoomNo(String roomNo);
-	String findTop1ByRoomNoOrderByRoomImageNoAsc(String roomNo);
+	RoomImageEntity findTop1ByRoomNoOrderByRoomImageNoAsc(String roomNo);
 }

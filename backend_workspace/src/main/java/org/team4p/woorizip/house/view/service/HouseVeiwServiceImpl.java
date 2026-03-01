@@ -7,6 +7,7 @@ import java.util.List;
 
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.team4p.woorizip.house.image.jpa.entity.HouseImageEntity;
 import org.team4p.woorizip.house.image.jpa.repository.HouseImageRepository;
 import org.team4p.woorizip.house.view.dto.HouseViewResponse;
 import org.team4p.woorizip.house.view.jpa.repository.HouseViewRepository;
@@ -35,7 +36,9 @@ public class HouseVeiwServiceImpl implements HouseViewService {
 		
 		String imageName = null;
 		for(HouseViewResponse res : list) {
-			 imageName = hiRepository.findTop1ByHouseNoOrderByHouseImageNoAsc(res.getHouseNo());
+			 HouseImageEntity row = hiRepository.findTop1ByHouseNoOrderByHouseImageNoAsc(res.getHouseNo());
+			 if(row == null) continue;
+			 imageName = row.getHouseStoredImageName();
 			 res.setRepImageName(imageName);
 		}
 		

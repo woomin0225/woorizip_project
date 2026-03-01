@@ -18,4 +18,3 @@ CREATE TABLE tb_house_view_hourly (
   PRIMARY KEY (house_no, hour_start),
   INDEX idx_house_hour (hour_start, house_no)
 ) ENGINE=InnoDB;
-

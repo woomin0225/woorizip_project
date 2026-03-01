@@ -1,18 +1,22 @@
 package org.team4p.woorizip.house.view.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
 
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
+@Getter
+@Setter
 public class HouseViewResponse {
 	private String houseNo;
-	private Integer viewCount;
+	private Long viewCount;
 	private String houseName;
 	private String houseAddress;
 	private String repImageName;	// representative
+	
+	public HouseViewResponse(String houseNo, Number viewCount, String houseName, String houseAddress) {
+		super();
+		this.houseNo = houseNo;
+		this.viewCount = viewCount == null ? 0L : viewCount.longValue();
+		this.houseName = houseName;
+		this.houseAddress = houseAddress;
+	}
 }
