@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import styles from "./EstateModify.module.css";
 
 import { getMyHouses, getHouse, getHouseImages, modifyHouse, getRoomByHouseNo } from "../api/houseApi";
@@ -7,6 +7,7 @@ import { getRoom, getRoomImages, modifyRoom } from "../api/roomApi";
 import HouseForm from "../components/HouseForm";
 import RoomForm from "../components/RoomForm";
 import ExistingImagePicker from "../components/ExistingImagePicker";
+import ScrollToTopButton from "../components/ScrollToTopButton";
 
 export default function EstateModify() {
   const [houses, setHouses] = useState([]);
@@ -29,6 +30,8 @@ export default function EstateModify() {
 
   const [tab, setTab] = useState("HOUSE"); // HOUSE | ROOM
   const [saving, setSaving] = useState(false);
+  const roomPanelRef = useRef(null);
+  const pendingScrollToRoomListRef = useRef(false);
 
   // 1) 내 건물 목록 로드
   useEffect(() => {
@@ -70,6 +73,15 @@ export default function EstateModify() {
       setRooms(roomList || []);
     })();
   }, [selectedHouseNo]);
+
+  useEffect(() => {
+    if (!pendingScrollToRoomListRef.current) return;
+
+    requestAnimationFrame(() => {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      pendingScrollToRoomListRef.current = false;
+    });
+  }, [rooms]);
 
   // 3) room 선택 → room detail/images 로드
   useEffect(() => {
@@ -133,6 +145,11 @@ export default function EstateModify() {
 
       return { ...cur, [name]: value };
     });
+  }
+
+  function handleSelectHouse(houseNo) {
+    pendingScrollToRoomListRef.current = true;
+    setSelectedHouseNo(houseNo);
   }
 
   async function submitHouse(e) {
@@ -218,7 +235,7 @@ export default function EstateModify() {
               <button
                 key={h.houseNo}
                 className={h.houseNo === selectedHouseNo ? styles.selectedBtn : styles.btn}
-                onClick={() => setSelectedHouseNo(h.houseNo)}
+                onClick={() => handleSelectHouse(h.houseNo)}
               >
                 {h.houseName ?? h.houseNo}
               </button>
@@ -229,7 +246,7 @@ export default function EstateModify() {
         {/* 우측: 수정 탭 */}
         <main className={styles.right}>
           {/* 우측 상단: 이 건물의 방 목록 */}
-          <div className={styles.roomPanel}>
+          <div className={styles.roomPanel} ref={roomPanelRef}>
             <div className={styles.blockTitle}>이 건물의 방</div>
 
             {!selectedHouseNo && (
@@ -326,6 +343,7 @@ export default function EstateModify() {
           )}
         </main>
       </div>
+      <ScrollToTopButton />
     </div>
   );
 }

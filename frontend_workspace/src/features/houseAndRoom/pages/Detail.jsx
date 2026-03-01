@@ -14,6 +14,7 @@ import HouseMiniMap from './../components/Detail/HouseMiniMap';
 import RoomOptionList from './../components/Detail/RoomOptionList';
 import FacilityList from './../components/Detail/FacilityList';
 import ReviewList from './../components/Detail/ReviewList';
+import ScrollToTopButton from './../components/ScrollToTopButton';
 
 import { useAuth } from '../../../app/providers/AuthProvider';
 
@@ -143,20 +144,6 @@ export default function Detail() {
     () => roomImageNames.map((n) => toUrl(`http://localhost:8080/upload/room_image`, n)).filter(Boolean),
     [roomImageNames]
   );
-  const scrollTopButtonStyle = {
-    position: 'fixed',
-    right: '16px',
-    bottom: '16px',
-    zIndex: 1200,
-    padding: '10px 14px',
-    border: '1px solid #ddd',
-    borderRadius: '999px',
-    background: '#fff',
-    color: '#222',
-    lineHeight: 1,
-    fontWeight: 700,
-    cursor: 'pointer',
-  };
 
   function onSelectRoom(nextRoomNo) {
     if (String(nextRoomNo) === String(selectedRoomNo)) {
@@ -166,10 +153,6 @@ export default function Detail() {
     shouldScrollToRoomRef.current = true;
     setSelectedRoomNo(nextRoomNo);
     // 라우트 작업 이후: navigate(`/rooms/${nextRoomNo}`)
-  }
-
-  function onScrollToTop() {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   return (
@@ -281,9 +264,7 @@ export default function Detail() {
           </>
         )}
       </main>
-      <button type="button" onClick={onScrollToTop} style={scrollTopButtonStyle} aria-label="scroll to top">
-        {'\u2191'}
-      </button>
+      <ScrollToTopButton />
     </div>
   );
 }
