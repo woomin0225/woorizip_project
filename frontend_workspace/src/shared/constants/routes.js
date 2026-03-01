@@ -29,7 +29,7 @@
   ADMIN: {
     MEMBERS: '/admin/members',
     CATEGORY: '/admin/categories',
-    CATEGORY_FORM: '/admin/categories/:facilityCode',
+    CATEGORY_FORM: '/admin/categories/form/:facilityCode?',
   },
 
   USER: {

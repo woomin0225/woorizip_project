@@ -9,13 +9,12 @@ export const useFacilityList = (houseNo) => {
   const [error, setError] = useState(null);
 
   const loadFacilities = useCallback(async () => {
-    if (!houseNo) return;
-
     try {
       setLoading(true);
       setError(null);
 
-      const data = await getFacilityList(houseNo);
+      const response = await getFacilityList(houseNo);
+      const data = unwrapApi(response);
       setFacilities(data || []);
     } catch (err) {
       setError(err);
