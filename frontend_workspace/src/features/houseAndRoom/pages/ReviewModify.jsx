@@ -9,7 +9,7 @@ export default function ReviewModify() {
   const { state } = useLocation();
 
   // ReviewList에서 Link state로 넘겨준 review 사용
-  const review = state?.review;
+  const review = state?.review ?? state?.r;
   const initialRating = review?.rating ?? 5;
   const initialContent = review?.reviewContent ?? "";
 

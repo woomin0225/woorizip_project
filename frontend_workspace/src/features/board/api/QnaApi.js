@@ -14,10 +14,9 @@ export function fetchQnaList(params) {
 
 // 검색 =========================================
 export async function searchQna(req) {
-  const { data } = await apiJson().get('/api/qna/search', {
+  return apiJson().get('/api/qna/search', {
     params: req,
   });
-  return data;
 }
 
 // 상세 =========================================

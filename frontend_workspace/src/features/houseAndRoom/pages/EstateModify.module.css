@@ -69,3 +69,19 @@
   margin: 12px 0 8px 0;
   font-weight: 900;
 }
+
+.roomPanel {
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+}
+
+/* 방 목록 버튼: 가로 배치 + 줄바꿈 */
+.roomList {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px;
+  max-height: 220px;
+  overflow: auto;
+  padding-right: 4px;
+}

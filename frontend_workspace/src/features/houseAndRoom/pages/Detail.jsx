@@ -14,7 +14,7 @@ import RoomOptionList from './../components/Detail/RoomOptionList';
 import FacilityList from './../components/Detail/FacilityList';
 import ReviewList from './../components/Detail/ReviewList';
 
-import { tokenStore } from '../../../app/http/tokenStore';
+import { useAuth } from '../../../app/providers/AuthProvider';
 
 import { getRoom, getRoomImages, getRoomReviews } from './../api/roomApi';
 import { getHouse, getHouseImages, getRoomByHouseNo } from './../api/houseApi';
@@ -25,12 +25,8 @@ function pickImageName(x) {
   if (!x) return null;
   if (typeof x === 'string') return x;
   return (
-    x.imageName ||
-    x.storedImageName ||
-    x.fileName ||
-    x.roomImageName ||
-    x.houseImageName ||
-    x.name ||
+    x.roomStoredImageName ||
+    x.houseStoredImageName ||
     null
   );
 }
@@ -42,6 +38,7 @@ function toUrl(base, name) {
 }
 
 export default function Detail() {
+  const { userNo: currentUserNo } = useAuth();
   const { roomNo: routeRoomNo } = useParams();
   const [selectedRoomNo, setSelectedRoomNo] = useState(routeRoomNo || '');
 
@@ -58,8 +55,6 @@ export default function Detail() {
   const [reviewPage, setReviewPage] = useState(null);
 
   const [loading, setLoading] = useState(false);
-
-  const currentUserNo = useMemo(() => tokenStore.getUserId(), []);
 
   const refreshReviews = async () => {
     if (!selectedRoomNo) return;
@@ -108,11 +103,13 @@ export default function Detail() {
 
     (async () => {
       try {
+        // console.log(room.houseNo)
         const [houseDto, roomsInHouse, houseImgs] = await Promise.all([
           getHouse(room.houseNo),
           getRoomByHouseNo(room.houseNo),
           getHouseImages(room.houseNo),
         ]);
+        // console.log(houseImgs)
 
         setHouse(houseDto);
         setHouseRooms(roomsInHouse || []);
@@ -125,11 +122,11 @@ export default function Detail() {
 
   // 업로드 경로(UploadProperties 기준)
   const houseImageUrls = useMemo(
-    () => houseImageNames.map((n) => toUrl('/upload_files/house_image', n)).filter(Boolean),
+    () => houseImageNames.map((n) => toUrl(`http://localhost:8080/upload/house_image`, n)).filter(Boolean),
     [houseImageNames]
   );
   const roomImageUrls = useMemo(
-    () => roomImageNames.map((n) => toUrl('/upload_files/room_image', n)).filter(Boolean),
+    () => roomImageNames.map((n) => toUrl(`http://localhost:8080/upload/room_image`, n)).filter(Boolean),
     [roomImageNames]
   );
 

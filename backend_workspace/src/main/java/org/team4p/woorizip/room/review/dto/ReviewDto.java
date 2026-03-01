@@ -20,13 +20,13 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class ReviewDto {
 	@Null
-	private int reviewNo;
-	@Null
+	private Integer reviewNo;
+	
 	private String roomNo;
 	@Null(message="userNo는 백엔드에서 설정")
 	private String userNo;
-	@Min(value = 1) @Max(value = 5) @NumericOnly
-	private int rating;
+	@Min(value = 1) @Max(value = 5)
+	private Integer rating;
 	
 	private String reviewContent;
 	@Null

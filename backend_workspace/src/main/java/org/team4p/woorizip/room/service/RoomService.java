@@ -20,4 +20,5 @@ public interface RoomService {
 	
 	Slice<RoomSearchResponse> selectRoomsInHouseMarker(RoomSearchCondition cond, Pageable pageable, String houseNo);
 	void updateRoomImageCount(String roomNo, int imageCount);
+	RoomDto updateRoomEmptyYn(String roomNo, String currentUser);
 }

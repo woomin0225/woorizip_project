@@ -64,13 +64,31 @@ export function useInformationList() {
 
       let resp;
       if (query.mode === 'search') {
-        resp = await searchInformation({
+        const searchReq = {
           ...baseReq,
           type: query.type,
-          keyword: query.keyword,
-          begin: query.begin,
-          end: query.end,
-        });
+        };
+
+        if (query.type === 'date') {
+          if (!query.begin || !query.end) {
+            setErr('시작일과 종료일을 모두 선택해주세요.');
+            setLoading(false);
+            return;
+          }
+
+          searchReq.begin = query.begin;
+          searchReq.end = query.end;
+        } else {
+          if (!query.keyword) {
+            setErr('검색어를 입력해주세요.');
+            setLoading(false);
+            return;
+          }
+
+          searchReq.keyword = query.keyword;
+        }
+
+        resp = await searchInformation(searchReq);
       } else {
         resp = await fetchInformationList(baseReq);
       }
@@ -95,16 +113,35 @@ export function useInformationList() {
     query.page,
     query.size,
     query.type,
-    query.keyword,
-    query.begin,
-    query.end,
     query.sort,
     query.direct,
   ]);
 
   const onSubmitSearch = async (e) => {
     e.preventDefault();
-    setQuery({ mode: 'search', page: 1 });
+
+    if (query.type === 'date') {
+      if (!query.begin || !query.end) {
+        setErr('시작일과 종료일을 모두 선택해주세요.');
+        return;
+      }
+    } else {
+      if (!query.keyword) {
+        setErr('검색어를 입력해주세요.');
+        return;
+      }
+    }
+
+    if (query.mode === 'search' && query.page === 1) {
+      load();
+      return;
+    }
+
+    setQuery((prev) => ({
+      ...prev,
+      mode: 'search',
+      page: 1,
+    }));
   };
 
   const onReset = () => {

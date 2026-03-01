@@ -1,5 +1,5 @@
 // src/features/board/hooks/useEventList.js
-import { use, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useQueryState } from '../../../shared/hooks/useQueryState';
 import { unwrapApi } from '../../../shared/utils/apiUnwrap';
 import { fetchEventList, searchEvent } from '../api/EventApi';
@@ -66,19 +66,36 @@ export function useEventList() {
       let resp;
 
       if (query.mode === 'search') {
-        resp = await searchEvent({
+        const searchReq = {
           ...baseReq,
           type: query.type,
-          keyword: query.keyword,
-          begin: query.begin,
-          end: query.end,
-        });
+        };
+
+        if (query.type === 'date') {
+          if (!query.begin || !query.end) {
+            setErr('시작일과 종료일을 모두 선택해주세요.');
+            setLoading(false);
+            return;
+          }
+
+          searchReq.begin = query.begin;
+          searchReq.end = query.end;
+        } else {
+          if (!query.keyword) {
+            setErr('검색어를 입력해주세요.');
+            setLoading(false);
+            return;
+          }
+
+          searchReq.keyword = query.keyword;
+        }
+
+        resp = await searchEvent(searchReq);
       } else {
         resp = await fetchEventList(baseReq);
       }
 
       const body = unwrapApi(resp);
-
       setPageResponse(body ? { ...body, page: query.page } : null);
     } catch (error) {
       console.error(error);
@@ -90,15 +107,13 @@ export function useEventList() {
   };
 
   useEffect(() => {
-    load(); // eslint-disable-next-line react-hooks/exhaustive-deps
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     query.mode,
     query.page,
     query.size,
     query.type,
-    query.keyword,
-    query.begin,
-    query.end,
     query.sort,
     query.direct,
   ]);
@@ -106,7 +121,29 @@ export function useEventList() {
   // 검색 동작 =====================================
   const onSubmitSearch = async (e) => {
     e.preventDefault();
-    setQuery({ mode: 'search', page: 1 });
+
+    if (query.type === 'date') {
+      if (!query.begin || !query.end) {
+        setErr('시작일과 종료일을 모두 선택해주세요.');
+        return;
+      }
+    } else {
+      if (!query.keyword) {
+        setErr('검색어를 입력해주세요.');
+        return;
+      }
+    }
+
+    if (query.mode === 'search' && query.page === 1) {
+      load();
+      return;
+    }
+
+    setQuery((prev) => ({
+      ...prev,
+      mode: 'search',
+      page: 1,
+    }));
   };
 
   const onReset = () => {
@@ -122,9 +159,20 @@ export function useEventList() {
 
   const onChangeType = (nextType) => {
     if (nextType === 'date') {
-      setQuery({ type: 'date', keyword: '', page: 1 });
+      setQuery((prev) => ({
+        ...prev,
+        type: 'date',
+        keyword: '',
+        page: 1,
+      }));
     } else {
-      setQuery({ type: nextType, begin: '', end: '', page: 1 });
+      setQuery((prev) => ({
+        ...prev,
+        type: nextType,
+        begin: '',
+        end: '',
+        page: 1,
+      }));
     }
   };
 

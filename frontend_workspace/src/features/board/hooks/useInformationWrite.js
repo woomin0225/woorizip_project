@@ -41,7 +41,13 @@ export function useInformationWrite({ navigate }) {
   // 유효성 검사
   const validate = () => {
     if (!form.postTitle.trim()) return '제목을 입력하세요.';
-    if (!form.postContent.trim()) return '내용을 입력하세요.';
+
+    const plainText = form.postContent
+      .replace(/<[^>]*>/g, '')
+      .replace(/%nbsp;/g, '')
+      .trim();
+
+    if (!plainText) return '내용을 입력하세요.';
     return '';
   };
 

@@ -20,7 +20,9 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Repository
 @RequiredArgsConstructor
 public class HouseRepositoryCustomImpl implements HouseRepositoryCustom {
@@ -130,7 +132,7 @@ public class HouseRepositoryCustomImpl implements HouseRepositoryCustom {
 	}
 
 	@Override
-	public Map<String, Long> searchPriceOfHouses(RoomSearchCondition cond) {
+	public Map<String, Long> searchPriceOfHouses(RoomSearchCondition cond, String houseNo) {
 		// 건물 마커 조회시 최소 가격 조회
 		
 		// 조건 생성 시작
@@ -206,6 +208,7 @@ public class HouseRepositoryCustomImpl implements HouseRepositoryCustom {
 			where.and(qhouseEntity.houseParkingMax.gt(0));
 		}
 		
+		where.and(qroomEntity.houseNo.eq(houseNo));
 		where.and(qhouseEntity.deleted.isFalse());
 		
 		Long min;
