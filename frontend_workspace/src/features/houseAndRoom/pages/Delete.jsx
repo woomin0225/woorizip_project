@@ -107,7 +107,7 @@ export default function Delete() {
 
         // ✅ 건물 삭제 후: 내 건물 목록 갱신 + 선택 초기화
         const list = await getMyHouses();
-        setHouses((list || [])).filter(Boolean);
+        setHouses((list || []).filter(Boolean));
         setSelectedHouseNo("");
         setRooms([]);
         alert("건물이 삭제되었습니다.");
@@ -128,7 +128,7 @@ export default function Delete() {
   const modalMessage = !target
     ? ""
     : target.type === "HOUSE"
-    ? `건물(${target.houseName ?? target.houseNo})을(를) 삭제할까요?\n(건물에 속한 방이 남아있으면 삭제가 실패할 수 있어요.)`
+    ? `건물(${target.houseName ?? target.houseNo})을(를) 삭제할까요?\n(건물에 속한 방도 삭제됩니다.)`
     : `방(${target.roomName ?? target.roomNo})을(를) 삭제할까요?`;
 
   return (
