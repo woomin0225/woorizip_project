@@ -48,8 +48,10 @@ export async function getRoomImages(roomNo){
 }
 
 // 방 상세 리뷰 조회 GET
-export async function getRoomReviews(roomNo, page, size){
-    const {data} = await apiJson().get(`/api/rooms/${roomNo}/reviews`, {params: {page, size}});
+export async function getRoomReviews(roomNo, page=0, size=10, options={}){
+    const params = {page, size};
+    if(options?.sort) params.sort = options.sort;
+    const {data} = await apiJson().get(`/api/rooms/${roomNo}/reviews`, {params});
     return unwrap(data);    // Page<ReviewDto>
 }
 

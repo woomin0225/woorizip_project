@@ -2,11 +2,12 @@ import { useState, useEffect } from "react";
 import PropTypes from 'prop-types';
 import { getPopularHouses, getPopularRooms } from "../../api/viewApi";
 import EstateRankingList from './EstateRankingList';
+import styles from './EstateRankingFrame.module.css';
 
 EstateRankingFrame.propTypes ={
     type: PropTypes.oneOf(['room', 'house']).isRequired,
     period: PropTypes.number.isRequired,
-    RankingTitle: PropTypes.string,
+    rankingTitle: PropTypes.string,
     limit: PropTypes.number
 }
 
@@ -32,11 +33,14 @@ export default function EstateRankingFrame({type, period, rankingTitle, limit=10
     }, [type, period, limit]);
 
     return (
-        <div>
-            <div>
-                <h4>{rankingTitle}</h4>
+        <section className={styles.section}>
+            <div className={styles.header}>
+                <h4 className={styles.title}>{rankingTitle}</h4>
+                <span className={styles.subTitle}>{`Last ${period} day${period > 1 ? "s" : ""}`}</span>
+            </div>
+            <div className={styles.listWrap}>
                 <EstateRankingList list={list} type={type}/>
             </div>
-        </div>
+        </section>
     );
 }

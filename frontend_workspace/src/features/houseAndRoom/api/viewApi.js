@@ -1,5 +1,5 @@
 // src/features/houseAndRoom/api/viewApi.js
-import { apiJson, apiForm } from '../../../app/http/request';
+import { apiJson } from '../../../app/http/request';
 
 function unwrap(res) {
   return (res && typeof res === "object" && "data" in res) ? res.data : res;
