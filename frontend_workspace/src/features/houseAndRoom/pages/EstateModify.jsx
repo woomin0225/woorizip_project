@@ -7,7 +7,7 @@ import { getRoom, getRoomImages, modifyRoom } from "../api/roomApi";
 import HouseForm from "../components/HouseForm";
 import RoomForm from "../components/RoomForm";
 import ExistingImagePicker from "../components/ExistingImagePicker";
-import ScrollToTopButton from "../components/ScrollToTopButton";
+import ScrollToTopButton from "../../../shared/components/ScrollToTopButton";
 
 export default function EstateModify() {
   const [houses, setHouses] = useState([]);

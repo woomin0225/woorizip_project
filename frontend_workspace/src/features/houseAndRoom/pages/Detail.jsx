@@ -14,7 +14,7 @@ import HouseMiniMap from './../components/Detail/HouseMiniMap';
 import RoomOptionList from './../components/Detail/RoomOptionList';
 import FacilityList from './../components/Detail/FacilityList';
 import ReviewList from './../components/Detail/ReviewList';
-import ScrollToTopButton from './../components/ScrollToTopButton';
+import ScrollToTopButton from '../../../shared/components/ScrollToTopButton';
 
 import { useAuth } from '../../../app/providers/AuthProvider';
 
