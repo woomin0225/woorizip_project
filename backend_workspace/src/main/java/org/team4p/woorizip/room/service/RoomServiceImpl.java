@@ -128,19 +128,37 @@ public class RoomServiceImpl implements RoomService {
 		if (roomResult != 1L) throw new IllegalStateException("방 정보 삭제 실패");
 	}
 
-	@Override
-	public RoomDto selectRoom(String roomNo) {
+	private RoomDto selectRoomCore(String roomNo) {
+		// selectRoom의 조회수 처리 분기용 공통 로직
 		// 방 상세 조회
 		Optional<RoomEntity> optional = roomRepository.findById(roomNo);
 		if(!optional.isPresent()) throw new NotFoundException("해당 방을 조회할 수 없습니다.");
 		RoomEntity roomEntity = optional.get();
 		if(roomEntity == null) throw new NotFoundException("해당 방을 조회할 수 없습니다.");
 		RoomDto roomDto = roomEntity.toDto();
+
+		return roomDto;
+	}
+
+	@Override
+	public RoomDto selectRoom(String roomNo) {
+		// 방 상세 조회
+		RoomDto roomDto = selectRoomCore(roomNo);
 		
 		// 조회수 증가
 		try {
 			rvService.upsertRoomView(roomNo);
 		} catch (Exception ignored) {}	// 조회수 처리 실패해도 상세보기는 성공하도록
+		
+		return roomDto;
+	}
+
+	@Override
+	public RoomDto selectRoomForEdit(String roomNo) {
+		// 방 상세 조회
+		RoomDto roomDto = selectRoomCore(roomNo);
+		
+		// 조회수 처리 안함
 		
 		return roomDto;
 	}

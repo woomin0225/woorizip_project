@@ -87,19 +87,39 @@ public class HouseServiceImpl implements HouseService {
 		return list;
 	}
 
-	@Override
-	public HouseDto selectHouse(String houseNo) {
+	private HouseDto selectHouseCore(String houseNo) {
+		// selectHouse의 조회수 처리 분기용
 		// 건물 상세 조회
 		Optional<HouseEntity> row = houseRepository.findById(houseNo);
 		if(!row.isPresent()) throw new NotFoundException("해당 건물을 조회할 수 없습니다.");
 		HouseEntity houseEntity = row.get();
 		if(houseEntity == null) throw new NotFoundException("해당 건물을 조회할 수 없습니다.");
-		
+		HouseDto houseDto = houseEntity.toDto();
+
+		return houseDto;
+	}
+
+	@Override
+	public HouseDto selectHouse(String houseNo) {
+		// 건물 상세 조회
+		HouseDto houseDto = selectHouseCore(houseNo);
+
+		// 조회수 증가 처리
 		try {
 			hvService.upsertHouseView(houseNo);
 		} catch (Exception ignored) {}		// 조회수 처리 실패해도 상세보기는 성공하도록
 		
-		return houseEntity.toDto();
+		return houseDto;
+	}
+
+	@Override
+	public HouseDto selectHouseForEdit(String houseNo) {
+		// 건물 상세 조회
+		HouseDto houseDto = selectHouseCore(houseNo);
+
+		// 조회수 처리 안함
+		
+		return houseDto;
 	}
 
 	@Override

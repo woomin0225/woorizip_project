@@ -98,6 +98,13 @@ public class RoomController {
 		RoomDto room = roomService.selectRoom(roomNo);
 		return ResponseEntity.status(200).body(ApiResponse.ok("방 목록 조회 성공", room));
 	}
+
+	@GetMapping("/{roomNo}/edit")
+	public ResponseEntity<ApiResponse<RoomDto>> getRoomForEdit(@PathVariable("roomNo") String roomNo){
+		// 방 상세 조회(편집용)
+		RoomDto room = roomService.selectRoomForEdit(roomNo);
+		return ResponseEntity.status(200).body(ApiResponse.ok("방 목록 조회 성공", room));
+	}
 	
 	@GetMapping("/{roomNo}/images")
 	public ResponseEntity<ApiResponse<List<RoomImageDto>>> getRoomImages(@PathVariable("roomNo") String roomNo) {

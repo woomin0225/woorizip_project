@@ -14,6 +14,7 @@ public interface RoomService {
 	RoomDto insertRoom(RoomDto roomDto, String currentUser);
 	void deleteRoom(String roomNo, String currentUserNo);
 	RoomDto selectRoom(String roomNo);
+	RoomDto selectRoomForEdit(String roomNo);
 	List<RoomDto> selectRoomsByHouseNo(String houseNo);
 	RoomDto updateRoom(RoomDto roomDto, String currentUser);
 	RoomDto updateRoomAvailability(String roomNo, LocalDate date, String userNo);

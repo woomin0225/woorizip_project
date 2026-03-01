@@ -72,6 +72,13 @@ public class HouseController {
 		HouseDto house = houseService.selectHouse(houseNo);
 		return ResponseEntity.status(200).body(ApiResponse.ok("건물 상세 조회 성공", house));
 	}
+
+	@GetMapping("/{houseNo}/edit")
+	public ResponseEntity<ApiResponse<HouseDto>> getHouseForEdit(@PathVariable("houseNo") String houseNo){
+		// 건물 상세 조회
+		HouseDto house = houseService.selectHouseForEdit(houseNo);
+		return ResponseEntity.status(200).body(ApiResponse.ok("건물 상세 조회 성공", house));
+	}
 	
 	@PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	public ResponseEntity<ApiResponse<Void>> createHouse(

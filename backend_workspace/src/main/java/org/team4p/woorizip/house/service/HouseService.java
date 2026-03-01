@@ -11,6 +11,7 @@ public interface HouseService {
 	List<HouseMarkerResponse> selectHouseMarkers(RoomSearchCondition cond);
 	List<HouseDto> selectHousesByOwnerNo(String userNo);
 	HouseDto selectHouse(String houseNo);
+	HouseDto selectHouseForEdit(String houseNo);
 	HouseDto insertHouse(HouseDto houseDto, String currentUser);
 	HouseDto updateHouse(HouseDto houseDto, String currentUser);
 	void deleteHouse(String houseNo, String currentUser);
