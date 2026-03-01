@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import styles from './ResultItem.module.css';
 
@@ -55,6 +55,7 @@ export default function ResultItem({
     // ✅ Hook은 항상 호출되어야 함 (early return 금지)
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isWished, setIsWished] = useState(!!wished);
+    const [slideDirection, setSlideDirection] = useState('next');
 
     // ✅ roomSearchResponse가 없을 수도 있다고 가정하고 "안전한 room" 준비
     const room = roomSearchResponse ?? {};
@@ -68,11 +69,28 @@ export default function ResultItem({
       [room.imageNames]
     );
     const total = images.length;
+    const parsedCount = Number(
+      room.roomImageCount ?? room.imageCount ?? room.imageCnt ?? NaN
+    );
+    const imageCount = Math.max(
+      images.length,
+      Number.isFinite(parsedCount) && parsedCount >= 0 ? parsedCount : 0
+    );
+
+    useEffect(() => {
+      setCurrentIndex((i) => (total === 0 ? 0 : Math.min(i, total - 1)));
+    }, [total]);
+
+    useEffect(() => {
+      setIsWished(!!wished);
+    }, [wished]);
 
     function prevClick() {
+      setSlideDirection('prev');
       setCurrentIndex((i) => Math.max(0, i - 1));
     }
     function nextClick() {
+      setSlideDirection('next');
       setCurrentIndex((i) => Math.min(Math.max(total - 1, 0), i + 1));
     }
 
@@ -113,15 +131,24 @@ export default function ResultItem({
 
         <div className={styles.body}>
           <div className={styles.thumb}>
-            {images.length === 0 ? (
-              <div className={styles.noImage}>Empty</div>
-            ) : (
-              <img
-                className={styles.thumbImg}
-                src={imgUrl(images[currentIndex])}
-                alt="room"
-              />
-            )}
+            <Link
+              className={styles.thumbLink}
+              to={`/rooms/${room.roomNo}`}
+              aria-label={`${room.roomName ?? 'room'} detail`}
+            >
+              {images.length === 0 ? (
+                <div className={styles.noImage}>Empty</div>
+              ) : (
+                <img
+                  key={`${room.roomNo}-${images[currentIndex]}`}
+                  className={`${styles.thumbImg} ${
+                    slideDirection === 'prev' ? styles.slidePrev : styles.slideNext
+                  }`}
+                  src={imgUrl(images[currentIndex])}
+                  alt="room"
+                />
+              )}
+            </Link>
 
             {images.length > 1 && (
               <div className={styles.thumbNav}>
@@ -135,7 +162,7 @@ export default function ResultItem({
             )}
 
             <div className={styles.photoCount}>
-              {room.roomImageCount ?? images.length}개 사진
+              {imageCount}개 사진
             </div>
           </div>
 
