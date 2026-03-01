@@ -9,7 +9,7 @@ function methodLabel(method) {
   return method ?? '';
 }
 
-function formatMoneyKRW(value) {
+export function formatMoneyKRW(value) {
   if (value === null || value === undefined) return '';
   const n = Number(value);
   if (Number.isNaN(n)) return String(value);
@@ -30,11 +30,13 @@ function priceText(room) {
   const method = room?.roomMethod;
   const deposit = formatMoneyKRW(room?.roomDeposit);
   const monthly = formatMoneyKRW(room?.roomMonthly);
+  const depositText = deposit ? `${deposit} 원` : '';
+  const monthlyText = monthly ? `${monthly} 원` : '';
 
   if (method === 'M')
-    return `보증금 ${deposit}${monthly ? ` / 월세 ${monthly}` : ''}`;
-  if (method === 'L') return `전세 ${deposit}`;
-  return [deposit, monthly].filter(Boolean).join(' / ');
+    return `보증금 ${depositText}${monthlyText ? ` / 월세 ${monthlyText}` : ''}`;
+  if (method === 'L') return `전세 ${depositText}`;
+  return [depositText, monthlyText].filter(Boolean).join(' / ');
 }
 
 function occupancyLabel(roomCount) {

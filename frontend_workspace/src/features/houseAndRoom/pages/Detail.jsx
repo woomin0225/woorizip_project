@@ -6,6 +6,7 @@ import styles from './Detail.module.css';
 import HouseRoomsPreview from './../components/Detail/HouseRoomsPreview';
 import TourApplyButton from './../components/Detail/TourApplyButton';
 import ContractApplyButton from './../components/Detail/ContractApplyButton';
+import { formatMoneyKRW } from './../components/Search/ResultItem';
 
 import ImageGallery from './../components/Detail/ImageGallery';
 import HouseInfoCard from './../components/Detail/HouseInfoCard';
@@ -35,6 +36,11 @@ function toUrl(base, name) {
   if (!name) return null;
   if (name.startsWith('http')) return name;
   return `${base}/${name}`;
+}
+
+function toKrwText(value) {
+  const money = formatMoneyKRW(value);
+  return money ? `${money} 원` : '-';
 }
 
 export default function Detail() {
@@ -137,6 +143,20 @@ export default function Detail() {
     () => roomImageNames.map((n) => toUrl(`http://localhost:8080/upload/room_image`, n)).filter(Boolean),
     [roomImageNames]
   );
+  const scrollTopButtonStyle = {
+    position: 'fixed',
+    right: '16px',
+    bottom: '16px',
+    zIndex: 1200,
+    padding: '10px 14px',
+    border: '1px solid #ddd',
+    borderRadius: '999px',
+    background: '#fff',
+    color: '#222',
+    lineHeight: 1,
+    fontWeight: 700,
+    cursor: 'pointer',
+  };
 
   function onSelectRoom(nextRoomNo) {
     if (String(nextRoomNo) === String(selectedRoomNo)) {
@@ -146,6 +166,10 @@ export default function Detail() {
     shouldScrollToRoomRef.current = true;
     setSelectedRoomNo(nextRoomNo);
     // 라우트 작업 이후: navigate(`/rooms/${nextRoomNo}`)
+  }
+
+  function onScrollToTop() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   return (
@@ -217,8 +241,8 @@ export default function Detail() {
                 {/* <div>🛋️ 호실: {room?.roomName ?? '-'}</div> */}
                 <div>🔑 공실여부: {room?.roomEmptyYn ? '공실' : '거주중'}</div>
                 <div>✍️ 거래: {(room?.roomMethod == 'L' ? '전세' : (room?.roomMethod == 'M' ? '월세' : '-'))}</div>
-                <div>💰 보증금: {room?.roomDeposit ?? '-'}</div>
-                <div>💰 월세: {room?.roomMonthly ?? '-'}</div>
+                <div>💰 보증금: {toKrwText(room?.roomDeposit)}</div>
+                <div>💰 월세: {toKrwText(room?.roomMonthly)}</div>
                 <div>📐 면적: {room?.roomArea ?? '-'}</div>
                 <div>🧭 방향: {room?.roomFacing ?? '-'}</div>
                 <div>🛏️ 방 수: {room?.roomRoomCount ?? '-'}</div>
@@ -257,6 +281,9 @@ export default function Detail() {
           </>
         )}
       </main>
+      <button type="button" onClick={onScrollToTop} style={scrollTopButtonStyle} aria-label="scroll to top">
+        {'\u2191'}
+      </button>
     </div>
   );
 }
