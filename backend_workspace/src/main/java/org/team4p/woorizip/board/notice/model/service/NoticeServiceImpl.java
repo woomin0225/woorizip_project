@@ -139,16 +139,19 @@ public class NoticeServiceImpl implements NoticeService {
 		postDto.setPostNo(null);
 		
 		PostEntity saved = postRepository.save(postDto.toEntity());
+		boolean hasFiles = postDto.getFiles() != null && !postDto.getFiles().isEmpty();
 		
 		if(saved.getPostNo() == null) {
 			throw new IllegalStateException("공지사항 게시글 등록에 실패했습니다.");
 		}
 		
-		if(postDto.getFiles() != null) {
+		if(hasFiles) {
 			for(FileDto fileDto : postDto.getFiles()) {
 				fileDto.setPostNo(saved.getPostNo());
 				fileRepository.save(fileDto.toEntity());
 			}
+			
+			saved.setPostFilesYn(true);
 		}
 		
 		return 1;
@@ -176,12 +179,15 @@ public class NoticeServiceImpl implements NoticeService {
 		}
 		
 		//새 파일 추가 
-		if(postDto.getFiles() != null) {
+		if(postDto.getFiles() != null && !postDto.getFiles().isEmpty()) {
 			for(FileDto fileDto : postDto.getFiles()) {
 				fileDto.setPostNo(postDto.getPostNo());
 				fileRepository.save(fileDto.toEntity());
 			}
 		}
+		
+		boolean hasFiles = !fileRepository.findByPostNo(postDto.getPostNo()).isEmpty();
+		entity.setPostFilesYn(hasFiles);
 		
 		return 1;
 	}

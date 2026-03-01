@@ -181,6 +181,7 @@ public class EventServiceImpl implements EventService {
 
 		// 이벤트 게시글 저장
 		PostEntity saved = postRepository.save(postDto.toEntity());
+		boolean hasFiles = postDto.getFiles() != null && !postDto.getFiles().isEmpty();
 
 		if (saved.getPostNo() == null)
 			throw new IllegalStateException("이벤트 게시글 등록에 실패했습니다.");
@@ -188,11 +189,13 @@ public class EventServiceImpl implements EventService {
 		Integer postNo = saved.getPostNo();
 
 		// 일반 첨부 파일 저장
-		if (postDto.getFiles() != null) {
-			for (FileDto fileDto : postDto.getFiles()) {
-				fileDto.setPostNo(postNo);
+		if(hasFiles) {
+			for(FileDto fileDto : postDto.getFiles()) {
+				fileDto.setPostNo(saved.getPostNo());
 				fileRepository.save(fileDto.toEntity());
 			}
+			
+			saved.setPostFilesYn(true);
 		}
 
 		// 배너 이미지 저장
@@ -213,12 +216,6 @@ public class EventServiceImpl implements EventService {
 		entity.setPostTitle(postDto.getPostTitle());
 	    entity.setPostContent(postDto.getPostContent());
 	    entity.setUserNo(postDto.getUserNo());
-	    
-	    //첨부 파일 확인 
-	    boolean hasExistingFiles = fileRepository.existsById(entity.getPostNo());
-	    boolean hasNewFiles = postDto.getFiles() != null && !postDto.getFiles().isEmpty();
-
-	    entity.setPostFilesYn(hasExistingFiles || hasNewFiles);
 
 		// 기존 파일 삭제
 		if (deleteFileNo != null && !deleteFileNo.isEmpty()) {
@@ -228,6 +225,8 @@ public class EventServiceImpl implements EventService {
 		}
 
 		// 새 파일 추가
+		boolean hasNewFiles = postDto.getFiles() != null && !postDto.getFiles().isEmpty();
+		
 		if (hasNewFiles) {
 	        for (FileDto fileDto : postDto.getFiles()) {
 	            fileDto.setPostNo(entity.getPostNo());
@@ -251,6 +250,9 @@ public class EventServiceImpl implements EventService {
 		            bannerImageRepository.save(bannerDto.toEntity());
 				});
 		}
+		
+		boolean hasFiles = !fileRepository.findByPostNo(entity.getPostNo()).isEmpty();
+		entity.setPostFilesYn(hasFiles);
 
 		return 1;
 	}

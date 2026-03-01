@@ -135,16 +135,19 @@ public class InformationServiceImpl implements InformationService {
 		postDto.setPostNo(null);
 
 		PostEntity saved = postRepository.save(postDto.toEntity());
+		boolean hasFiles = postDto.getFiles() != null && !postDto.getFiles().isEmpty();
 
 		if (saved.getPostNo() == null)
 			throw new IllegalStateException("정책・정보 게시글 등록에 실패했습니다.");
 
 		// 파일 저장
-		if (postDto.getFiles() != null) {
-			for (FileDto fileDto : postDto.getFiles()) {
+		if(hasFiles) {
+			for(FileDto fileDto : postDto.getFiles()) {
 				fileDto.setPostNo(saved.getPostNo());
 				fileRepository.save(fileDto.toEntity());
 			}
+			
+			saved.setPostFilesYn(true);
 		}
 
 		return 1;
@@ -172,12 +175,15 @@ public class InformationServiceImpl implements InformationService {
 		}
 		
 		//새 파일 추가 
-		if(postDto.getFiles() != null) {
+		if(postDto.getFiles() != null && !postDto.getFiles().isEmpty()) {
 			for(FileDto fileDto : postDto.getFiles()) {
 				fileDto.setPostNo(postDto.getPostNo());
 				fileRepository.save(fileDto.toEntity());
 			}
 		}
+		
+		boolean hasFiles = !fileRepository.findByPostNo(postDto.getPostNo()).isEmpty();
+		entity.setPostFilesYn(hasFiles);
 		
 		return 1;
 	}
