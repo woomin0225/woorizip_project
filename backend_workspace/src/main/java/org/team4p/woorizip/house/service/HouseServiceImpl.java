@@ -21,6 +21,7 @@ import org.team4p.woorizip.house.image.jpa.repository.HouseImageRepository;
 import org.team4p.woorizip.house.jpa.entity.HouseEntity;
 import org.team4p.woorizip.house.jpa.repository.HouseRepository;
 import org.team4p.woorizip.house.kakaoAPI.KakaoGeocodingResponse;
+import org.team4p.woorizip.house.view.service.HouseViewService;
 import org.team4p.woorizip.room.dto.request.RoomSearchCondition;
 import org.team4p.woorizip.room.jpa.repository.RoomRepository;
 import org.team4p.woorizip.user.jpa.repository.UserRepository;
@@ -37,6 +38,7 @@ public class HouseServiceImpl implements HouseService {
 	private final RoomRepository roomRepository;
 	private final UserRepository userRepository;
 	private final HouseImageRepository houseImageRepository;
+	private final HouseViewService hvService;
 	private @Value("${kakao.geocoding.api.uri}") String geoCodingApiUri;
 	
 	@Override
@@ -92,6 +94,11 @@ public class HouseServiceImpl implements HouseService {
 		if(!row.isPresent()) throw new NotFoundException("해당 건물을 조회할 수 없습니다.");
 		HouseEntity houseEntity = row.get();
 		if(houseEntity == null) throw new NotFoundException("해당 건물을 조회할 수 없습니다.");
+		
+		try {
+			hvService.upsertHouseView(houseNo);
+		} catch (Exception ignored) {}		// 조회수 처리 실패해도 상세보기는 성공하도록
+		
 		return houseEntity.toDto();
 	}
 

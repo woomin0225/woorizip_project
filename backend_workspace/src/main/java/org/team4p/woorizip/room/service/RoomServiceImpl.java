@@ -20,6 +20,7 @@ import org.team4p.woorizip.room.image.dto.RoomImageDto;
 import org.team4p.woorizip.room.image.service.RoomImageService;
 import org.team4p.woorizip.room.jpa.entity.RoomEntity;
 import org.team4p.woorizip.room.jpa.repository.RoomRepository;
+import org.team4p.woorizip.room.view.service.RoomViewService;
 import org.team4p.woorizip.user.jpa.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -31,6 +32,7 @@ public class RoomServiceImpl implements RoomService {
 	private final RoomImageService roomImageService;
 	private final HouseRepository houseRepository;
 	private final UserRepository userRepository;
+	private final RoomViewService rvService;
 	
 	@Override
 	public Slice<RoomSearchResponse> selectRoomSearch(RoomSearchCondition cond, Pageable pageable) {
@@ -134,6 +136,12 @@ public class RoomServiceImpl implements RoomService {
 		RoomEntity roomEntity = optional.get();
 		if(roomEntity == null) throw new NotFoundException("해당 방을 조회할 수 없습니다.");
 		RoomDto roomDto = roomEntity.toDto();
+		
+		// 조회수 증가
+		try {
+			rvService.upsertRoomView(roomNo);
+		} catch (Exception ignored) {}	// 조회수 처리 실패해도 상세보기는 성공하도록
+		
 		return roomDto;
 	}
 
