@@ -2,7 +2,7 @@ package org.team4p.woorizip.house.view.jpa.entity;
 
 import java.time.LocalDateTime;
 
-import org.team4p.woorizip.house.view.dto.HouseViewDto;
+import org.team4p.woorizip.house.view.dto.HouseViewResponse;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.EmbeddedId;
@@ -27,12 +27,5 @@ public class HouseViewEntity {
 	private Integer viewCount;
 	@Column(name="updated_at")
 	private LocalDateTime updatedAt;
-	
-	public HouseViewDto toDto() {
-		return HouseViewDto.builder()
-							.id(id)
-							.viewCount(viewCount)
-							.updatedAt(updatedAt)
-							.build();
-	}
+
 }

@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
+import org.team4p.woorizip.room.view.dto.RoomViewResponse;
 import org.team4p.woorizip.room.view.jpa.entity.RoomViewEntity;
 import org.team4p.woorizip.room.view.jpa.entity.RoomViewId;
 
@@ -24,11 +25,13 @@ public interface RoomViewRepository extends JpaRepository<RoomViewEntity, RoomVi
 	
 	
 	@Query(value="""
-			SELECT r.room_no AS id, SUM(r.view_count) AS viewCount
-	        FROM tb_room_view_hourly r
-	        WHERE r.hour_start >= :cutoff
-	        GROUP BY r.room_no
-	        ORDER BY viewCount DESC
+	        SELECT rv.room_no, SUM(rv.view_count), r.room_name, h.house_name
+	        FROM tb_room_view_hourly as rv
+	        JOIN tb_rooms as r ON rv.room_no = r.room_no
+			JOIN tb_houses as h ON r.house_no = h.house_no
+	        WHERE rv.hour_start >= :cutoff
+	        GROUP BY rv.room_no, r.room_name, h.house_name
+	        ORDER BY SUM(rv.view_count) DESC
 			""", nativeQuery=true)
-	List<RoomViewEntity> findPopularSince(@Param("cutoff") LocalDateTime cutoff, Pageable pageable);	// 조회수 높은거 조회
+	List<RoomViewResponse> findPopularSince(@Param("cutoff") LocalDateTime cutoff, Pageable pageable);	// 조회수 높은거 조회
 }

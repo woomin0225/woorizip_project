@@ -1,5 +1,5 @@
-DROP TABLE IF EXISTS tb_room_view_daily;
-DROP TABLE IF EXISTS tb_house_view_daily;
+DROP TABLE IF EXISTS tb_room_view_hourly;
+DROP TABLE IF EXISTS tb_house_view_hourly;
 
 CREATE TABLE tb_room_view_hourly (
   room_no VARCHAR(36) NOT NULL,

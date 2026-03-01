@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
+import org.team4p.woorizip.house.view.dto.HouseViewResponse;
 import org.team4p.woorizip.house.view.jpa.entity.HouseViewEntity;
 import org.team4p.woorizip.house.view.jpa.entity.HouseViewId;
 
@@ -24,11 +25,12 @@ public interface HouseViewRepository extends JpaRepository<HouseViewEntity, Hous
 	
 	
 	@Query(value="""
-			SELECT h.house_no AS id, SUM(h.view_count) AS viewCount
-	        FROM tb_house_view_hourly h
-	        WHERE h.hour_start >= :cutoff
-	        GROUP BY h.house_no
-	        ORDER BY viewCount DESC
+			SELECT hv.house_no, SUM(hv.view_count), h.house_name, h.house_address
+	        FROM tb_house_view_hourly as hv
+	        JOIN tb_houses as h ON hv.house_no = h.house_no
+	        WHERE hv.hour_start >= :cutoff
+	        GROUP BY hv.house_no
+	        ORDER BY SUM(hv.view_count) DESC
 			""", nativeQuery=true)
-	List<HouseViewEntity> findPopularSince(@Param("cutoff") LocalDateTime cutoff, Pageable pageable);	// 조회수 높은거 조회
+	List<HouseViewResponse> findPopularSince(@Param("cutoff") LocalDateTime cutoff, Pageable pageable);	// 조회수 높은거 조회
 }

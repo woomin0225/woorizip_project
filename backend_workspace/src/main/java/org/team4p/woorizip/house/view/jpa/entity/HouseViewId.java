@@ -7,7 +7,7 @@ import jakarta.persistence.Embeddable;
 
 @Embeddable
 public class HouseViewId {
-	@Column(name="house_no", nullable=false)
+	@Column(name="house_no", length=36, nullable=false)
 	private String houseNo;
 	@Column(name="hour_start", nullable=false)
 	private LocalDateTime hourStart;

@@ -3,12 +3,12 @@ package org.team4p.woorizip.house.view.service;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
-import org.team4p.woorizip.house.view.dto.HouseViewDto;
+import org.team4p.woorizip.house.image.jpa.repository.HouseImageRepository;
+import org.team4p.woorizip.house.view.dto.HouseViewResponse;
 import org.team4p.woorizip.house.view.jpa.repository.HouseViewRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -17,7 +17,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class HouseVeiwServiceImpl implements HouseViewService {
 	
-private final HouseViewRepository hvRepository;
+	private final HouseViewRepository hvRepository;
+	private final HouseImageRepository hiRepository;
 	
 	private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 	
@@ -28,10 +29,16 @@ private final HouseViewRepository hvRepository;
 	}
 
 	@Override
-	public List<HouseViewDto> selectPopularHousesLastHours(int hours, int limit) {
+	public List<HouseViewResponse> selectPopularHousesLastHours(int hours, int limit) {
 		LocalDateTime cutoff = LocalDateTime.now(KST).minusHours(hours).truncatedTo(ChronoUnit.HOURS);
-		List<HouseViewDto> list = new ArrayList<>();
-		hvRepository.findPopularSince(cutoff, PageRequest.of(0, limit)).forEach(entity->list.add(entity.toDto()));;
+		List<HouseViewResponse> list = hvRepository.findPopularSince(cutoff, PageRequest.of(0, limit));
+		
+		String imageName = null;
+		for(HouseViewResponse res : list) {
+			 imageName = hiRepository.findTop1ByHouseNoOrderByHouseImageNoAsc(res.getHouseNo());
+			 res.setRepImageName(imageName);
+		}
+		
 		return list;
 	}
 	

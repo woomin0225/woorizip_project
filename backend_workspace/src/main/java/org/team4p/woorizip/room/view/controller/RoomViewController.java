@@ -2,18 +2,19 @@ package org.team4p.woorizip.room.view.controller;
 
 import java.util.List;
 
+import org.springframework.data.domain.PageRequest;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.team4p.woorizip.room.view.dto.RoomViewDto;
+import org.team4p.woorizip.room.view.dto.RoomViewResponse;
 import org.team4p.woorizip.room.view.service.RoomViewService;
 
 import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/roomView")
+@RequestMapping("/api/room_view")
 public class RoomViewController {
 	private final RoomViewService rvService;
 
@@ -27,9 +28,9 @@ public class RoomViewController {
 	}
 
 	@GetMapping("/popular")
-	public List<RoomViewDto> getPopularRooms(
+	public List<RoomViewResponse> getPopularRooms(
 			@RequestParam(defaultValue = "DAY1") String period,
-			@RequestParam(defaultValue = "10") int limit
+			@RequestParam(defaultValue = "10") Integer limit
 			) {
 		int hours = parseHours(period);
 		return rvService.selectPopularRoomsLastHours(hours, limit);
