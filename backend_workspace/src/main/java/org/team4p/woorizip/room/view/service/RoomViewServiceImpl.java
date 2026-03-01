@@ -3,13 +3,14 @@ package org.team4p.woorizip.room.view.service;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.data.domain.PageRequest;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.team4p.woorizip.room.view.dto.RoomViewRow;
-import org.team4p.woorizip.room.view.repository.RoomViewRepository;
+import org.team4p.woorizip.room.view.dto.RoomViewDto;
+import org.team4p.woorizip.room.view.jpa.repository.RoomViewRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -29,9 +30,11 @@ public class RoomViewServiceImpl implements RoomViewService {
 	}
 
 	@Override
-	public List<RoomViewRow> selectPopularRoomsLastHours(int hours, int limit) {
+	public List<RoomViewDto> selectPopularRoomsLastHours(int hours, int limit) {
 		LocalDateTime cutoff = LocalDateTime.now(KST).minusHours(hours).truncatedTo(ChronoUnit.HOURS);
-		return rvRepository.findPopularSince(cutoff, PageRequest.of(0, limit));
+		List<RoomViewDto> list = new ArrayList<>();
+		rvRepository.findPopularSince(cutoff, PageRequest.of(0, limit)).forEach(entity->list.add(entity.toDto()));;
+		return list;
 	}
 
 }

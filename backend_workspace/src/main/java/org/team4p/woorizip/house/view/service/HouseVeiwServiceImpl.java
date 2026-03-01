@@ -3,12 +3,13 @@ package org.team4p.woorizip.house.view.service;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
-import org.team4p.woorizip.house.view.dto.HouseViewRow;
-import org.team4p.woorizip.house.view.repository.HouseViewRepository;
+import org.team4p.woorizip.house.view.dto.HouseViewDto;
+import org.team4p.woorizip.house.view.jpa.repository.HouseViewRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -27,9 +28,11 @@ private final HouseViewRepository hvRepository;
 	}
 
 	@Override
-	public List<HouseViewRow> selectPopularHousesLastHours(int hours, int limit) {
+	public List<HouseViewDto> selectPopularHousesLastHours(int hours, int limit) {
 		LocalDateTime cutoff = LocalDateTime.now(KST).minusHours(hours).truncatedTo(ChronoUnit.HOURS);
-		return hvRepository.findPopularSince(cutoff, PageRequest.of(0, limit));
+		List<HouseViewDto> list = new ArrayList<>();
+		hvRepository.findPopularSince(cutoff, PageRequest.of(0, limit)).forEach(entity->list.add(entity.toDto()));;
+		return list;
 	}
 	
 }

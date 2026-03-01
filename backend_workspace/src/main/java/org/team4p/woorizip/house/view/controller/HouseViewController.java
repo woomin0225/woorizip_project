@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.team4p.woorizip.house.view.dto.HouseViewRow;
+import org.team4p.woorizip.house.view.dto.HouseViewDto;
 import org.team4p.woorizip.house.view.service.HouseViewService;
 
 import lombok.RequiredArgsConstructor;
@@ -27,7 +27,7 @@ public class HouseViewController {
 	}
 
 	@GetMapping("/popular")
-	public List<HouseViewRow> getPopularHouses(
+	public List<HouseViewDto> getPopularHouses(
 			@RequestParam(defaultValue = "DAY1") String period,
 			@RequestParam(defaultValue = "10") int limit
 			) {

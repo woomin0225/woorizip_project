@@ -1,17 +1,18 @@
-package org.team4p.woorizip.room.view.repository;
+package org.team4p.woorizip.room.view.jpa.repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
-import org.team4p.woorizip.room.view.dto.RoomViewRow;
+import org.team4p.woorizip.room.view.jpa.entity.RoomViewEntity;
+import org.team4p.woorizip.room.view.jpa.entity.RoomViewId;
 
-public interface RoomViewRepository extends Repository<Object, Long>{
+public interface RoomViewRepository extends JpaRepository<RoomViewEntity, RoomViewId>{
 	@Modifying	// 영속성 컨텍스트 거치지 않고 DB에 바로 쿼리 날림
 	@Transactional
 	@Query(value="""
@@ -29,5 +30,5 @@ public interface RoomViewRepository extends Repository<Object, Long>{
 	        GROUP BY r.room_no
 	        ORDER BY viewCount DESC
 			""", nativeQuery=true)
-	List<RoomViewRow> findPopularSince(@Param("cutoff") LocalDateTime cutoff, Pageable pageable);	// 조회수 높은거 조회
+	List<RoomViewEntity> findPopularSince(@Param("cutoff") LocalDateTime cutoff, Pageable pageable);	// 조회수 높은거 조회
 }
