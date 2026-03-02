@@ -1,17 +1,26 @@
 package org.team4p.woorizip.room.review.service;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.team4p.woorizip.common.exception.ForbiddenException;
 import org.team4p.woorizip.common.exception.NotFoundException;
+import org.team4p.woorizip.room.image.jpa.entity.RoomImageEntity;
+import org.team4p.woorizip.room.image.jpa.repository.RoomImageRepository;
 import org.team4p.woorizip.room.jpa.repository.RoomRepository;
 import org.team4p.woorizip.room.review.dto.ReviewDto;
+import org.team4p.woorizip.room.review.dto.ReviewRankingResponse;
 import org.team4p.woorizip.room.review.jpa.entity.ReviewEntity;
 import org.team4p.woorizip.room.review.jpa.repository.ReviewRepository;
+import org.team4p.woorizip.room.view.dto.RoomViewResponse;
 import org.team4p.woorizip.user.jpa.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -22,6 +31,9 @@ public class ReviewServiceImpl implements ReviewService {
 	private final ReviewRepository reviewRepository;
 	private final RoomRepository roomRepository;
 	private final UserRepository userRepository;
+	private final RoomImageRepository riRepository;
+
+	private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 	
 	@Override
 	public Page<ReviewDto> selectRoomReviews(String roomNo, Pageable pageable) {
@@ -77,4 +89,18 @@ public class ReviewServiceImpl implements ReviewService {
 		return entity.toDto();
 	}
 
+	public List<ReviewRankingResponse> selectTopNByRating(int period, int limit){
+		LocalDateTime cutoff = LocalDateTime.now(KST).minusDays(period).truncatedTo(ChronoUnit.HOURS);
+		List<ReviewRankingResponse> list = reviewRepository.findTopNByRating(cutoff, PageRequest.of(0, limit));
+		
+		String imageName = null;
+		for(ReviewRankingResponse res : list) {
+			 RoomImageEntity row = riRepository.findTop1ByRoomNoOrderByRoomImageNoAsc(res.getRoomNo());
+			 if(row == null) continue;
+			 imageName = row.getRoomStoredImageName();
+			 res.setRepImageName(imageName);
+		}
+
+		return list;
+	}
 }

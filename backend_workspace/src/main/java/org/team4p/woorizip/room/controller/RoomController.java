@@ -30,6 +30,7 @@ import org.team4p.woorizip.room.dto.response.RoomSearchResponse;
 import org.team4p.woorizip.room.image.dto.RoomImageDto;
 import org.team4p.woorizip.room.image.service.RoomImageService;
 import org.team4p.woorizip.room.review.dto.ReviewDto;
+import org.team4p.woorizip.room.review.dto.ReviewRankingResponse;
 import org.team4p.woorizip.room.review.service.ReviewService;
 import org.team4p.woorizip.room.service.RoomService;
 
@@ -220,4 +221,11 @@ public class RoomController {
 		
 		return ResponseEntity.status(200).body(ApiResponse.ok("공실여부 변경 완료", null));
 	}
+	
+	@GetMapping("/review/ranking")
+	public ResponseEntity<ApiResponse<List<ReviewRankingResponse>>> getReviewRanking(@RequestParam("period") Integer period, @RequestParam("limit") Integer limit){
+		List<ReviewRankingResponse> list = reviewService.selectTopNByRating(period, limit);
+		return ResponseEntity.status(200).body(ApiResponse.ok("리뷰기준 랭킹 조회 완료("+period+"일,"+limit+"개)", list));
+	}
+	
 }
