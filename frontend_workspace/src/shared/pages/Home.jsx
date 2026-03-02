@@ -98,7 +98,7 @@ export default function Home() {
                 <EstateRankingFrame
                   type='room'
                   period={1}
-                  rankingTitle="Room Daily"
+                  rankingTitle="일간 방 조회랭킹"
                   limit={10}
                 />
               </Col>
@@ -106,7 +106,7 @@ export default function Home() {
                 <EstateRankingFrame
                   type='room'
                   period={7}
-                  rankingTitle="Room Weekly"
+                  rankingTitle="주간 방 조회랭킹"
                   limit={10}
                 />
               </Col>
@@ -114,7 +114,7 @@ export default function Home() {
                 <EstateRankingFrame
                   type='room'
                   period={30}
-                  rankingTitle="Room Monthly"
+                  rankingTitle="월간 방 조회랭킹"
                   limit={10}
                 />
               </Col>
@@ -122,7 +122,7 @@ export default function Home() {
                 <EstateRankingFrame
                   type='house'
                   period={1}
-                  rankingTitle="House Daily"
+                  rankingTitle="일간 건물 조회랭킹"
                   limit={10}
                 />
               </Col>
@@ -130,7 +130,7 @@ export default function Home() {
                 <EstateRankingFrame
                   type='house'
                   period={7}
-                  rankingTitle="House Weekly"
+                  rankingTitle="주간 건물 조회랭킹"
                   limit={10}
                 />
               </Col>
@@ -138,7 +138,7 @@ export default function Home() {
                 <EstateRankingFrame
                   type='house'
                   period={30}
-                  rankingTitle="House Monthly"
+                  rankingTitle="월간 건물 조회 랭킹"
                   limit={10}
                 />
               </Col>

@@ -124,6 +124,7 @@ export const router = createBrowserRouter([
       { path: '/event/:postNo', element: <EventDetail /> },
 
       { path: '/rooms', element: <Search /> }, // 방 찾기 페이지
+      { path: '/houses/:houseNo', element: <Detail /> }, // 건물 상세보기 페이지
       { path: '/rooms/:roomNo', element: <Detail /> }, // 방 상세보기 페이지
 
       // 로그인 필요

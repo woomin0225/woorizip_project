@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
+import { Link } from "react-router-dom";
 import { Card, CardBody, Row, Col } from "reactstrap";
 import styles from "./EstateRankingList.module.css";
 import woorizipLogo from "../../../../assets/images/logo-muted.png";
@@ -166,15 +167,29 @@ export default function EstateRankingList({ list = [], type }) {
 
                 <Col className={styles.infoCol}>
                   {type === "room" ? (
-                    <>
-                      <div className={styles.subText}>{item?.houseName || ""}</div>
-                      <div className={styles.mainText}>{item?.roomName || ""}</div>
-                    </>
+                    item?.roomNo ? (
+                      <Link to={`/rooms/${item.roomNo}`} className={styles.infoLink}>
+                        <div className={styles.subText}>{item?.houseName || ""}</div>
+                        <div className={styles.mainText}>{item?.roomName || ""}</div>
+                      </Link>
+                    ) : (
+                      <>
+                        <div className={styles.subText}>{item?.houseName || ""}</div>
+                        <div className={styles.mainText}>{item?.roomName || ""}</div>
+                      </>
+                    )
                   ) : (
-                    <>
-                      <div className={styles.mainText}>{item?.houseName || ""}</div>
-                      <div className={styles.subText}>{item?.houseAddress || ""}</div>
-                    </>
+                    item?.houseNo ? (
+                      <Link to={`/houses/${item.houseNo}`} className={styles.infoLink}>
+                        <div className={styles.mainText}>{item?.houseName || ""}</div>
+                        <div className={styles.subText}>{item?.houseAddress || ""}</div>
+                      </Link>
+                    ) : (
+                      <>
+                        <div className={styles.mainText}>{item?.houseName || ""}</div>
+                        <div className={styles.subText}>{item?.houseAddress || ""}</div>
+                      </>
+                    )
                   )}
                 </Col>
 

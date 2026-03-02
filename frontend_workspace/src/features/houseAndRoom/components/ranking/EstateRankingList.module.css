@@ -34,18 +34,28 @@
 
 .rankCol {
   max-width: 64px;
-  flex: 0 0 64px;
+  flex: 0 0 60px;
 }
 
 .imageCol {
   max-width: 108px;
-  flex: 0 0 108px;
+  flex: 0 0 100px;
 }
 
 .infoCol {
   color: #385a8a;
   text-align: left;
   min-width: 0;
+}
+
+.infoLink {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+
+.infoLink:hover .mainText {
+  text-decoration: underline;
 }
 
 .sideCol {
@@ -56,17 +66,17 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 1.6rem;
-  height: 1.6rem;
+  width: 1.3rem;
+  height: 1.3rem;
   border-radius: 999px;
   background: #f1f6ff;
   color: #2f4f80;
-  font-size: 0.95rem;
+  font-size: 0.85rem;
   font-weight: 700;
 }
 
 .mainText {
-  font-size: 1rem;
+  font-size: 0.90rem;
   font-weight: 600;
   line-height: 1.3;
   word-break: keep-all;
@@ -75,7 +85,7 @@
 .subText {
   margin-top: 0.1rem;
   color: #4c6794;
-  font-size: 0.95rem;
+  font-size: 0.78rem;
   line-height: 1.25;
   word-break: keep-all;
 }
@@ -84,7 +94,7 @@
   padding: 1rem 0.5rem 0.8rem;
   text-align: center;
   color: #6f809f;
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   font-weight: 500;
 }
 
