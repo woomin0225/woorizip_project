@@ -1,13 +1,21 @@
 package org.team4p.woorizip.room.review.service;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.team4p.woorizip.common.exception.ForbiddenException;
 import org.team4p.woorizip.common.exception.NotFoundException;
+import org.team4p.woorizip.room.dto.response.ReviewRankingResponse;
+import org.team4p.woorizip.room.image.jpa.entity.RoomImageEntity;
+import org.team4p.woorizip.room.image.jpa.repository.RoomImageRepository;
 import org.team4p.woorizip.room.jpa.repository.RoomRepository;
 import org.team4p.woorizip.room.review.dto.ReviewDto;
 import org.team4p.woorizip.room.review.jpa.entity.ReviewEntity;
@@ -22,11 +30,14 @@ public class ReviewServiceImpl implements ReviewService {
 	private final ReviewRepository reviewRepository;
 	private final RoomRepository roomRepository;
 	private final UserRepository userRepository;
+	private final RoomImageRepository riRepository;
+
+	private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 	
 	@Override
 	public Page<ReviewDto> selectRoomReviews(String roomNo, Pageable pageable) {
 		// 방 상세 리뷰 조회
-		Page<ReviewEntity> pageEntity = reviewRepository.findByRoomNo(roomNo, pageable);
+		Page<ReviewEntity> pageEntity = reviewRepository.findByRoomNoOrderByReviewCreatedAtDesc(roomNo, pageable);
 		return pageEntity.map(entity->entity.toDto());
 	}
 
@@ -76,5 +87,4 @@ public class ReviewServiceImpl implements ReviewService {
 		
 		return entity.toDto();
 	}
-
 }

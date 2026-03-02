@@ -2,7 +2,7 @@
 import styles from "./RoomOptionList.module.css";
 
 const ICONS = {
-  WiFi: "📶",
+  WiFi: "🛜",
   냉장고: "🧊",
   세탁기: "🧺",
   에어컨: "❄️",

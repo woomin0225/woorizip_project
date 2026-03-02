@@ -1,10 +1,14 @@
 package org.team4p.woorizip.room.service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
@@ -15,12 +19,21 @@ import org.team4p.woorizip.house.jpa.entity.HouseEntity;
 import org.team4p.woorizip.house.jpa.repository.HouseRepository;
 import org.team4p.woorizip.room.dto.RoomDto;
 import org.team4p.woorizip.room.dto.request.RoomSearchCondition;
+import org.team4p.woorizip.room.dto.response.ReviewRankingResponse;
 import org.team4p.woorizip.room.dto.response.RoomSearchResponse;
+import org.team4p.woorizip.room.dto.response.ViewsRankingResponse;
+import org.team4p.woorizip.room.dto.response.WishRankingResponse;
 import org.team4p.woorizip.room.image.dto.RoomImageDto;
+import org.team4p.woorizip.room.image.jpa.entity.RoomImageEntity;
+import org.team4p.woorizip.room.image.jpa.repository.RoomImageRepository;
 import org.team4p.woorizip.room.image.service.RoomImageService;
 import org.team4p.woorizip.room.jpa.entity.RoomEntity;
 import org.team4p.woorizip.room.jpa.repository.RoomRepository;
+import org.team4p.woorizip.room.review.jpa.repository.ReviewRepository;
+import org.team4p.woorizip.room.view.jpa.repository.RoomViewRepository;
+import org.team4p.woorizip.room.view.service.RoomViewService;
 import org.team4p.woorizip.user.jpa.repository.UserRepository;
+import org.team4p.woorizip.wishlist.jpa.repository.WishlistRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -31,6 +44,11 @@ public class RoomServiceImpl implements RoomService {
 	private final RoomImageService roomImageService;
 	private final HouseRepository houseRepository;
 	private final UserRepository userRepository;
+	private final RoomViewService rvService;
+	private final RoomViewRepository rvRepository;
+	private final RoomImageRepository riRepository;
+	private final ReviewRepository reviewRepository;
+	private final WishlistRepository wishlistRepository;
 	
 	@Override
 	public Slice<RoomSearchResponse> selectRoomSearch(RoomSearchCondition cond, Pageable pageable) {
@@ -126,14 +144,38 @@ public class RoomServiceImpl implements RoomService {
 		if (roomResult != 1L) throw new IllegalStateException("방 정보 삭제 실패");
 	}
 
-	@Override
-	public RoomDto selectRoom(String roomNo) {
+	private RoomDto selectRoomCore(String roomNo) {
+		// selectRoom의 조회수 처리 분기용 공통 로직
 		// 방 상세 조회
 		Optional<RoomEntity> optional = roomRepository.findById(roomNo);
 		if(!optional.isPresent()) throw new NotFoundException("해당 방을 조회할 수 없습니다.");
 		RoomEntity roomEntity = optional.get();
 		if(roomEntity == null) throw new NotFoundException("해당 방을 조회할 수 없습니다.");
 		RoomDto roomDto = roomEntity.toDto();
+
+		return roomDto;
+	}
+
+	@Override
+	public RoomDto selectRoom(String roomNo) {
+		// 방 상세 조회
+		RoomDto roomDto = selectRoomCore(roomNo);
+		
+		// 조회수 증가
+		try {
+			rvService.upsertRoomView(roomNo);
+		} catch (Exception ignored) {}	// 조회수 처리 실패해도 상세보기는 성공하도록
+		
+		return roomDto;
+	}
+
+	@Override
+	public RoomDto selectRoomForEdit(String roomNo) {
+		// 방 상세 조회
+		RoomDto roomDto = selectRoomCore(roomNo);
+		
+		// 조회수 처리 안함
+		
 		return roomDto;
 	}
 
@@ -263,5 +305,52 @@ public class RoomServiceImpl implements RoomService {
 		roomEntity.setRoomEmptyYn(!roomEntity.getRoomEmptyYn());
 		return roomEntity.toDto();
 	}
+	
+	private static final ZoneId KST = ZoneId.of("Asia/Seoul");
+	
+	@Override
+	public List<ViewsRankingResponse> selectPopularRoomsLastHours(int hours, int limit) {
+		LocalDateTime cutoff = LocalDateTime.now(KST).minusHours(hours).truncatedTo(ChronoUnit.HOURS);
+		List<ViewsRankingResponse> list = rvRepository.findPopularSince(cutoff, PageRequest.of(0, limit));
+		
+		String imageName = null;
+		for(ViewsRankingResponse res : list) {
+			 RoomImageEntity row = riRepository.findTop1ByRoomNoOrderByRoomImageNoAsc(res.getRoomNo());
+			 if(row == null) continue;
+			 imageName = row.getRoomStoredImageName();
+			 res.setRepImageName(imageName);
+		}
+		
+		return list;
+	}
+	
+	public List<ReviewRankingResponse> selectTopNByRating(int hours, int limit){
+		LocalDateTime cutoff = LocalDateTime.now(KST).minusHours(hours).truncatedTo(ChronoUnit.HOURS);
+		List<ReviewRankingResponse> list = reviewRepository.findPopularSince(cutoff, PageRequest.of(0, limit));
+		
+		String imageName = null;
+		for(ReviewRankingResponse res : list) {
+			 RoomImageEntity row = riRepository.findTop1ByRoomNoOrderByRoomImageNoAsc(res.getRoomNo());
+			 if(row == null) continue;
+			 imageName = row.getRoomStoredImageName();
+			 res.setRepImageName(imageName);
+		}
 
+		return list;
+	}
+
+	@Override
+	public List<WishRankingResponse> selectTopNByWish(int limit) {
+		List<WishRankingResponse> list = wishlistRepository.findPopularSince(PageRequest.of(0, limit));
+		
+		String imageName = null;
+		for(WishRankingResponse res : list) {
+			 RoomImageEntity row = riRepository.findTop1ByRoomNoOrderByRoomImageNoAsc(res.getRoomNo());
+			 if(row == null) continue;
+			 imageName = row.getRoomStoredImageName();
+			 res.setRepImageName(imageName);
+		}
+		
+		return null;
+	}
 }

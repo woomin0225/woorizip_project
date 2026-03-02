@@ -1,6 +1,10 @@
 import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Container, Row, Col, Card, CardBody, CardHeader } from 'reactstrap';
+import ViewsRankingFrame from '../../features/houseAndRoom/components/ranking/ViewsRankingFrame';
+import styles from './Home.module.css';
+import ReviewRankingFrame from '../../features/houseAndRoom/components/ranking/ReviewRankingFrame';
+import WishRankingFrame from '../../features/houseAndRoom/components/ranking/WishRankingFrame';
 
 export default function Home() {
   useEffect(() => {
@@ -39,7 +43,7 @@ export default function Home() {
             <span />
           </div>
           <Container className="d-flex align-items-center h-100 py-lg">
-            <div className="w-100 h-75 placeholder-box flex-column text-center p-4">
+            <div className={`w-100 h-75 ${styles.placeholderBox} flex-column text-center p-4`}>
               <h2 className="text-white mb-2">슬라이드 배너 영역</h2>
               <p className="text-white-50">
                 나중에 이곳에 메인 배너 이미지나 캐러셀이 들어갑니다.
@@ -48,7 +52,68 @@ export default function Home() {
           </Container>
         </section>
 
-        {/* 2. 게시판 프리뷰 영역 */}
+
+        {/* 조회순 기반 매물 랭킹 */}
+        <section className="section pt-4">
+          <Container>
+            <Row>
+              <Col md="6" className="mb-4">
+                <ViewsRankingFrame
+                  type="room"
+                  period={1}
+                  rankingTitle="일간 방 조회랭킹"
+                  limit={10}
+                />
+              </Col>
+              <Col md="6" className="mb-4">
+                <ViewsRankingFrame
+                  type="room"
+                  period={30}
+                  rankingTitle="월간 방 조회랭킹"
+                  limit={10}
+                />
+              </Col>
+              <Col md="6" className="mb-4">
+                <ViewsRankingFrame
+                  type="house"
+                  period={1}
+                  rankingTitle="일간 건물 조회랭킹"
+                  limit={10}
+                />
+              </Col>
+              <Col md="6" className="mb-4">
+                <ViewsRankingFrame
+                  type="house"
+                  period={7}
+                  rankingTitle="주간 건물 조회랭킹"
+                  limit={10}
+                />
+              </Col>
+            </Row>
+          </Container>
+
+          <Container>
+            <Row>
+              <Col md="6" className="mb-4">
+                <ReviewRankingFrame
+                  period={30}
+                  rankingTitle="월간 리뷰평균 랭킹"
+                  limit={10}
+                />
+              </Col>
+              <Col md="6" className="mb-4">
+                <WishRankingFrame
+                  rankingTitle="관심목록 랭킹"
+                  limit={10}
+                  subTitle="Total Wish"
+                />
+              </Col>
+            </Row>
+          </Container>
+        </section>
+        
+
+        {/* 3. 게시판 프리뷰 영역 */}
         <section className="section bg-secondary mt-4">
           <Container>
             <Row>
