@@ -10,7 +10,7 @@ export default function ReviewCreate() {
   async function onSubmit(payload) {
     // payload: { rating, reviewContent }
     await createRoomReview(roomNo, payload);
-    navigate(-1); // 라우트 붙이면 상세로 navigate(`/rooms/${roomNo}`)로 바꿔도 됨
+    navigate(`/rooms/${roomNo}`);
   }
 
   return (

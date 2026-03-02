@@ -17,7 +17,7 @@
 .group {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 16px;
 }
 
 .label {
@@ -97,10 +97,44 @@
   flex-wrap: wrap;
 }
 
-.check {
+.checks{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+
+  margin-top: 1px; /* ✅ optionGrid와 높이 맞춤 */
+}
+
+.optionGrid{
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  flex-wrap: wrap;
+
+  overflow-x: auto;
+
+  padding-top: 0;
+  padding-bottom: 0;
+
+  margin-top: 2px;
+
+  -webkit-overflow-scrolling: touch;
+}
+
+.optionItem{
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  white-space: nowrap;
+  gap: 6px;
   font-size: 13px;
+  user-select: none;
+
+  /* ✅ 줄바꿈 방지 */
+  white-space: nowrap;
+}
+
+.optionItem input{
+  width: 16px;
+  height: 16px;
 }

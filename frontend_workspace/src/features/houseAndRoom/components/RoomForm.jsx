@@ -2,6 +2,7 @@
 import ImageUploadField from "./ImageUploadField";
 import styles from "./RoomForm.module.css";
 import { PropTypes } from 'prop-types';
+import { useEffect, useMemo } from 'react';
 
 const OPTIONS = ["WiFi", "냉장고", "세탁기", "에어컨", "침대", "책상", "옷장", "TV", "신발장"];
 
@@ -37,8 +38,19 @@ export default function RoomForm({
       roomOptions: PropTypes.string,
     }),
   };
+
+  const today = new Date().toISOString().slice(0, 10);
+  const raw = room.roomAvailableDate ? String(room.roomAvailableDate).slice(0, 10) : "";
+  useEffect(() => {
+    // 입주 가능 날짜가 비어있으면 기본값을 오늘로 세팅(부모 state도 같이 바뀜)
+    if(!raw) return;
+    if(raw < today){
+      onChange?.({ target: { name: "roomAvailableDate", value: today } });
+    }
+  }, [raw, today]);
+  const availableDateValue = (room.roomAvailableDate ? String(room.roomAvailableDate).slice(0, 10) : today);
+
   const isJeonse = room.roomMethod === "L";
-  const isWolse = room.roomMethod === "M";
 
   return (
     <form className={styles.form} onSubmit={onSubmit}>
@@ -50,19 +62,54 @@ export default function RoomForm({
       <div className={styles.grid2}>
         <div className={styles.row}>
           <label>거래방식</label>
-          <select name="roomMethod" value={room.roomMethod || ""} onChange={onChange}>
-            <option value="">선택</option>
-            <option value="L">전세</option>
-            <option value="M">월세</option>
-          </select>
+          <div className={styles.radioGroup}>
+            <label className={styles.radioItem}>
+              <input
+                type="radio"
+                name="roomMethod"
+                value="L"
+                checked={room.roomMethod === "L"}
+                onChange={onChange}
+              />
+              전세
+            </label>
+            <label className={styles.radioItem}>
+              <input
+                type="radio"
+                name="roomMethod"
+                value="M"
+                checked={room.roomMethod === "M"}
+                onChange={onChange}
+              />
+              월세
+            </label>
+          </div>
         </div>
 
         <div className={styles.row}>
           <label>공실여부</label>
-          <select name="roomEmptyYn" value={String(room.roomEmptyYn ?? true)} onChange={onChange}>
-            <option value="true">공실</option>
-            <option value="false">거주중</option>
-          </select>
+          <div className={styles.radioGroup}>
+            <label className={styles.radioItem}>
+              <input
+                type="radio"
+                name="roomEmptyYn"
+                value="true"
+                checked={room.roomEmptyYn === true}
+                onChange={onChange}
+              />
+              공실
+            </label>
+            <label className={styles.radioItem}>
+              <input
+                type="radio"
+                name="roomEmptyYn"
+                value="false"
+                checked={room.roomEmptyYn === false}
+                onChange={onChange}
+              />
+              거주중
+            </label>
+          </div>
         </div>
       </div>
 
@@ -127,7 +174,12 @@ export default function RoomForm({
 
       <div className={styles.row}>
         <label>입주 가능 날짜</label>
-        <input type="date" name="roomAvailableDate" value={room.roomAvailableDate || ""} onChange={onChange} />
+        <input
+          type="date"
+          name="roomAvailableDate"
+          value={raw && raw >= today ? raw : today}
+          onChange={onChange}
+        />
       </div>
 
       <div className={styles.row}>

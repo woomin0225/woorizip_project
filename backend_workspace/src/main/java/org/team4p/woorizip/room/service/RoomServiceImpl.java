@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.team4p.woorizip.common.exception.ForbiddenException;
 import org.team4p.woorizip.common.exception.NotFoundException;
+import org.team4p.woorizip.house.jpa.entity.HouseEntity;
 import org.team4p.woorizip.house.jpa.repository.HouseRepository;
 import org.team4p.woorizip.room.dto.RoomDto;
 import org.team4p.woorizip.room.dto.request.RoomSearchCondition;
@@ -43,6 +44,7 @@ public class RoomServiceImpl implements RoomService {
 				.map((entity)->RoomSearchResponse.builder()
 								.roomNo(entity.getRoomNo())
 								.roomName(entity.getRoomName())
+								.houseNo(entity.getHouseNo())
 								.roomUpdatedAt(entity.getRoomUpdatedAt())
 								.roomDeposit(entity.getRoomDeposit())
 								.roomMonthly(entity.getRoomMonthly())
@@ -54,6 +56,15 @@ public class RoomServiceImpl implements RoomService {
 								.roomImageCount(entity.getRoomImageCount())
 								.build()
 		);
+		
+		// 주소 추가
+		for (RoomSearchResponse item : slice.getContent()) {
+			HouseEntity house = houseRepository.findById(item.getHouseNo()).get();
+			String name = house.getHouseName();
+			String address = house.getHouseAddress();
+			item.setHouseName(name);
+			item.setHouseAddress(address);
+		}
 		
 		// 사진 조회 -> 이름 추출 -> 응답에 저장
 		for (RoomSearchResponse item : slice.getContent()) {
@@ -178,12 +189,11 @@ public class RoomServiceImpl implements RoomService {
 		
 		RoomEntity roomEntity = optional.get();
 		
-		roomEntity.setRoomAvailableDate(date);
-		
 		// 소유권 검사
 		if(!roomEntity.getUserNo().equals(userRepository.findUserNoByEmailId(currentUser))) throw new ForbiddenException("입주일자 변경 가능 권한이 없습니다.");
 		
-		return roomRepository.save(roomEntity).toDto();
+		roomEntity.setRoomAvailableDate(date);
+		return roomEntity.toDto();
 	}
 
 	@Override
@@ -235,6 +245,23 @@ public class RoomServiceImpl implements RoomService {
 		RoomEntity entity = row.get();
 		
 		entity.setRoomImageCount(imageCount);
+	}
+
+	@Override
+	public RoomDto updateRoomEmptyYn(String roomNo, String currentUser) {
+		// 방 공실 여부 변경
+		
+		// 해당 방 조회
+		Optional<RoomEntity> optional = roomRepository.findById(roomNo);
+		if(!optional.isPresent()) throw new NotFoundException("존재하지 않는 방입니다.");
+		
+		RoomEntity roomEntity = optional.get();
+		
+		// 소유권 검사
+		if(!roomEntity.getUserNo().equals(userRepository.findUserNoByEmailId(currentUser))) throw new ForbiddenException("입주일자 변경 가능 권한이 없습니다.");
+		
+		roomEntity.setRoomEmptyYn(!roomEntity.getRoomEmptyYn());
+		return roomEntity.toDto();
 	}
 
 }
