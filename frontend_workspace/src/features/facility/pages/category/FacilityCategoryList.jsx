@@ -1,5 +1,5 @@
 // placeholder
 
-export default function FacilityCategoryList() {
+export default function FacilityCategoryListPage() {
 
 }

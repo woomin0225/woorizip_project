@@ -1,4 +1,3 @@
-// src/features/facility/hooks/facility/useFacilityForm.js
 import { useState, useEffect, useCallback } from 'react';
 import { createFacility, modifyFacility, getFacilityDetail, getFacilityCategories } from '../../api/facilityApi';
 import { unwrapApi } from '../../../../shared/utils/apiUnwrap';
@@ -18,8 +17,11 @@ const schema = {
   facilityMaxDurationMinutes: ''
 };
 
-export function useFacilityForm(facilityNo = null) {
-  const [values, setValues] = useState(schema);
+export function useFacilityForm(houseNo, facilityNo = null) {
+  const [values, setValues] = useState({
+    ...schema,
+    houseNo: houseNo || '' 
+  });
   const [categories, setCategories] = useState([]);
   const [defaultOptions, setDefaultOptions] = useState([]);
   const [error, setError] = useState(null);
@@ -53,6 +55,7 @@ export function useFacilityForm(facilityNo = null) {
 
           setValues({
             ...data,
+            houseNo: houseNo,
             facilityOptionInfo:
               typeof data.facilityOptionInfo === 'string'
                 ? JSON.parse(data.facilityOptionInfo)
@@ -68,7 +71,7 @@ export function useFacilityForm(facilityNo = null) {
       };
       loadData();
     }
-  }, [facilityNo, updateMode]);
+  }, [facilityNo, updateMode, houseNo]);
 
   useEffect(() => {
     if (values.facilityCode && categories.length > 0) {
@@ -125,14 +128,17 @@ export function useFacilityForm(facilityNo = null) {
 
     const formData = new FormData();
 
+    const finalHouseNo = values.houseNo || houseNo;
+
     Object.keys(values).forEach((key) => {
-      const value = values[key];
+      const value = (key === 'houseNo') ? finalHouseNo : values[key];
 
       if (key === 'facilityOptionInfo') {
         formData.append(key, JSON.stringify(value));
       } else if (key === 'images' || key === 'facilityImages' || key === 'displayOptionList') {
+        // 이미지 필드 후단 처리
       } else {
-        formData.append(key, value || '');
+        formData.append(key, value ?? '');
       }
     });
 
@@ -146,10 +152,10 @@ export function useFacilityForm(facilityNo = null) {
         : await createFacility(formData);
 
       alert(response.message);
-      navigate(`/facility/view/${houseNo}/${response.facilityNo}`);
+      navigate(`/facility/view/${finalHouseNo}`);
     } catch (err) {
       setError(err);
-      console.error(err.message);
+      alert(err.message);
     } finally {
       setSubmitting(false);
     }

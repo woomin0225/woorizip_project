@@ -28,8 +28,8 @@
 
   ADMIN: {
     MEMBERS: '/admin/members',
-    CATEGORY: '/admin/categories',
-    CATEGORY_FORM: '/admin/categories/form/:facilityCode?',
+    CATEGORY: '/admin/category',
+    CATEGORY_FORM: '/admin/category/form/:facilityCode?',
   },
 
   USER: {

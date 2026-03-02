@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useFacilityDetail } from '../../hooks/facility/useFacilityDetail';
 import styles from './Detail.module.css';
 
-export default function FacilityDetail({ facilityNo, owner, onClose }) {
+export default function FacilityDetail({ facilityNo, owner, houseNo, onClose }) {
   const nav = useNavigate();
   const { facilityDetails, loading, error } = useFacilityDetail(facilityNo);
 
@@ -83,13 +83,11 @@ export default function FacilityDetail({ facilityNo, owner, onClose }) {
             </div>
 
             <div className={styles.btnGroup}>
-              <button className={styles.inlineBtn} onClick={onClose}>닫기</button>
-              
               {owner ? (
                 <>
                   <button 
                     className={styles.inlineBtn}
-                    onClick={() => nav(`/facility/form/${house?.houseNo}/${facilityNo}`)}
+                    onClick={() => nav(`/facility/form/${houseNo}/${facilityNo}`)}
                   >
                     수정하기
                   </button>

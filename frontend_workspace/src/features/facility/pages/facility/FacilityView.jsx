@@ -1,35 +1,40 @@
-// src/features/facility/pages/facility/FacilityView.jsx
-import { useEffect, useState } from 'react';
-import styles from './FacilityView.module.css'; 
-import HouseList from '../../components/list/HouseList';
+import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import FacilityList from '../../components/list/FacilityList';
-import { getMyHouses } from '../../../houseAndRoom/api/houseApi';
-import { useFacilityList } from '../../hooks/facility/useFacilityList';
+import { axiosInstance } from '../../../../app/http/axiosInstance'; 
+import styles from './FacilityPage.module.css';
 
-export default function FacilityView() {
-  const [houses, setHouses] = useState([]);
-  const [selectedHouseNo, setSelectedHouseNo] = useState('');
-  const { facilities, loading, error } = useFacilityList(selectedHouseNo);
+export default function FacilityViewPage() {
+  const { houseNo } = useParams();
+  const [isLessor, setIsLessor] = useState(null);
+  const token = localStorage.getItem('accessToken');
 
   useEffect(() => {
-    getMyHouses().then((data) => setHouses(data || []));
-  }, []);
+    const checkUser = async () => {
+      if (!token) { setIsLessor(false); return; }
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        const emailId = payload.emailId || payload.sub;
+        
+        const res = await axiosInstance.get(`/api/user/${encodeURIComponent(emailId)}`);
+        setIsLessor(res?.data?.data?.type === 'LESSOR');
+      } catch (e) { 
+        setIsLessor(false); 
+      }
+    };
+    checkUser();
+  }, [token]);
 
-  if (loading) return <div className={styles.loadingText}>시설 정보를 불러오고 있습니다.</div>;
+  if (isLessor === null) return null;
 
   return (
-    <div className={styles.container}>
-      <h2 className={styles.title}>공용 시설 목록</h2>
-
-      <HouseList
-        houses={houses}
-        selectedHouseNo={selectedHouseNo}
-        onHouseChange={setSelectedHouseNo}
-      />
-
-      <hr className={styles.divider} />
-
-      <FacilityList facilityList={facilities} />
+    <div className={styles.contentSection}>
+      <div className="container">
+        <FacilityList 
+          isLessor={isLessor} 
+          houseNo={isLessor ? (houseNo || null) : null} 
+        />
+      </div>
     </div>
   );
 }
