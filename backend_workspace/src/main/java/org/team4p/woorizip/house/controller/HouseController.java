@@ -22,6 +22,7 @@ import org.team4p.woorizip.common.api.ApiResponse;
 import org.team4p.woorizip.common.config.UploadProperties;
 import org.team4p.woorizip.house.dto.HouseDto;
 import org.team4p.woorizip.house.dto.response.HouseMarkerResponse;
+import org.team4p.woorizip.house.dto.response.ViewRankingResponse;
 import org.team4p.woorizip.house.image.dto.HouseImageDto;
 import org.team4p.woorizip.house.image.service.HouseImageService;
 import org.team4p.woorizip.house.service.HouseService;
@@ -166,4 +167,19 @@ public class HouseController {
 		return ResponseEntity.status(200).body(ApiResponse.ok("건물마커 내 방 목록 조회 성공", slice));
 	}
 	
+	
+	private int parseHours(String period) {
+		if(period.startsWith("DAY")) return Integer.parseInt(period.substring(3))*24;
+		
+		return 7*24;
+	}
+
+	@GetMapping("/view/popular")
+	public List<ViewRankingResponse> getPopularHouses(
+			@RequestParam(name="period", defaultValue = "DAY1") String period,
+			@RequestParam(name="limit", defaultValue = "10") Integer limit
+			) {
+		int hours = parseHours(period);
+		return houseService.selectPopularHousesLastHours(hours, limit);
+	}
 }

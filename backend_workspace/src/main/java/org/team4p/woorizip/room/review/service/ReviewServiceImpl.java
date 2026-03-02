@@ -13,14 +13,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.team4p.woorizip.common.exception.ForbiddenException;
 import org.team4p.woorizip.common.exception.NotFoundException;
+import org.team4p.woorizip.room.dto.response.ReviewRankingResponse;
 import org.team4p.woorizip.room.image.jpa.entity.RoomImageEntity;
 import org.team4p.woorizip.room.image.jpa.repository.RoomImageRepository;
 import org.team4p.woorizip.room.jpa.repository.RoomRepository;
 import org.team4p.woorizip.room.review.dto.ReviewDto;
-import org.team4p.woorizip.room.review.dto.ReviewRankingResponse;
 import org.team4p.woorizip.room.review.jpa.entity.ReviewEntity;
 import org.team4p.woorizip.room.review.jpa.repository.ReviewRepository;
-import org.team4p.woorizip.room.view.dto.RoomViewResponse;
 import org.team4p.woorizip.user.jpa.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -38,7 +37,7 @@ public class ReviewServiceImpl implements ReviewService {
 	@Override
 	public Page<ReviewDto> selectRoomReviews(String roomNo, Pageable pageable) {
 		// 방 상세 리뷰 조회
-		Page<ReviewEntity> pageEntity = reviewRepository.findByRoomNo(roomNo, pageable);
+		Page<ReviewEntity> pageEntity = reviewRepository.findByRoomNoOrderByReviewCreatedAtDesc(roomNo, pageable);
 		return pageEntity.map(entity->entity.toDto());
 	}
 
@@ -87,20 +86,5 @@ public class ReviewServiceImpl implements ReviewService {
 		entity.setReviewContent(reviewDto.getReviewContent());
 		
 		return entity.toDto();
-	}
-
-	public List<ReviewRankingResponse> selectTopNByRating(int period, int limit){
-		LocalDateTime cutoff = LocalDateTime.now(KST).minusDays(period).truncatedTo(ChronoUnit.HOURS);
-		List<ReviewRankingResponse> list = reviewRepository.findTopNByRating(cutoff, PageRequest.of(0, limit));
-		
-		String imageName = null;
-		for(ReviewRankingResponse res : list) {
-			 RoomImageEntity row = riRepository.findTop1ByRoomNoOrderByRoomImageNoAsc(res.getRoomNo());
-			 if(row == null) continue;
-			 imageName = row.getRoomStoredImageName();
-			 res.setRepImageName(imageName);
-		}
-
-		return list;
 	}
 }

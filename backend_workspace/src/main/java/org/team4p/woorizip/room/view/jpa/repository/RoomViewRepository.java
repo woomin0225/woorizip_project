@@ -9,7 +9,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
-import org.team4p.woorizip.room.view.dto.RoomViewResponse;
+import org.team4p.woorizip.room.dto.response.ViewsRankingResponse;
 import org.team4p.woorizip.room.view.jpa.entity.RoomViewEntity;
 import org.team4p.woorizip.room.view.jpa.entity.RoomViewId;
 
@@ -33,5 +33,5 @@ public interface RoomViewRepository extends JpaRepository<RoomViewEntity, RoomVi
 	        GROUP BY rv.room_no, r.room_name, h.house_name
 	        ORDER BY SUM(rv.view_count) DESC
 			""", nativeQuery=true)
-	List<RoomViewResponse> findPopularSince(@Param("cutoff") LocalDateTime cutoff, Pageable pageable);	// 조회수 높은거 조회
+	List<ViewsRankingResponse> findPopularSince(@Param("cutoff") LocalDateTime cutoff, Pageable pageable);	// 조회수 높은거 조회
 }

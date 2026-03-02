@@ -1,8 +1,10 @@
 import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Container, Row, Col, Card, CardBody, CardHeader } from 'reactstrap';
-import EstateRankingFrame from '../../features/houseAndRoom/components/ranking/EstateRankingFrame';
+import ViewsRankingFrame from '../../features/houseAndRoom/components/ranking/ViewsRankingFrame';
 import styles from './Home.module.css';
+import ReviewRankingFrame from '../../features/houseAndRoom/components/ranking/ReviewRankingFrame';
+import WishRankingFrame from '../../features/houseAndRoom/components/ranking/WishRankingFrame';
 
 export default function Home() {
   useEffect(() => {
@@ -95,57 +97,60 @@ export default function Home() {
           <Container>
             <Row>
               <Col md="6" className="mb-4">
-                <EstateRankingFrame
-                  type='room'
+                <ViewsRankingFrame
+                  type="room"
                   period={1}
                   rankingTitle="일간 방 조회랭킹"
                   limit={10}
                 />
               </Col>
               <Col md="6" className="mb-4">
-                <EstateRankingFrame
-                  type='room'
-                  period={7}
-                  rankingTitle="주간 방 조회랭킹"
-                  limit={10}
-                />
-              </Col>
-              <Col md="6" className="mb-4">
-                <EstateRankingFrame
-                  type='room'
+                <ViewsRankingFrame
+                  type="room"
                   period={30}
                   rankingTitle="월간 방 조회랭킹"
                   limit={10}
                 />
               </Col>
               <Col md="6" className="mb-4">
-                <EstateRankingFrame
-                  type='house'
+                <ViewsRankingFrame
+                  type="house"
                   period={1}
                   rankingTitle="일간 건물 조회랭킹"
                   limit={10}
                 />
               </Col>
               <Col md="6" className="mb-4">
-                <EstateRankingFrame
-                  type='house'
+                <ViewsRankingFrame
+                  type="house"
                   period={7}
                   rankingTitle="주간 건물 조회랭킹"
                   limit={10}
                 />
               </Col>
+            </Row>
+          </Container>
+
+          <Container>
+            <Row>
               <Col md="6" className="mb-4">
-                <EstateRankingFrame
-                  type='house'
+                <ReviewRankingFrame
                   period={30}
-                  rankingTitle="월간 건물 조회 랭킹"
+                  rankingTitle="월간 리뷰평균 랭킹"
                   limit={10}
+                />
+              </Col>
+              <Col md="6" className="mb-4">
+                <WishRankingFrame
+                  rankingTitle="관심목록 랭킹"
+                  limit={10}
+                  subTitle="Total Wish"
                 />
               </Col>
             </Row>
           </Container>
         </section>
-
+        
 
         {/* 3. 게시판 프리뷰 영역 */}
         <section className="section bg-secondary mt-4">

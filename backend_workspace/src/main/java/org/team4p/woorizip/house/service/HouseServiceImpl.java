@@ -1,5 +1,8 @@
 package org.team4p.woorizip.house.service;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -7,6 +10,7 @@ import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,11 +20,13 @@ import org.team4p.woorizip.common.exception.ForbiddenException;
 import org.team4p.woorizip.common.exception.NotFoundException;
 import org.team4p.woorizip.house.dto.HouseDto;
 import org.team4p.woorizip.house.dto.response.HouseMarkerResponse;
+import org.team4p.woorizip.house.dto.response.ViewRankingResponse;
 import org.team4p.woorizip.house.image.jpa.entity.HouseImageEntity;
 import org.team4p.woorizip.house.image.jpa.repository.HouseImageRepository;
 import org.team4p.woorizip.house.jpa.entity.HouseEntity;
 import org.team4p.woorizip.house.jpa.repository.HouseRepository;
 import org.team4p.woorizip.house.kakaoAPI.KakaoGeocodingResponse;
+import org.team4p.woorizip.house.view.jpa.repository.HouseViewRepository;
 import org.team4p.woorizip.house.view.service.HouseViewService;
 import org.team4p.woorizip.room.dto.request.RoomSearchCondition;
 import org.team4p.woorizip.room.jpa.repository.RoomRepository;
@@ -39,6 +45,8 @@ public class HouseServiceImpl implements HouseService {
 	private final UserRepository userRepository;
 	private final HouseImageRepository houseImageRepository;
 	private final HouseViewService hvService;
+	private final HouseViewRepository hvRepository;
+	private final HouseImageRepository hiRepository;
 	private @Value("${kakao.geocoding.api.uri}") String geoCodingApiUri;
 	
 	@Override
@@ -261,6 +269,21 @@ public class HouseServiceImpl implements HouseService {
 		entity.setHouseImageCount(imageCount);
 	}
 	
+	private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 	
-
+	@Override
+	public List<ViewRankingResponse> selectPopularHousesLastHours(int hours, int limit) {
+		LocalDateTime cutoff = LocalDateTime.now(KST).minusHours(hours).truncatedTo(ChronoUnit.HOURS);
+		List<ViewRankingResponse> list = hvRepository.findPopularSince(cutoff, PageRequest.of(0, limit));
+		
+		String imageName = null;
+		for(ViewRankingResponse res : list) {
+			 HouseImageEntity row = hiRepository.findTop1ByHouseNoOrderByHouseImageNoAsc(res.getHouseNo());
+			 if(row == null) continue;
+			 imageName = row.getHouseStoredImageName();
+			 res.setRepImageName(imageName);
+		}
+		
+		return list;
+	}
 }

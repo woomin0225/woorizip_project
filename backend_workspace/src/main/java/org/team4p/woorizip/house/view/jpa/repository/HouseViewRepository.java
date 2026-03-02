@@ -9,7 +9,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
-import org.team4p.woorizip.house.view.dto.HouseViewResponse;
+import org.team4p.woorizip.house.dto.response.ViewRankingResponse;
 import org.team4p.woorizip.house.view.jpa.entity.HouseViewEntity;
 import org.team4p.woorizip.house.view.jpa.entity.HouseViewId;
 
@@ -32,5 +32,5 @@ public interface HouseViewRepository extends JpaRepository<HouseViewEntity, Hous
 	        GROUP BY hv.house_no
 	        ORDER BY SUM(hv.view_count) DESC
 			""", nativeQuery=true)
-	List<HouseViewResponse> findPopularSince(@Param("cutoff") LocalDateTime cutoff, Pageable pageable);	// 조회수 높은거 조회
+	List<ViewRankingResponse> findPopularSince(@Param("cutoff") LocalDateTime cutoff, Pageable pageable);	// 조회수 높은거 조회
 }

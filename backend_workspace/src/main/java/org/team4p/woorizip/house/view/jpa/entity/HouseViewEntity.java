@@ -2,7 +2,7 @@ package org.team4p.woorizip.house.view.jpa.entity;
 
 import java.time.LocalDateTime;
 
-import org.team4p.woorizip.house.view.dto.HouseViewResponse;
+import org.team4p.woorizip.house.dto.response.ViewRankingResponse;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.EmbeddedId;

@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.team4p.woorizip.house.dto.HouseDto;
 import org.team4p.woorizip.house.dto.response.HouseMarkerResponse;
+import org.team4p.woorizip.house.dto.response.ViewRankingResponse;
 import org.team4p.woorizip.room.dto.request.RoomSearchCondition;
 
 public interface HouseService {
@@ -17,4 +18,5 @@ public interface HouseService {
 	void deleteHouse(String houseNo, String currentUser);
 	void updateHouseImageCount(String houseNo, int imageCount);
 	
+	List<ViewRankingResponse> selectPopularHousesLastHours(int hours, int limit);	// 최근 n시간 인기 조회
 }

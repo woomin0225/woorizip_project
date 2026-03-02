@@ -1,18 +1,18 @@
-package org.team4p.woorizip.house.view.dto;
+package org.team4p.woorizip.house.dto.response;
 
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
-public class HouseViewResponse {
+public class ViewRankingResponse {
 	private String houseNo;
 	private Long viewCount;
 	private String houseName;
 	private String houseAddress;
 	private String repImageName;	// representative
 	
-	public HouseViewResponse(String houseNo, Number viewCount, String houseName, String houseAddress) {
+	public ViewRankingResponse(String houseNo, Number viewCount, String houseName, String houseAddress) {
 		super();
 		this.houseNo = houseNo;
 		this.viewCount = viewCount == null ? 0L : viewCount.longValue();

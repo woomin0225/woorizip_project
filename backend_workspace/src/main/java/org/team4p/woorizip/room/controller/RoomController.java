@@ -26,13 +26,16 @@ import org.team4p.woorizip.common.api.ApiResponse;
 import org.team4p.woorizip.common.config.UploadProperties;
 import org.team4p.woorizip.room.dto.RoomDto;
 import org.team4p.woorizip.room.dto.request.RoomSearchCondition;
+import org.team4p.woorizip.room.dto.response.ReviewRankingResponse;
 import org.team4p.woorizip.room.dto.response.RoomSearchResponse;
+import org.team4p.woorizip.room.dto.response.ViewsRankingResponse;
+import org.team4p.woorizip.room.dto.response.WishRankingResponse;
 import org.team4p.woorizip.room.image.dto.RoomImageDto;
 import org.team4p.woorizip.room.image.service.RoomImageService;
 import org.team4p.woorizip.room.review.dto.ReviewDto;
-import org.team4p.woorizip.room.review.dto.ReviewRankingResponse;
 import org.team4p.woorizip.room.review.service.ReviewService;
 import org.team4p.woorizip.room.service.RoomService;
+import org.team4p.woorizip.room.view.service.RoomViewService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -48,6 +51,7 @@ public class RoomController {
 	private final RoomImageService roomImageService;
 	private final UploadProperties uploadProperties;
 	private final ReviewService reviewService;
+	private final RoomViewService rvService;
 	
 	@GetMapping("/search")
 	public ResponseEntity<ApiResponse<Slice<RoomSearchResponse>>> searchRooms(@Valid @ModelAttribute RoomSearchCondition cond, Pageable pageable) {
@@ -222,10 +226,35 @@ public class RoomController {
 		return ResponseEntity.status(200).body(ApiResponse.ok("공실여부 변경 완료", null));
 	}
 	
-	@GetMapping("/review/ranking")
-	public ResponseEntity<ApiResponse<List<ReviewRankingResponse>>> getReviewRanking(@RequestParam("period") Integer period, @RequestParam("limit") Integer limit){
-		List<ReviewRankingResponse> list = reviewService.selectTopNByRating(period, limit);
-		return ResponseEntity.status(200).body(ApiResponse.ok("리뷰기준 랭킹 조회 완료("+period+"일,"+limit+"개)", list));
+	private int parseHours(String period) {
+		if(period.startsWith("DAY")) return Integer.parseInt(period.substring(3))*24;
+		
+		return 7*24;
+	}
+
+	@GetMapping("/view/popular")
+	public ResponseEntity<ApiResponse<List<ViewsRankingResponse>>> getViewsRankingOfRooms(
+			@RequestParam(name="period", defaultValue = "DAY1") String period,
+			@RequestParam(name="limit", defaultValue = "10") Integer limit
+			) {
+		int hours = parseHours(period);
+		List<ViewsRankingResponse> list = roomService.selectPopularRoomsLastHours(hours, limit);
+		return ResponseEntity.status(200).body(ApiResponse.ok("조회수기준 랭킹 조회 완료("+period+"일,"+limit+"개)", list));
+	}
+	
+	@GetMapping("/review/popular")
+	public ResponseEntity<ApiResponse<List<ReviewRankingResponse>>> getReviewRanking(@RequestParam("period") String period, @RequestParam("limit") Integer limit){
+		// 리뷰 많은 순 방 목록 조회, period일 동안, limit개 조회함
+		int hours = parseHours(period);
+		List<ReviewRankingResponse> list = roomService.selectTopNByRating(hours, limit);
+		return ResponseEntity.status(200).body(ApiResponse.ok("리뷰평균기준 랭킹 조회 완료("+period+"일,"+limit+"개)", list));
+	}
+	
+	@GetMapping("wish/popular")
+	public ResponseEntity<ApiResponse<List<WishRankingResponse>>> getWishRanking(@RequestParam("limit") Integer limit){
+		// 위시 많은 순 방 목록 조회, limit개 조회함
+		List<WishRankingResponse> list = roomService.selectTopNByWish(limit);
+		return ResponseEntity.status(200).body(ApiResponse.ok("위시갯수기준 랭킹 조회 완료("+limit+"개)", list));
 	}
 	
 }
