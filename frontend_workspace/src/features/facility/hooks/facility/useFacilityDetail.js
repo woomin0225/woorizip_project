@@ -14,9 +14,7 @@ export const useFacilityDetail = (facilityNo) => {
       setError(null);
 
       const response = await getFacilityDetail(facilityNo);
-      
       const actualData = response?.data || response;
-      
       console.log("상세 데이터 로드 성공:", actualData);
       setFacilityDetails(actualData);
     } catch (err) {

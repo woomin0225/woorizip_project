@@ -156,3 +156,20 @@
   transform: scale(1.1);
   background: #fa3a55;
 }
+
+.reasonGroup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px 20px;
+  margin-bottom: 20px;
+  padding: 10px 5px;
+}
+
+.reasonItem {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  gap: 8px;
+  font-size: 14px;
+  color: #333;
+}

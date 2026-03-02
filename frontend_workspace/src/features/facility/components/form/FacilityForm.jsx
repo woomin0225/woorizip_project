@@ -1,18 +1,16 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useFacilityForm } from '../../hooks/facility/useFacilityForm';
-import { useCategoryList } from '../../hooks/category/useCategoryList';
 import styles from './Form.module.css';
 
 export default function FacilityForm() {
   const { houseNo, facilityNo } = useParams();
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
-const { categories, loading: catLoading } = useCategoryList();
-  const [images, setImages] = useState([]);
 
   const {
     values,
+    categories,
     defaultOptions,
     handleChange,
     handleOptionChange,
@@ -21,9 +19,40 @@ const { categories, loading: catLoading } = useCategoryList();
     submitting,
     onSubmit,
     updateMode,
+    existingImages,
+    setImages: setFormFiles,
   } = useFacilityForm(houseNo, facilityNo);
 
+  const [images, setImages] = useState([]);
   const [customInputs, setCustomInputs] = useState(['', '', '', '', '']);
+
+  const currentCategoryName =
+    categories.find(
+      (cat) => String(cat.facilityCode) === String(values.facilityCode)
+    )?.facilityType || '카테고리는 수정할 수 없습니다.';
+
+  useEffect(() => {
+    if (updateMode && existingImages?.length > 0) {
+      const formatted = existingImages.map((img) => ({
+        preview: img.imageUrl,
+        isExisting: true,
+      }));
+      setImages(formatted);
+    }
+  }, [updateMode, existingImages]);
+
+  useEffect(() => {
+    if (updateMode && values.facilityOptionInfo && defaultOptions?.length > 0) {
+      const allKeys = Object.keys(values.facilityOptionInfo);
+      const extraKeys = allKeys.filter((key) => !defaultOptions.includes(key));
+
+      const nextInputs = ['', '', '', '', ''];
+      extraKeys.forEach((key, i) => {
+        if (i < 5) nextInputs[i] = key;
+      });
+      setCustomInputs(nextInputs);
+    }
+  }, [updateMode, values.facilityOptionInfo, defaultOptions]);
 
   const handleFileChange = (e) => {
     const selectedFiles = Array.from(e.target.files);
@@ -31,20 +60,22 @@ const { categories, loading: catLoading } = useCategoryList();
       alert('이미지는 최대 5장까지 업로드 가능합니다.');
       return;
     }
-
     const newImages = selectedFiles.map((file) => ({
       file,
       preview: URL.createObjectURL(file),
     }));
     setImages((prev) => [...prev, ...newImages]);
+    setFormFiles((prev) => [...prev, ...selectedFiles]);
   };
 
   const removeImage = (index) => {
     setImages((prev) => {
       const target = prev[index];
-      if (target.preview) URL.revokeObjectURL(target.preview);
+      if (target.preview && !target.isExisting)
+        URL.revokeObjectURL(target.preview);
       return prev.filter((_, i) => i !== index);
     });
+    setFormFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
   if (loading)
@@ -89,7 +120,6 @@ const { categories, loading: catLoading } = useCategoryList();
                     accept="image/*"
                   />
                 </div>
-
                 {images.length > 0 && (
                   <div className={styles.imagePreviewGrid}>
                     {images.map((img, idx) => (
@@ -121,20 +151,34 @@ const { categories, loading: catLoading } = useCategoryList();
                   <div className={styles.fieldRow}>
                     <div className={styles.fieldLabel}>카테고리</div>
                     <div className={styles.fieldControl}>
-                      <select
-                        name="facilityCode"
-                        className={styles.input}
-                        value={values.facilityCode}
-                        onChange={handleChange}
-                        required
-                      >
-                        <option value="">선택하세요</option>
-                        {categories.map((cat) => (
-                          <option key={cat.facilityCode} value={cat.facilityCode}>
-                            {cat.facilityType}
-                          </option>
-                        ))}
-                      </select>
+                      {updateMode ? (
+                        <div className={styles.readOnlyField}>
+                          <strong>{currentCategoryName}</strong>
+                          <input
+                            type="hidden"
+                            name="facilityCode"
+                            value={values.facilityCode || ''}
+                          />
+                        </div>
+                      ) : (
+                        <select
+                          name="facilityCode"
+                          className={styles.input}
+                          value={values.facilityCode || ''}
+                          onChange={handleChange}
+                          required
+                        >
+                          <option value="">-- 선택하세요 --</option>
+                          {categories.map((cat) => (
+                            <option
+                              key={cat.facilityCode}
+                              value={cat.facilityCode}
+                            >
+                              {cat.facilityType}
+                            </option>
+                          ))}
+                        </select>
+                      )}
                     </div>
                   </div>
                   <div className={styles.fieldRow}>
@@ -144,7 +188,7 @@ const { categories, loading: catLoading } = useCategoryList();
                         type="text"
                         name="facilityName"
                         className={styles.input}
-                        value={values.facilityName}
+                        value={values.facilityName || ''}
                         onChange={handleChange}
                       />
                     </div>
@@ -163,7 +207,7 @@ const { categories, loading: catLoading } = useCategoryList();
                           type="number"
                           name="facilityLocation"
                           className={styles.input}
-                          value={values.facilityLocation}
+                          value={values.facilityLocation ?? ''}
                           onChange={handleChange}
                         />
                       </div>
@@ -175,7 +219,7 @@ const { categories, loading: catLoading } = useCategoryList();
                           type="number"
                           name="facilityCapacity"
                           className={styles.input}
-                          value={values.facilityCapacity}
+                          value={values.facilityCapacity || ''}
                           onChange={handleChange}
                           min="0"
                         />
@@ -190,7 +234,7 @@ const { categories, loading: catLoading } = useCategoryList();
                           type="time"
                           name="facilityOpenTime"
                           className={styles.input}
-                          value={values.facilityOpenTime}
+                          value={values.facilityOpenTime || ''}
                           onChange={handleChange}
                         />
                       </div>
@@ -202,7 +246,7 @@ const { categories, loading: catLoading } = useCategoryList();
                           type="time"
                           name="facilityCloseTime"
                           className={styles.input}
-                          value={values.facilityCloseTime}
+                          value={values.facilityCloseTime || ''}
                           onChange={handleChange}
                         />
                       </div>
@@ -218,7 +262,7 @@ const { categories, loading: catLoading } = useCategoryList();
                     <input
                       type="checkbox"
                       name="facilityRsvnRequiredYn"
-                      checked={values.facilityRsvnRequiredYn}
+                      checked={!!values.facilityRsvnRequiredYn}
                       onChange={handleChange}
                     />
                     <span> 시설 예약 시스템을 활성화합니다.</span>
@@ -232,7 +276,7 @@ const { categories, loading: catLoading } = useCategoryList();
                             type="number"
                             name="maxRsvnPerDay"
                             className={styles.input}
-                            value={values.maxRsvnPerDay}
+                            value={values.maxRsvnPerDay || ''}
                             onChange={handleChange}
                             min="0"
                           />
@@ -245,12 +289,14 @@ const { categories, loading: catLoading } = useCategoryList();
                             <select
                               name="facilityRsvnUnitMinutes"
                               className={styles.input}
-                              value={values.facilityRsvnUnitMinutes}
+                              value={values.facilityRsvnUnitMinutes || ''}
                               onChange={handleChange}
                             >
                               <option value="">선택</option>
                               {[15, 30, 60].map((m) => (
-                                <option key={m} value={m}>{m}분</option>
+                                <option key={m} value={m}>
+                                  {m}분
+                                </option>
                               ))}
                             </select>
                           </div>
@@ -259,14 +305,16 @@ const { categories, loading: catLoading } = useCategoryList();
                           <div className={styles.fieldLabel}>최대 시간</div>
                           <div className={styles.fieldControl}>
                             <select
-                              name="facilityRsvnMaxMinutes"
+                              name="facilityMaxDurationMinutes"
                               className={styles.input}
-                              value={values.facilityRsvnMaxMinutes}
+                              value={values.facilityMaxDurationMinutes || ''}
                               onChange={handleChange}
                             >
                               <option value="">선택</option>
                               {[60, 120, 180].map((m) => (
-                                <option key={m} value={m}>{m / 60}시간 ({m}분)</option>
+                                <option key={m} value={m}>
+                                  {m / 60}시간 ({m}분)
+                                </option>
                               ))}
                             </select>
                           </div>
@@ -281,17 +329,21 @@ const { categories, loading: catLoading } = useCategoryList();
                 <h4 className={styles.sectionTitle}>시설 옵션</h4>
                 <div className={styles.surveyBox}>
                   <div className={styles.reasonGroup}>
-                    {defaultOptions.map((opt) => (
-                      <label key={opt} className={styles.reasonItem}>
-                        <input
-                          type="checkbox"
-                          checked={!!values.facilityOptionInfo[opt]}
-                          onChange={(e) => handleOptionChange(opt, e.target.checked)}
-                        />
-                        <span>{opt}</span>
-                      </label>
-                    ))}
+                    {defaultOptions &&
+                      defaultOptions.map((opt) => (
+                        <label key={opt} className={styles.reasonItem}>
+                          <input
+                            type="checkbox"
+                            checked={!!values.facilityOptionInfo?.[opt]}
+                            onChange={(e) =>
+                              handleOptionChange(opt, e.target.checked)
+                            }
+                          />
+                          <span>{opt}</span>
+                        </label>
+                      ))}
                   </div>
+
                   <div className={styles.customOptionGrid}>
                     {customInputs.map((val, idx) => (
                       <input
