@@ -89,7 +89,6 @@ public class FacilityController {
 		
 	// 시설 카테고리 조회
 	@GetMapping("/categories")
-	@PreAuthorize("hasRole('ADMIN')")
 	public ResponseEntity<ApiResponse<List<FacilityCategoryDTO>>> getFacilityCategory() {
 		List<FacilityCategoryDTO> category = facilityService.getFacilityCategory();
 		return ResponseEntity.ok(ApiResponse.ok("시설 카테고리 목록 조회 성공", category));
