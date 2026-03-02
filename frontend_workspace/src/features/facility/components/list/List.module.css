@@ -1,0 +1,65 @@
+/* src/features/facility/components/facility/list/List.module.css */
+@import '../../../../app/layouts/MyPageLayout.module.css';
+
+.facilityHeader, .facilityRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 20px;
+  border: 1px solid #e9ecef;
+  background: #fff;
+}
+
+.facilityHeader {
+  border-bottom: 0;
+  border-radius: 10px 10px 0 0;
+  background: #f8f9fe;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #525f7f;
+}
+
+.facilityRow {
+  border-top: 0;
+  font-size: 0.95rem;
+  color: #344767;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.facilityRow:last-of-type {
+  border-radius: 0 0 10px 10px;
+}
+
+.facilityRow:hover {
+  background-color: #f2fbff;
+  padding-left: 28px;
+  color: #11cdef;
+}
+
+.facilityEmpty {
+  text-align: center;
+  padding: 60px;
+  background: #fff;
+  border: 1px solid #e9ecef;
+  border-top: 0;
+  border-radius: 0 0 10px 10px;
+  color: #8898aa;
+}
+
+.houseSelectField {
+  max-width: 320px;
+  margin-bottom: 20px;
+}
+
+.registerBtnSection {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 15px;
+}
+
+.textMuted {
+  font-size: 0.85rem;
+  color: #8898aa;
+  margin-left: 10px;
+}

@@ -1,18 +1,13 @@
-// src/features/facility/hooks/facility/usefacilityForm.js
+// src/features/facility/hooks/facility/useFacilityForm.js
 import { useState, useEffect, useCallback } from 'react';
-import {
-  createFacility,
-  modifyFacility,
-  getFacilityDetail,
-  getFacilityCategories,
-} from '../../api/facilityApi';
-import { unwrapApi } from '../../../../shared//utils/apiUnwrap';
+import { createFacility, modifyFacility, getFacilityDetail, getFacilityCategories } from '../../api/facilityApi';
+import { unwrapApi } from '../../../../shared/utils/apiUnwrap';
 
 const schema = {
   houseNo: '',
   facilityCode: '',
   facilityName: '',
-  facilityOptionInfo: {},
+  facilityOptionInfo: {}, 
   facilityLocation: '',
   facilityCapacity: '',
   facilityOpenTime: '',
@@ -20,19 +15,19 @@ const schema = {
   facilityRsvnRequiredYn: false,
   maxRsvnPerDay: '',
   facilityRsvnUnitMinutes: '',
-  facilityMaxDurationMinutes: '',
+  facilityMaxDurationMinutes: ''
 };
 
 export function useFacilityForm(facilityNo = null) {
-  const [values, setValues] = useState(initialSchema);
+  const [values, setValues] = useState(schema);
   const [categories, setCategories] = useState([]);
-  const [categoryError, setCategoryError] = useState(null);
-  const [images, setImages] = useState([]); // 신규 업로드 파일들
-  const [existingImages, setExistingImages] = useState([]); // 기존 이미지 URL들
-  const [isLoading, setIsLoading] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const isUpdateMode = !!facilityNo;
+  const [defaultOptions, setDefaultOptions] = useState([]);
+  const [error, setError] = useState(null);
+  const [images, setImages] = useState([]);
+  const [existingImages, setExistingImages] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const updateMode = !!facilityNo;
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -41,110 +36,140 @@ export function useFacilityForm(facilityNo = null) {
         const data = unwrapApi(response);
         setCategories(data || []);
       } catch (err) {
-        console.error('카테고리 로딩 실패', err);
-        
+        setError(err);
+        console.error(err.message);
       }
     };
     fetchCategories();
   }, []);
 
-  // 1. [수정 모드] 기존 데이터 로드
   useEffect(() => {
-    if (isUpdateMode) {
+    if (updateMode && facilityNo) {
       const loadData = async () => {
-        setIsLoading(true);
+        setLoading(true);
         try {
-          const res = await getFacilityDetail(facilityNo);
-          const data = unwrapApi(res);
+          const response = await getFacilityDetail(facilityNo);
+          const data = unwrapApi(response);
 
-          // 서버 데이터를 상태에 맞게 가공해서 넣어줌
           setValues({
             ...data,
-            // 'Y'면 true, 'N'이면 false로 변환해서 체크박스에 연결
-            facilityRsvnRequiredYn: data.facilityRsvnRequiredYn === 'Y',
-            // 만약 서버에서 JSON 문자열로 온다면 파싱, 아니면 그대로
             facilityOptionInfo:
               typeof data.facilityOptionInfo === 'string'
                 ? JSON.parse(data.facilityOptionInfo)
                 : data.facilityOptionInfo || {},
           });
-          setExistingImages(data.facilityImages || []);
+          setExistingImages(data.images || []);
         } catch (err) {
-          console.error(err);
-          alert('데이터를 불러오지 못했습니다.');
+          setError(err);
+          console.error(err.message);
         } finally {
-          setIsLoading(false);
+          setLoading(false);
         }
       };
       loadData();
     }
-  }, [facilityNo, isUpdateMode]);
+  }, [facilityNo, updateMode]);
 
-  // 2. 입력값 변경 핸들러
+  useEffect(() => {
+    if (values.facilityCode && categories.length > 0) {
+      const selectedCat = categories.find((c) => c.facilityCode === values.facilityCode);
+      
+      if (selectedCat && selectedCat.facilityOptions) {
+        setDefaultOptions(selectedCat.facilityOptions);
+        
+        setValues((prev) => {
+          const updatedOptionInfo = { ...prev.facilityOptionInfo };
+          selectedCat.facilityOptions.forEach((opt) => {
+            if (!(opt in updatedOptionInfo)) {
+              updatedOptionInfo[opt] = false;
+            }
+          });
+          return { ...prev, facilityOptionInfo: updatedOptionInfo };
+        });
+      }
+    }
+  }, [values.facilityCode, categories]);
+
   const handleChange = useCallback((e) => {
     const { name, value, type, checked } = e.target;
     setValues((prev) => ({
       ...prev,
-      // 체크박스면 checked(T/F)를 쓰고, 아니면 value를 씀
       [name]: type === 'checkbox' ? checked : value,
     }));
   }, []);
 
-  // 3. 제출 (등록/수정)
+  const handleOptionChange = useCallback((optionKey, isChecked) => {
+    setValues((prev) => ({
+      ...prev,
+      facilityOptionInfo: {
+        ...prev.facilityOptionInfo,
+        [optionKey]: isChecked,
+      },
+    }));
+  }, []);
+
+  const addCustomOption = useCallback((customText) => {
+    if (!customText.trim()) return;
+    setValues((prev) => ({
+      ...prev,
+      facilityOptionInfo: {
+        ...prev.facilityOptionInfo,
+        [customText.trim()]: true,
+      },
+    }));
+  }, []);
+
   const onSubmit = async (e, navigate) => {
-    e.preventDefault();
-    setIsSubmitting(true);
+    if (e) e.preventDefault();
+    setSubmitting(true);
 
     const formData = new FormData();
 
-    // DTO 규격에 맞춰서 변환하며 담기
     Object.keys(values).forEach((key) => {
       const value = values[key];
 
-      if (key === 'facilityRsvnRequiredYn') {
-        // 불리언 -> 백엔드용 Y/N 문자열로 변환
-        formData.append(key, value ? 'Y' : 'N');
-      } else if (key === 'facilityOptionInfo' && typeof value === 'object') {
-        // 맵(객체) -> JSON 문자열로 변환
+      if (key === 'facilityOptionInfo') {
         formData.append(key, JSON.stringify(value));
+      } else if (key === 'images' || key === 'facilityImages' || key === 'displayOptionList') {
       } else {
-        // 나머지 문자열, 숫자 등 그대로 추가
         formData.append(key, value || '');
       }
     });
 
-    // 이미지 파일들 추가
     images.forEach((file) => {
       formData.append('facilityImages', file);
     });
 
     try {
-      if (isUpdateMode) {
-        await modifyFacility(facilityNo, formData);
-        alert('성공적으로 수정되었습니다.');
-      } else {
-        await createFacility(formData);
-        alert('신규 등록이 완료되었습니다.');
-      }
-      navigate('/facilities');
+      const response = updateMode
+        ? await modifyFacility(facilityNo, formData)
+        : await createFacility(formData);
+
+      alert(response.message);
+      navigate(`/facility/view/${houseNo}/${response.facilityNo}`);
     } catch (err) {
-      console.error(err);
-      alert(err.message || '요청 처리 중 오류가 발생했습니다.');
+      setError(err);
+      console.error(err.message);
     } finally {
-      setIsSubmitting(false);
+      setSubmitting(false);
     }
   };
 
   return {
     values,
     setValues,
+    categories,
+    defaultOptions,
     handleChange,
+    handleOptionChange,
+    addCustomOption,
     images,
     setImages,
     existingImages,
-    isLoading,
-    isSubmitting,
+    loading,
+    submitting,
     onSubmit,
-    isUpdateMode,
+    updateMode,
+    error
   };
 }

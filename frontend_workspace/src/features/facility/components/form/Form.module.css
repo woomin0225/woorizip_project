@@ -1,1 +1,4 @@
-/* placeholder */
+/* src/features/facility/components/detail/Detail.module.css */
+@import '../../../../app/layouts/MyPageLayout.module.css';
+@import '../list/List.module.css';
+@import '../detail/detail.module.css';
