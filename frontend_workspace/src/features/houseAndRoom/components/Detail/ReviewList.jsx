@@ -55,14 +55,13 @@ const navigate = useNavigate();
   return (
     <div>
       <div className={styles.header}>
-        <div className={styles.title}>리뷰</div>
-
+        <h3>평가</h3>
         <Link to={`/rooms/${roomNo}/reviews/new`} className={styles.writeLink}>
-          리뷰 작성
+          평가 작성
         </Link>
       </div>
 
-      {content.length === 0 && <div className={styles.empty}>리뷰가 없습니다.</div>}
+      {content.length === 0 && <div className={styles.empty}>평가가 없습니다.</div>}
 
       {content.map((r) => {
         const isMine = String(r.userNo ?? "") === String(currentUserNo ?? "");
@@ -76,13 +75,6 @@ const navigate = useNavigate();
           />
         );
       })}
-
-      {/* 수정 Link는 ReviewItem에 넣고 싶으면 ReviewItem을 Link 포함으로 바꿔도 됨.
-          지금은 “수정” 버튼을 ReviewItem 내부에서 onEdit 호출하도록 되어있으니,
-          여기서 onEdit을 Link로 처리할 수 있게 아래처럼 바꾸는 방식 추천: */}
-      <div className={styles.note}>
-        * 수정은 각 행의 “수정” 버튼을 Link로 바꿔 연결할 예정(라우트 추가 시)
-      </div>
 
       {/* 페이지네이션 */}
       <div className={styles.paging}>
@@ -119,7 +111,7 @@ const navigate = useNavigate();
 
       <DeleteConfirmModal
         open={confirmOpen}
-        title="리뷰 삭제"
+        title="평가 삭제"
         message="정말 삭제할까요?"
         onCancel={() => { setConfirmOpen(false); setTarget(null); }}
         onConfirm={confirmDelete}

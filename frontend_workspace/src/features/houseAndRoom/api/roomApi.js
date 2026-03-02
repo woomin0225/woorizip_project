@@ -41,15 +41,17 @@ export async function getRoom(roomNo){
     return unwrap(data);    // RoomDto
 }
 
-// 방 상세 이미지 조회 GET
+// 방 상세: 이미지 조회 GET
 export async function getRoomImages(roomNo){
     const {data} = await apiJson().get(`/api/rooms/${roomNo}/images`);
     return unwrap(data);    // List<RoomImageDto>
 }
 
-// 방 상세 리뷰 조회 GET
-export async function getRoomReviews(roomNo, page, size){
-    const {data} = await apiJson().get(`/api/rooms/${roomNo}/reviews`, {params: {page, size}});
+// 방 상세: 리뷰 목록 조회 GET
+export async function getRoomReviews(roomNo, page=0, size=10, options={}){
+    const params = {page, size};
+    if(options?.sort) params.sort = options.sort;
+    const {data} = await apiJson().get(`/api/rooms/${roomNo}/reviews`, {params});
     return unwrap(data);    // Page<ReviewDto>
 }
 
@@ -102,5 +104,25 @@ export async function modifyRoomAvailability(roomNo, date){
 // 방 공실여부 변경 PATCH
 export async function modifyRoomEmptyYn(roomNo){
     const {data} = await apiJson().patch(`/api/rooms/${roomNo}/emptyyn`);
+    return unwrap(data);
+}
+
+// 조회수 높은 순 roomNo 조회
+export async function getViewsRankingOfRooms(period, limit) {
+    // period: {DAY1: 최근1일, DAY7: 최근7일, DAY: 30: 최근30일}
+    // limit: 조회할 갯수
+  const { data } = await apiJson().get('/api/rooms/view/popular', {params: {period, limit}});   //  @ModelAttribute: params로 보냄
+  return unwrap(data); // List<ViewsRankingResponse>
+}
+
+// 리뷰 평균 높은 순 방 목록 조회, period일 동안, limit개 조회함
+export async function getReviewRanking(period, limit){
+    const {data} = await apiJson().get(`/api/rooms/review/popular`, {params: {period, limit}});
+    return unwrap(data);    // ApiResponse<List<ReviewRankingResponse>>
+}
+
+// 위시 많은 순 방 목록 조회, limit개 조회함
+export async function getWishRanking(limit){
+    const {data} = await apiJson().get(`/api/rooms/wish/popular`, {params: {limit}});
     return unwrap(data);
 }
