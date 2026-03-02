@@ -18,9 +18,9 @@ public class HouseViewController {
 	private final HouseViewService hvService;
 
 	private int parseHours(String period) {
-		if(period.startsWith("DAY")) return 7 * 24;
+		if(period.startsWith("DAY")) return Integer.parseInt(period.substring(3))*24;
 		
-		return Integer.parseInt(period.substring(3))*24;
+		return 7*24;
 	}
 
 	@GetMapping("/popular")
