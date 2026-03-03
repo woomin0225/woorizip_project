@@ -10,18 +10,20 @@
 
 .imageSection {
   width: 100%;
-  height: 320px;
+  height: 200px; 
   background: #f8f9fe;
   display: flex;
   gap: 12px;
   overflow-x: auto;
-  padding: 15px;
+  padding: 20px; 
   scroll-behavior: smooth;
+  position: relative;
+  z-index: 1;
 }
 
 .facilityImg {
   height: 100%;
-  aspect-ratio: 16/10;
+  aspect-ratio: 1/1; 
   object-fit: cover;
   border-radius: 10px;
   flex-shrink: 0;
@@ -29,7 +31,7 @@
 }
 
 .noImage {
-  width: 100%;
+  height: 100%; 
   display: flex;
   align-items: center;
   justify-content: center;
@@ -75,4 +77,24 @@
   margin-top: 40px;
   padding-top: 24px;
   border-top: 1px solid #e9ecef;
+}
+
+.btnGroup button {
+  padding: 10px 24px;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+}
+
+.secondaryBtn {
+  background-color: #f7fafc;
+  color: #8898aa;
+}
+
+.secondaryBtn:hover {
+  background-color: #e9ecef;
+  color: #32325d;
 }

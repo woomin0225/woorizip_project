@@ -1,5 +1,5 @@
 // placeholder
 
-export default function ReservationView() {
+export default function ReservationViewPage() {
 
 }

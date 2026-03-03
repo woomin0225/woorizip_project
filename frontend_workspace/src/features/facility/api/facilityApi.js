@@ -34,7 +34,7 @@ export async function modifyFacilityCategory(facilityCode, dto) {
 
 // 시설 상세 조회
 export async function getFacilityDetail(facilityNo) {
-  const { data } = await apiJson().get(`/api/facilities/${facilityNo}`);
+  const { data } = await apiJson().get(`/api/facilities/detail/${facilityNo}`);
   return data;
 }
 
