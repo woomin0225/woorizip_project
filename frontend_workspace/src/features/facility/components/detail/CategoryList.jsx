@@ -34,36 +34,35 @@ export default function CategoryList() {
     <div className={styles.contentSection}>
       <div className="container">
         <div className={styles.headerRow}>
-          <h2 className={styles.title}>시설 카테고리 관리</h2>
+          <div>
+            <h2 className={styles.title}>시설 카테고리 관리</h2>
+            <p className={styles.subTitle}>* 클릭 시 수정 페이지로 이동합니다.</p>
+          </div>
           <button
-            className={styles.primaryBtn}
-            onClick={() => nav('/admin/categories/form')}
+            className={styles.facilityRow}
+            onClick={() => nav('/admin/category/form')}
           >
-            신규등록
+            + 신규 카테고리 등록
           </button>
         </div>
 
-        <p className={styles.subTitle}>* 클릭 시 수정 페이지로 이동합니다.</p>
         <div className={styles.grid2}>
           {categories.map((category) => (
             <div
               key={category.facilityCode}
               className={styles.itemCard}
               onClick={() =>
-                nav(`/admin/categories/form/${category.facilityCode}`)
+                nav(`/admin/category/form/${category.facilityCode}`)
               }
             >
-              <div className={styles.infoSection}>
+              <div className={styles.facilityRow}>
                 <h4 className={styles.itemTitle}>{category.facilityType}</h4>
-
-                <div className={styles.sectionBlock}>
-                  <div className={styles.optionGrid}>
-                    {category.facilityOptions?.map((option, idx) => (
-                      <span key={idx} className={styles.optionBadge}>
-                        {option}
-                      </span>
-                    ))}
-                  </div>
+                <div className={styles.optionGrid}>
+                  {category.facilityOptions?.map((option, idx) => (
+                    <span key={idx} className={styles.optionBadge}>
+                      {option}
+                    </span>
+                  ))}
                 </div>
               </div>
             </div>

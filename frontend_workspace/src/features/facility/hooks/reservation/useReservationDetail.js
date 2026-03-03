@@ -1,47 +1,32 @@
-// src/features/facility/hooks/reservation/useReservationDetail.js
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { getReservationDetail } from '../../api/reservationApi';
-import { unwrapApi } from '../../../../shared/utils/apiUnwrap';
 
 export const useReservationDetail = (reservationNo) => {
   const [reservationDetails, setReservationDetails] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const loadReservationDetails = useCallback(async () => {
+  useEffect(() => {
     if (!reservationNo) return;
-    try {
-      setLoading(true);
-      setError(null);
 
-      const response = await getReservationDetail(reservationNo);
-      const data = unwrapApi(response);
-      setReservationDetails(data);
-    } catch (err) {
-      setError(err);
-      console.error(err.message);
-    } finally {
-      setLoading(false);
-    }
+    const fetchDetail = async () => {
+      setLoading(true);
+      try {
+        const res = await getReservationDetail(reservationNo);
+        const actualData = res?.data || res;
+        
+        console.log('상세 데이터 로드 성공:', actualData);
+        setReservationDetails(actualData);
+      } catch (err) {
+        setError(err);
+        console.error('상세 조회 에러:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDetail();
   }, [reservationNo]);
 
-  const sortedDetails = useMemo(() => {
-    if (!reservationDetails || !reservationDetails.facilityImages)
-      return reservationDetails;
-    const sortedImages = [...reservationDetails.facilityImages].sort(
-      (a, b) => a.facilityImageNo - b.facilityImageNo
-    );
-    return { ...reservationDetails, facilityImages: sortedImages };
-  }, [reservationDetails]);
-
-  useEffect(() => {
-    loadReservationDetails();
-  }, [loadReservationDetails]);
-
-  return {
-    reservationDetails: sortedDetails,
-    loading,
-    error,
-    refresh: loadReservationDetails,
-  };
+  return { reservationDetails, loading, error };
 };

@@ -1,22 +1,16 @@
-// src/features/facility/hooks/reservation/useReservationList.js
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { getReservationList } from '../../api/reservationApi';
 import { useQueryState } from '../../../../shared/hooks/useQueryState';
-import { unwrapApi } from './../../../../shared/utils/apiUnwrap';
 
 const schema = {
   page: 1,
   size: 10,
   sort: 'reservationDate,reservationStartTime',
   direct: 'DESC',
-  facilityNo: '', 
 };
 
 export const useReservationList = (facilityNo) => {
-  const { query, setQuery } = useQueryState({ 
-    ...schema, 
-    facilityNo: facilityNo 
-  });
+  const { query, setQuery } = useQueryState(schema);
   const [response, setResponse] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -29,34 +23,30 @@ export const useReservationList = (facilityNo) => {
     const fetchReservations = async () => {
       setLoading(true);
       try {
-        const res = await getReservationList(query);
-        const data = unwrapApi(res);
-        setResponse(data);
-        setError(null);
+        const res = await getReservationList({ ...query, facilityNo });
+        const pageData = res?.data || res;
+        setResponse(pageData);
       } catch (err) {
         setError(err);
-        console.error(err.message);
       } finally {
         setLoading(false);
       }
     };
     fetchReservations();
-  }, [query]);
+  }, [query, facilityNo]);
+
+  const reservationList = useMemo(() => {
+    return response?.content || [];
+  }, [response]);
 
   const pageResponse = useMemo(() => {
-    if(!response) return null;
-    return {...response, page: query.page}
-  }, [response, query.page]);
+    if (!response) return null;
+    return {
+      page: response.page,
+      totalPages: response.totalPages,
+      totalElements: response.totalElements,
+    };
+  }, [response]);
 
-  const reservationList = pageResponse?.content || [];
-
-  return {
-      query, 
-      setQuery,
-      loading,
-      error,
-      setPage, 
-      pageResponse, 
-      reservationList
-  };
+  return { query, loading, error, setPage, pageResponse, reservationList };
 };

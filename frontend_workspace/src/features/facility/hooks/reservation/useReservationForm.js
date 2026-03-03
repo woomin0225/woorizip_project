@@ -1,11 +1,9 @@
-// src/features/facility/hooks/reservation/useReservationForm.js
 import { useState, useEffect, useCallback } from 'react';
 import {
   createReservation,
   modifyReservation,
   getReservationDetail,
 } from '../../api/reservationApi';
-import { unwrapApi } from '../../../../shared/utils/apiUnwrap';
 
 const schema = {
   reservationName: '',
@@ -15,12 +13,18 @@ const schema = {
   reservationEndTime: '',
 };
 
-export function useReservationForm(facilityNo = null, reservationNo = null) {
+export function useReservationForm(facilityNoInput = null, reservationNo = null) {
   const [values, setValues] = useState(schema);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  
   const updateMode = !!reservationNo;
+
+  const facilityNo = 
+    facilityNoInput && typeof facilityNoInput === 'object' 
+      ? facilityNoInput.facilityNo 
+      : facilityNoInput;
 
   useEffect(() => {
     if (updateMode && reservationNo) {
@@ -28,25 +32,29 @@ export function useReservationForm(facilityNo = null, reservationNo = null) {
         setLoading(true);
         try {
           const response = await getReservationDetail(reservationNo);
-          const data = unwrapApi(response);
+          
+          const resData = response?.data || response;
+          const target = resData?.data || resData;
 
-          if (data) {
+          if (target) {
             setValues({
-              reservationName: data.reservationName || '',
-              reservationPhone: data.reservationPhone || '',
-              reservationDate: data.reservationDate || '',
-              reservationStartTime: data.reservationStartTime || '',
-              reservationEndTime: data.reservationEndTime || '',
+              reservationName: target.reservationName || '',
+              reservationPhone: target.reservationPhone || '',
+              reservationDate: target.reservationDate || '',
+              reservationStartTime: target.reservationStartTime ? target.reservationStartTime.substring(0, 5) : '',
+              reservationEndTime: target.reservationEndTime ? target.reservationEndTime.substring(0, 5) : '',
             });
           }
         } catch (err) {
           setError(err);
-          console.error(err.message);
+          console.error("데이터 로드 실패:", err.message);
         } finally {
           setLoading(false);
         }
       };
       loadData();
+    } else {
+      setValues(schema);
     }
   }, [reservationNo, updateMode]);
 
@@ -62,21 +70,24 @@ export function useReservationForm(facilityNo = null, reservationNo = null) {
     if (e) e.preventDefault();
     setSubmitting(true);
 
-    const payload = {
-      ...values,
-      facilityNo: facilityNo, 
-    };
-
     try {
-      const response = updateMode
-        ? await modifyReservation(reservationNo, payload)
-        : await createReservation(payload);
+      let response;
+      if (updateMode) {
+        response = await modifyReservation(reservationNo, values);
+      } else {
+        response = await createReservation(facilityNo, values);
+      }
 
-      alert(response.message);
-      navigate(`/reservation/view/${facilityNo}/${response.reservationNo}`); 
+      const result = response?.data || response;
+      alert(result.message);
+      
+      const resNo = result.reservationNo || reservationNo;
+      const targetFNo = facilityNo || result.facilityNo;
+      navigate(`/reservation/view/${targetFNo}/${resNo}`);
+      
     } catch (err) {
       setError(err);
-      alert(err.message);
+      alert(err.message || '오류가 발생했습니다.');
     } finally {
       setSubmitting(false);
     }

@@ -8,20 +8,16 @@ export default function CategoryForm() {
   const { facilityCode } = useParams();
   const navigate = useNavigate();
 
-  const { 
-    values, 
-    handleChange, 
-    onSubmit, 
-    loading, 
-    submitting, 
-    updateMode 
-  } = useCategoryForm(facilityCode ? parseInt(facilityCode) : null);
+  const { values, handleChange, onSubmit, loading, submitting, updateMode } =
+    useCategoryForm(facilityCode ? parseInt(facilityCode) : null);
 
   const [optionList, setOptionList] = useState(['', '', '', '', '']);
 
   useEffect(() => {
     if (values.facilityOptions) {
-      const savedOptions = values.facilityOptions.split(',').map(opt => opt.trim());
+      const savedOptions = values.facilityOptions
+        .split(',')
+        .map((opt) => opt.trim());
       const newOptions = ['', '', '', '', ''];
       savedOptions.forEach((opt, i) => {
         if (i < 5) newOptions[i] = opt;
@@ -38,8 +34,8 @@ export default function CategoryForm() {
     const syntheticEvent = {
       target: {
         name: 'facilityOptions',
-        value: newOptions.filter(opt => opt.trim() !== '').join(',')
-      }
+        value: newOptions.filter((opt) => opt.trim() !== '').join(','),
+      },
     };
     handleChange(syntheticEvent);
   };
@@ -63,14 +59,17 @@ export default function CategoryForm() {
               {updateMode ? '카테고리 수정' : '신규 카테고리 등록'}
             </h2>
 
-            <form onSubmit={(e) => onSubmit(e, navigate)} className={styles.descBox}>
+            <form
+              onSubmit={(e) => onSubmit(e, navigate)}
+              className={styles.descBox}
+            >
               <div className={styles.sectionBlock}>
                 <h4 className={styles.sectionTitle}>시설 종류</h4>
-                <input 
+                <input
                   type="text"
                   name="facilityType"
                   className={styles.input}
-                  placeholder='시설 이름'
+                  placeholder="시설 이름"
                   value={values.facilityType}
                   onChange={handleChange}
                 />
@@ -82,12 +81,14 @@ export default function CategoryForm() {
                   {optionList.map((opt, idx) => (
                     <div key={idx} className={styles.fieldRow}>
                       <label className={styles.fieldLabel}>{idx + 1}.</label>
-                      <input 
+                      <input
                         type="text"
                         className={styles.input}
                         placeholder={`${idx + 1}번째 시설 기본 옵션`}
                         value={opt}
-                        onChange={(e) => handleOptionChange(idx, e.target.value)}
+                        onChange={(e) =>
+                          handleOptionChange(idx, e.target.value)
+                        }
                       />
                     </div>
                   ))}
@@ -95,8 +96,18 @@ export default function CategoryForm() {
               </div>
 
               <div className={styles.btnGroup}>
-                <button type="button" className={styles.inlineBtn} onClick={() => navigate(-1)}>취소</button>
-                <button type="submit" className={styles.primaryBtn} disabled={submitting}>
+                <button
+                  type="button"
+                  className={styles.secondaryBtn}
+                  onClick={() => navigate(`/admin/category`)}
+                >
+                  취소
+                </button>
+                <button
+                  type="submit"
+                  className={styles.primaryBtn}
+                  disabled={submitting}
+                >
                   저장
                 </button>
               </div>
