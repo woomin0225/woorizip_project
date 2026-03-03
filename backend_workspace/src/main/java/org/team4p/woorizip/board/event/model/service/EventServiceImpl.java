@@ -78,9 +78,9 @@ public class EventServiceImpl implements EventService {
 
 	// =========================기본 조회================================
 	@Override
-	public ArrayList<PostDto> selectTop3() {
+	public ArrayList<PostDto> selectTop5() {
 		List<PostEntity> entities = 
-				postRepository.findTop3ByBoardTypeNoOrderByPostCreatedAtDesc(BOARD_TYPE_NO);
+				postRepository.findTop5ByBoardTypeNoOrderByPostViewCountDesc(BOARD_TYPE_NO);
 
 		ArrayList<PostDto> list = new ArrayList<>();
 		

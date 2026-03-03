@@ -52,10 +52,10 @@ public class InformationController {
 	private final UserRepository userRepository;
 	
 	//==============Top3===================
-	@GetMapping("/top3")
-	public ResponseEntity<ApiResponse<ArrayList<PostDto>>> top3() {
+	@GetMapping("/top5")
+	public ResponseEntity<ApiResponse<ArrayList<PostDto>>> top5() {
 		return ResponseEntity.ok(
-				ApiResponse.ok("top3 조회 성공", informationService.selectTop3()));
+				ApiResponse.ok("top5 조회 성공", informationService.selectTop5()));
 	}
 	
 	//==============목록===================

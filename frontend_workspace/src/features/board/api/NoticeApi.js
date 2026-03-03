@@ -6,9 +6,9 @@ export function toggleNoticePin(postNo) {
   return apiJson().patch(`/api/notice/${postNo}/pin`);
 }
 
-// Top3 (최신 공지)
-export async function fetchNoticeTop3() {
-  const { data } = await apiJson().get('/api/notice/top3');
+// Top5 (최신 공지)
+export async function fetchNoticeTop5() {
+  const { data } = await apiJson().get('/api/notice/top5');
   return data; // ApiResponse<List<NoticeDto>>
 }
 

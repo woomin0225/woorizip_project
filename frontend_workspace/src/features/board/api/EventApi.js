@@ -1,9 +1,9 @@
 // src/features/board/api/eventApi.js
 import { apiJson, apiForm } from '../../../app/http/request';
 
-// Top3 ===================================
-export async function fetchEventTop3() {
-  const { data } = await apiJson().get('/api/event/top3');
+// Top5 ===================================
+export async function fetchEventTop5() {
+  const { data } = await apiJson().get('/api/event/top5');
   return data;
 }
 
