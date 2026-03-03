@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { useFacilityDetail } from '../../hooks/facility/useFacilityDetail';
 import styles from './Detail.module.css';
 
+const FAC_IMG_DIR = 'http://localhost:8080/upload/facility_image';
+
 export default function FacilityDetail({
   facilityNo,
   owner,
@@ -50,7 +52,7 @@ export default function FacilityDetail({
     facilityCloseTime,
     images,
     displayOptionList,
-    facilityRsvnRequiredYn
+    facilityRsvnRequiredYn,
   } = facilityDetails;
 
   return (
@@ -62,7 +64,7 @@ export default function FacilityDetail({
               {images.map((img) => (
                 <img
                   key={img.facilityImageNo}
-                  src={`http://localhost:8080/upload/facility_image/${img?.facilityStoredImageName}`}
+                  src={`${FAC_IMG_DIR}/${img?.facilityStoredImageName}`}
                   alt={facilityName}
                   className={styles.facilityImg}
                 />
@@ -98,7 +100,7 @@ export default function FacilityDetail({
               {owner ? (
                 <>
                   <button
-                    className={styles.inlineBtn}
+                    className={styles.primaryBtn}
                     onClick={() =>
                       nav(`/facility/form/${houseNo}/${facilityNo}`)
                     }

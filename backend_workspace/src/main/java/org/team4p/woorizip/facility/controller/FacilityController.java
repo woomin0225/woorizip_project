@@ -74,7 +74,7 @@ public class FacilityController {
 	        dto.setImages(imageDtoList);
 	    }
 		String currentUserNo = (principal != null) ? principal.getUserNo() : null;
-		facilityService.createFacility(dto, currentUserNo);
+		facilityService.createFacility(files, dto, currentUserNo);
         return ResponseEntity.ok(ApiResponse.ok("새로운 시설이 성공적으로 등록되었습니다.", "facilityCreateSuccess"));
 	}
 	

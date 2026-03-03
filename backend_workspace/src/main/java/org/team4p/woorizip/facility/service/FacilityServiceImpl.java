@@ -1,5 +1,6 @@
 package org.team4p.woorizip.facility.service;
 
+import java.io.File;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -11,6 +12,8 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+import org.team4p.woorizip.common.config.UploadProperties;
 import org.team4p.woorizip.common.exception.ForbiddenException;
 import org.team4p.woorizip.common.exception.NotFoundException;
 import org.team4p.woorizip.common.validator.LesseeValidator;
@@ -49,6 +52,8 @@ public class FacilityServiceImpl implements FacilityService {
 	private final UserRepository userRepository;
 	private final LesseeValidator lesseeValidator;
 	
+	private final UploadProperties upload;
+	
 	// 시설 목록 조회
 	@Override
 	@Transactional(readOnly = true)
@@ -72,7 +77,7 @@ public class FacilityServiceImpl implements FacilityService {
 	// 시설 신규 등록
 	@Override
 	@Transactional
-	public void createFacility(FacilityCreateRequestDTO dto, String userNo) {
+	public void createFacility(List<MultipartFile> files, FacilityCreateRequestDTO dto, String userNo) {
 		UserEntity user = userRepository.findById(userNo)
 				.orElseThrow(() -> new NotFoundException("사용자 정보를 찾을 수 없습니다."));
 		
@@ -161,19 +166,42 @@ public class FacilityServiceImpl implements FacilityService {
 				.maxRsvnPerDay(finalMaxRsvn)
 				.facilityRsvnUnitMinutes(finalUnitMin)
 				.facilityMaxDurationMinutes(finalMaxDur).build();
-
-		// 이미지 입력
-		if (dto.getImages() != null) {
-			for (FacilityImageDTO imageDto : dto.getImages()) {
-				FacilityImageEntity imageEntity = FacilityImageEntity
+		
+		// 이미지 저장 : 파일저장소 -> DB
+		File saveDir = upload.facilityImageDir().toFile();
+		if (!saveDir.exists()) saveDir.mkdirs();
+		List<FacilityImageDTO> imageDtos = dto.getImages();
+		for(int i = 0; i < files.size(); i++) {
+			File saveFile = new File(saveDir, imageDtos.get(i).getFacilityStoredImageName());
+			try {
+	            files.get(i).transferTo(saveFile);	// 파일저장소에 먼저 저장
+	        } catch (Exception e) {
+	            continue;	// 파일저장소에 저장 실패하면 DB에도 저장하지 않음
+	        }
+			
+			// DB에 이름 저장
+			FacilityImageEntity entity = FacilityImageEntity
 						.builder()
-						.facilityOriginalImageName(imageDto.getFacilityOriginalImageName())
-						.facilityStoredImageName(imageDto.getFacilityStoredImageName())
+						.facilityOriginalImageName(imageDtos.get(i).getFacilityOriginalImageName())
+						.facilityStoredImageName(imageDtos.get(i).getFacilityStoredImageName())
 						.facility(facility)
 						.build();
-				facility.getImages().add(imageEntity);
-			}
+			facility.getImages().add(entity);
 		}
+		
+//		// 이미지 입력
+//		if (dto.getImages() != null) {
+//			for (FacilityImageDTO imageDto : dto.getImages()) {
+//		        // 이미지 DB에 이름 저장
+//				FacilityImageEntity imageEntity = FacilityImageEntity
+//						.builder()
+//						.facilityOriginalImageName(imageDto.getFacilityOriginalImageName())
+//						.facilityStoredImageName(imageDto.getFacilityStoredImageName())
+//						.facility(facility)
+//						.build();
+//				facility.getImages().add(imageEntity);
+//			}
+//		}
 
 		facilityRepository.save(facility);
 	}
