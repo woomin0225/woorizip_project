@@ -1,7 +1,16 @@
 import ResultItem from "./ResultItem";
 import styles from "./ResultList.module.css";
 
-export default function ResultList({ slice=[], criterion, onLoadMore, onChangeCriterion, hasNext, loading, wishMap, onToggleWish }){
+export default function ResultList({
+  slice = [],
+  criterion,
+  onLoadMore,
+  onChangeCriterion,
+  hasNext,
+  loading,
+  wishMap,
+  onToggleWish,
+}) {
   function searchLatest() {
     onChangeCriterion("LATEST");
   }

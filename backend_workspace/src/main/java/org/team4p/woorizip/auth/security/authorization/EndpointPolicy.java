@@ -20,6 +20,8 @@ public final class EndpointPolicy {
     		"/api/user/signup",
             "/api/user/check-id",
             "/api/user/find-id",
+            "/api/user/password/send-code",
+            "/api/user/password/verify-code",
             "/api/user/find-password",
             "/auth/login"
     };

@@ -48,6 +48,9 @@ public class PostEntity {
   private Boolean postCommentYn;
   @Column(name = "POST_FILES_YN")
   private Boolean postFilesYn;
+  
+  @Column(name = "POST_PINNED_YN")
+  private Boolean postPinnedYn = false;
 
   //Insert 직전 기본값 세팅
   @PrePersist

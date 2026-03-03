@@ -11,6 +11,9 @@ public interface TourService {
     // 투어 목록 조회
     PageResponse<TourDto> selectListTour(String userNo, int page, int size);
 
+    // 임대인 기준 투어 목록 조회
+    PageResponse<TourDto> selectListTourByOwner(String ownerUserNo, int page, int size);
+
     // 투어 추가
     int insertTour(TourDto tourDto);
 

@@ -2,8 +2,13 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Container, Row, Col, Card, CardBody } from 'reactstrap';
 import MyPageSideNav from '../../user/components/MyPageSideNav';
-import { getTourPage } from '../api/tourAPI';
-import { getMyContractsPage } from '../../contract/api/contractAPI';
+import { decideTour, getOwnerTourPage, getTourPage } from '../api/tourAPI';
+import {
+  decideContract,
+  getMyContractsPage,
+  getOwnerContractsPage,
+} from '../../contract/api/contractAPI';
+import { getMyInfo, isLessorType } from '../../user/api/userAPI';
 import layoutStyles from '../../../app/layouts/MyPageLayout.module.css';
 import styles from './OccupyApply.module.css';
 
@@ -12,13 +17,17 @@ const PAGE_SIZE = 8;
 function statusLabel(status) {
   switch (String(status || '').toUpperCase()) {
     case 'PENDING':
-      return '요청중';
+      return '승인대기';
     case 'APPROVED':
       return '승인됨';
     case 'REJECTED':
       return '취소/거절';
     case 'APPLIED':
       return '신청됨';
+    case 'AMENDMENT_REQUESTED':
+      return '수정요청중';
+    case 'PAID':
+      return '결제완료';
     case 'ACTIVE':
       return '진행중';
     default:
@@ -57,6 +66,8 @@ function getRoomName(item) {
 
 export default function OccupyApply() {
   const navigate = useNavigate();
+  const [isLessor, setIsLessor] = useState(false);
+  const [userTypeLoaded, setUserTypeLoaded] = useState(false);
   const [tourItems, setTourItems] = useState([]);
   const [tourPage, setTourPage] = useState(1);
   const [tourTotalPages, setTourTotalPages] = useState(0);
@@ -64,31 +75,122 @@ export default function OccupyApply() {
   const [contractPage, setContractPage] = useState(1);
   const [contractTotalPages, setContractTotalPages] = useState(0);
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
 
   const loadTours = useCallback(async (nextPage = 1) => {
-    const res = await getTourPage(nextPage, PAGE_SIZE);
+    const fetcher = isLessor ? getOwnerTourPage : getTourPage;
+    const res = await fetcher(nextPage, PAGE_SIZE);
     setTourItems(res.content || []);
     setTourPage(res.page || nextPage);
     setTourTotalPages(res.totalPages || 0);
-  }, []);
+  }, [isLessor]);
 
   const loadContracts = useCallback(async (nextPage = 1) => {
-    const res = await getMyContractsPage(nextPage, PAGE_SIZE);
+    const fetcher = isLessor ? getOwnerContractsPage : getMyContractsPage;
+    const res = await fetcher(nextPage, PAGE_SIZE);
     setContractItems(res.content || []);
     setContractPage(res.page || nextPage);
     setContractTotalPages(res.totalPages || 0);
+  }, [isLessor]);
+
+  useEffect(() => {
+    let mounted = true;
+    getMyInfo()
+      .then((info) => {
+        if (!mounted) return;
+        setIsLessor(isLessorType(info?.type));
+      })
+      .catch(() => {
+        if (!mounted) return;
+        setIsLessor(false);
+      })
+      .finally(() => {
+        if (!mounted) return;
+        setUserTypeLoaded(true);
+      });
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   useEffect(() => {
+    if (!userTypeLoaded) return;
     (async () => {
-      try {
-        setError('');
-        await Promise.all([loadTours(1), loadContracts(1)]);
-      } catch (e) {
-        setError(e.message || '신청현황 조회 실패');
+      setError('');
+      setNotice('');
+
+      const [tourResult, contractResult] = await Promise.allSettled([loadTours(1), loadContracts(1)]);
+      const errors = [];
+
+      if (tourResult.status === 'rejected') {
+        setTourItems([]);
+        setTourPage(1);
+        setTourTotalPages(0);
+        errors.push(`투어: ${tourResult.reason?.message || '조회 실패'}`);
+      }
+
+      if (contractResult.status === 'rejected') {
+        setContractItems([]);
+        setContractPage(1);
+        setContractTotalPages(0);
+        errors.push(`입주: ${contractResult.reason?.message || '조회 실패'}`);
+      }
+
+      if (errors.length > 0) {
+        setError(`${isLessor ? '승인현황' : '신청현황'} 일부 조회 실패 (${errors.join(' / ')})`);
       }
     })();
-  }, [loadTours, loadContracts]);
+  }, [isLessor, loadTours, loadContracts, userTypeLoaded]);
+
+  const canReviewTour = useCallback((item) => {
+    const status = String(item?.status || '').toUpperCase();
+    return ['PENDING', 'APPLIED'].includes(status);
+  }, []);
+
+  const canReviewContract = useCallback((item) => {
+    const status = String(item?.status || '').toUpperCase();
+    return ['APPLIED', 'AMENDMENT_REQUESTED'].includes(status);
+  }, []);
+
+  const onTourDecision = useCallback(
+    async (item, nextStatus) => {
+      if (!item?.tourNo) return;
+      try {
+        setError('');
+        setNotice('');
+        let reason = '';
+        if (nextStatus === 'REJECTED') {
+          reason = window.prompt('거절 사유를 입력해 주세요.', '') || '';
+        }
+        await decideTour(item.tourNo, nextStatus, reason.trim());
+        setNotice(nextStatus === 'APPROVED' ? '투어 신청을 승인했습니다.' : '투어 신청을 거절했습니다.');
+        await loadTours(tourPage);
+      } catch (e) {
+        setError(e.message || '투어 승인 처리 실패');
+      }
+    },
+    [loadTours, tourPage]
+  );
+
+  const onContractDecision = useCallback(
+    async (item, nextStatus) => {
+      if (!item?.contractNo) return;
+      try {
+        setError('');
+        setNotice('');
+        let reason = '';
+        if (nextStatus === 'REJECTED') {
+          reason = window.prompt('거절 사유를 입력해 주세요.', '') || '';
+        }
+        await decideContract(item.contractNo, nextStatus, reason.trim(), item.status);
+        setNotice(nextStatus === 'APPROVED' ? '입주 신청을 승인했습니다.' : '입주 신청을 거절했습니다.');
+        await loadContracts(contractPage);
+      } catch (e) {
+        setError(e.message || '입주 신청 승인 처리 실패');
+      }
+    },
+    [contractPage, loadContracts]
+  );
 
   const tourPages = useMemo(() => Array.from({ length: tourTotalPages }, (_, i) => i + 1), [tourTotalPages]);
   const contractPages = useMemo(
@@ -121,40 +223,81 @@ export default function OccupyApply() {
               </Card>
             </Col>
             <Col lg="9">
-              <Card className={`shadow border-0 ${layoutStyles.mainCard}`}>
+                <Card className={`shadow border-0 ${layoutStyles.mainCard}`}>
                 <CardBody>
                   {error && <p className={layoutStyles.desc}>{error}</p>}
+                  {notice && <p className={layoutStyles.desc}>{notice}</p>}
 
                   <div className={layoutStyles.sectionBlock}>
-                    <h3 className={layoutStyles.sectionTitle}>투어 신청</h3>
-                    {tourItems.length === 0 && <p className={layoutStyles.desc}>투어 신청 내역이 없습니다.</p>}
+                    <h3 className={layoutStyles.sectionTitle}>{isLessor ? '투어 승인' : '투어 신청'}</h3>
+                    {tourItems.length === 0 && (
+                      <p className={layoutStyles.desc}>
+                        {isLessor ? '승인할 투어 신청 내역이 없습니다.' : '투어 신청 내역이 없습니다.'}
+                      </p>
+                    )}
                     {tourItems.length > 0 && (
                       <>
-                        <div className={styles.listHeader}>
+                        <div className={`${styles.listHeader} ${isLessor ? styles.listHeaderLessor : ''}`}>
                           <span>방</span>
                           <span>방문일</span>
                           <span>시간</span>
                           <span>상태</span>
-                          <span>상세</span>
+                          <span>{isLessor ? '승인처리' : '상세'}</span>
                         </div>
                         {tourItems.map((item) => (
-                          <div key={item.tourNo} className={styles.listRow}>
+                          <div
+                            key={item.tourNo}
+                            className={`${styles.listRow} ${isLessor ? styles.listRowLessor : ''}`}
+                          >
                             <span className={styles.oneLine}>{getRoomName(item)}</span>
                             <span>{fmtDate(item.visitDate)}</span>
                             <span>{fmtTime(item.visitTime)}</span>
                             <span>{statusLabel(item.status)}</span>
                             <span>
-                              <button
-                                type="button"
-                                className={styles.smallBtn}
-                                onClick={() =>
-                                  navigate(`/mypage/applications/tour/${item.tourNo}`, {
-                                    state: { item, kind: 'tour' },
-                                  })
-                                }
-                              >
-                                상세
-                              </button>
+                              {!isLessor && (
+                                <button
+                                  type="button"
+                                  className={styles.smallBtn}
+                                  onClick={() =>
+                                    navigate(`/mypage/applications/tour/${item.tourNo}`, {
+                                      state: { item, kind: 'tour' },
+                                    })
+                                  }
+                                >
+                                  상세
+                                </button>
+                              )}
+                              {isLessor && (
+                                <div className={styles.actionStack}>
+                                  <button
+                                    type="button"
+                                    className={styles.smallBtn}
+                                    onClick={() =>
+                                      navigate(`/mypage/applications/tour/${item.tourNo}`, {
+                                        state: { item, kind: 'tour' },
+                                      })
+                                    }
+                                  >
+                                    내역
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className={styles.smallBtn}
+                                    onClick={() => onTourDecision(item, 'APPROVED')}
+                                    disabled={!canReviewTour(item)}
+                                  >
+                                    승인
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className={`${styles.smallBtn} ${styles.rejectBtn}`}
+                                    onClick={() => onTourDecision(item, 'REJECTED')}
+                                    disabled={!canReviewTour(item)}
+                                  >
+                                    거절
+                                  </button>
+                                </div>
+                              )}
                             </span>
                           </div>
                         ))}
@@ -194,35 +337,75 @@ export default function OccupyApply() {
                   </div>
 
                   <div className={layoutStyles.sectionBlock}>
-                    <h3 className={layoutStyles.sectionTitle}>입주 신청</h3>
-                    {contractItems.length === 0 && <p className={layoutStyles.desc}>입주 신청 내역이 없습니다.</p>}
+                    <h3 className={layoutStyles.sectionTitle}>{isLessor ? '입주 승인' : '입주 신청'}</h3>
+                    {contractItems.length === 0 && (
+                      <p className={layoutStyles.desc}>
+                        {isLessor ? '승인할 입주 신청 내역이 없습니다.' : '입주 신청 내역이 없습니다.'}
+                      </p>
+                    )}
                     {contractItems.length > 0 && (
                       <>
-                        <div className={styles.listHeader}>
+                        <div className={`${styles.listHeader} ${isLessor ? styles.listHeaderLessor : ''}`}>
                           <span>방</span>
                           <span>입주일</span>
                           <span>기간</span>
                           <span>상태</span>
-                          <span>상세</span>
+                          <span>{isLessor ? '승인처리' : '상세'}</span>
                         </div>
                         {contractItems.map((item) => (
-                          <div key={item.contractNo} className={styles.listRow}>
+                          <div
+                            key={item.contractNo}
+                            className={`${styles.listRow} ${isLessor ? styles.listRowLessor : ''}`}
+                          >
                             <span className={styles.oneLine}>{getRoomName(item)}</span>
                             <span>{fmtDate(item.moveInDate)}</span>
                             <span>{item.termMonths ? `${item.termMonths}개월` : '-'}</span>
                             <span>{statusLabel(item.status)}</span>
                             <span>
-                              <button
-                                type="button"
-                                className={styles.smallBtn}
-                                onClick={() =>
-                                  navigate(`/mypage/applications/contract/${item.contractNo}`, {
-                                    state: { item, kind: 'contract' },
-                                  })
-                                }
-                              >
-                                상세
-                              </button>
+                              {!isLessor && (
+                                <button
+                                  type="button"
+                                  className={styles.smallBtn}
+                                  onClick={() =>
+                                    navigate(`/mypage/applications/contract/${item.contractNo}`, {
+                                      state: { item, kind: 'contract' },
+                                    })
+                                  }
+                                >
+                                  상세
+                                </button>
+                              )}
+                              {isLessor && (
+                                <div className={styles.actionStack}>
+                                  <button
+                                    type="button"
+                                    className={styles.smallBtn}
+                                    onClick={() =>
+                                      navigate(`/mypage/applications/contract/${item.contractNo}`, {
+                                        state: { item, kind: 'contract' },
+                                      })
+                                    }
+                                  >
+                                    내역
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className={styles.smallBtn}
+                                    onClick={() => onContractDecision(item, 'APPROVED')}
+                                    disabled={!canReviewContract(item)}
+                                  >
+                                    승인
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className={`${styles.smallBtn} ${styles.rejectBtn}`}
+                                    onClick={() => onContractDecision(item, 'REJECTED')}
+                                    disabled={!canReviewContract(item)}
+                                  >
+                                    거절
+                                  </button>
+                                </div>
+                              )}
                             </span>
                           </div>
                         ))}
@@ -262,7 +445,7 @@ export default function OccupyApply() {
                   </div>
 
                   {!error && tourItems.length === 0 && contractItems.length === 0 && (
-                    <p className={layoutStyles.desc}>신청현황이 없습니다.</p>
+                    <p className={layoutStyles.desc}>{isLessor ? '승인현황이 없습니다.' : '신청현황이 없습니다.'}</p>
                   )}
                 </CardBody>
               </Card>

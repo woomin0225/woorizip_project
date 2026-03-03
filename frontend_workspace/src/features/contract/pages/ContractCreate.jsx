@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Container, Row, Col, Card, CardBody } from 'reactstrap';
 import {
@@ -8,7 +8,7 @@ import {
 } from '../api/contractAPI';
 import { getRoom, getRoomImages } from '../../houseAndRoom/api/roomApi';
 import { getHouse } from '../../houseAndRoom/api/houseApi';
-import { getMyInfo } from '../../user/api/userAPI';
+import { getMyInfo, getUserByUserNo } from '../../user/api/userAPI';
 import InlineCalendar from '../../../shared/components/InlineCalendar';
 import styles from './ContractCreate.module.css';
 
@@ -81,12 +81,26 @@ function occupancyLabel(roomCount) {
   return `${n}인`;
 }
 
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function toDataUrlHtml(html) {
+  return `data:text/html;charset=utf-8,${encodeURIComponent(html)}`;
+}
+
 export default function ContractCreate() {
   const navigate = useNavigate();
   const { roomNo: routeRoomNo } = useParams();
   const [step, setStep] = useState(1);
   const [room, setRoom] = useState(null);
   const [house, setHouse] = useState(null);
+  const [landlordInfo, setLandlordInfo] = useState(null);
   const [thumb, setThumb] = useState('');
   const [userInfo, setUserInfo] = useState(null);
   const [error, setError] = useState('');
@@ -98,9 +112,6 @@ export default function ContractCreate() {
   const [termMonths, setTermMonths] = useState(12);
   const [amendReason, setAmendReason] = useState('');
   const [signatureName, setSignatureName] = useState('');
-  const [agreePersonal, setAgreePersonal] = useState(false);
-  const [agreeContract, setAgreeContract] = useState(false);
-  const [agreeSign, setAgreeSign] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('CARD');
   const [docModal, setDocModal] = useState({ open: false, key: '', title: '', urls: [] });
   const [docConfirmed, setDocConfirmed] = useState({
@@ -108,6 +119,9 @@ export default function ContractCreate() {
     contract: false,
     sign: false,
   });
+  const [signatureDataUrl, setSignatureDataUrl] = useState('');
+  const signatureCanvasRef = useRef(null);
+  const isSignatureDrawingRef = useRef(false);
 
   const todayIso = useMemo(() => getTodayLocalIso(), []);
   const roomAvailableDateIso = useMemo(() => normalizeIsoDate(room?.roomAvailableDate), [room?.roomAvailableDate]);
@@ -129,6 +143,144 @@ export default function ContractCreate() {
     }
     return displayRoomName;
   }, [displayRoomName, house]);
+
+  const landlordName = landlordInfo?.name || room?.userName || house?.userName || room?.lessorName || house?.lessorName || '-';
+  const landlordPhone = landlordInfo?.phone || room?.userPhone || house?.userPhone || room?.lessorPhone || house?.lessorPhone || '-';
+  const lessorUserNo = house?.userNo || house?.user_no || room?.userNo || room?.user_no || '';
+
+  const drawSignatureLine = useCallback((x0, y0, x1, y1) => {
+    const canvas = signatureCanvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = '#172b4d';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(x0, y0);
+    ctx.lineTo(x1, y1);
+    ctx.stroke();
+  }, []);
+
+  const getCanvasPoint = useCallback((evt) => {
+    const canvas = signatureCanvasRef.current;
+    if (!canvas) return { x: 0, y: 0 };
+    const rect = canvas.getBoundingClientRect();
+    return {
+      x: evt.clientX - rect.left,
+      y: evt.clientY - rect.top,
+    };
+  }, []);
+
+  const updateSignatureDataUrl = useCallback(() => {
+    const canvas = signatureCanvasRef.current;
+    if (!canvas) return;
+    setSignatureDataUrl(canvas.toDataURL('image/png'));
+  }, []);
+
+  const clearSignature = useCallback(() => {
+    const canvas = signatureCanvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    setSignatureDataUrl('');
+  }, []);
+
+  const onSignaturePointerDown = useCallback((evt) => {
+    const canvas = signatureCanvasRef.current;
+    if (!canvas) return;
+    canvas.setPointerCapture(evt.pointerId);
+    isSignatureDrawingRef.current = true;
+    const point = getCanvasPoint(evt);
+    canvas.dataset.prevX = String(point.x);
+    canvas.dataset.prevY = String(point.y);
+  }, [getCanvasPoint]);
+
+  const onSignaturePointerMove = useCallback((evt) => {
+    const canvas = signatureCanvasRef.current;
+    if (!canvas || !isSignatureDrawingRef.current) return;
+    const point = getCanvasPoint(evt);
+    const prevX = Number(canvas.dataset.prevX || point.x);
+    const prevY = Number(canvas.dataset.prevY || point.y);
+    drawSignatureLine(prevX, prevY, point.x, point.y);
+    canvas.dataset.prevX = String(point.x);
+    canvas.dataset.prevY = String(point.y);
+  }, [drawSignatureLine, getCanvasPoint]);
+
+  const onSignaturePointerUp = useCallback((evt) => {
+    const canvas = signatureCanvasRef.current;
+    if (!canvas) return;
+    if (canvas.hasPointerCapture(evt.pointerId)) {
+      canvas.releasePointerCapture(evt.pointerId);
+    }
+    isSignatureDrawingRef.current = false;
+    updateSignatureDataUrl();
+  }, [updateSignatureDataUrl]);
+
+  const buildLeasePreviewDataUrl = () => {
+    const contractWrittenDate = getTodayLocalIso();
+    const specialTerms = (amendReason || '').trim() || '특약 없음';
+    const html = `<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>주택 임대차 전자계약서</title>
+  <style>
+    body { font-family: 'Malgun Gothic', Arial, sans-serif; margin: 20px; color: #222; line-height: 1.5; }
+    h1 { margin: 0 0 8px; font-size: 22px; }
+    p { margin: 0 0 10px; color: #555; }
+    table { width: 100%; border-collapse: collapse; margin: 10px 0 16px; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 14px; vertical-align: top; }
+    th { width: 180px; background: #f7f7f7; }
+    .sig { min-height: 52px; border: 1px dashed #bbb; padding: 8px; background: #fafafa; }
+  </style>
+</head>
+<body>
+  <h1>주택 임대차 전자계약서(간편 양식)</h1>
+  <p>본 계약서는 우리집(Woorizip) 플랫폼에서 임대인과 임차인이 전자적으로 체결하는 주택 임대차 계약서입니다.</p>
+
+  <h3>1. 당사자</h3>
+  <table>
+    <tr><th>임대인</th><td>${escapeHtml(landlordName)} / 연락처 ${escapeHtml(landlordPhone)}</td></tr>
+    <tr><th>임차인</th><td>${escapeHtml(who)} / 연락처 ${escapeHtml(userInfo?.phone || userInfo?.phoneNumber || userInfo?.phone_number || '-')}</td></tr>
+  </table>
+
+  <h3>2. 목적물</h3>
+  <table>
+    <tr><th>주소</th><td>${escapeHtml(house?.houseAddress || '-')} ${escapeHtml(house?.houseAddressDetail || '')}</td></tr>
+    <tr><th>호실</th><td>${escapeHtml(displayRoomName)}</td></tr>
+  </table>
+
+  <h3>3. 계약 조건</h3>
+  <table>
+    <tr><th>입주 예정일</th><td>${escapeHtml(moveInDate || '-')}</td></tr>
+    <tr><th>계약기간</th><td>${escapeHtml(String(termMonths || '-'))}개월 (종료 예정일: ${escapeHtml(expectedMoveOutDate)})</td></tr>
+    <tr><th>보증금</th><td>${escapeHtml(String(deposit || 0))}원</td></tr>
+    <tr><th>월 차임</th><td>${escapeHtml(String(monthlyFee || 0))}원 (지급일: ${escapeHtml(rentPayDay)})</td></tr>
+  </table>
+
+  <h3>4. 특약</h3>
+  <table>
+    <tr><td>${escapeHtml(specialTerms)}</td></tr>
+  </table>
+
+  <h3>5. 서명</h3>
+  <table>
+    <tr><th>임대인 서명</th><td><div class="sig">승인 단계에서 작성</div></td></tr>
+    <tr><th>임차인 서명</th><td><div class="sig">${
+      signatureDataUrl
+        ? `<img src="${signatureDataUrl}" alt="tenant-signature" style="max-width:280px; max-height:90px; object-fit:contain;" />`
+        : '계약 단계에서 서명을 그려주세요.'
+    }</div></td></tr>
+    <tr><th>작성일</th><td>${escapeHtml(contractWrittenDate)}</td></tr>
+  </table>
+</body>
+</html>`;
+    return toDataUrlHtml(html);
+  };
 
   const loadTossPaymentsSdk = () =>
     new Promise((resolve, reject) => {
@@ -198,6 +350,27 @@ export default function ContractCreate() {
   }, [routeRoomNo]);
 
   useEffect(() => {
+    if (!lessorUserNo) {
+      setLandlordInfo(null);
+      return;
+    }
+    let mounted = true;
+    (async () => {
+      try {
+        const lessor = await getUserByUserNo(lessorUserNo);
+        if (!mounted) return;
+        setLandlordInfo(lessor || null);
+      } catch {
+        if (!mounted) return;
+        setLandlordInfo(null);
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, [lessorUserNo]);
+
+  useEffect(() => {
     if (!routeRoomNo) return;
     (async () => {
       try {
@@ -222,6 +395,22 @@ export default function ContractCreate() {
       }
     })();
   }, []);
+
+  useEffect(() => {
+    if (step !== 2) return;
+    const canvas = signatureCanvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    if (!signatureDataUrl) return;
+    const img = new Image();
+    img.onload = () => {
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    };
+    img.src = signatureDataUrl;
+  }, [step, signatureDataUrl]);
 
   useEffect(() => {
     if (!moveInDate || !minDate) return;
@@ -267,12 +456,8 @@ export default function ContractCreate() {
       setError('각 동의서 링크를 열어 내용을 확인한 뒤 확인 버튼을 눌러주세요.');
       return;
     }
-    if (!agreePersonal || !agreeContract || !agreeSign) {
-      setError('전자계약 동의 항목을 모두 체크해 주세요.');
-      return;
-    }
-    if (!signatureName.trim()) {
-      setError('전자서명(이름)을 입력해 주세요.');
+    if (!signatureDataUrl) {
+      setError('서명을 직접 그려주세요.');
       return;
     }
     setStep(3);
@@ -301,7 +486,7 @@ export default function ContractCreate() {
         memo: amendReason.trim(),
       });
       const signRes = await verifyElectronicSignature(ensuredContractNo, {
-        signerName: signatureName.trim(),
+        signerName: (userInfo?.name || signatureName || '').trim(),
         agreedAt: new Date().toISOString(),
       });
       const contractUrl = signRes?.contractUrl || eContractRes?.contractUrl || '';
@@ -323,14 +508,14 @@ export default function ContractCreate() {
         paymentProvider: 'TOSS_TEST',
         signProvider: 'EFORMSIGN_TEST',
         orderId,
-        customerName: signatureName.trim() || who,
+        customerName: who,
       };
       sessionStorage.setItem(PAYMENT_CONTEXT_KEY, JSON.stringify(context));
       await requestTossPayment({
         orderId,
         amount: totalMonthlyPayment,
         roomName: displayRoomName,
-        customerName: signatureName.trim() || who,
+        customerName: who,
         method: paymentMethod,
       });
     } catch (e2) {
@@ -347,9 +532,6 @@ export default function ContractCreate() {
   const confirmDocModal = () => {
     if (docModal.key) {
       setDocConfirmed((prev) => ({ ...prev, [docModal.key]: true }));
-      if (docModal.key === 'personal') setAgreePersonal(true);
-      if (docModal.key === 'contract') setAgreeContract(true);
-      if (docModal.key === 'sign') setAgreeSign(true);
     }
     setDocModal({ open: false, key: '', title: '', urls: [] });
   };
@@ -466,19 +648,42 @@ export default function ContractCreate() {
                       <h4>전자계약서 작성 및 동의</h4>
                       <p className={styles.desc}>전자계약/서명 절차를 진행합니다.</p>
 
-                      <label className={styles.label}>전자계약 수정/요청 메모(선택)</label>
+                      <label className={styles.label}>특약 제안 메모(선택)</label>
                       <textarea
-                        className={styles.textarea}
+                        className={`${styles.textarea} ${styles.textareaCompact}`}
                         value={amendReason}
                         onChange={(e) => setAmendReason(e.target.value)}
-                        placeholder="특이사항이나 요청사항을 입력해 주세요."
+                        placeholder="임대인에게 제안할 특약/요청사항을 간단히 입력해 주세요."
+                        maxLength={200}
                       />
+                      <p className={styles.memoHint}>입력한 메모는 계약서 특약 항목에 반영됩니다.</p>
+
+                      <label className={styles.label}>서명(직접 그리기)</label>
+                      <div className={styles.signatureWrap}>
+                        <canvas
+                          ref={signatureCanvasRef}
+                          width={640}
+                          height={180}
+                          className={styles.signatureCanvas}
+                          onPointerDown={onSignaturePointerDown}
+                          onPointerMove={onSignaturePointerMove}
+                          onPointerUp={onSignaturePointerUp}
+                          onPointerCancel={onSignaturePointerUp}
+                          onPointerLeave={onSignaturePointerUp}
+                        />
+                        <div className={styles.signatureActions}>
+                          <button type="button" className={styles.secondaryBtn} onClick={clearSignature}>
+                            서명 지우기
+                          </button>
+                        </div>
+                      </div>
 
                       <label className={styles.checkRow}>
                         <input
                           type="checkbox"
-                          checked={agreePersonal}
-                          onChange={(e) => setAgreePersonal(e.target.checked)}
+                          checked={docConfirmed.personal}
+                          readOnly
+                          disabled
                         />
                         <span className={styles.checkText}>
                           개인정보 수집 및 이용/제3자 제공에 동의합니다.
@@ -503,8 +708,9 @@ export default function ContractCreate() {
                       <label className={styles.checkRow}>
                         <input
                           type="checkbox"
-                          checked={agreeContract}
-                          onChange={(e) => setAgreeContract(e.target.checked)}
+                          checked={docConfirmed.contract}
+                          readOnly
+                          disabled
                         />
                         <span className={styles.checkText}>
                           전자계약서 내용 확인 및 계약 진행에 동의합니다.
@@ -513,7 +719,9 @@ export default function ContractCreate() {
                               key={link.url}
                               type="button"
                               className={styles.linkBtn}
-                              onClick={() => openDocModal('contract', CONSENT_DOCS.contract.title, [link.url])}
+                              onClick={() =>
+                                openDocModal('contract', CONSENT_DOCS.contract.title, [buildLeasePreviewDataUrl()])
+                              }
                             >
                               {link.label}
                             </button>
@@ -523,8 +731,9 @@ export default function ContractCreate() {
                       <label className={styles.checkRow}>
                         <input
                           type="checkbox"
-                          checked={agreeSign}
-                          onChange={(e) => setAgreeSign(e.target.checked)}
+                          checked={docConfirmed.sign}
+                          readOnly
+                          disabled
                         />
                         <span className={styles.checkText}>
                           전자문서 및 전자서명 이용에 동의합니다.
@@ -540,14 +749,6 @@ export default function ContractCreate() {
                           ))}
                         </span>
                       </label>
-
-                      <label className={styles.label}>전자서명(이름 입력)</label>
-                      <input
-                        className={styles.input}
-                        value={signatureName}
-                        onChange={(e) => setSignatureName(e.target.value)}
-                        placeholder="실명 입력"
-                      />
                     </div>
 
                     <div className={styles.actionRow}>

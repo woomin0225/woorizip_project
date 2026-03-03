@@ -2,9 +2,10 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Container, Row, Col, Card, CardBody } from 'reactstrap';
 import MyPageSideNav from '../components/MyPageSideNav';
+import { getIsLessorHint, getMyInfo, isLessorType } from '../api/userAPI';
 import styles from '../../../app/layouts/MyPageLayout.module.css';
 
-const quickMenus = [
+const BASE_QUICK_MENUS = [
   {
     title: '내정보',
     description: '회원 정보 확인 및 수정',
@@ -22,6 +23,8 @@ const quickMenus = [
     description: '투어 신청 상태 확인',
     to: '/tour/list',
     buttonText: '확인하기',
+    lessorTitle: '승인현황',
+    lessorDescription: '투어/입주 신청 승인 처리',
   },
   {
     title: '계약 내역',
@@ -32,6 +35,48 @@ const quickMenus = [
 ];
 
 export default function MyPageHome() {
+  const [isLessor, setIsLessor] = React.useState(() => getIsLessorHint());
+  const quickMenus = React.useMemo(
+    () =>
+      BASE_QUICK_MENUS.map((menu) => ({
+        ...menu,
+        title:
+          menu.lessorTitle && isLessor === null
+            ? '신청/승인현황'
+            : isLessor && menu.lessorTitle
+              ? menu.lessorTitle
+              : menu.title,
+        description:
+          menu.lessorDescription && isLessor === null
+            ? '투어/입주 신청 상태 확인'
+            : isLessor && menu.lessorDescription
+              ? menu.lessorDescription
+              : menu.description,
+      })),
+    [isLessor]
+  );
+
+  React.useEffect(() => {
+    let mounted = true;
+    getMyInfo()
+      .then((info) => {
+        if (!mounted) return;
+        const nextIsLessor = isLessorType(info?.type);
+        setIsLessor(nextIsLessor);
+        if (info?.type) {
+          localStorage.setItem('userType', String(info.type));
+          sessionStorage.setItem('userType', String(info.type));
+        }
+      })
+      .catch(() => {
+        if (!mounted) return;
+        setIsLessor((prev) => (prev === null ? false : prev));
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   return (
     <>
       <section

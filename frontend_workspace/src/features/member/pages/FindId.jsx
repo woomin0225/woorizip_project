@@ -23,11 +23,13 @@ export default function FindId() {
     foundId,
     loading,
     error,
-    isCodeSent,
     isVerified,
+    isVerifying,
+    verificationError,
+    verifiedPhone,
     handleChange,
     handleSendCode,
-    handleVerifyCode,
+    handleResetVerification,
     handleFindId,
   } = useFindId();
 
@@ -105,43 +107,39 @@ export default function FindId() {
                               size="sm"
                               type="button"
                               onClick={handleSendCode}
-                              disabled={isVerified}
+                              disabled={isVerified || isVerifying}
                             >
-                              {isCodeSent ? '재발송' : '인증요청'}
+                              {isVerifying
+                                ? '인증 중...'
+                                : isVerified
+                                  ? '인증완료'
+                                  : 'PASS 인증'}
                             </Button>
                             <FormFeedback>번호를 입력해 주세요.</FormFeedback>
                           </InputGroup>
                         </FormGroup>
-                        {isCodeSent && !isVerified && (
-                          <FormGroup className="mb-3">
-                            <InputGroup className="input-group-alternative">
-                              <InputGroupText>
-                                <i className="fa fa-check" />
-                              </InputGroupText>
-                              <Input
-                                name="code"
-                                type="text"
-                                placeholder="인증번호 4자리"
-                                value={form.code}
-                                onChange={handleChange}
-                              />
-                              <Button
-                                color="success"
-                                size="sm"
-                                type="button"
-                                onClick={handleVerifyCode}
-                              >
-                                확인
-                              </Button>
-                            </InputGroup>
-                          </FormGroup>
-                        )}
                         {isVerified && (
                           <div className="text-success text-center mb-3">
                             <small>
-                              <i className="fa fa-check-circle" /> 휴대폰 인증이
-                              완료되었습니다.
+                              <i className="fa fa-check-circle" /> 휴대폰 PASS
+                              인증이 완료되었습니다.
+                              {verifiedPhone ? ` (${verifiedPhone})` : ''}
                             </small>
+                            <div className="mt-2">
+                              <Button
+                                color="secondary"
+                                size="sm"
+                                type="button"
+                                onClick={handleResetVerification}
+                              >
+                                인증 초기화
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                        {verificationError && (
+                          <div className="text-danger text-center mb-3">
+                            <small>{verificationError}</small>
                           </div>
                         )}
                         {error && (

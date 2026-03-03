@@ -13,6 +13,19 @@ export default function Home() {
 
   return (
     <>
+      <style>{`
+    .placeholder-box {
+        border: 2px dashed #90cdf4;
+        background-color: rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+    }
+    `}</style>
+
       <main>
         {/* 1. 슬라이드 배너 영역 (하늘색 테마 배경 + 임시 윤곽선) */}
         <section
@@ -30,7 +43,9 @@ export default function Home() {
             <span />
           </div>
           <Container className="d-flex align-items-center h-100 py-lg">
-            <div className={`w-100 h-75 ${styles.placeholderBox} flex-column text-center p-4`}>
+            <div
+              className={`w-100 h-75 ${styles.placeholderBox} flex-column text-center p-4`}
+            >
               <h2 className="text-white mb-2">슬라이드 배너 영역</h2>
               <p className="text-white-50">
                 나중에 이곳에 메인 배너 이미지나 캐러셀이 들어갑니다.
@@ -38,59 +53,6 @@ export default function Home() {
             </div>
           </Container>
         </section>
-
-        {/* 2. 퀵 링크 (바로가기 아이콘) 영역 */}
-        <Container className={styles.quickLinksContainer}>
-          <div className={styles.quickLinksWrapper}>
-            <Card className="shadow-lg border-0">
-              <CardBody className="py-3 px-2">
-                {' '}
-                <Row className="text-center justify-content-center m-0">
-                  <Col xs="auto" className={styles.quickCol}>
-                    <Link to="/rooms" className="text-decoration-none">
-                      <div className={`icon icon-shape bg-info text-white rounded-circle shadow ${styles.quickIcon} mx-auto`}>
-                        <i className="ni ni-building" />
-                      </div>
-                      <h6 className={`mb-0 ${styles.quickTitle}`}>방찾기</h6>
-                    </Link>
-                  </Col>
-                  <Col xs="auto" className={styles.quickCol}>
-                    <Link to="/notices" className="text-decoration-none">
-                      <div className={`icon icon-shape bg-success text-white rounded-circle shadow ${styles.quickIcon} mx-auto`}>
-                        <i className="ni ni-notification-70" />
-                      </div>
-                      <h6 className={`mb-0 ${styles.quickTitle}`}>공지사항</h6>
-                    </Link>
-                  </Col>
-                  <Col xs="auto" className={styles.quickCol}>
-                    <Link to="/event" className="text-decoration-none">
-                      <div className={`icon icon-shape bg-warning text-white rounded-circle shadow ${styles.quickIcon} mx-auto`}>
-                        <i className="ni ni-calendar-grid-58" />
-                      </div>
-                      <h6 className={`mb-0 ${styles.quickTitle}`}>이벤트</h6>
-                    </Link>
-                  </Col>
-                  <Col xs="auto" className={styles.quickCol}>
-                    <Link to="/information" className="text-decoration-none">
-                      <div className={`icon icon-shape bg-danger text-white rounded-circle shadow ${styles.quickIcon} mx-auto`}>
-                        <i className="ni ni-books" />
-                      </div>
-                      <h6 className={`mb-0 ${styles.quickTitle}`}>정책안내</h6>
-                    </Link>
-                  </Col>
-                  <Col xs="auto" className={styles.quickCol}>
-                    <Link to="/qna" className="text-decoration-none">
-                      <div className={`icon icon-shape bg-primary text-white rounded-circle shadow ${styles.quickIcon} mx-auto`}>
-                        <i className="ni ni-chat-round" />
-                      </div>
-                      <h6 className={`mb-0 ${styles.quickTitle}`}>커뮤니티</h6>
-                    </Link>
-                  </Col>
-                </Row>
-              </CardBody>
-            </Card>
-          </div>
-        </Container>
 
         {/* 조회순 기반 매물 랭킹 */}
         <section className="section pt-4">
@@ -150,7 +112,6 @@ export default function Home() {
             </Row>
           </Container>
         </section>
-        
 
         {/* 3. 게시판 프리뷰 영역 */}
         <section className="section bg-secondary mt-4">

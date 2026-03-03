@@ -34,13 +34,53 @@ async function request(path, options = {}) {
     ...options,
   });
   const text = await response.text();
-  const json = text ? JSON.parse(text) : null;
-  if (!response.ok) throw new Error(json?.message || 'Contract request failed');
+  let json = null;
+
+  try {
+    json = text ? JSON.parse(text) : null;
+  } catch (_) {
+    json = { message: text || 'Contract request failed' };
+  }
+
+  if (!response.ok) {
+    const message = json?.message || text || 'Contract request failed';
+    throw new Error(`[${response.status}] ${message}`);
+  }
   return json?.data ?? json;
+}
+
+async function requestCandidates(candidates = [], options = {}) {
+  let lastError = null;
+  for (const path of candidates) {
+    try {
+      return await request(path, options);
+    } catch (e) {
+      lastError = e;
+    }
+  }
+  throw lastError || new Error('Contract request failed');
 }
 
 export async function getMyContractsPage(page = 1, size = 8) {
   const data = await request(`/api/contract/user/me?page=${page}&size=${size}`);
+  return {
+    content: Array.isArray(data?.content) ? data.content : [],
+    page: Number(data?.page || page),
+    size: Number(data?.size || size),
+    totalElements: Number(data?.totalElements || 0),
+    totalPages: Number(data?.totalPages || 0),
+  };
+}
+
+export async function getOwnerContractsPage(page = 1, size = 8) {
+  const data = await requestCandidates([
+    `/api/contract/owner/me?page=${page}&size=${size}`,
+    `/api/contract/lessor/me?page=${page}&size=${size}`,
+    `/api/contract/owner/list?page=${page}&size=${size}`,
+    `/api/contract/list/owner?page=${page}&size=${size}`,
+    `/api/contract/list/lessor?page=${page}&size=${size}`,
+    `/api/contract/lessor/list?page=${page}&size=${size}`,
+  ]);
   return {
     content: Array.isArray(data?.content) ? data.content : [],
     page: Number(data?.page || page),
@@ -93,4 +133,47 @@ export async function requestContractPayment(contractNo, payload) {
     method: 'POST',
     body: JSON.stringify(payload),
   });
+}
+
+export async function decideContract(contractNo, status, reason = '', currentStatus = '') {
+  const normalizedStatus = String(status || '').toUpperCase();
+  const normalizedCurrentStatus = String(currentStatus || '').toUpperCase();
+
+  try {
+    return await request(`/api/contract/decision/${contractNo}`, {
+      method: 'POST',
+      body: JSON.stringify({
+        status: normalizedStatus,
+        reason: normalizedStatus === 'REJECTED' ? reason : '',
+        currentStatus: normalizedCurrentStatus,
+      }),
+    });
+  } catch (e) {
+    const msg = String(e?.message || '');
+    const isEndpointMissing = msg.startsWith('[404]') || msg.startsWith('[405]') || msg.startsWith('[501]');
+    if (!isEndpointMissing) {
+      throw e;
+    }
+    // 하위 호환: decision 엔드포인트가 없는 서버 버전 fallback
+  }
+
+  if (normalizedCurrentStatus === 'AMENDMENT_REQUESTED') {
+    return request(`/api/contract/amendment/decide/${contractNo}`, {
+      method: 'POST',
+      body: JSON.stringify({
+        approved: normalizedStatus === 'APPROVED',
+        reason: normalizedStatus === 'REJECTED' ? reason : '',
+      }),
+    });
+  }
+
+  if (normalizedStatus === 'REJECTED') {
+    return cancelContract(contractNo, reason);
+  }
+
+  if (normalizedStatus === 'APPROVED') {
+    return createElectronicContract(contractNo, {});
+  }
+
+  throw new Error('지원하지 않는 계약 상태 처리입니다.');
 }

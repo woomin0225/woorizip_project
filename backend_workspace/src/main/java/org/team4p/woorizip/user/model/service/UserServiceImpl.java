@@ -2,6 +2,9 @@ package org.team4p.woorizip.user.model.service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -18,8 +21,13 @@ import lombok.extern.slf4j.Slf4j;
 @Transactional(readOnly = true)
 public class UserServiceImpl implements UserService {
 
+    private static final long CODE_EXPIRE_MILLIS = 5 * 60 * 1000L;
+    private static final long TOKEN_EXPIRE_MILLIS = 10 * 60 * 1000L;
+
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final Map<String, PhoneVerificationCode> codeStore = new ConcurrentHashMap<>();
+    private final Map<String, PasswordResetToken> tokenStore = new ConcurrentHashMap<>();
 
     @Override
     public int selectCheckEmailId(String emailId) {
@@ -41,9 +49,95 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
+    public void sendPasswordResetCode(String name, String phone) {
+        String normalizedName = normalizeName(name);
+        String normalizedPhone = normalizePhone(phone);
+
+        UserEntity user = findUserByNameAndPhone(normalizedName, normalizedPhone);
+        if (user == null) {
+            throw new IllegalArgumentException("일치하는 회원 정보가 없습니다.");
+        }
+
+        String code = String.format("%06d", (int) (Math.random() * 1_000_000));
+        String key = buildVerificationKey(normalizedName, normalizedPhone);
+        codeStore.put(key, new PhoneVerificationCode(code, System.currentTimeMillis() + CODE_EXPIRE_MILLIS));
+        tokenStore.remove(key);
+
+        // TODO: 실제 SMS 발송 연동 지점 (예: Naver SENS, Solapi, Twilio)
+        log.info("[PasswordReset] code issued. name={}, phone={}, code={}", normalizedName, normalizedPhone, code);
+    }
+
+    @Override
+    @Transactional
+    public String verifyPasswordResetCode(String name, String phone, String code) {
+        String normalizedName = normalizeName(name);
+        String normalizedPhone = normalizePhone(phone);
+        String normalizedCode = code == null ? "" : code.trim();
+        String key = buildVerificationKey(normalizedName, normalizedPhone);
+
+        PhoneVerificationCode issued = codeStore.get(key);
+        if (issued == null || issued.expiresAt() < System.currentTimeMillis()) {
+            codeStore.remove(key);
+            throw new IllegalArgumentException("인증번호가 만료되었습니다. 다시 요청해주세요.");
+        }
+
+        if (!issued.code().equals(normalizedCode)) {
+            throw new IllegalArgumentException("인증번호가 일치하지 않습니다.");
+        }
+
+        UserEntity user = findUserByNameAndPhone(normalizedName, normalizedPhone);
+        if (user == null) {
+            throw new IllegalArgumentException("일치하는 회원 정보가 없습니다.");
+        }
+
+        codeStore.remove(key);
+
+        String verificationToken = UUID.randomUUID().toString();
+        tokenStore.put(key, new PasswordResetToken(verificationToken, System.currentTimeMillis() + TOKEN_EXPIRE_MILLIS));
+        return verificationToken;
+    }
+
+    @Override
+    @Transactional
+    public void resetPasswordByPhoneVerification(String name, String phone, String verificationToken, String newPassword) {
+        String normalizedName = normalizeName(name);
+        String normalizedPhone = normalizePhone(phone);
+        String token = verificationToken == null ? "" : verificationToken.trim();
+        String key = buildVerificationKey(normalizedName, normalizedPhone);
+
+        PasswordResetToken issuedToken = tokenStore.get(key);
+        if (issuedToken == null || issuedToken.expiresAt() < System.currentTimeMillis()) {
+            tokenStore.remove(key);
+            throw new IllegalArgumentException("비밀번호 변경 인증이 만료되었습니다. 다시 인증해주세요.");
+        }
+
+        if (!issuedToken.token().equals(token)) {
+            throw new IllegalArgumentException("유효하지 않은 인증 정보입니다.");
+        }
+
+        UserEntity user = findUserByNameAndPhone(normalizedName, normalizedPhone);
+        if (user == null) {
+            throw new IllegalArgumentException("일치하는 회원 정보가 없습니다.");
+        }
+
+        user.setPassword(passwordEncoder.encode(newPassword));
+        user.setUpdatedAt(new java.util.Date());
+        userRepository.save(user);
+
+        tokenStore.remove(key);
+    }
+
+    @Override
     public UserDto selectUser(UserDto userDto) {
         UserEntity user_entity = userRepository.findByEmailId(userDto.getEmailId());
         return user_entity != null ? UserDto.fromEntity(user_entity) : null;
+    }
+
+    @Override
+    public UserDto selectUserByUserNo(String userNo) {
+        UserEntity userEntity = userRepository.findById(userNo).orElse(null);
+        return userEntity != null ? UserDto.fromEntity(userEntity) : null;
     }
 
     @Override
@@ -151,4 +245,37 @@ public class UserServiceImpl implements UserService {
         }
         return dtos;
     }
+
+    private UserEntity findUserByNameAndPhone(String name, String phone) {
+        UserEntity user = userRepository.findByNameAndPhone(name, phone);
+        if (user != null) {
+            return user;
+        }
+        String rawPhone = phone != null ? phone.replaceFirst("^(010)(\\d{4})(\\d{4})$", "$1-$2-$3") : null;
+        if (rawPhone != null && !rawPhone.equals(phone)) {
+            return userRepository.findByNameAndPhone(name, rawPhone);
+        }
+        return null;
+    }
+
+    private String normalizeName(String name) {
+        if (name == null) {
+            return "";
+        }
+        return name.trim();
+    }
+
+    private String normalizePhone(String phone) {
+        if (phone == null) {
+            return "";
+        }
+        return phone.replaceAll("\\D", "");
+    }
+
+    private String buildVerificationKey(String name, String phone) {
+        return name + "|" + phone;
+    }
+
+    private record PhoneVerificationCode(String code, long expiresAt) {}
+    private record PasswordResetToken(String token, long expiresAt) {}
 }
