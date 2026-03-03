@@ -56,10 +56,10 @@ public class EventController {
 	private final UserRepository userRepository;
 	
 	//==============Top3===================
-	@GetMapping("/top3")
-	public ResponseEntity<ApiResponse<ArrayList<PostDto>>> top3() {
+	@GetMapping("/top5")
+	public ResponseEntity<ApiResponse<ArrayList<PostDto>>> top5() {
 		return ResponseEntity.ok(
-				ApiResponse.ok("top3 조회 성공", eventService.selectTop3()));
+				ApiResponse.ok("top5 조회 성공", eventService.selectTop5()));
 	}
 	
 	//==============목록===================
@@ -241,10 +241,20 @@ public class EventController {
 		// 배너 처리=======
 		BannerImageDto bannerDto = null;
 		BannerImageEntity oldBanner = null;
+		String oldBannerRename = null;
+		String bannerRenameSaved = null;
 		
 		if(bannerFile != null && !bannerFile.isEmpty()) {
 			//기존 배너 조회 
 			oldBanner = bannerImageRepository.findByPostNo(postNo).orElse(null);
+			
+			if (oldBanner != null && oldBanner.getPostNo() != postNo) {
+				throw new NotFoundException("해당 게시글의 배너가 아닙니다.");
+			}
+			
+			if (oldBanner != null) {
+			    oldBannerRename = oldBanner.getUpdatedFileName();
+			}
 			
 			String bannerOriginal = bannerFile.getOriginalFilename();
 			String bannerRename = FileNameChange.change(bannerOriginal);
@@ -259,6 +269,7 @@ public class EventController {
 				log.error("배너 업로드 실패", e);
 				throw new IllegalStateException("배너 업로드 실패");
 			}
+			bannerRenameSaved = bannerRename;
 			
 			bannerDto = BannerImageDto.builder()
 					.originalFileName(bannerOriginal)
@@ -335,14 +346,14 @@ public class EventController {
 		}
 
 		// 기존 배너 이미지 삭제 =========================
-		if (oldBanner != null) {
-			File oldPhysical = uploadProperties.eventBannerDir()
-					.resolve(oldBanner.getUpdatedFileName())
-					.toFile();
+		if (oldBannerRename != null && (bannerRenameSaved == null || !oldBannerRename.equals(bannerRenameSaved))) {
+		    File oldPhysical = uploadProperties.eventBannerDir()
+		            .resolve(oldBannerRename)
+		            .toFile();
 
-			if (oldPhysical.exists() && !oldPhysical.delete()) {
-				log.warn("배너 이미지 파일 삭제 실패: {}", oldPhysical.getAbsolutePath());
-			}
+		    if (oldPhysical.exists() && !oldPhysical.delete()) {
+		        log.warn("배너 이미지 파일 삭제 실패: {}", oldPhysical.getAbsolutePath());
+		    }
 		}
 
 		return ResponseEntity.ok(ApiResponse.ok("수정 성공", null));

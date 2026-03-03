@@ -1,9 +1,9 @@
 // src/features/board/api/informationApi.js
 import { apiJson, apiForm } from '../../../app/http/request';
 
-// Top3 ======================================
-export const fetchInformationTop3 = () => {
-  return apiJson().get('/api/information/top3');
+// Top5 ======================================
+export const fetchInformationTop5 = () => {
+  return apiJson().get('/api/information/top5');
 };
 
 // 목록 ======================================

@@ -1,15 +1,57 @@
-import React, { useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { Container, Row, Col, Card, CardBody, CardHeader } from 'reactstrap';
 import ViewsRankingFrame from '../../features/houseAndRoom/components/ranking/ViewsRankingFrame';
 import styles from './Home.module.css';
 import ReviewRankingFrame from '../../features/houseAndRoom/components/ranking/ReviewRankingFrame';
 import WishRankingFrame from '../../features/houseAndRoom/components/ranking/WishRankingFrame';
+import { fetchNoticeTop5 } from '../../features/board/api/NoticeApi';
+import { fetchInformationTop5 } from '../../features/board/api/InformationApi';
+import { fetchEventTop5 } from '../../features/board/api/EventApi';
 
 export default function Home() {
+  const [topNotices, setTopNotices] = useState([]);
+  const [topInformations, setTopInformations] = useState([]);
+  const [topEvents, setTopEvents] = useState([]);
+
+  const location = useLocation();
+
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
+
+  useEffect(() => {
+    fetchNoticeTop5()
+      .then((res) => {
+        const list = Array.isArray(res?.data)
+          ? res.data
+          : (res?.data?.data ?? res?.data?.content ?? []);
+        setTopNotices(list);
+      })
+      .catch(console.error);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    fetchInformationTop5()
+      .then((res) => {
+        const list = Array.isArray(res?.data)
+          ? res.data
+          : (res?.data?.data ?? res?.data?.content ?? []);
+        setTopInformations(list);
+      })
+      .catch(console.error);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    fetchEventTop5()
+      .then((res) => {
+        const list = Array.isArray(res?.data)
+          ? res.data
+          : (res?.data?.data ?? res?.data?.content ?? []);
+        setTopEvents(list);
+      })
+      .catch(console.error);
+  }, [location.pathname]);
 
   return (
     <>
@@ -43,7 +85,9 @@ export default function Home() {
             <span />
           </div>
           <Container className="d-flex align-items-center h-100 py-lg">
-            <div className={`w-100 h-75 ${styles.placeholderBox} flex-column text-center p-4`}>
+            <div
+              className={`w-100 h-75 ${styles.placeholderBox} flex-column text-center p-4`}
+            >
               <h2 className="text-white mb-2">슬라이드 배너 영역</h2>
               <p className="text-white-50">
                 나중에 이곳에 메인 배너 이미지나 캐러셀이 들어갑니다.
@@ -51,7 +95,6 @@ export default function Home() {
             </div>
           </Container>
         </section>
-
 
         {/* 조회순 기반 매물 랭킹 */}
         <section className="section pt-4">
@@ -111,7 +154,6 @@ export default function Home() {
             </Row>
           </Container>
         </section>
-        
 
         {/* 3. 게시판 프리뷰 영역 */}
         <section className="section bg-secondary mt-4">
@@ -126,26 +168,19 @@ export default function Home() {
                   </CardHeader>
                   <CardBody>
                     <ul className="list-unstyled mb-0">
-                      <li className="mb-2 text-sm text-truncate">
-                        <Link to="#pablo" className="text-muted">
-                          - [안내] 우리집 서비스 정기 점검
-                        </Link>
-                      </li>
-                      <li className="mb-2 text-sm text-truncate">
-                        <Link to="#pablo" className="text-muted">
-                          - 신규 코리빙 지점 오픈 안내
-                        </Link>
-                      </li>
-                      <li className="mb-2 text-sm text-truncate">
-                        <Link to="#pablo" className="text-muted">
-                          - 플랫폼 이용 가이드라인 개정
-                        </Link>
-                      </li>
-                      <li className="text-sm text-truncate">
-                        <Link to="#pablo" className="text-muted">
-                          - 2026년 상반기 입주자 모집 완료
-                        </Link>
-                      </li>
+                      {topNotices.map((notice) => (
+                        <li
+                          key={notice.postNo}
+                          className="mb-2 text-sm text-truncate"
+                        >
+                          <Link
+                            to={`/notices/${notice.postNo}`}
+                            className="text-muted"
+                          >
+                            - {notice.postTitle}
+                          </Link>
+                        </li>
+                      ))}
                     </ul>
                   </CardBody>
                 </Card>
@@ -160,26 +195,19 @@ export default function Home() {
                   </CardHeader>
                   <CardBody>
                     <ul className="list-unstyled mb-0">
-                      <li className="mb-2 text-sm text-truncate">
-                        <Link to="#pablo" className="text-muted">
-                          - [이벤트] 친구 추천하고 월세 할인받자!
-                        </Link>
-                      </li>
-                      <li className="mb-2 text-sm text-truncate">
-                        <Link to="#pablo" className="text-muted">
-                          - 웰컴 키트 증정 리뷰 이벤트
-                        </Link>
-                      </li>
-                      <li className="mb-2 text-sm text-truncate">
-                        <Link to="#pablo" className="text-muted">
-                          - 루프탑 바베큐 파티 참여자 모집
-                        </Link>
-                      </li>
-                      <li className="text-sm text-truncate">
-                        <Link to="#pablo" className="text-muted">
-                          - 우수 입주자 선정 발표 (5월)
-                        </Link>
-                      </li>
+                      {topEvents.map((event) => (
+                        <li
+                          key={event.postNo}
+                          className="mb-2 text-sm text-truncate"
+                        >
+                          <Link
+                            to={`/event/${event.postNo}`}
+                            className="text-muted"
+                          >
+                            - {event.postTitle}
+                          </Link>
+                        </li>
+                      ))}
                     </ul>
                   </CardBody>
                 </Card>
@@ -194,26 +222,19 @@ export default function Home() {
                   </CardHeader>
                   <CardBody>
                     <ul className="list-unstyled mb-0">
-                      <li className="mb-2 text-sm text-truncate">
-                        <Link to="#pablo" className="text-muted">
-                          - 청년 전세자금 대출 완벽 가이드
-                        </Link>
-                      </li>
-                      <li className="mb-2 text-sm text-truncate">
-                        <Link to="#pablo" className="text-muted">
-                          - 2026년 주거 지원금 신청 방법
-                        </Link>
-                      </li>
-                      <li className="mb-2 text-sm text-truncate">
-                        <Link to="#pablo" className="text-muted">
-                          - 임대차 계약 시 주의해야 할 3가지
-                        </Link>
-                      </li>
-                      <li className="text-sm text-truncate">
-                        <Link to="#pablo" className="text-muted">
-                          - 전입신고 및 확정일자 받는 법
-                        </Link>
-                      </li>
+                      {topInformations.map((info) => (
+                        <li
+                          key={info.postNo}
+                          className="mb-2 text-sm text-truncate"
+                        >
+                          <Link
+                            to={`/information/${info.postNo}`}
+                            className="text-muted"
+                          >
+                            - {info.postTitle}
+                          </Link>
+                        </li>
+                      ))}
                     </ul>
                   </CardBody>
                 </Card>
