@@ -44,7 +44,9 @@ public class InformationServiceImpl implements InformationService {
 			UserEntity user = userRepository.findById(entity.getUserNo()).orElse(null);
 
 			if(user == null || "Y".equals(user.getDeletedYn())) {
-				dto.setUserNo("알 수 없는 사용자");
+				dto.setUserName("알 수 없는 사용자");
+			} else {
+				dto.setUserName(user.getName());
 			}
 	        
 			dto.setFiles(getFiles(entity.getPostNo()));
@@ -96,7 +98,9 @@ public class InformationServiceImpl implements InformationService {
 					UserEntity user = userRepository.findById(entity.getUserNo()).orElse(null);
 			        
 			        if(user == null || "Y".equals(user.getDeletedYn())) {
-			        		dto.setUserNo("알 수 없는 사용자");
+			        		dto.setUserName("알 수 없는 사용자");
+			        } else {
+			        	dto.setUserName(user.getName());
 			        }
 			        
 					dto.setFiles(getFiles(entity.getPostNo()));

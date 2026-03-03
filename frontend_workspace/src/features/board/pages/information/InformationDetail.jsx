@@ -22,7 +22,7 @@ export default function InformationDetail() {
   if (!information) return <div className={styles.error}>데이터 없음</div>;
 
   const title = information.postTitle || '(제목 없음)';
-  const writer = information.userNo || '';
+  const writer = information.userName || '';
   const readCount = information.postViewCount ?? 0;
   const enrollDate = information.postCreatedAt || '';
   const content = information.postContent || '';
