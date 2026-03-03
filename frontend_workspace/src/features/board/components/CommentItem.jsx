@@ -32,7 +32,7 @@ function CommentItem({ comment, onReply, onEdit, onDelete }) {
       {!isEditing ? (
         <div>
           <div>
-            <strong>{comment.userNo}</strong>
+            <strong>{comment.userName}</strong>
             <span style={{ marginLeft: '10px' }}>
               {comment.commentCreatedAt}
             </span>

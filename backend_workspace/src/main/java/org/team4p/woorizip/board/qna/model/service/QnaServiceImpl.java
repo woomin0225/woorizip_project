@@ -50,7 +50,9 @@ public class QnaServiceImpl implements QnaService {
 			UserEntity user = userRepository.findById(entity.getUserNo()).orElse(null);
 			
 			if(user == null || "Y".equals(user.getDeletedYn())) {
-				dto.setUserNo("알 수 없는 사용자");
+				dto.setUserName("알 수 없는 사용자");
+			} else {
+				dto.setUserName(user.getName());
 			}
 			
 			list.add(dto);
@@ -108,7 +110,9 @@ public class QnaServiceImpl implements QnaService {
 		UserEntity user = userRepository.findById(entity.getUserNo()).orElse(null);
 		
 		if(user == null || "Y".equals(user.getDeletedYn())) {
-			dto.setUserNo("알 수 없는 사용자");
+			dto.setUserName("알 수 없는 사용자");
+		} else {
+			dto.setUserName(user.getName());
 		}
 		dto.setFiles(getFiles(entity.getPostNo()));
 		
@@ -120,6 +124,16 @@ public class QnaServiceImpl implements QnaService {
 		
 		for(CommentEntity ce : commentEntities) {
 			flatList.add(CommentDto.fromEntity(ce));
+		}
+		
+		for (CommentDto c : flatList) {
+		    UserEntity u = userRepository.findById(c.getUserNo()).orElse(null);
+
+		    if (u == null || "Y".equals(u.getDeletedYn())) {
+		        c.setUserName("알 수 없는 사용자");
+		    } else {
+		        c.setUserName(u.getName());
+		    }
 		}
 		
 		dto.setComments(buildCommentTree(flatList));
