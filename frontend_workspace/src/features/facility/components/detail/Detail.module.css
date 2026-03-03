@@ -2,61 +2,64 @@
 @import '../../../../app/layouts/MyPageLayout.module.css';
 @import '../list/List.module.css';
 
-.detailContainer {
-  background: #fff;
-  border-radius: 12px;
-  overflow: hidden;
+/* 1. 신규 등록 버튼: 레이아웃 버튼 상속 */
+.primaryBtn {
+  composes: primaryBtn from '../../../../app/layouts/MyPageLayout.module.css';
+  padding: 10px 24px !important; /* 패딩만 강제 조정 */
 }
 
-.imageSection {
-  width: 100%;
-  height: 200px; 
-  background: #f8f9fe;
+.facilityRow {
+  composes: facilityRow from '../list/List.module.css';
+}
+
+.facilityRow:last-of-type {
+  border-bottom: none;
+}
+
+.facilityRow:hover {
+  background-color: #f6f9fc;
+  color: #11cdef;
+}
+
+/* 2. 카테고리 리스트 그리드 */
+.grid2 {
+  composes: grid2 from '../list/List.module.css';
+  margin-top: 24px;
+}
+
+/* 3. 개별 카드 (라운지/카페 범위) */
+.itemCard {
+  composes: mainCard from '../../../../app/layouts/MyPageLayout.module.css';
   display: flex;
-  gap: 12px;
-  overflow-x: auto;
-  padding: 20px; 
-  scroll-behavior: smooth;
-  position: relative;
-  z-index: 1;
+  flex-direction: column;
+  padding: 0 !important; /* 내부 패딩은 infoSection에서 조절 */
+  cursor: pointer;
+  transition: transform 0.2s;
+  min-height: auto !important; /* 카드 높이 최적화 */
 }
 
-.facilityImg {
-  height: 100%;
-  aspect-ratio: 1/1; 
-  object-fit: cover;
-  border-radius: 10px;
-  flex-shrink: 0;
-  box-shadow: 0 4px 6px rgba(50, 50, 93, 0.11);
+.itemCard:hover {
+  transform: translateY(-4px);
+  border-color: #5e72e4 !important;
 }
 
-.noImage {
-  height: 100%; 
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #8898aa;
-  font-weight: 600;
-}
-
+/* 4. 내부 정보 섹션 */
 .infoSection {
-  padding: 30px;
+  padding: 24px; /* 여기서 카드 내부 여백 잡기 */
 }
 
-.descBox {
-  margin: 24px 0;
-  padding: 20px;
-  background: #f8f9fe;
-  border-radius: 12px;
-  color: #525f7f;
-  line-height: 1.7;
-  font-size: 0.95rem;
+/* 5. 카테고리 타이틀 */
+.itemTitle {
+  composes: menuTitle from '../../../../app/layouts/MyPageLayout.module.css';
+  font-size: 1.25rem !important;
+  margin-bottom: 16px !important;
 }
 
+/* 6. 옵션 배지 스타일 (네가 준 속성 유지) */
 .optionGrid {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 8px;
   margin-top: 12px;
 }
 
@@ -70,31 +73,13 @@
   border: 1px solid rgba(94, 114, 228, 0.1);
 }
 
-.btnGroup {
+/* 7. 헤더 라인 */
+.headerRow {
+  composes: headerRow from '../../../../app/layouts/MyPageLayout.module.css';
   display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  margin-top: 40px;
-  padding-top: 24px;
-  border-top: 1px solid #e9ecef;
+  justify-content: space-between;
+  align-items: center;
 }
 
-.btnGroup button {
-  padding: 10px 24px;
-  border-radius: 6px;
-  font-size: 0.875rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-  border: none;
-}
-
-.secondaryBtn {
-  background-color: #f7fafc;
-  color: #8898aa;
-}
-
-.secondaryBtn:hover {
-  background-color: #e9ecef;
-  color: #32325d;
-}
+.title { composes: title from '../../../../app/layouts/MyPageLayout.module.css'; }
+.subTitle { composes: subTitle from '../../../../app/layouts/MyPageLayout.module.css'; }
