@@ -250,7 +250,7 @@ public class RoomController {
 		return ResponseEntity.status(200).body(ApiResponse.ok("리뷰평균기준 랭킹 조회 완료("+period+"일,"+limit+"개)", list));
 	}
 	
-	@GetMapping("wish/popular")
+	@GetMapping("/wish/popular")
 	public ResponseEntity<ApiResponse<List<WishRankingResponse>>> getWishRanking(@RequestParam("limit") Integer limit){
 		// 위시 많은 순 방 목록 조회, limit개 조회함
 		List<WishRankingResponse> list = roomService.selectTopNByWish(limit);

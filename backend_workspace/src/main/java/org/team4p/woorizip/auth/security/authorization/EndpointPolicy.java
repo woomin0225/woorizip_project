@@ -14,6 +14,10 @@ public final class EndpointPolicy {
             // PUBLIC_GET: house, room
             "/api/houses/**",
             "/api/rooms/**",
+            "/api/*/*/popular",
+            
+            "/api/facilities/*", "/api/facilities/detail/*",
+            
     };
 
     public static final String[] PUBLIC_POST = {
@@ -69,7 +73,9 @@ public final class EndpointPolicy {
     public static final String[] TOUR_USER = { "/api/tour/**" };
 
     // 공용시설
-    public static final String FACILITY_ALL = "/api/facilities/**";
+    public static final String[] FACILITY_ADMIN_ONLY = {"/api/facilities/categories", "/api/facilities/categories/*"};	//POST, PATCH
+    public static final String[] FACILITY_LOGIN = {"/api/facilities", "/api/facilities/*"};	//POST, PATCH
+    public static final String[] FACILITY_LOGIN_GET = {"/api/facilities/categories"};
 
     // 공용시설 예약
     public static final String RESERVATION_ALL = "/api/reservations/**";
