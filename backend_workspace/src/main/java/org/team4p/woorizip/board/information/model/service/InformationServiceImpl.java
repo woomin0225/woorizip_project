@@ -84,7 +84,7 @@ public class InformationServiceImpl implements InformationService {
 
 	@Override
 	public ArrayList<PostDto> selectList(Pageable pageable) {
-		return toList(postRepository.findByBoardTypeNoOrderByPostNoDesc(BOARD_TYPE_NO, pageable));
+		return toList(postRepository.findByBoardTypeNoOrderByPostPinnedYnDescPostNoDesc(BOARD_TYPE_NO, pageable));
 	}
 
 	@Override

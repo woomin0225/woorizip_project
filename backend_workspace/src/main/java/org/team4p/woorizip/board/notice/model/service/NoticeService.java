@@ -32,4 +32,6 @@ public interface NoticeService {
   ArrayList<PostDto> selectSearchTitle(String keyword, Pageable pageable);
   ArrayList<PostDto> selectSearchContent(String keyword, Pageable pageable);
   ArrayList<PostDto> selectSearchDate(LocalDate begin, LocalDate end, Pageable pageable);
+  
+  void togglePin(int postNo);
 }
