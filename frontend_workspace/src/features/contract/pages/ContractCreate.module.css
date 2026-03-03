@@ -210,6 +210,16 @@
   resize: none;
 }
 
+.textareaCompact {
+  min-height: 72px;
+}
+
+.memoHint {
+  margin: 6px 0 0;
+  color: #6c757d;
+  font-size: 0.78rem;
+}
+
 .presetRow {
   display: flex;
   gap: 8px;

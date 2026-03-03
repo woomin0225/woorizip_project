@@ -1,126 +1,126 @@
 /* 슬라이드 앨범 css */
-.card{
+.card {
   position: relative;
   padding: 12px;
-  border-bottom: 1px solid rgba(0,0,0,0.08);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
   background: #fff;
 }
 
-.body{
+.body {
   display: flex;
   gap: 12px;
 }
 
-.thumb{
+.thumb {
   width: 160px;
   flex: 0 0 160px;
 }
 
-.thumbLink{
+.thumbLink {
   display: block;
   width: 160px;
   text-decoration: none;
 }
 
-.noImage{
+.noImage {
   width: 160px;
   height: 120px;
   background: #f3f4f6;
-  border: 1px solid rgba(0,0,0,0.08);
+  border: 1px solid rgba(0, 0, 0, 0.08);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: rgba(0,0,0,0.6);
+  color: rgba(0, 0, 0, 0.6);
   font-size: 13px;
 }
 
-.thumbImg{
+.thumbImg {
   width: 160px;
   height: 120px;
   object-fit: cover;
   border-radius: 8px;
-  border: 1px solid rgba(0,0,0,0.08);
+  border: 1px solid rgba(0, 0, 0, 0.08);
   will-change: opacity, transform;
 }
 
-.slideNext{
+.slideNext {
   animation: thumbSlideNext 180ms ease;
 }
 
-.slidePrev{
+.slidePrev {
   animation: thumbSlidePrev 180ms ease;
 }
 
-@keyframes thumbSlideNext{
-  from{
+@keyframes thumbSlideNext {
+  from {
     opacity: 0.86;
     transform: translateX(5px);
   }
-  to{
+  to {
     opacity: 1;
     transform: translateX(0);
   }
 }
 
-@keyframes thumbSlidePrev{
-  from{
+@keyframes thumbSlidePrev {
+  from {
     opacity: 0.86;
     transform: translateX(-5px);
   }
-  to{
+  to {
     opacity: 1;
     transform: translateX(0);
   }
 }
 
-.thumbNav{
+.thumbNav {
   margin-top: 6px;
   display: flex;
   gap: 6px;
 }
 
-.photoCount{
+.photoCount {
   margin-top: 6px;
   font-size: 12px;
   opacity: 0.7;
 }
 
-.info{
+.info {
   flex: 1 1 auto;
   min-width: 0;
 }
 
-.titleRow{
+.titleRow {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
 }
 
-.title{
+.title {
   font-weight: 600;
   color: #111;
   text-decoration: none;
 }
 
-.updated{
+.updated {
   font-size: 12px;
   opacity: 0.65;
   white-space: nowrap;
 }
 
-.priceRow{
+.priceRow {
   margin-top: 8px;
   display: flex;
   gap: 10px;
   font-size: 14px;
 }
 
-.method{
+.method {
   font-weight: 600;
 }
 
-.metaRow{
+.metaRow {
   margin-top: 8px;
   display: flex;
   gap: 10px;
@@ -129,26 +129,26 @@
   flex-wrap: wrap;
 }
 
-.wishBtn{
+.wishBtn {
   position: absolute;
   right: 10px;
   top: 10px;
   width: 34px;
   height: 34px;
   border-radius: 999px;
-  border: 1px solid rgba(0,0,0,0.12);
+  border: 1px solid rgba(0, 0, 0, 0.12);
   background: #fff;
   cursor: pointer;
 }
 
-.titleCol{
+.titleCol {
   display: flex;
   flex-direction: column;
   gap: 4px;
   min-width: 0;
 }
 
-.houseName{
+.houseName {
   font-size: 12px;
   opacity: 0.7;
   white-space: nowrap;
@@ -156,7 +156,7 @@
   text-overflow: ellipsis;
 }
 
-.passRow{
+.passRow {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -164,7 +164,7 @@
   justify-content: flex-end;
 }
 
-.passBtn{
+.passBtn {
   height: 28px;
   padding: 0 10px;
   border-radius: 10px;
@@ -175,12 +175,12 @@
   cursor: pointer;
 }
 
-.passBtn:disabled{
+.passBtn:disabled {
   opacity: 0.7;
   cursor: default;
 }
 
-.passBadge{
+.passBadge {
   font-size: 12px;
   color: #065f46;
   background: #d1fae5;
@@ -189,22 +189,22 @@
   padding: 2px 8px;
 }
 
-.passMeta{
+.passMeta {
   font-size: 11px;
   color: rgba(17, 24, 39, 0.8);
 }
 
-.passResetBtn{
+.passResetBtn {
   height: 24px;
   padding: 0 8px;
   border-radius: 8px;
-  border: 1px solid rgba(0,0,0,0.16);
+  border: 1px solid rgba(0, 0, 0, 0.16);
   background: #fff;
   font-size: 11px;
   cursor: pointer;
 }
 
-.passError{
+.passError {
   margin-top: 6px;
   font-size: 12px;
   color: #b91c1c;
