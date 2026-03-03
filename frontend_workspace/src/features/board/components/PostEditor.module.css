@@ -1,78 +1,96 @@
 /* src/features/board/components/PostEditor.module.css */
+
 .container {
   width: 100%;
-  max-width: 800px;
-  margin: 50px auto;
-  padding: 20px;
-  border: 1px solid #ddd;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  border-radius: 10px;
-  background-color: #ffffff;
-  font-family: Arial, sans-serif;
+  max-width: 900px;
+  margin: 60px auto;
+  padding: 30px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
 }
 
-.form {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
+.formGroup {
+  margin-bottom: 25px;
 }
 
-.table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.th,
-.td {
-  padding: 10px;
-  border-bottom: 1px solid #ddd;
-}
-
-.th {
-  text-align: left;
-  background-color: #f5f5f5;
-  font-weight: bold;
+.label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  font-size: 15px;
   color: #333;
-  width: 140px;
 }
 
-.input,
-.file {
+.input {
   width: 100%;
-  padding: 8px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+  padding: 12px 14px;
   font-size: 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  outline: none;
+  transition: border 0.2s ease;
 }
 
-.editor {
-  margin-top: 5px;
+.input:focus {
+  border-color: #0078ff;
+}
+
+.fileInput {
+  margin-top: 6px;
+}
+
+.newFileList {
+  margin-top: 10px;
+}
+
+.fileRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  font-size: 14px;
+}
+
+.removeBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.editorWrapper {
+  margin-top: 10px;
 }
 
 .buttonGroup {
-  text-align: center;
-  padding-top: 15px;
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 30px;
 }
 
-.button {
-  padding: 10px 15px;
-  font-size: 16px;
+.primaryBtn {
+  padding: 10px 20px;
+  font-size: 15px;
   border: none;
-  border-radius: 4px;
-  color: #fff;
+  border-radius: 8px;
   background-color: #0078ff;
+  color: #ffffff;
   cursor: pointer;
-  transition: background-color 0.3s ease;
-  margin: 0 5px;
+  transition: background 0.2s ease;
 }
 
-.button:hover {
-  background-color: #0058cc;
+.primaryBtn:hover {
+  background-color: #005ed6;
 }
 
-@media screen and (max-width: 768px) {
-  .container {
-    margin: 20px;
-    padding: 15px;
-  }
+.secondaryBtn {
+  padding: 10px 20px;
+  font-size: 15px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background-color: #ffffff;
+  cursor: pointer;
 }
