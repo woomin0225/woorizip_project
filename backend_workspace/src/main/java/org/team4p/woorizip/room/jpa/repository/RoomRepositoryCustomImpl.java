@@ -155,16 +155,16 @@ public class RoomRepositoryCustomImpl implements RoomRepositoryCustom {
 		}
 		
 		// 승강기 유무 조건
-		if(cond.getHouseElevatorYn() != null) {
+		if(cond.getHouseElevatorYn() != null && cond.getHouseElevatorYn() == true) {
 			where.and(qhouseEntity.houseElevatorYn.eq(cond.getHouseElevatorYn()));
 		}
 		
 		// 애완동물 가능 여부
-		if(cond.getHousePetYn() != null) {
+		if(cond.getHousePetYn() != null && cond.getHousePetYn() == true) {
 			where.and(qhouseEntity.housePetYn.eq(cond.getHousePetYn()));
 		}
 		// 여성전용 여부
-		if(cond.getHouseFemaleLimit() != null) {
+		if(cond.getHouseFemaleLimit() != null && cond.getHouseFemaleLimit() == true) {
 			where.and(qhouseEntity.houseFemaleLimit.eq(cond.getHouseFemaleLimit()));
 		}
 		

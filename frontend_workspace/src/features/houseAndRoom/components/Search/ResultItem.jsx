@@ -123,10 +123,18 @@ export default function ResultItem({
 
           {images.length > 1 && (
             <div className={styles.thumbNav}>
-              <button onClick={prevClick} disabled={currentIndex === 0}>
+              <button
+                type="button"
+                onClick={prevClick}
+                disabled={currentIndex === 0}
+              >
                 ◀
               </button>
-              <button onClick={nextClick} disabled={currentIndex >= total - 1}>
+              <button
+                type="button"
+                onClick={nextClick}
+                disabled={currentIndex >= total - 1}
+              >
                 ▶
               </button>
             </div>

@@ -3,6 +3,7 @@
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import styles from "./HouseSelection.module.css";
+import ScrollToTopButton from "../../../../shared/components/ScrollToTopButton";
 
 import { getMyHouses } from "../../api/houseApi";
 
@@ -50,6 +51,7 @@ export default function HouseSelection() {
           ))}
         </div>
       )}
+      <ScrollToTopButton />
     </div>
   );
 }

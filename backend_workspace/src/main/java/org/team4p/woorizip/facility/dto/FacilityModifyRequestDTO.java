@@ -9,6 +9,7 @@ import org.team4p.woorizip.common.validator.TextOnly;
 import org.team4p.woorizip.facility.enums.FacilityStatus;
 
 import jakarta.validation.constraints.AssertTrue;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -47,7 +48,7 @@ public class FacilityModifyRequestDTO {
 	private LocalTime facilityOpenTime;
 	
 	private LocalTime facilityCloseTime;
-	
+	@NotNull
 	private Boolean facilityRsvnRequiredYn;
 	
 	private Integer maxRsvnPerDay;
@@ -57,6 +58,8 @@ public class FacilityModifyRequestDTO {
 	private Integer facilityMaxDurationMinutes;
 	
 	private List<FacilityImageDTO> images;
+
+	private List<Integer> deleteImageNos;
 	
 	@AssertTrue(message = "시설 위치는 0이 아닌 값으로 입력해주세요.")
 	public boolean validValidFloor() {
