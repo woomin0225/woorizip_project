@@ -3,6 +3,7 @@ import React from 'react';
 import PostListItem from './PostListItem';
 import PostSearchBar from './PostSearchBar';
 import PagingView from './../../../shared/components/PagingView/PagingView';
+import styles from './PostList.module.css';
 
 export default function PostList({
   title,
@@ -27,24 +28,32 @@ export default function PostList({
   ListItemComponent = PostListItem, // 기본값
 }) {
   return (
-    <div style={{ padding: 16 }}>
-      <h2
-        style={{
-          textAlign: 'center',
-          color: '#2f9d27',
-          fontSize: 42,
-          margin: '18px 0',
-        }}
-      >
-        {title}
-      </h2>
-
-      {(isAdmin || isAuthed) && (
-        <div style={{ textAlign: 'center', marginBottom: 18 }}>
-          <button type="button" onClick={onClickWrite}>
-            글 등록
-          </button>
+    <div className={styles.wrap}>
+      {title ? (
+        <div className={styles.header}>
+          <h2 className={styles.h2}>{title}</h2>
+          {(isAdmin || isAuthed) && (
+            <button
+              type="button"
+              className={styles.writeBtn}
+              onClick={onClickWrite}
+            >
+              글 등록
+            </button>
+          )}
         </div>
+      ) : (
+        (isAdmin || isAuthed) && (
+          <div className={styles.headerOnlyBtn}>
+            <button
+              type="button"
+              className={styles.writeBtn}
+              onClick={onClickWrite}
+            >
+              글 등록
+            </button>
+          </div>
+        )
       )}
 
       <PostSearchBar
@@ -55,50 +64,65 @@ export default function PostList({
         onChangeType={onChangeType}
       />
 
-      {loading && <div style={{ textAlign: 'center' }}>Loading...</div>}
-      {error && (
-        <div style={{ textAlign: 'center', color: 'crimson' }}>{error}</div>
-      )}
+      {loading && <div className={styles.loading}>Loading...</div>}
+      {error && <div className={styles.error}>{error}</div>}
 
-      <table
-        width="100%"
-        border="1"
-        cellPadding="8"
-        style={{ borderCollapse: 'collapse' }}
-      >
-        <thead>
-          <tr>
-            <th width="10%">번호</th>
-            <th>제목</th>
-            <th width="15%">작성자</th>
-            <th width="15%">등록일</th>
-            <th width="10%">조회수</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          {content.length === 0 ? (
+      <div className={styles.tableWrap}>
+        <table className={styles.table}>
+          <thead>
             <tr>
-              <td colSpan="5" align="center">
-                게시글이 없습니다.
-              </td>
+              <th
+                className={`${styles.th} ${styles.center}`}
+                style={{ width: '10%' }}
+              >
+                번호
+              </th>
+              <th className={styles.th}>제목</th>
+              <th
+                className={`${styles.th} ${styles.center}`}
+                style={{ width: '15%' }}
+              >
+                작성자
+              </th>
+              <th
+                className={`${styles.th} ${styles.center}`}
+                style={{ width: '15%' }}
+              >
+                등록일
+              </th>
+              <th
+                className={`${styles.th} ${styles.center}`}
+                style={{ width: '10%' }}
+              >
+                조회수
+              </th>
             </tr>
-          ) : (
-            content.map((post) => (
-              <ListItemComponent
-                key={post.postNo}
-                post={post}
-                isAdmin={isAdmin}
-                onTogglePin={onTogglePin}
-                onClick={() => onClickRow(post.postNo)}
-              />
-            ))
-          )}
-        </tbody>
-      </table>
+          </thead>
+
+          <tbody>
+            {content.length === 0 ? (
+              <tr>
+                <td className={`${styles.td} ${styles.center}`} colSpan="5">
+                  게시글이 없습니다.
+                </td>
+              </tr>
+            ) : (
+              content.map((post) => (
+                <ListItemComponent
+                  key={post.postNo}
+                  post={post}
+                  isAdmin={isAdmin}
+                  onTogglePin={onTogglePin}
+                  onClick={() => onClickRow(post.postNo)}
+                />
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
 
       {pageResponse && (
-        <div style={{ marginTop: 16 }}>
+        <div className={styles.paging}>
           <PagingView pageResponse={pageResponse} onChangePage={setPage} />
         </div>
       )}

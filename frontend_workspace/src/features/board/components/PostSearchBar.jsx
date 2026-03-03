@@ -1,5 +1,6 @@
 // src/features/board/components/PostSearchBar.jsx
 import React from 'react';
+import styles from './PostSearchBar.module.css';
 
 export default function PostSearchBar({
   search,
@@ -25,18 +26,12 @@ export default function PostSearchBar({
   };
 
   return (
-    <form
-      onSubmit={onSubmit}
-      style={{
-        display: 'flex',
-        justifyContent: 'center',
-        gap: 8,
-        flexWrap: 'wrap',
-        marginBottom: 14,
-      }}
-    >
-      {/* 검색 타입 */}
-      <select value={search.type} onChange={handleTypeChange}>
+    <form onSubmit={onSubmit} className={styles.bar}>
+      <select
+        className={styles.select}
+        value={search.type}
+        onChange={handleTypeChange}
+      >
         {types.map((t) => (
           <option key={t.value} value={t.value}>
             {t.label}
@@ -44,9 +39,9 @@ export default function PostSearchBar({
         ))}
       </select>
 
-      {/* 키워드 검색 */}
       {search.type !== 'date' ? (
         <input
+          className={styles.input}
           value={search.keyword || ''}
           onChange={(e) =>
             setSearch((prev) => ({
@@ -59,6 +54,7 @@ export default function PostSearchBar({
       ) : (
         <>
           <input
+            className={styles.date}
             type="date"
             value={search.begin || ''}
             onChange={(e) =>
@@ -69,6 +65,7 @@ export default function PostSearchBar({
             }
           />
           <input
+            className={styles.date}
             type="date"
             value={search.end || ''}
             onChange={(e) =>
@@ -81,8 +78,11 @@ export default function PostSearchBar({
         </>
       )}
 
-      <button type="submit">검색</button>
-      <button type="button" onClick={onReset}>
+      <button type="submit" className={`${styles.btn} ${styles.primary}`}>
+        검색
+      </button>
+
+      <button type="button" className={styles.btn} onClick={onReset}>
         초기화
       </button>
     </form>

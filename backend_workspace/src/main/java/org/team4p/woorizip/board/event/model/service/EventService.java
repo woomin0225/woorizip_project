@@ -11,7 +11,7 @@ import org.team4p.woorizip.board.post.model.dto.PostDto;
 public interface EventService {
 
 	  //기본 조회 
-	  ArrayList<PostDto> selectTop3();
+	  ArrayList<PostDto> selectTop5();
 	  int selectListCount();
 	  ArrayList<PostDto> selectList(Pageable pageable);
 	  PostDto selectEvent(int postNo);

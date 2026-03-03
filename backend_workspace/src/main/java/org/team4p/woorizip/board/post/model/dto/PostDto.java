@@ -38,6 +38,7 @@ public class PostDto {
   private Integer postNo;
   private String boardTypeNo;
   private String userNo;
+  private String userName;
   @NotBlank(message = "제목을 작성해야 합니다", groups = {Create.class, Update.class})
   @Size(max = 255)
   private String postTitle;

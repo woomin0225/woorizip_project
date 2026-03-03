@@ -1,1 +1,109 @@
 /* src/features/board/components/PostList.module.css */
+
+.wrap {
+  padding: 24px;
+}
+
+.header,
+.headerOnlyBtn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 0 12px 0;
+  border-bottom: 1px solid #d9d9d9;
+  background: transparent;
+}
+
+.h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #111;
+}
+
+.writeBtn {
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid #666;
+  background: #f5f5f5;
+  color: #111;
+  border-radius: 2px;
+  cursor: pointer;
+  font-weight: 600;
+}
+.writeBtn:hover {
+  background: #eee;
+}
+
+.tableWrap {
+  margin-top: 14px;
+  border: 1px solid #999;
+  border-radius: 0;
+  overflow: hidden;
+  background: #fff;
+}
+
+/* 테이블 기본 */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.th {
+  background: #efefef;
+  padding: 10px 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #111;
+  border: 1px solid #999;
+}
+
+.td {
+  padding: 10px 8px;
+  font-size: 13px;
+  color: #111;
+  border: 1px solid #999;
+}
+
+.center {
+  text-align: center;
+}
+
+/* 컬럼 폭(원하시면 숫자만 조절) */
+.table th:nth-child(1),
+.table td:nth-child(1) {
+  width: 80px;
+  text-align: center;
+}
+.table th:nth-child(3),
+.table td:nth-child(3) {
+  width: 110px;
+  text-align: center;
+}
+.table th:nth-child(4),
+.table td:nth-child(4) {
+  width: 140px;
+  text-align: center;
+}
+.table th:nth-child(5),
+.table td:nth-child(5) {
+  width: 140px;
+  text-align: center;
+}
+
+.loading,
+.error {
+  text-align: center;
+  padding: 14px 0;
+}
+.error {
+  color: crimson;
+}
+
+/* 페이징은 테이블 아래, 가운데 */
+.paging {
+  display: flex;
+  justify-content: center;
+  margin-top: 10px;
+}

@@ -13,6 +13,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.team4p.woorizip.board.post.jpa.entity.PostEntity;
 
 public interface PostRepository extends JpaRepository<PostEntity, Integer> {
+	
+	//게시글 최신 조회수 기준 정렬
+	List<PostEntity> findTop5ByBoardTypeNoOrderByPostViewCountDesc(String boardTypeNo);
 
 	// 게시판 유형별 목록 조회
 	Page<PostEntity> findByBoardTypeNoOrderByPostPinnedYnDescPostNoDesc(
