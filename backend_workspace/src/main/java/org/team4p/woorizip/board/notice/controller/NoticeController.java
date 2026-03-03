@@ -60,6 +60,14 @@ public class NoticeController {
 		return ResponseEntity.ok(ApiResponse.ok("고정 상태 변경", null));
 	}
 	
+	//고정글 전용 API (일반글과 분리)
+	@GetMapping("/pinned")
+	public ResponseEntity<ApiResponse<ArrayList<PostDto>>> pinned() {
+		return ResponseEntity.ok(
+				ApiResponse.ok("고정글 조회 성공", noticeService.selectPinnedList())
+				);
+	}
+	
 	//==============Top3===================
 	@GetMapping("/top5")
 	public ResponseEntity<ApiResponse<ArrayList<PostDto>>> top5() {

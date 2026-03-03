@@ -135,6 +135,27 @@ public class NoticeServiceImpl implements NoticeService {
 		dto.setFiles(getFiles(entity.getPostNo()));
 		return dto;
 	}
+	
+	@Override
+	public ArrayList<PostDto> selectPinnedList() {
+		List<PostEntity> entities = 
+				postRepository.findByBoardTypeNoAndPostPinnedYnTrueOrderByPostNoDesc(BOARD_TYPE_NO);
+		
+		ArrayList<PostDto> list = new ArrayList<>();
+		for(PostEntity entity : entities) {
+			PostDto dto = PostDto.fromEntity(entity);
+			
+			//기존 toList()와 동일
+			UserEntity user = userRepository.findById(entity.getUserNo()).orElse(null);
+			if(user == null || "Y".equals(user.getDeletedYn())) dto.setUserName("알 수 없는 사용자");
+			else dto.setUserName(user.getName());
+			
+			dto.setFiles(getFiles(entity.getPostNo()));
+			list.add(dto);
+		}
+		
+		return list;
+	}
 
 	// ===========================조회수============================
 	@Override

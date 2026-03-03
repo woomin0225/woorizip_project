@@ -14,6 +14,9 @@ import org.team4p.woorizip.board.post.jpa.entity.PostEntity;
 
 public interface PostRepository extends JpaRepository<PostEntity, Integer> {
 	
+	//고정글 전용
+	List<PostEntity> findByBoardTypeNoAndPostPinnedYnTrueOrderByPostNoDesc(String boardTypeNo);
+	
 	//게시글 최신 조회수 기준 정렬
 	List<PostEntity> findTop5ByBoardTypeNoOrderByPostViewCountDesc(String boardTypeNo);
 
