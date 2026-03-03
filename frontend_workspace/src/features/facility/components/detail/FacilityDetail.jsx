@@ -62,7 +62,7 @@ export default function FacilityDetail({
               {images.map((img) => (
                 <img
                   key={img.facilityImageNo}
-                  src={img.imagePath}
+                  src={`http://localhost:8080/upload/facility_image/${img?.facilityStoredImageName}`}
                   alt={facilityName}
                   className={styles.facilityImg}
                 />
