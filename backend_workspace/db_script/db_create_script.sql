@@ -326,6 +326,9 @@ ALTER TABLE `tb_contracts`
     END
   ) STORED,
   ADD UNIQUE KEY `uk_tb_contracts_room_date_active` (`room_no`, `move_in_date`, `active_flag`);
+  
+  ALTER TABLE tb_posts
+  ADD COLUMN post_pinned_yn TINYINT(1) DEFAULT 0;
 
 desc `tb_users`;
 desc `tb_contracts`;
