@@ -138,3 +138,17 @@ VALUES
 (33, 'E1', 'admin1', '연말 감사 프로모션',
  '연말 계약자 대상 특별 관리비 지원 이벤트입니다.',
  0, 0, 2);
+ 
+INSERT INTO tb_banner_images
+(post_no, original_file_name, updated_file_name, file_created_at)
+VALUES
+(24, 'event_24_spring_new_resident.png', '20260303115832.png', '2026-03-03 11:58:32'),
+(25, 'event_25_friend_referral.png',     '20260303115855.png', '2026-03-03 11:58:56'),
+(28, 'event_28_facility_experience.png', '20260303115911.png', '2026-03-03 11:59:11'),
+(33, 'event_33_year_end_promotion.png',  '20260303115922.png', '2026-03-03 11:59:22'),
+(26, 'event_26_sns_review.png',          '20260303120534.png', '2026-03-03 12:05:34'),
+(32, 'event_32_new_open.png',            '20260303120549.png', '2026-03-03 12:05:49'),
+(30, 'event_30_autumn_renewal.png',      '20260303120603.png', '2026-03-03 12:06:03'),
+(29, 'event_29_long_term_thanks.png',    '20260303120619.png', '2026-03-03 12:06:19'),
+(27, 'event_27_summer_premium.png',      '20260303123646.png', '2026-03-03 12:07:40'),
+(31, 'event_31_consultation_premium.png','20260303120934.png', '2026-03-03 12:09:34');
