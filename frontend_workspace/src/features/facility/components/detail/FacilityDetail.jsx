@@ -76,7 +76,7 @@ export default function FacilityDetail({
             <div className={styles.headerRow}>
               <h2 className={styles.title}>{facilityName}</h2>
               <p className={styles.subTitle}>
-                {facilityLocation} | 수용 인원: {facilityCapacity}명
+                {facilityLocation} 층 | 수용 인원: {facilityCapacity}명
               </p>
             </div>
 

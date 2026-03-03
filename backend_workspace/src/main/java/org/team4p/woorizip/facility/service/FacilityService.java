@@ -17,5 +17,5 @@ public interface FacilityService {
 	List<FacilityCategoryDTO> getFacilityCategory(); // 시설 카테고리 조회
 	void modifyFacilityCategory(Integer facilityCode, FacilityCategoryDTO dto); // 시설 카테고리 수정
 	FacilityDetailResponseDTO getFacilityDetails(String facilityNo); // 시설 상세 조회
-	void modifyFacility(String facilityNo, FacilityModifyRequestDTO dto, String userNo); // 시설 정보 수정
+	void modifyFacility(List<MultipartFile> files, String facilityNo, FacilityModifyRequestDTO dto, String userNo); // 시설 정보 수정
 }

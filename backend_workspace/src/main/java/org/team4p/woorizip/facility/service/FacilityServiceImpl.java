@@ -1,6 +1,8 @@
 package org.team4p.woorizip.facility.service;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -267,7 +269,7 @@ public class FacilityServiceImpl implements FacilityService {
 
 	@Override
 	@Transactional
-	public void modifyFacility(String facilityNo, FacilityModifyRequestDTO dto, String currentUserNo) {
+	public void modifyFacility(List<MultipartFile> files, String facilityNo, FacilityModifyRequestDTO dto, String currentUserNo) {
 		// 시설 정보 찾기
 		FacilityEntity entity = facilityRepository.findById(facilityNo)
 				.orElseThrow(() -> new NotFoundException("해당 시설 정보를 찾을 수 없습니다."));
@@ -311,11 +313,49 @@ public class FacilityServiceImpl implements FacilityService {
 	    }
 	    
 		// 이미지 삭제 후 재업로드
-		if (dto.getImages() != null) {
-			entity.getImages().clear();
-			for (FacilityImageDTO imageDto : dto.getImages()) {
-				FacilityImageEntity imageEntity = FacilityImageEntity
-						.builder()
+		File fileDir = upload.facilityImageDir().toFile();
+
+		List<Integer> deleteImageNos = dto.getDeleteImageNos();
+		if (deleteImageNos != null && !deleteImageNos.isEmpty()) {
+			for (Integer deleteImageNo : deleteImageNos) {
+				if (deleteImageNo == null) continue;
+
+				FacilityImageEntity target = entity.getImages().stream()
+						.filter(img -> img.getFacilityImageNo() == deleteImageNo)
+						.findFirst()
+						.orElse(null);
+				if (target == null) continue;
+
+				entity.getImages().remove(target);
+
+				File deleteFile = new File(fileDir, target.getFacilityStoredImageName());
+				try {
+					Files.deleteIfExists(deleteFile.toPath());
+				} catch (IOException e) {
+					throw new RuntimeException("공용시설 사진 삭제 중 오류가 발생했습니다: " + deleteFile);
+				}
+			}
+		}
+
+		List<FacilityImageDTO> imageDtos = dto.getImages();
+		if (files != null && !files.isEmpty()) {
+			if (imageDtos == null || imageDtos.size() != files.size()) {
+				throw new RuntimeException("시설 이미지 정보가 올바르지 않습니다.");
+			}
+
+			if (!fileDir.exists()) fileDir.mkdirs();
+
+			for (int i = 0; i < files.size(); i++) {
+				MultipartFile file = files.get(i);
+				FacilityImageDTO imageDto = imageDtos.get(i);
+				File saveFile = new File(fileDir, imageDto.getFacilityStoredImageName());
+				try {
+					file.transferTo(saveFile);
+				} catch (Exception e) {
+					throw new RuntimeException("공용시설 이미지 저장에 실패했습니다.");
+				}
+
+				FacilityImageEntity imageEntity = FacilityImageEntity.builder()
 						.facilityOriginalImageName(imageDto.getFacilityOriginalImageName())
 						.facilityStoredImageName(imageDto.getFacilityStoredImageName())
 						.facility(entity)
