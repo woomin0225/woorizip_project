@@ -23,6 +23,7 @@ export default function PostList({
   onClickRow,
   setPage,
 
+  onTogglePin,
   ListItemComponent = PostListItem, // 기본값
 }) {
   return (
@@ -87,6 +88,8 @@ export default function PostList({
               <ListItemComponent
                 key={post.postNo}
                 post={post}
+                isAdmin={isAdmin}
+                onTogglePin={onTogglePin}
                 onClick={() => onClickRow(post.postNo)}
               />
             ))

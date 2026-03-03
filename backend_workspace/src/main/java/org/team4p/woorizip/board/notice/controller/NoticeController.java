@@ -51,6 +51,15 @@ public class NoticeController {
 	private final FileRepository fileRepository;
 	private final UserRepository userRepository;
 	
+	//==============상단 고정=================== 
+	@PatchMapping("/{postNo}/pin")
+	public ResponseEntity<ApiResponse<Void>> togglePin(
+			@PathVariable("postNo") int postNo) {
+		noticeService.togglePin(postNo);
+		log.info("PIN TOGGLE HIT postNo={}", postNo);
+		return ResponseEntity.ok(ApiResponse.ok("고정 상태 변경", null));
+	}
+	
 	//==============Top3===================
 	@GetMapping("/top3")
 	public ResponseEntity<ApiResponse<ArrayList<PostDto>>> top3() {

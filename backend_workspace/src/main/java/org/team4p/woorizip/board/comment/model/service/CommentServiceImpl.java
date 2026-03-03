@@ -16,6 +16,8 @@ import org.team4p.woorizip.board.post.jpa.entity.PostEntity;
 import org.team4p.woorizip.board.post.jpa.repository.PostRepository;
 import org.team4p.woorizip.common.exception.ForbiddenException;
 import org.team4p.woorizip.common.exception.NotFoundException;
+import org.team4p.woorizip.user.jpa.entity.UserEntity;
+import org.team4p.woorizip.user.jpa.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,6 +30,7 @@ public class CommentServiceImpl implements CommentService {
 	
 	private final CommentRepository commentRepository;
 	private final PostRepository postRepository;
+	private final UserRepository userRepository;
 	
 	private static final String BOARD_TYPE_NO = "Q1";
 	
@@ -76,6 +79,16 @@ public class CommentServiceImpl implements CommentService {
 				.stream()
 				.map(CommentDto::fromEntity)
 				.toList();
+		
+		for(CommentDto dto : flatList) {
+			UserEntity user = userRepository.findById(dto.getUserNo()).orElse(null);
+			
+			if(user == null || "Y".equals(user.getDeletedYn())) {
+				dto.setUserNo("알 수 없는 사용자");
+			} else {
+				dto.setUserNo(user.getUserNo());
+			}
+		}
 		
 		//parent 기준으로 그룹핑
 		Map<Integer, List<CommentDto>> childrenMap = new LinkedHashMap<>();

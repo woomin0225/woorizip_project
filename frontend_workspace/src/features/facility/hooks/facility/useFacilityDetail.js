@@ -1,4 +1,4 @@
-// src/features/facility/hooks/facility/usefacilityDetail.js
+// src/features/facility/hooks/facility/useFacilityDetail.js
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { getFacilityDetail } from '../../api/facilityApi';
 
@@ -13,20 +13,42 @@ export const useFacilityDetail = (facilityNo) => {
       setLoading(true);
       setError(null);
 
-      const data = await getFacilityDetail(facilityNo);
-      setFacilityDetails(data);
+      const response = await getFacilityDetail(facilityNo);
+      const actualData = response?.data || response;
+      console.log("상세 데이터 로드 성공:", actualData);
+      setFacilityDetails(actualData);
     } catch (err) {
       setError(err);
-      console.error('시설 정보 로딩 실패:', err);
+      console.error("데이터 로드 실패:", err.message);
     } finally {
       setLoading(false);
     }
   }, [facilityNo]);
 
   const sortedDetails = useMemo(() => {
-    if (!facilityDetails || !facilityDetails.images) return facilityDetails;
-    const sortedImages = [...facilityDetails.images].sort((a, b) => a.facilityImageNo - b.facilityImageNo);
-    return {...facilityDetails, images: sortedImages}
+    if (!facilityDetails) return null;
+
+    const images = facilityDetails.images || [];
+    const sortedImages = images.length > 0 
+      ? [...images].sort((a, b) => a.facilityImageNo - b.facilityImageNo)
+      : [];
+
+    let rawOptions = facilityDetails.facilityOptionInfo;
+    if (typeof rawOptions === 'string') {
+      try {
+        rawOptions = JSON.parse(rawOptions);
+      } catch (e) { rawOptions = {}; }
+    }
+
+
+    const displayOptionList = rawOptions 
+      ? Object.keys(rawOptions).filter(key => rawOptions[key] === true || rawOptions[key] === "Y") : [];
+
+    return {
+      ...facilityDetails,
+      images: sortedImages,
+      displayOptionList
+    };
   }, [facilityDetails]);
 
   useEffect(() => {
