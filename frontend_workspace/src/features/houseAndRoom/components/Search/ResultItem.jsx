@@ -51,153 +51,180 @@ export default function ResultItem({
   roomSearchResponse,
   wished = false,
   onToggleWish,
-  }) {
-    // ✅ Hook은 항상 호출되어야 함 (early return 금지)
-    const [currentIndex, setCurrentIndex] = useState(0);
-    const [isWished, setIsWished] = useState(!!wished);
-    const [slideDirection, setSlideDirection] = useState('next');
+  passVerified = false,
+  passVerifying = false,
+  passVerifiedPhone = '',
+  passVerifiedAt = '',
+  passError = '',
+  onRequestPassVerification,
+  onResetPassVerification,
+}) {
+  // ✅ Hook은 항상 호출되어야 함 (early return 금지)
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isWished, setIsWished] = useState(!!wished);
 
-    // ✅ roomSearchResponse가 없을 수도 있다고 가정하고 "안전한 room" 준비
-    const room = roomSearchResponse ?? {};
+  // ✅ roomSearchResponse가 없을 수도 있다고 가정하고
+  const room = roomSearchResponse ?? {};
 
-    const houseName = room.houseName;
-    const houseAddress = room.houseAddress;
-    
-    // ✅ images도 안전하게 (null/undefined 대비)
-    const images = useMemo(
-      () => (room.imageNames ?? []).filter(Boolean),
-      [room.imageNames]
-    );
-    const total = images.length;
-    const parsedCount = Number(
-      room.roomImageCount ?? room.imageCount ?? room.imageCnt ?? NaN
-    );
-    const imageCount = Math.max(
-      images.length,
-      Number.isFinite(parsedCount) && parsedCount >= 0 ? parsedCount : 0
-    );
+  const houseName = room.houseName;
+  const houseAddress = room.houseAddress;
 
-    useEffect(() => {
-      setCurrentIndex((i) => (total === 0 ? 0 : Math.min(i, total - 1)));
-    }, [total]);
+  // ✅ images도 안전하게 (null/undefined 대비)
+  const images = useMemo(
+    () => (room.imageNames ?? []).filter(Boolean),
+    [room.imageNames]
+  );
+  const total = images.length;
 
-    useEffect(() => {
-      setIsWished(!!wished);
-    }, [wished]);
+  function prevClick() {
+    setCurrentIndex((i) => Math.max(0, i - 1));
+  }
+  function nextClick() {
+    setCurrentIndex((i) => Math.min(Math.max(total - 1, 0), i + 1));
+  }
 
-    function prevClick() {
-      setSlideDirection('prev');
-      setCurrentIndex((i) => Math.max(0, i - 1));
+  // function toggleWish(e) {
+  //   e.stopPropagation();
+  //   e.preventDefault();
+  //   const next = !isWished;
+  //   setIsWished(next);
+  //   if (onToggleWish && room.roomNo) onToggleWish(room.roomNo, next);
+  // }
+  async function toggleWish(e) {
+    e.stopPropagation();
+    e.preventDefault();
+
+    const next = !isWished;
+    setIsWished(next);
+
+    if (!onToggleWish || !room.roomNo) return;
+    const ok = await onToggleWish(room.roomNo, next);
+    if (!ok) setIsWished(!next);
+  }
+  // -- 우민 수정
+  async function clickPassVerification(e) {
+    e.stopPropagation();
+    e.preventDefault();
+    if (onRequestPassVerification) {
+      await onRequestPassVerification();
     }
-    function nextClick() {
-      setSlideDirection('next');
-      setCurrentIndex((i) => Math.min(Math.max(total - 1, 0), i + 1));
+  }
+
+  function clickPassReset(e) {
+    e.stopPropagation();
+    e.preventDefault();
+    if (onResetPassVerification) {
+      onResetPassVerification();
     }
+  }
 
-    // function toggleWish(e) {
-    //   e.stopPropagation();
-    //   e.preventDefault();
-    //   const next = !isWished;
-    //   setIsWished(next);
-    //   if (onToggleWish && room.roomNo) onToggleWish(room.roomNo, next);
-    // }
-    async function toggleWish(e) {
-      e.stopPropagation();
-      e.preventDefault();
+  function formatVerifiedAt(value) {
+    if (!value) return '';
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return '';
+    return `${d.getHours().toString().padStart(2, '0')}:${d
+      .getMinutes()
+      .toString()
+      .padStart(2, '0')}`;
+  }
 
-      const next = !isWished;
-      setIsWished(next);
+  function imgUrl(imageName) {
+    if (!imageName) return '#';
+    if (imageName.startsWith('http')) return imageName;
+    return `http://localhost:8080/upload/room_image/${imageName}`;
+  }
 
-      if (!onToggleWish || !room.roomNo) return;
-      const ok = await onToggleWish(room.roomNo, next);
-      if (!ok) setIsWished(!next);
-    }
-    // -- 우민 수정
+  // ✅ roomSearchResponse가 진짜 없으면 렌더만 비워주기
+  if (!roomSearchResponse) return null;
 
-    function imgUrl(imageName) {
-      if (!imageName) return '#';
-      if (imageName.startsWith('http')) return imageName;
-      return `http://localhost:8080/upload/room_image/${imageName}`;
-    }
+  return (
+    <div className={styles.card}>
+      <button className={styles.wishBtn} onClick={toggleWish} aria-label="찜">
+        {isWished ? '★' : '☆'}
+      </button>
 
-    // ✅ roomSearchResponse가 진짜 없으면 렌더만 비워주기
-    if (!roomSearchResponse) return null;
+      <div className={styles.body}>
+        <div className={styles.thumb}>
+          {images.length === 0 ? (
+            <div className={styles.noImage}>Empty</div>
+          ) : (
+            <img
+              className={styles.thumbImg}
+              src={imgUrl(images[currentIndex])}
+              alt="room"
+            />
+          )}
 
-    return (
-      <div className={styles.card}>
-        <button className={styles.wishBtn} onClick={toggleWish} aria-label="찜">
-          {isWished ? '★' : '☆'}
-        </button>
+          {images.length > 1 && (
+            <div className={styles.thumbNav}>
+              <button onClick={prevClick} disabled={currentIndex === 0}>
+                ◀
+              </button>
+              <button onClick={nextClick} disabled={currentIndex >= total - 1}>
+                ▶
+              </button>
+            </div>
+          )}
 
-        <div className={styles.body}>
-          <div className={styles.thumb}>
-            <Link
-              className={styles.thumbLink}
-              to={`/rooms/${room.roomNo}`}
-              aria-label={`${room.roomName ?? 'room'} detail`}
-            >
-              {images.length === 0 ? (
-                <div className={styles.noImage}>Empty</div>
+          <div className={styles.photoCount}>
+            {room.roomImageCount ?? images.length}개 사진
+          </div>
+        </div>
+
+        <div className={styles.info}>
+          <div className={styles.titleRow}>
+            <div className={styles.titleCol}>
+              {houseName && <div className={styles.houseName}>{houseName}</div>}
+              <Link className={styles.title} to={`/rooms/${room.roomNo}`}>
+                {room.roomName}
+              </Link>
+            </div>
+            <div className={styles.passRow}>
+              {passVerified ? (
+                <>
+                  <span className={styles.passBadge}>PASS 인증완료</span>
+                  <span className={styles.passMeta}>
+                    {passVerifiedPhone} {formatVerifiedAt(passVerifiedAt)}
+                  </span>
+                  <button className={styles.passResetBtn} onClick={clickPassReset}>
+                    초기화
+                  </button>
+                </>
               ) : (
-                <img
-                  key={`${room.roomNo}-${images[currentIndex]}`}
-                  className={`${styles.thumbImg} ${
-                    slideDirection === 'prev' ? styles.slidePrev : styles.slideNext
-                  }`}
-                  src={imgUrl(images[currentIndex])}
-                  alt="room"
-                />
+                <button
+                  className={styles.passBtn}
+                  onClick={clickPassVerification}
+                  disabled={passVerifying}
+                >
+                  {passVerifying ? '인증 중...' : 'PASS 본인인증'}
+                </button>
               )}
-            </Link>
-
-            {images.length > 1 && (
-              <div className={styles.thumbNav}>
-                <button onClick={prevClick} disabled={currentIndex === 0}>
-                  ◀
-                </button>
-                <button onClick={nextClick} disabled={currentIndex >= total - 1}>
-                  ▶
-                </button>
-              </div>
-            )}
-
-            <div className={styles.photoCount}>
-              {imageCount}개 사진
             </div>
           </div>
 
-          <div className={styles.info}>
-            <div className={styles.titleRow}>
-              <div className={styles.titleCol}>
-                {houseName && (
-                  <div className={styles.houseName}>{houseName}</div>
-                )}
-                <Link className={styles.title} to={`/rooms/${room.roomNo}`}>
-                  {room.roomName}
-                </Link>
-              </div>
-            </div>
+          <div className={styles.priceRow}>
+            <span className={styles.method}>
+              {methodLabel(room.roomMethod)}
+            </span>
+            <span>{priceText(room)}</span>
+          </div>
+          {!passVerified && passError && (
+            <div className={styles.passError}>{passError}</div>
+          )}
 
-            <div className={styles.priceRow}>
-              <span className={styles.method}>
-                {methodLabel(room.roomMethod)}
-              </span>
-              <span>{priceText(room)}</span>
-            </div>
-
-            <div className={styles.metaRow}>
-              <span>{room.roomArea}㎡</span>
-              <span>{room.roomFacing}</span>
-              <span>{occupancyLabel(room.roomRoomCount)}</span>
-              <span>{room.roomEmptyYn ? '공실' : '거주중'}</span>
-            </div>
-            <div>
-              {houseAddress && (
-                <span className={styles.houseName}>{houseAddress}</span>
-              )}
-            </div>
+          <div className={styles.metaRow}>
+            <span>{room.roomArea}㎡</span>
+            <span>{room.roomFacing}</span>
+            <span>{occupancyLabel(room.roomRoomCount)}</span>
+            <span>{room.roomEmptyYn ? '공실' : '거주중'}</span>
+          </div>
+          <div>
+            {houseAddress && (
+              <span className={styles.houseName}>{houseAddress}</span>
+            )}
           </div>
         </div>
       </div>
-    );
+    </div>
+  );
 }

@@ -4,6 +4,7 @@ import { Container, Row, Col, Card, CardBody } from 'reactstrap';
 import MyPageSideNav from '../../user/components/MyPageSideNav';
 import { getTour, updateTour } from '../api/tourAPI';
 import { cancelContract, getContract, requestContractAmendment } from '../../contract/api/contractAPI';
+import { getMyInfo, isLessorType } from '../../user/api/userAPI';
 import { getRoom } from '../../houseAndRoom/api/roomApi';
 import InlineCalendar from '../../../shared/components/InlineCalendar';
 import layoutStyles from '../../../app/layouts/MyPageLayout.module.css';
@@ -12,7 +13,7 @@ import styles from './ApplicationDetail.module.css';
 function statusLabel(status) {
   switch (String(status || '').toUpperCase()) {
     case 'PENDING':
-      return '요청중';
+      return '승인대기';
     case 'APPROVED':
       return '승인됨';
     case 'REJECTED':
@@ -93,6 +94,7 @@ export default function ApplicationDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
+  const [isLessor, setIsLessor] = useState(false);
 
   const [tourDate, setTourDate] = useState('');
   const [tourTime, setTourTime] = useState('');
@@ -138,6 +140,23 @@ export default function ApplicationDetail() {
       setLoading(false);
     }
   }, [canRender, id, isTour, stateItem]);
+
+  useEffect(() => {
+    let mounted = true;
+    getMyInfo()
+      .then((info) => {
+        if (!mounted) return;
+        setIsLessor(isLessorType(info?.type));
+      })
+      .catch(() => {
+        if (!mounted) return;
+        setIsLessor(false);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   useEffect(() => {
     loadDetail();
@@ -376,7 +395,7 @@ export default function ApplicationDetail() {
                         ))}
                       </div>
 
-                      {isTour && (
+                      {isTour && !isLessor && (
                         <>
                           <div className={styles.actionGrid}>
                             <div className={styles.actionCard}>
@@ -442,7 +461,7 @@ export default function ApplicationDetail() {
                         </>
                       )}
 
-                      {isContract && (
+                      {isContract && !isLessor && (
                         <>
                           <div className={styles.actionGrid}>
                             <div className={styles.actionCard}>
@@ -501,6 +520,9 @@ export default function ApplicationDetail() {
                             <p className={styles.hint}>현재 상태에서는 수정/취소가 불가능합니다.</p>
                           )}
                         </>
+                      )}
+                      {isLessor && (
+                        <p className={styles.hint}>임대인은 신청 내역을 확인만 할 수 있습니다.</p>
                       )}
                     </>
                   )}

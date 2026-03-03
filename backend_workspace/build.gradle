@@ -73,6 +73,9 @@ dependencies {
 	
 	//jsonObject 사용 라이브러리 의존성 추가
 	implementation 'com.googlecode.json-simple:json-simple:1.1.1'
+
+	// HTML -> PDF 렌더링 (계약서 보관용)
+	implementation 'com.openhtmltopdf:openhtmltopdf-pdfbox:1.0.10'
 	
 	implementation 'org.springframework.boot:spring-boot-starter-tomcat'
 	//스프링 부트에 내장된 톰켓 라이브러리, 웹 애플리케이션 구동을 위한 라이브러리임

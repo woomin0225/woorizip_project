@@ -10,6 +10,7 @@ import org.team4p.woorizip.tour.jpa.entity.TourEntity;
 public interface TourRepositoryCustom {
     List<TourEntity> findByUserNo(String userNo);
     Page<TourEntity> findByUserNoOrderByVisitDateDesc(String userNo, Pageable pageable);
+    Page<TourEntity> findByRoomOwnerNoOrderByVisitDateDesc(String ownerUserNo, Pageable pageable);
     boolean existsByRoomNoAndVisitDateAndVisitTimeAndStatusIn(
             String roomNo,
             LocalDate visitDate,
