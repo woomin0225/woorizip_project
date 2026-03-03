@@ -8,7 +8,7 @@ import { getRoomReviews } from '../../api/roomApi';
 import { getFacilityList } from '../../../facility/api/facilityApi';
 
 const REVIEW_LIMIT = 3;
-const FACILITY_LIMIT = 8;
+const FACILITY_LIMIT = 2;
 
 const FACILITY_ICON_MAP = [
   { keys: ['wifi', '와이파이'], icon: '📶' },
@@ -262,7 +262,8 @@ export default function ViewsRankingList({ list = [], type }) {
                   ) : visibleFacilities.length === 0 ? (
                     <div className={styles.sideEmpty}>시설 정보 없음</div>
                   ) : (
-                    <div className={styles.facilityList}>
+                    <div className={styles.facilityWrap}>
+                      <div className={styles.facilityList}>
                       {visibleFacilities.map((facility) => {
                         const name = facility?.facilityName || '시설';
                         return (
@@ -280,10 +281,35 @@ export default function ViewsRankingList({ list = [], type }) {
                           </span>
                         );
                       })}
+                        {facilities.length > FACILITY_LIMIT && (
+                          <span className={styles.facilityMore}>
+                            +{facilities.length - FACILITY_LIMIT}
+                          </span>
+                        )}
+                      </div>
                       {facilities.length > FACILITY_LIMIT && (
-                        <span className={styles.facilityMore}>
-                          +{facilities.length - FACILITY_LIMIT}
-                        </span>
+                        <div className={styles.facilityTooltip}>
+                          <div className={styles.facilityList}>
+                            {facilities.map((facility) => {
+                              const name = facility?.facilityName || '시설';
+                              return (
+                                <span
+                                  key={
+                                    facility?.facilityNo ||
+                                    `${item?.houseNo}-${name}-tooltip`
+                                  }
+                                  className={styles.facilityChip}
+                                  title={name}
+                                >
+                                  <span className={styles.facilityIcon}>
+                                    {getFacilityIcon(name)}
+                                  </span>
+                                  <span className={styles.facilityName}>{name}</span>
+                                </span>
+                              );
+                            })}
+                          </div>
+                        </div>
                       )}
                     </div>
                   )}
