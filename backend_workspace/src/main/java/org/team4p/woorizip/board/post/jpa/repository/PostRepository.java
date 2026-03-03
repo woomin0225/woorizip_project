@@ -18,7 +18,7 @@ public interface PostRepository extends JpaRepository<PostEntity, Integer> {
 	List<PostEntity> findTop5ByBoardTypeNoOrderByPostViewCountDesc(String boardTypeNo);
 
 	// 게시판 유형별 목록 조회
-	Page<PostEntity> findByBoardTypeNoOrderByPostPinnedYnDescPostNoDesc(
+	Page<PostEntity> findByBoardTypeNoOrderByPostNoDesc(
 		    String boardTypeNo,
 		    Pageable pageable
 		);

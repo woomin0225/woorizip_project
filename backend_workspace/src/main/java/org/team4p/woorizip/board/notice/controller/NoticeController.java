@@ -70,17 +70,19 @@ public class NoticeController {
 	//==============목록===================
 	@GetMapping
 	public ResponseEntity<ApiResponse<PageResponse<PostDto>>> list(
-			@ModelAttribute SearchRequest req) {
-		
+		@ModelAttribute SearchRequest req) {
+
 		Pageable pageable = req.toPageable();
-		
+
 		int total = noticeService.selectListCount();
-		ArrayList<PostDto> content = noticeService.selectList(pageable);
-		
+
 		int totalPages = (int) Math.ceil((double) total / req.size());
-		
-		return ResponseEntity.ok(
-				ApiResponse.ok("목록 조회 성공", new PageResponse<>(content, req.page(), req.size(), total, totalPages)));
+		int currentPage = req.page();
+
+		ArrayList<PostDto> content = noticeService.selectList(pageable);
+
+		return ResponseEntity
+				.ok(ApiResponse.ok("목록 조회 성공", new PageResponse<>(content, currentPage, req.size(), total, totalPages)));
 	}
 	
 	//==============상세===================
