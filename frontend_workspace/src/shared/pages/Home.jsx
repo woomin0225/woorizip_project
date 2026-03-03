@@ -43,7 +43,9 @@ export default function Home() {
             <span />
           </div>
           <Container className="d-flex align-items-center h-100 py-lg">
-            <div className={`w-100 h-75 ${styles.placeholderBox} flex-column text-center p-4`}>
+            <div
+              className={`w-100 h-75 ${styles.placeholderBox} flex-column text-center p-4`}
+            >
               <h2 className="text-white mb-2">슬라이드 배너 영역</h2>
               <p className="text-white-50">
                 나중에 이곳에 메인 배너 이미지나 캐러셀이 들어갑니다.
@@ -51,7 +53,6 @@ export default function Home() {
             </div>
           </Container>
         </section>
-
 
         {/* 조회순 기반 매물 랭킹 */}
         <section className="section pt-4">
@@ -111,7 +112,6 @@ export default function Home() {
             </Row>
           </Container>
         </section>
-        
 
         {/* 3. 게시판 프리뷰 영역 */}
         <section className="section bg-secondary mt-4">

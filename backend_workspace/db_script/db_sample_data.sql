@@ -2207,8 +2207,8 @@ VALUES
 -- facility_status는 NOT NULL이라 반드시 명시
 INSERT INTO `tb_fm_list` (`facility_no`, `house_no`, `facility_code`, `facility_name`, `facility_option_info`, `facility_location`, `facility_open_time`, `facility_close_time`, `facility_status`, `facility_rsvn_required_yn`, `max_rsvn_per_day`, `facility_rsvn_unit_minutes`, `facility_max_duration_minutes`, `facility_created_at`, `facility_capacity`) 
 VALUES 
-('fac1', 'house1', 3, '입주민 전용 헬스장', '{"treadmill": true, "weights": true}', 1, '06:00:00', '23:00:00', 'AVAILABLE', 0, 2, 30, 60, '2026-01-01 00:00:01', 30),
-('fac2', 'house1', 1, '공용 스터디 라운지', '{"wifi": true, "coffee": true}', 2, '00:00:00', '23:59:59', 'AVAILABLE', 1, NULL, NULL, NULL,  '2026-01-01 00:00:02', 10);
+('fac1', 'house1', 3, '입주민 전용 헬스장', '{"treadmill": true, "weights": true}', 1, '06:00:00', '23:00:00', 'AVAILABLE', 1, 2, 30, 60, '2026-01-01 00:00:01', 30),
+('fac2', 'house1', 1, '공용 스터디 라운지', '{"wifi": true, "coffee": true}', 2, '00:00:00', '23:59:59', 'AVAILABLE', 0, NULL, NULL, NULL,  '2026-01-01 00:00:02', 10);
 
 -- 17. 부대시설 사진 (tb_fm_images)
 INSERT INTO `tb_fm_images` (`facility_image_no`, `facility_no`, `facility_original_image_name`, `facility_stored_image_name`) 

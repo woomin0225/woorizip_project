@@ -4,7 +4,12 @@ import { useNavigate } from 'react-router-dom';
 import { useFacilityDetail } from '../../hooks/facility/useFacilityDetail';
 import styles from './Detail.module.css';
 
-export default function FacilityDetail({ facilityNo, owner, houseNo, onClose }) {
+export default function FacilityDetail({
+  facilityNo,
+  owner,
+  houseNo,
+  onClose,
+}) {
   const nav = useNavigate();
   const { facilityDetails, loading, error } = useFacilityDetail(facilityNo);
 
@@ -12,7 +17,9 @@ export default function FacilityDetail({ facilityNo, owner, houseNo, onClose }) 
     return (
       <div className={styles.contentSection}>
         <div className="container">
-          <div className={styles.facilityEmpty}>시설 정보를 불러오는 중입니다...</div>
+          <div className={styles.facilityEmpty}>
+            시설 정보를 불러오는 중입니다...
+          </div>
         </div>
       </div>
     );
@@ -24,7 +31,9 @@ export default function FacilityDetail({ facilityNo, owner, houseNo, onClose }) 
         <div className="container">
           <div className={styles.facilityEmpty}>
             <p>{error.message}</p>
-            <button className={styles.inlineBtn} onClick={onClose}>닫기</button>
+            <button className={styles.inlineBtn} onClick={onClose}>
+              닫기
+            </button>
           </div>
         </div>
       </div>
@@ -41,7 +50,7 @@ export default function FacilityDetail({ facilityNo, owner, houseNo, onClose }) 
     facilityCloseTime,
     images,
     displayOptionList,
-    house
+    facilityRsvnRequiredYn
   } = facilityDetails;
 
   return (
@@ -51,11 +60,11 @@ export default function FacilityDetail({ facilityNo, owner, houseNo, onClose }) 
           {images && images.length > 0 && (
             <div className={styles.imageSection}>
               {images.map((img) => (
-                <img 
-                  key={img.facilityImageNo} 
-                  src={img.imagePath} 
-                  alt={facilityName} 
-                  className={styles.facilityImg} 
+                <img
+                  key={img.facilityImageNo}
+                  src={img.imagePath}
+                  alt={facilityName}
+                  className={styles.facilityImg}
                 />
               ))}
             </div>
@@ -70,14 +79,17 @@ export default function FacilityDetail({ facilityNo, owner, houseNo, onClose }) 
             </div>
 
             <div className={styles.descBox}>
-              <strong>운영 시간:</strong> {facilityOpenTime?.slice(0, 5)} ~ {facilityCloseTime?.slice(0, 5)}
+              <strong>운영 시간:</strong> {facilityOpenTime?.slice(0, 5)} ~{' '}
+              {facilityCloseTime?.slice(0, 5)}
             </div>
 
             <div className={styles.sectionBlock}>
               <h4 className={styles.sectionTitle}>시설 옵션</h4>
               <div className={styles.optionGrid}>
                 {displayOptionList?.map((opt) => (
-                  <span key={opt} className={styles.optionBadge}>{opt}</span>
+                  <span key={opt} className={styles.optionBadge}>
+                    {opt}
+                  </span>
                 ))}
               </div>
             </div>
@@ -85,13 +97,15 @@ export default function FacilityDetail({ facilityNo, owner, houseNo, onClose }) 
             <div className={styles.btnGroup}>
               {owner ? (
                 <>
-                  <button 
+                  <button
                     className={styles.inlineBtn}
-                    onClick={() => nav(`/facility/form/${houseNo}/${facilityNo}`)}
+                    onClick={() =>
+                      nav(`/facility/form/${houseNo}/${facilityNo}`)
+                    }
                   >
                     수정하기
                   </button>
-                  <button 
+                  <button
                     className={styles.primaryBtn}
                     onClick={() => nav(`/reservation/view/${facilityNo}`)}
                   >
@@ -99,12 +113,14 @@ export default function FacilityDetail({ facilityNo, owner, houseNo, onClose }) 
                   </button>
                 </>
               ) : (
-                <button 
-                  className={styles.primaryBtn} 
-                  onClick={() => nav(`/reservation/form/${facilityNo}`)}
-                >
-                  예약하기
-                </button>
+                facilityRsvnRequiredYn && (
+                  <button
+                    className={styles.primaryBtn}
+                    onClick={() => nav(`/reservation/form/${facilityNo}`)}
+                  >
+                    예약하기
+                  </button>
+                )
               )}
             </div>
           </div>
