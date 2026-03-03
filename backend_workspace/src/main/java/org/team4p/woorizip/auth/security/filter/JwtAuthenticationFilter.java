@@ -32,7 +32,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String uri = request.getRequestURI();
         String method = request.getMethod();
         
-        	if (uri.startsWith("/upload/")) return true;
+        	if (uri.startsWith("/upload/") || uri.startsWith("/contract-docs/")) return true;
 
         if (HttpMethod.OPTIONS.matches(method)) return true;
 
@@ -56,7 +56,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         if (HttpMethod.POST.matches(method) && (
                 uri.equals("/api/user/signup") || 
-                uri.equals("/api/user/check-id")
+                uri.equals("/api/user/check-id") ||
+                uri.equals("/api/user/find-id") ||
+                uri.equals("/api/user/password/send-code") ||
+                uri.equals("/api/user/password/verify-code") ||
+                uri.equals("/api/user/find-password")
         )) {
             return true;
         }
@@ -71,7 +75,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     	
     	String uri = request.getRequestURI();
 
-    	if (uri.startsWith("/upload/")) {
+    	if (uri.startsWith("/upload/") || uri.startsWith("/contract-docs/")) {
     	    chain.doFilter(request, response);
     	    return;
     	}

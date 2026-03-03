@@ -112,4 +112,22 @@ export async function findPassword(payload) {
   return unwrapData(response);
 }
 
+export async function sendPasswordResetCode(payload) {
+  const response = await request('/api/user/password/send-code', {
+    method: 'POST',
+    body: payload,
+  });
+
+  return unwrapData(response);
+}
+
+export async function verifyPasswordResetCode(payload) {
+  const response = await request('/api/user/password/verify-code', {
+    method: 'POST',
+    body: payload,
+  });
+
+  return unwrapData(response);
+}
+
 export { normalizeApiError };

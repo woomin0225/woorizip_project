@@ -1,6 +1,7 @@
 package org.team4p.woorizip.user.controller;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -12,6 +13,9 @@ import org.springframework.web.bind.annotation.*;
 import org.team4p.woorizip.auth.security.principal.CustomUserPrincipal;
 import org.team4p.woorizip.common.api.ApiResponse;
 import org.team4p.woorizip.user.model.dto.UserDto;
+import org.team4p.woorizip.user.model.dto.request.PasswordResetCodeSendRequest;
+import org.team4p.woorizip.user.model.dto.request.PasswordResetCodeVerifyRequest;
+import org.team4p.woorizip.user.model.dto.request.PasswordResetRequest;
 import org.team4p.woorizip.user.model.service.UserService;
 
 import jakarta.validation.Valid;
@@ -46,6 +50,42 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.ok("아이디 찾기 성공", emailId));
     }
 
+    @PostMapping("/password/send-code")
+    public ResponseEntity<ApiResponse<Void>> sendPasswordResetCode(
+            @RequestBody @Valid PasswordResetCodeSendRequest request
+    ) {
+        userService.sendPasswordResetCode(request.getName(), request.getPhone());
+        return ResponseEntity.ok(ApiResponse.ok("인증번호가 발송되었습니다.", null));
+    }
+
+    @PostMapping("/password/verify-code")
+    public ResponseEntity<ApiResponse<Map<String, String>>> verifyPasswordResetCode(
+            @RequestBody @Valid PasswordResetCodeVerifyRequest request
+    ) {
+        String verificationToken = userService.verifyPasswordResetCode(
+                request.getName(),
+                request.getPhone(),
+                request.getCode()
+        );
+
+        return ResponseEntity.ok(
+                ApiResponse.ok("휴대폰 본인인증이 완료되었습니다.", Map.of("verificationToken", verificationToken))
+        );
+    }
+
+    @PostMapping("/find-password")
+    public ResponseEntity<ApiResponse<Void>> resetPassword(
+            @RequestBody @Valid PasswordResetRequest request
+    ) {
+        userService.resetPasswordByPhoneVerification(
+                request.getName(),
+                request.getPhone(),
+                request.getVerificationToken(),
+                request.getNewPassword()
+        );
+        return ResponseEntity.ok(ApiResponse.ok("비밀번호가 변경되었습니다.", null));
+    }
+
     /**
      * 회원 정보 조회
      * GET /user/{email_id}
@@ -55,6 +95,16 @@ public class UserController {
         UserDto params = UserDto.builder().emailId(emailId).build();
         
         UserDto user = userService.selectUser(params);
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                                 .body(ApiResponse.fail("회원을 찾을 수 없습니다.", null));
+        }
+        return ResponseEntity.ok(ApiResponse.ok("회원 정보 조회 성공", user));
+    }
+
+    @GetMapping("/no/{user_no}")
+    public ResponseEntity<ApiResponse<UserDto>> selectUserByUserNo(@PathVariable("user_no") String userNo) {
+        UserDto user = userService.selectUserByUserNo(userNo);
         if (user == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                                  .body(ApiResponse.fail("회원을 찾을 수 없습니다.", null));

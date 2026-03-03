@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { createBrowserRouter } from 'react-router-dom';
 
 import MainLayout from '../layouts/MainLayout';
@@ -39,7 +39,7 @@ import MemberList from '../../features/member/pages/MemberList';
 
 import MyInfo from '../../features/user/pages/MyInfo';
 import MyInfoModify from '../../features/user/pages/MyInfoModify';
-import Withdrawn from '../../features/user/pages/withdrawn';
+import Withdraw from '../../features/user/pages/withdraw';
 import MyPageHome from '../../features/user/pages/MyPageHome';
 
 import WishlistPage from '../../features/wishlist/pages/WishlistPage';
@@ -94,7 +94,7 @@ export const router = createBrowserRouter([
           { path: ROUTES.MEMBER.MYPAGE, element: <MyPageHome /> },
           { path: ROUTES.MEMBER.MY_INFO, element: <MyInfo /> },
           { path: ROUTES.MEMBER.MY_INFO_EDIT, element: <MyInfoModify /> },
-          { path: ROUTES.MEMBER.MY_WITHDRAW, element: <Withdrawn /> },
+          { path: ROUTES.MEMBER.MY_WITHDRAW, element: <Withdraw /> },
 
           { path: ROUTES.WISHLIST.LIST, element: <WishlistPage /> },
 

@@ -20,6 +20,11 @@ public interface ContractService {
     PageResponse<ContractDto> selectListContract(String userNo, int page, int size);
 
     /**
+     * 임대인(방 소유자) 기준 계약 목록 조회
+     */
+    PageResponse<ContractDto> selectListContractByOwner(String ownerUserNo, int page, int size);
+
+    /**
      * 계약 등록 (입주 신청)
      */
     ContractDto insertContract(ContractDto contractDto);
@@ -39,5 +44,7 @@ public interface ContractService {
     ContractDto verifyElectronicSignature(String contractNo, ContractSignatureVerifyRequest request);
 
     ContractDto requestContractPayment(String contractNo, ContractPaymentRequest request);
+
+    int updateStatus(String contractNo, String status, String reason);
     
 }

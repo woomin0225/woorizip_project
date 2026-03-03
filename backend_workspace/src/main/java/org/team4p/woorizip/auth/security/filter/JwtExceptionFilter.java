@@ -21,7 +21,7 @@ public class JwtExceptionFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String uri = request.getRequestURI();
-        return uri.startsWith("/upload/");
+        return uri.startsWith("/upload/") || uri.startsWith("/contract-docs/");
     }
 
     @Override

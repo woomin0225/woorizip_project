@@ -1,6 +1,10 @@
 ﻿import { useAuth } from '../../../app/providers/AuthProvider';
 import { useState, useEffect, useCallback } from 'react';
-import { findId as findIdApi } from '../api/authApi';
+import {
+  findId as findIdApi,
+  findPassword as findPasswordApi,
+} from '../api/authApi';
+import { usePassVerification } from './usePassVerification';
 
 function parseJwtPayload(token) {
   if (!token) return null;
@@ -30,25 +34,26 @@ export function useSignup() {
     phone: '',
     rrnFront: '',
     rrnBack: '',
-    phoneCode: '',
     type: 'USER',
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [isIdChecked, setIsIdChecked] = useState(false);
-  const [isPhoneCodeSent, setIsPhoneCodeSent] = useState(false);
-  const [isPhoneVerified, setIsPhoneVerified] = useState(false);
-  const [phoneCode, setPhoneCode] = useState('');
+  const {
+    isVerified: isPhoneVerified,
+    isVerifying: isPhoneVerifying,
+    verification: phoneVerification,
+    verificationError: phoneVerificationError,
+    startVerification: startPhoneVerification,
+    resetVerification: resetPhoneVerification,
+  } = usePassVerification({ purpose: 'SIGNUP' });
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
     if (name === 'emailId') setIsIdChecked(false);
     if (name === 'phone') {
-      setIsPhoneCodeSent(false);
-      setIsPhoneVerified(false);
-      setPhoneCode('');
-      setForm((prev) => ({ ...prev, phoneCode: '' }));
+      resetPhoneVerification();
     }
   };
 
@@ -95,30 +100,17 @@ export function useSignup() {
     return { birthDate, gender, age: age >= 0 ? age : 0 };
   };
 
-  const handleSendPhoneCode = () => {
+  const handleSendPhoneCode = async () => {
     const phone = String(form.phone || '').replace(/\D/g, '');
     if (phone.length < 10 || phone.length > 11) {
       alert('휴대폰 번호를 올바르게 입력해주세요.');
       return;
     }
-    const issued = String(Math.floor(100000 + Math.random() * 900000));
-    setPhoneCode(issued);
-    setIsPhoneCodeSent(true);
-    setIsPhoneVerified(false);
-    alert(`인증번호 ${issued}가 발송되었습니다.`);
-  };
-
-  const handleVerifyPhoneCode = () => {
-    if (!isPhoneCodeSent) {
-      alert('먼저 인증번호 발송을 진행해주세요.');
+    const ok = await startPhoneVerification({ phone, purpose: 'SIGNUP' });
+    if (!ok) {
+      alert('PASS 본인인증에 실패했습니다. 다시 시도해주세요.');
       return;
     }
-    if (String(form.phoneCode || '').trim() !== phoneCode) {
-      alert('인증번호가 일치하지 않습니다.');
-      setIsPhoneVerified(false);
-      return;
-    }
-    setIsPhoneVerified(true);
     alert('휴대폰 인증이 완료되었습니다.');
   };
 
@@ -212,44 +204,52 @@ export function useSignup() {
     error,
     derivedProfile: deriveBirthAndGender(),
     isIdChecked,
-    isPhoneCodeSent,
     isPhoneVerified,
+    isPhoneVerifying,
+    phoneVerificationError,
+    phoneVerifiedPhone: phoneVerification?.phoneMasked || '',
     handleChange,
     handleCheckId,
     handleSendPhoneCode,
-    handleVerifyPhoneCode,
+    handleResetPhoneVerification: resetPhoneVerification,
     handleSubmit,
   };
 }
 
 export const useFindId = () => {
-  const [form, setForm] = useState({ name: '', phone: '', code: '' });
+  const [form, setForm] = useState({ name: '', phone: '' });
   const [foundId, setFoundId] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [isCodeSent, setIsCodeSent] = useState(false);
-  const [isVerified, setIsVerified] = useState(false);
+  const {
+    isVerified,
+    isVerifying,
+    verification,
+    verificationError,
+    startVerification,
+    resetVerification,
+  } = usePassVerification({ purpose: 'FIND_ID' });
 
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+    if (name === 'name' || name === 'phone') {
+      resetVerification();
+    }
   };
 
-  const handleSendCode = () => {
+  const handleSendCode = async () => {
     if (!form.name || !form.phone) {
       alert('이름과 휴대폰 번호를 입력해주세요.');
       return;
     }
-    alert('인증번호 1234가 발송되었습니다.');
-    setIsCodeSent(true);
-  };
-
-  const handleVerifyCode = () => {
-    if (form.code === '1234') {
-      alert('인증되었습니다.');
-      setIsVerified(true);
-    } else {
-      alert('인증번호가 일치하지 않습니다.');
+    const phone = String(form.phone || '').replace(/\D/g, '');
+    const ok = await startVerification({ phone, purpose: 'FIND_ID' });
+    if (!ok) {
+      alert('PASS 본인인증에 실패했습니다. 다시 시도해주세요.');
+      return;
     }
+    alert('휴대폰 본인인증이 완료되었습니다.');
   };
 
   const handleFindId = async (e) => {
@@ -299,11 +299,13 @@ export const useFindId = () => {
     foundId,
     loading,
     error,
-    isCodeSent,
     isVerified,
+    isVerifying,
+    verificationError,
+    verifiedPhone: verification?.phoneMasked || '',
     handleChange,
     handleSendCode,
-    handleVerifyCode,
+    handleResetVerification: resetVerification,
     handleFindId,
   };
 };
@@ -521,44 +523,127 @@ export function useAdminUserList() {
 }
 
 export function useFindPassword() {
-  const [method, setMethod] = useState('email');
-  const [form, setForm] = useState({ emailId: '', phone: '' });
+  const [form, setForm] = useState({
+    name: '',
+    phone: '',
+    newPassword: '',
+    newPasswordConfirm: '',
+  });
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const [message, setMessage] = useState('');
+  const [verificationToken, setVerificationToken] = useState('');
+  const {
+    isVerified,
+    isVerifying,
+    verification,
+    verificationError,
+    startVerification,
+    resetVerification,
+  } = usePassVerification({ purpose: 'FIND_PASSWORD' });
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
+
+    if (name === 'phone' || name === 'name') {
+      setVerificationToken('');
+      resetVerification();
+    }
+  };
+
+  const handleSendCode = async () => {
+    const name = String(form.name || '').trim();
+    const rawPhone = String(form.phone || '').trim();
+    const phone = rawPhone.replace(/\D/g, '');
+
+    if (!name) {
+      setError('이름을 입력해주세요.');
+      return;
+    }
+
+    if (phone.length < 10 || phone.length > 11) {
+      setError('휴대폰 번호를 정확히 입력해주세요.');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+    setMessage('');
+
+    try {
+      const verifyResult = await startVerification({
+        phone,
+        purpose: 'FIND_PASSWORD',
+      });
+      if (!verifyResult) throw new Error('PASS 본인인증에 실패했습니다.');
+      const token =
+        verifyResult?.txId || verifyResult?.ci || verifyResult?.di || '';
+      setVerificationToken(token || `PASS-${Date.now()}`);
+      setMessage('휴대폰 PASS 본인인증이 완료되었습니다.');
+    } catch (err) {
+      setError(err?.message || '휴대폰 본인인증에 실패했습니다.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleRequestNewPassword = async (e) => {
     e.preventDefault();
-    setLoading(true);
+    setError('');
     setMessage('');
 
-    try {
-      const targetValue = method === 'email' ? form.emailId : form.phone;
-      console.log(`인증 요청: [${method}] ${targetValue}`);
+    if (!isVerified) {
+      setError('휴대폰 본인인증을 먼저 완료해주세요.');
+      return;
+    }
 
-      setTimeout(() => {
-        setMessage(
-          '인증이 완료되어 새로운 임시 비밀번호가 발급/전송 되었습니다.'
-        );
-        setLoading(false);
-      }, 1000);
-    } catch {
-      setMessage('인증에 실패했습니다. 입력 정보를 확인해주세요.');
+    const passwordRegex =
+      /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,16}$/;
+
+    if (!passwordRegex.test(form.newPassword)) {
+      setError('새 비밀번호는 8~16자 영문/숫자/특수문자를 포함해야 합니다.');
+      return;
+    }
+
+    if (form.newPassword !== form.newPasswordConfirm) {
+      setError('새 비밀번호 확인이 일치하지 않습니다.');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const name = String(form.name || '').trim();
+      const phone = String(form.phone || '').replace(/\D/g, '');
+
+      await findPasswordApi({
+        name,
+        phone,
+        verificationToken,
+        newPassword: form.newPassword,
+      });
+
+      setMessage('비밀번호가 성공적으로 변경되었습니다.');
+    } catch (err) {
+      setError(err?.message || '비밀번호 변경에 실패했습니다.');
+    } finally {
       setLoading(false);
     }
   };
 
   return {
-    method,
-    setMethod,
     form,
     loading,
+    error,
     message,
+    isVerified,
+    isVerifying,
+    verificationError,
+    verifiedPhone: verification?.phoneMasked || '',
     handleChange,
+    handleSendCode,
+    handleResetVerification: resetVerification,
     handleRequestNewPassword,
   };
 }

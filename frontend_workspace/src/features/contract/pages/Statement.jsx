@@ -1,12 +1,14 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Container, Row, Col, Card, CardBody } from 'reactstrap';
 import MyPageSideNav from '../../user/components/MyPageSideNav';
+import { getApiBaseUrl } from '../../../app/config/env';
 import { getMyContractsPage } from '../api/contractAPI';
 import { getRoom } from '../../houseAndRoom/api/roomApi';
 import { getHouse } from '../../houseAndRoom/api/houseApi';
 import styles from '../../../app/layouts/MyPageLayout.module.css';
 
 const PAGE_SIZE = 8;
+const API_BASE_URL = getApiBaseUrl();
 
 function moneyLabel(amount) {
   if (!amount && amount !== 0) return '-';
@@ -38,6 +40,15 @@ function contractStatusLabel(status) {
     default:
       return status || '-';
   }
+}
+
+function resolveContractUrl(url) {
+  if (!url) return '';
+  const s = String(url).trim();
+  if (!s) return '';
+  if (s.startsWith('http://') || s.startsWith('https://')) return s;
+  if (s.startsWith('/')) return `${API_BASE_URL}${s}`;
+  return `${API_BASE_URL}/${s}`;
 }
 
 export default function Statement() {
@@ -173,7 +184,7 @@ export default function Statement() {
                       <div className={styles.contractPreview}>
                         <h3 className={styles.sectionTitle}>계약서 미리보기</h3>
                         {selected?.contractUrl ? (
-                          <iframe title="contract-preview" src={selected.contractUrl} className={styles.contractFrame} />
+                          <iframe title="contract-preview" src={resolveContractUrl(selected.contractUrl)} className={styles.contractFrame} />
                         ) : (
                           <p className={styles.desc}>선택한 계약의 계약서 URL이 없습니다.</p>
                         )}

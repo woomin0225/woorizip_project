@@ -53,6 +53,23 @@ public class TourServiceImpl implements TourService {
     }
 
     @Override
+    public PageResponse<TourDto> selectListTourByOwner(String ownerUserNo, int page, int size) {
+        int safePage = Math.max(page, 1);
+        int safeSize = Math.max(size, 1);
+        Pageable pageable = PageRequest.of(safePage - 1, safeSize);
+        Page<TourEntity> resultPage = tourRepository.findByRoomOwnerNoOrderByVisitDateDesc(ownerUserNo, pageable);
+
+        List<TourDto> content = toList(resultPage.getContent());
+        return new PageResponse<>(
+                content,
+                safePage,
+                safeSize,
+                resultPage.getTotalElements(),
+                resultPage.getTotalPages()
+        );
+    }
+
+    @Override
     @Transactional
     public int insertTour(TourDto tourDto) {
         TourEntity entity = tourDto.toEntity();

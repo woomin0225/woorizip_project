@@ -27,12 +27,14 @@ export default function Signup() {
     loading,
     error,
     isIdChecked,
-    isPhoneCodeSent,
     isPhoneVerified,
+    isPhoneVerifying,
+    phoneVerificationError,
+    phoneVerifiedPhone,
     handleChange,
     handleCheckId,
     handleSendPhoneCode,
-    handleVerifyPhoneCode,
+    handleResetPhoneVerification,
     handleSubmit,
   } = useSignup();
 
@@ -277,40 +279,44 @@ export default function Signup() {
                                 color={isPhoneVerified ? 'success' : 'info'}
                                 type="button"
                                 onClick={handleSendPhoneCode}
+                                disabled={isPhoneVerifying}
                                 className={styles.inlineActionBtn}
                               >
-                                {isPhoneCodeSent ? '재발송' : '인증요청'}
+                                {isPhoneVerifying
+                                  ? '인증 중...'
+                                  : isPhoneVerified
+                                    ? '인증완료'
+                                    : 'PASS 본인인증'}
                               </Button>
                             </div>
                           </FormGroup>
 
-                          {isPhoneCodeSent && (
+                          {isPhoneVerified && (
                             <FormGroup className={styles.narrowInputWrap}>
                               <div className={styles.inlineInputAction}>
-                                <InputGroup className="input-group-alternative mb-0">
-                                  <InputGroupText>
-                                    <i className="ni ni-check-bold" />
-                                  </InputGroupText>
-                                  <Input
-                                    name="phoneCode"
-                                    placeholder="인증번호 6자리"
-                                    type="text"
-                                    value={form.phoneCode}
-                                    onChange={handleChange}
-                                  />
-                                </InputGroup>
+                                <div className="text-success">
+                                  <small>
+                                    PASS 본인인증 완료
+                                    {phoneVerifiedPhone
+                                      ? ` (${phoneVerifiedPhone})`
+                                      : ''}
+                                  </small>
+                                </div>
                                 <Button
-                                  color={
-                                    isPhoneVerified ? 'success' : 'secondary'
-                                  }
+                                  color="secondary"
                                   type="button"
-                                  onClick={handleVerifyPhoneCode}
+                                  onClick={handleResetPhoneVerification}
                                   className={styles.inlineActionBtn}
                                 >
-                                  {isPhoneVerified ? '인증완료' : '확인'}
+                                  초기화
                                 </Button>
                               </div>
                             </FormGroup>
+                          )}
+                          {phoneVerificationError && (
+                            <div className="text-danger">
+                              <small>{phoneVerificationError}</small>
+                            </div>
                           )}
                         </div>
                       </div>

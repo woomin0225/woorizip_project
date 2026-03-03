@@ -9,7 +9,8 @@ import java.nio.file.Path;
 
 @ConfigurationProperties(prefix = "app")  // 이 클래스는 properties 와 연결된다는 어노테이션임, (prefix = "app") == app.* 의미함
 public record UploadProperties(
-        String uploadDir   // app.upload-dir 프로퍼티 값으로 매핑됨. uploadDir == C:/upload_files (base 경로)
+        String uploadDir,   // app.upload-dir 프로퍼티 값으로 매핑됨. uploadDir == C:/upload_files (base 경로)
+        String contractDocDir // 계약서 전용 저장 경로 (예: C:/contract_docs)
 ) {
 
     /** 공지사항 업로드 경로 */
@@ -50,5 +51,10 @@ public record UploadProperties(
     /** 방 사진 업로드 경로 */
     public Path roomImageDir() {
     		return Path.of(uploadDir, "room_image");
+    }
+
+    /** 계약서 파일 저장 경로 */
+    public Path contractDocDirPath() {
+        return Path.of(contractDocDir);
     }
 }
