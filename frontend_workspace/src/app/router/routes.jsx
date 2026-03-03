@@ -30,10 +30,10 @@ import QnaDetail from '../../features/board/pages/qna/QnaDetail';
 import QnaWrite from '../../features/board/pages/qna/QnaWrite';
 import QnaUpdate from '../../features/board/pages/qna/QnaUpdate';
 
-import InformationList from '../../features/board/pages/Information/InformationList';
-import InformationDetail from '../../features/board/pages/Information/InformationDetail';
-import InformationWrite from '../../features/board/pages/Information/InformationWrite';
-import InformationUpdate from '../../features/board/pages/Information/InformationUpdate';
+import InformationList from '../../features/board/pages/information/InformationList';
+import InformationDetail from '../../features/board/pages/information/InformationDetail';
+import InformationWrite from '../../features/board/pages/information/InformationWrite';
+import InformationUpdate from '../../features/board/pages/information/InformationUpdate';
 
 import MemberList from '../../features/member/pages/MemberList';
 
@@ -51,8 +51,6 @@ import Statement from '../../features/contract/pages/Statement';
 import Completion from '../../features/contract/pages/Completion';
 import PaymentSuccess from '../../features/contract/pages/PaymentSuccess';
 import PaymentFail from '../../features/contract/pages/PaymentFail';
-import ReservationView from './../../features/facility/pages/reservation/ReservationView';
-import ReservationForm from './../../features/facility/pages/reservation/ReservationForm';
 
 import Search from '../../features/houseAndRoom/pages/Search';
 import Detail from './../../features/houseAndRoom/pages/Detail';
@@ -64,6 +62,13 @@ import HouseSelection from '../../features/houseAndRoom/pages/house/HouseSelecti
 import RoomRegistration from '../../features/houseAndRoom/pages/room/RoomRegistration';
 import EstateModify from '../../features/houseAndRoom/pages/EstateModify';
 import Delete from '../../features/houseAndRoom/pages/Delete';
+
+import FacilityViewPage from './../../features/facility/pages/facility/FacilityView';
+import FacilityFormPage from './../../features/facility/pages/facility/FacilityForm';
+import FacilityCategoryFormPage from './../../features/facility/pages/category/FacilityCategoryForm';
+import FacilityCategoryListPage from './../../features/facility/pages/category/FacilityCategoryList';
+import ReservationViewPage from './../../features/facility/pages/reservation/ReservationView';
+import ReservationFormPage from './../../features/facility/pages/reservation/ReservationForm';
 
 import Empty from '../../shared/pages/Empty';
 import RouteError from './../../shared/pages/RouteError';
@@ -137,19 +142,19 @@ export const router = createBrowserRouter([
           // { path: ROUTES.MEMBER.MYPAGE, element: <MemberInfo /> },
           {
             path: ROUTES.USER.FACILITY_VIEW,
-            // element: <FacilityView />,
+            element: <FacilityViewPage />,
           },
           {
             path: ROUTES.USER.FACILITY_FORM,
-            // element: <FacilityForm />,
+            element: <FacilityFormPage />,
           },
           {
             path: ROUTES.USER.RESERVATION_VIEW,
-            element: <ReservationView />,
+            element: <ReservationViewPage />,
           },
           {
             path: ROUTES.USER.RESERVATION_FORM,
-            element: <ReservationForm />,
+            element: <ReservationFormPage />,
           },
 
           { path: '/rooms/:roomNo/reviews/new', element: <ReviewCreate /> }, // 리뷰 등록 페이지
@@ -185,11 +190,11 @@ export const router = createBrowserRouter([
 
           {
             path: ROUTES.ADMIN.CATEGORY,
-            // element: <FacilityCategoryList />,
+            element: <FacilityCategoryListPage />,
           },
           {
             path: ROUTES.ADMIN.CATEGORY_FORM,
-            // element: <FacilityCategoryForm />,
+            element: <FacilityCategoryFormPage />,
           },
         ],
       },

@@ -1,6 +1,11 @@
 // src/features/board/api/noticeApi.js
 import { apiJson, apiForm } from '../../../app/http/request';
 
+// 상단 고정
+export function toggleNoticePin(postNo) {
+  return apiJson().patch(`/api/notice/${postNo}/pin`);
+}
+
 // Top3 (최신 공지)
 export async function fetchNoticeTop3() {
   const { data } = await apiJson().get('/api/notice/top3');
