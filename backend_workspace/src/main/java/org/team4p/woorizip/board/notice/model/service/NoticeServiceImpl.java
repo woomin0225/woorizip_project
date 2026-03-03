@@ -62,6 +62,16 @@ public class NoticeServiceImpl implements NoticeService {
 		return list;
 	}
 
+	// =========================상단 고정================================
+	@Transactional
+	@Override
+	public void togglePin(int postNo) {
+		PostEntity entity = postRepository.findById(postNo)
+				.filter(e -> BOARD_TYPE_NO.equals(e.getBoardTypeNo()))
+				.orElseThrow(() -> new NotFoundException("해당 공지사항 게시글이 없습니다."));
+		
+		entity.setPostPinnedYn(!Boolean.TRUE.equals(entity.getPostPinnedYn()));
+	}
 	// =========================기본 조회================================
 	@Override
 	public ArrayList<PostDto> selectTop3() {
@@ -84,7 +94,7 @@ public class NoticeServiceImpl implements NoticeService {
 
 	@Override
 	public ArrayList<PostDto> selectList(Pageable pageable) {
-		return toList(postRepository.findByBoardTypeNoOrderByPostNoDesc(BOARD_TYPE_NO, pageable));
+		return toList(postRepository.findByBoardTypeNoOrderByPostPinnedYnDescPostNoDesc(BOARD_TYPE_NO, pageable));
 	}
 
 	@Override

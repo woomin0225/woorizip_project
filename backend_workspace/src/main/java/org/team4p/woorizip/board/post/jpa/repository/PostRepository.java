@@ -15,7 +15,10 @@ import org.team4p.woorizip.board.post.jpa.entity.PostEntity;
 public interface PostRepository extends JpaRepository<PostEntity, Integer> {
 
 	// 게시판 유형별 목록 조회
-	Page<PostEntity> findByBoardTypeNoOrderByPostNoDesc(String boardTypeNo, Pageable pageable);
+	Page<PostEntity> findByBoardTypeNoOrderByPostPinnedYnDescPostNoDesc(
+		    String boardTypeNo,
+		    Pageable pageable
+		);
 
 	// 게시판 유형별 최신 게시글 1개
 	PostEntity findTopByBoardTypeNoOrderByPostNoDesc(String boardTypeNo);

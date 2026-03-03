@@ -93,7 +93,7 @@ public class QnaServiceImpl implements QnaService {
 	@Override
 	public ArrayList<PostDto> selectList(Pageable pageable) {
 		return toList(
-				postRepository.findByBoardTypeNoOrderByPostNoDesc(BOARD_TYPE_NO, pageable));
+				postRepository.findByBoardTypeNoOrderByPostPinnedYnDescPostNoDesc(BOARD_TYPE_NO, pageable));
 	}
 	
 	@Override
