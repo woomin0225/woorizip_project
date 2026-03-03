@@ -31,6 +31,8 @@ public class QPostEntity extends EntityPathBase<PostEntity> {
 
     public final NumberPath<Integer> postNo = createNumber("postNo", Integer.class);
 
+    public final BooleanPath postPinnedYn = createBoolean("postPinnedYn");
+
     public final StringPath postTitle = createString("postTitle");
 
     public final DateTimePath<java.sql.Timestamp> postUpdatedAt = createDateTime("postUpdatedAt", java.sql.Timestamp.class);

@@ -27,6 +27,7 @@ export function useFacilityForm(houseNo, facilityNo = null) {
   const [defaultOptions, setDefaultOptions] = useState([]);
   const [images, setImages] = useState([]);
   const [existingImages, setExistingImages] = useState([]);
+  const [deleteImageNos, setDeleteImageNos] = useState([]);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const updateMode = !!facilityNo;
@@ -98,6 +99,7 @@ export function useFacilityForm(houseNo, facilityNo = null) {
           }
           
           setExistingImages(data.images || data.facilityImages || []);
+          setDeleteImageNos([]);
         } catch (err) {
           console.error('상세 정보 로드 실패:', err);
         } finally {
@@ -133,7 +135,9 @@ export function useFacilityForm(houseNo, facilityNo = null) {
     const formData = new FormData();
 
     const dtoData = {
-      houseNo: values.houseNo,
+      ...(updateMode
+        ? { deleteImageNos }
+        : { houseNo: values.houseNo }),
       facilityCode: Number(values.facilityCode),
       facilityName: values.facilityName,
       facilityOptionInfo: values.facilityOptionInfo,
@@ -180,6 +184,7 @@ export function useFacilityForm(houseNo, facilityNo = null) {
     handleOptionChange,
     addCustomOption,
     setImages,
+    setDeleteImageNos,
     loading,
     submitting,
     onSubmit,
