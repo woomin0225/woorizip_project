@@ -457,7 +457,7 @@ export default function ContractCreate() {
       return;
     }
     if (!signatureDataUrl) {
-      setError('전자서명을 직접 그려주세요.');
+      setError('서명을 직접 그려주세요.');
       return;
     }
     setStep(3);
@@ -648,13 +648,35 @@ export default function ContractCreate() {
                       <h4>전자계약서 작성 및 동의</h4>
                       <p className={styles.desc}>전자계약/서명 절차를 진행합니다.</p>
 
-                      <label className={styles.label}>전자계약 수정/요청 메모(선택)</label>
+                      <label className={styles.label}>특약 제안 메모(선택)</label>
                       <textarea
-                        className={styles.textarea}
+                        className={`${styles.textarea} ${styles.textareaCompact}`}
                         value={amendReason}
                         onChange={(e) => setAmendReason(e.target.value)}
-                        placeholder="특이사항이나 요청사항을 입력해 주세요."
+                        placeholder="임대인에게 제안할 특약/요청사항을 간단히 입력해 주세요."
+                        maxLength={200}
                       />
+                      <p className={styles.memoHint}>입력한 메모는 계약서 특약 항목에 반영됩니다.</p>
+
+                      <label className={styles.label}>서명(직접 그리기)</label>
+                      <div className={styles.signatureWrap}>
+                        <canvas
+                          ref={signatureCanvasRef}
+                          width={640}
+                          height={180}
+                          className={styles.signatureCanvas}
+                          onPointerDown={onSignaturePointerDown}
+                          onPointerMove={onSignaturePointerMove}
+                          onPointerUp={onSignaturePointerUp}
+                          onPointerCancel={onSignaturePointerUp}
+                          onPointerLeave={onSignaturePointerUp}
+                        />
+                        <div className={styles.signatureActions}>
+                          <button type="button" className={styles.secondaryBtn} onClick={clearSignature}>
+                            서명 지우기
+                          </button>
+                        </div>
+                      </div>
 
                       <label className={styles.checkRow}>
                         <input
@@ -727,26 +749,6 @@ export default function ContractCreate() {
                           ))}
                         </span>
                       </label>
-
-                      <label className={styles.label}>전자서명(직접 그리기)</label>
-                      <div className={styles.signatureWrap}>
-                        <canvas
-                          ref={signatureCanvasRef}
-                          width={640}
-                          height={180}
-                          className={styles.signatureCanvas}
-                          onPointerDown={onSignaturePointerDown}
-                          onPointerMove={onSignaturePointerMove}
-                          onPointerUp={onSignaturePointerUp}
-                          onPointerCancel={onSignaturePointerUp}
-                          onPointerLeave={onSignaturePointerUp}
-                        />
-                        <div className={styles.signatureActions}>
-                          <button type="button" className={styles.secondaryBtn} onClick={clearSignature}>
-                            서명 지우기
-                          </button>
-                        </div>
-                      </div>
                     </div>
 
                     <div className={styles.actionRow}>

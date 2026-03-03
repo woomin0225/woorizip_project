@@ -11,7 +11,6 @@ import {
   deleteWishlist,
   getWishlistByUser,
 } from '../../wishlist/api/wishlistAPI';
-import { usePassVerification } from '../../member/hooks/usePassVerification';
 
 import styles from './Search.module.css';
 
@@ -101,14 +100,6 @@ export default function Search() {
   // 찜(서버 연동)
   const currentUserNo = useMemo(() => getCurrentUserNo(), []);
   const [wishMap, setWishMap] = useState({}); // { [roomNo]: wishNo }
-  const {
-    isVerified: isPassVerified,
-    isVerifying: isPassVerifying,
-    verification: passVerification,
-    verificationError: passVerificationError,
-    startVerification: runPassVerification,
-    resetVerification: resetPassVerification,
-  } = usePassVerification({ purpose: 'WISHLIST' });
 
   // 마커 팝업 (마커 위 미니 리스트)
   const [markerPopup, setMarkerPopup] = useState(null);
@@ -294,37 +285,10 @@ export default function Search() {
   //   setWishMap((prev) => ({ ...prev, [roomNo]: nextWished }));
   //   // 추후 찜 API 붙이면 여기서 호출
   // }
-  async function requestPassVerification() {
-    if (isPassVerifying) return false;
-
-    const rawPhone = window.prompt(
-      'PASS 본인인증에 사용할 휴대폰 번호를 입력해주세요. (숫자만)'
-    );
-    if (!rawPhone) return false;
-
-    const ok = await runPassVerification({
-      phone: rawPhone,
-      purpose: 'WISHLIST',
-    });
-
-    if (!ok) {
-      alert('휴대폰 본인인증에 실패했습니다. 다시 시도해주세요.');
-      return false;
-    }
-
-    alert('휴대폰 본인인증이 완료되었습니다.');
-    return true;
-  }
-
   async function toggleWish(roomNo, nextWished) {
     if (!currentUserNo) {
       alert('찜 기능은 로그인 후 사용할 수 있습니다.');
       return false;
-    }
-
-    if (!isPassVerified) {
-      const verified = await requestPassVerification();
-      if (!verified) return false;
     }
 
     try {
@@ -402,13 +366,6 @@ export default function Search() {
             loading={loadingRooms}
             wishMap={wishMap}
             onToggleWish={toggleWish}
-            passVerified={isPassVerified}
-            passVerifying={isPassVerifying}
-            passVerifiedPhone={passVerification?.phoneMasked || ''}
-            passVerifiedAt={passVerification?.verifiedAt || ''}
-            passError={passVerificationError}
-            onRequestPassVerification={requestPassVerification}
-            onResetPassVerification={resetPassVerification}
           />
         </div>
 

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import styles from './ResultItem.module.css';
 
@@ -51,19 +51,12 @@ export default function ResultItem({
   roomSearchResponse,
   wished = false,
   onToggleWish,
-  passVerified = false,
-  passVerifying = false,
-  passVerifiedPhone = '',
-  passVerifiedAt = '',
-  passError = '',
-  onRequestPassVerification,
-  onResetPassVerification,
 }) {
   // ✅ Hook은 항상 호출되어야 함 (early return 금지)
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isWished, setIsWished] = useState(!!wished);
 
-  // ✅ roomSearchResponse가 없을 수도 있다고 가정하고 "안전한 room" 준비
+  // ✅ roomSearchResponse가 없을 수도 있다고 가정하고
   const room = roomSearchResponse ?? {};
 
   const houseName = room.houseName;
@@ -101,33 +94,6 @@ export default function ResultItem({
     const ok = await onToggleWish(room.roomNo, next);
     if (!ok) setIsWished(!next);
   }
-  // -- 우민 수정
-  async function clickPassVerification(e) {
-    e.stopPropagation();
-    e.preventDefault();
-    if (onRequestPassVerification) {
-      await onRequestPassVerification();
-    }
-  }
-
-  function clickPassReset(e) {
-    e.stopPropagation();
-    e.preventDefault();
-    if (onResetPassVerification) {
-      onResetPassVerification();
-    }
-  }
-
-  function formatVerifiedAt(value) {
-    if (!value) return '';
-    const d = new Date(value);
-    if (Number.isNaN(d.getTime())) return '';
-    return `${d.getHours().toString().padStart(2, '0')}:${d
-      .getMinutes()
-      .toString()
-      .padStart(2, '0')}`;
-  }
-
   function imgUrl(imageName) {
     if (!imageName) return '#';
     if (imageName.startsWith('http')) return imageName;
@@ -179,30 +145,6 @@ export default function ResultItem({
                 {room.roomName}
               </Link>
             </div>
-            <div className={styles.passRow}>
-              {passVerified ? (
-                <>
-                  <span className={styles.passBadge}>PASS 인증완료</span>
-                  <span className={styles.passMeta}>
-                    {passVerifiedPhone} {formatVerifiedAt(passVerifiedAt)}
-                  </span>
-                  <button
-                    className={styles.passResetBtn}
-                    onClick={clickPassReset}
-                  >
-                    초기화
-                  </button>
-                </>
-              ) : (
-                <button
-                  className={styles.passBtn}
-                  onClick={clickPassVerification}
-                  disabled={passVerifying}
-                >
-                  {passVerifying ? '인증 중...' : 'PASS 본인인증'}
-                </button>
-              )}
-            </div>
           </div>
 
           <div className={styles.priceRow}>
@@ -211,10 +153,6 @@ export default function ResultItem({
             </span>
             <span>{priceText(room)}</span>
           </div>
-          {!passVerified && passError && (
-            <div className={styles.passError}>{passError}</div>
-          )}
-
           <div className={styles.metaRow}>
             <span>{room.roomArea}㎡</span>
             <span>{room.roomFacing}</span>
