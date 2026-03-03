@@ -115,8 +115,26 @@ public class FacilityController {
 	@PatchMapping("/{facilityNo}")
 	public ResponseEntity<ApiResponse<String>> modifyFacility(
 			@PathVariable(value="facilityNo") String facilityNo,
-		    @Valid @RequestBody FacilityModifyRequestDTO dto,
+			@RequestPart(value = "dto") @Valid FacilityModifyRequestDTO dto,
+		    @RequestPart(value = "files", required = false) List<MultipartFile> files,
 		    @AuthenticationPrincipal CustomUserPrincipal principal) {
+		if (files != null && !files.isEmpty()) {
+	        List<FacilityImageDTO> imageDtoList = new ArrayList<>();
+	        
+	        for (MultipartFile file : files) {
+	            String originalName = file.getOriginalFilename();
+	            String storedName = FileNameChange.change(originalName, RenameStrategy.DATETIME_UUID);
+	            
+	            FacilityImageDTO imageDto = FacilityImageDTO.builder()
+	                .facilityOriginalImageName(originalName)
+	                .facilityStoredImageName(storedName)
+	                .build();
+	            
+	            imageDtoList.add(imageDto);
+	        }
+	        
+	        dto.setImages(imageDtoList);
+	    }
 		String currentUserNo = (principal != null) ? principal.getUserNo() : null;
 		facilityService.modifyFacility(facilityNo, dto, currentUserNo);
         return ResponseEntity.ok(ApiResponse.ok("해당 시설의 정보가 정상적으로 수정되었습니다.", "facilityModifySuccess"));

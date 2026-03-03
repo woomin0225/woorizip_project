@@ -93,7 +93,7 @@ export default function ReservationForm({
           className={styles.primaryBtn}
           disabled={submitting}
         >
-          저장
+          {submitText}
         </button>
       </div>
     </form>

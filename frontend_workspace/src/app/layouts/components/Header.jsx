@@ -195,7 +195,7 @@ export default function Header() {
                 </NavLink>
               </NavItem>
               <NavItem>
-                <NavLink to="/facilities" tag={Link}>
+                <NavLink to="/facility/view" tag={Link}>
                   공용시설
                 </NavLink>
               </NavItem>
