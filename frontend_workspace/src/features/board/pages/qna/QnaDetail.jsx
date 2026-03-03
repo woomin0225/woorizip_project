@@ -20,7 +20,7 @@ export default function QnaDetail() {
   if (!qna) return <div>데이터 없음</div>;
 
   const title = qna.postTitle || '(제목 없음)';
-  const writer = qna.userNo || '';
+  const writer = qna.userName || '';
   const readCount = qna.postViewCount ?? 0;
   const enrollDate = qna.postCreatedAt || '';
   const content = qna.postContent || '';

@@ -1,4 +1,6 @@
 // src/features/board/components/PostListItem.jsx
+import styles from './PostListItem.module.css';
+
 export default function PostListItem({ post, onClick, isAdmin, onTogglePin }) {
   const hasFile = post?.files && post.files.length > 0;
 
@@ -12,31 +14,21 @@ export default function PostListItem({ post, onClick, isAdmin, onTogglePin }) {
 
   return (
     <tr
-      style={{
-        cursor: 'pointer',
-        background: isPinned ? '#FFF7CC' : 'transparent',
-      }}
+      className={`${styles.row} ${isPinned ? styles.pinned : ''}`}
       onClick={onClick}
     >
-      <td align="center">{post.postNo}</td>
+      <td className={styles.center}>{post.postNo}</td>
 
       <td>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div className={styles.titleCell}>
           {hasFile && <span>📎</span>}
 
-          {/* 관리자만 핀버튼 */}
           {isAdmin && (
             <button
               type="button"
               onClick={handlePinClick}
-              style={{
-                border: '1px solid #ddd',
-                background: isPinned ? '#FFD84D' : 'white',
-                borderRadius: 6,
-                padding: '2px 6px',
-                cursor: 'pointer',
-              }}
-              title="상단 고정 코글"
+              className={`${styles.pinBtn} ${isPinned ? styles.pinBtnPinned : ''}`}
+              title="상단 고정 토글"
             >
               📌
             </button>
@@ -46,9 +38,9 @@ export default function PostListItem({ post, onClick, isAdmin, onTogglePin }) {
         </div>
       </td>
 
-      <td align="center">{post.userNo}</td>
-      <td align="center">{post.postCreatedAt}</td>
-      <td align="center">{post.postViewCount}</td>
+      <td className={styles.center}>{post.userName}</td>
+      <td className={styles.center}>{post.postCreatedAt}</td>
+      <td className={styles.center}>{post.postViewCount}</td>
     </tr>
   );
 }

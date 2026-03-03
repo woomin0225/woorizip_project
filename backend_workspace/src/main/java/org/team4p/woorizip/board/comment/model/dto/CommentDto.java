@@ -36,6 +36,7 @@ public class CommentDto {
 	@NotBlank(groups = {Update.class})
 	@Size(max = 36)
 	private String userNo;
+	private String userName;
 	@NotBlank(groups = {Create.class, Update.class})
 	@Size(max = 2000)
 	private String commentContent;
