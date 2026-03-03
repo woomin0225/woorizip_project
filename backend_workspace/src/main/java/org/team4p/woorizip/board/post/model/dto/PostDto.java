@@ -50,6 +50,7 @@ public class PostDto {
   private Timestamp postUpdatedAt;
   private Boolean postCommentYn;
   private Boolean postFilesYn;
+  private Boolean postPinnedYn;
   
   private BannerImageDto bannerImage;
 
@@ -66,6 +67,7 @@ public class PostDto {
         .postUpdatedAt(this.postUpdatedAt)
         .postCommentYn(this.postCommentYn)
         .postFilesYn(this.postFilesYn)
+        .postPinnedYn(this.postPinnedYn)
         .build();
   }
 
@@ -84,6 +86,7 @@ public class PostDto {
         .postUpdatedAt(entity.getPostUpdatedAt())
         .postCommentYn(entity.getPostCommentYn())
         .postFilesYn(entity.getPostFilesYn())
+        	.postPinnedYn(entity.getPostPinnedYn())
         .build();
   }
 }

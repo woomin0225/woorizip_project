@@ -2,7 +2,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQueryState } from '../../../shared/hooks/useQueryState';
 import { unwrapApi } from '../../../shared/utils/apiUnwrap';
-import { fetchNoticeList, searchNotice } from '../api/NoticeApi';
+import {
+  fetchNoticeList,
+  searchNotice,
+  toggleNoticePin,
+} from '../api/NoticeApi';
 import { useAuth } from '../../../app/providers/AuthProvider';
 
 const defaultQuerySchema = {
@@ -154,6 +158,16 @@ export function useNoticeList() {
     });
   };
 
+  const togglePin = async (postNo) => {
+    try {
+      await toggleNoticePin(postNo);
+      await load();
+    } catch (e) {
+      console.error(e);
+      setErr('고정 상태 변경에 실패했습니다.');
+    }
+  };
+
   // type 변경 시 UI 입력값 정리(기간/키워드)
   const onChangeType = (nextType) => {
     if (nextType === 'date') {
@@ -183,5 +197,7 @@ export function useNoticeList() {
     onSubmitSearch,
     onReset,
     onChangeType,
+
+    togglePin,
   };
 }

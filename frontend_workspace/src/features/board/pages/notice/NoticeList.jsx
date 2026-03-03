@@ -23,6 +23,7 @@ export default function NoticeList() {
       onChangeType={hook.onChangeType}
       onClickWrite={() => nav('/notices/new')}
       onClickRow={(postNo) => nav(`/notices/${postNo}`)}
+      onTogglePin={hook.togglePin}
       setPage={hook.setPage}
     />
   );
