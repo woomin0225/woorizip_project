@@ -103,6 +103,12 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.PUT, EndpointPolicy.ESTATE_USER).hasAnyRole("USER", "ADMIN")
                 .requestMatchers(HttpMethod.DELETE, EndpointPolicy.ESTATE_USER).hasAnyRole("USER", "ADMIN")
                 
+                // facility, reservation
+                .requestMatchers(HttpMethod.POST, EndpointPolicy.FACILITY_ADMIN_ONLY).hasAnyRole("ADMIN")
+                .requestMatchers(HttpMethod.PATCH, EndpointPolicy.FACILITY_ADMIN_ONLY).hasAnyRole("ADMIN")
+                .requestMatchers(HttpMethod.POST, EndpointPolicy.FACILITY_LOGIN).hasAnyRole("USER", "ADMIN")
+                .requestMatchers(HttpMethod.PATCH, EndpointPolicy.FACILITY_LOGIN).hasAnyRole("USER", "ADMIN")
+                .requestMatchers(HttpMethod.GET, EndpointPolicy.FACILITY_LOGIN_GET).hasAnyRole("USER", "ADMIN")
                 
                 // PUBLIC GET
                 .requestMatchers(HttpMethod.GET, EndpointPolicy.PUBLIC_GET).permitAll()
@@ -141,8 +147,6 @@ public class SecurityConfig {
                 .requestMatchers(EndpointPolicy.CONTRACT_USER).hasAnyRole("USER", "ADMIN")
                 .requestMatchers(EndpointPolicy.TOUR_USER).hasAnyRole("USER", "ADMIN")
 
-                // facility, reservation
-                .requestMatchers(EndpointPolicy.FACILITY_ALL).hasAnyRole("USER", "ADMIN")
                 .requestMatchers(EndpointPolicy.RESERVATION_ALL).hasAnyRole("USER", "ADMIN")
 
                 .anyRequest().authenticated()

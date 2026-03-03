@@ -1,5 +1,7 @@
 /* src/features/facility/components/form/Form.module.css */
 @import '../../../../app/layouts/MyPageLayout.module.css';
+@import '../list/List.module.css';
+@import '../detail/Detail.module.css';
 
 /* 1. 최상단 섹션 여백 */
 .contentSection {

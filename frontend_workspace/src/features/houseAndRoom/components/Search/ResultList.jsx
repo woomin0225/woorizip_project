@@ -10,13 +10,6 @@ export default function ResultList({
   loading,
   wishMap,
   onToggleWish,
-  passVerified = false,
-  passVerifying = false,
-  passVerifiedPhone = "",
-  passVerifiedAt = "",
-  passError = "",
-  onRequestPassVerification,
-  onResetPassVerification,
 }) {
   function searchLatest() {
     onChangeCriterion("LATEST");
@@ -37,13 +30,6 @@ export default function ResultList({
           roomSearchResponse={room}
           wished={!!wishMap?.[room.roomNo]}
           onToggleWish={onToggleWish}
-          passVerified={passVerified}
-          passVerifying={passVerifying}
-          passVerifiedPhone={passVerifiedPhone}
-          passVerifiedAt={passVerifiedAt}
-          passError={passError}
-          onRequestPassVerification={onRequestPassVerification}
-          onResetPassVerification={onResetPassVerification}
         />
       ))}
 

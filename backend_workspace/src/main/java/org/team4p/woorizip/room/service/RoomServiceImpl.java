@@ -351,6 +351,6 @@ public class RoomServiceImpl implements RoomService {
 			 res.setRepImageName(imageName);
 		}
 		
-		return null;
+		return list;
 	}
 }

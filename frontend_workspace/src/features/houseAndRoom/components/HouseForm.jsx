@@ -117,7 +117,7 @@ export default function HouseForm({
       </div>
 
       <div className={styles.actions}>
-        <button type="submit">저장(임시)</button>
+        <button type="submit">저장</button>
       </div>
     </form>
   );

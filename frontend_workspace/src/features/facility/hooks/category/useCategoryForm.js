@@ -70,7 +70,7 @@ export function useCategoryForm(facilityCode = null) {
         : await createFacilityCategory(payload);
       
       alert(response.message);
-      navigate('/admin/categories'); 
+      navigate('/admin/category'); 
     } catch (err) {
       setError(err);
       alert(err.message);

@@ -12,10 +12,10 @@ export const useCategoryList = () => {
     try {
       setLoading(true);
       setError(null);
-
       const response = await getFacilityCategories();
-      const data = unwrapApi(response);
-      setCategories(data);
+      const actualData = response?.data || response;
+      console.log('상세 데이터 로드 성공:', actualData);
+      setCategories(actualData);
     } catch (err) {
       setError(err);
       console.error(err.message);
@@ -28,11 +28,15 @@ export const useCategoryList = () => {
     loadCategories();
   }, [loadCategories]);
 
-  const sortedCategories = useMemo(() =>
-    {
-        if(!categories || categories.length == 0) return [];
-        return [...categories].sort((a,b) => a.facilityCode - b.facilityCode);
-    }, [categories]);
+  const sortedCategories = useMemo(() => {
+    if (!categories || categories.length == 0) return [];
+    return [...categories].sort((a, b) => a.facilityCode - b.facilityCode);
+  }, [categories]);
 
-  return { categories: sortedCategories, loading, error, refresh: loadCategories };
+  return {
+    categories: sortedCategories,
+    loading,
+    error,
+    refresh: loadCategories,
+  };
 };

@@ -326,25 +326,25 @@ ALTER TABLE `tb_contracts`
     END
   ) STORED,
   ADD UNIQUE KEY `uk_tb_contracts_room_date_active` (`room_no`, `move_in_date`, `active_flag`);
-  
-  ALTER TABLE tb_posts
+
+ALTER TABLE tb_posts
   ADD COLUMN post_pinned_yn TINYINT(1) DEFAULT 0;
 
-desc `tb_users`;
-desc `tb_contracts`;
-desc `tb_tours`;
-desc `tb_reviews`;
-desc `tb_wishlists`;
-desc `tb_board_type`;
-desc `tb_posts`;
-desc `tb_comments`;
-desc `tb_files`;
-desc `tb_banner_images`;
-desc `tb_houses`;
-desc `tb_houses_images`;
-desc `tb_rooms`;
-desc `tb_rooms_images`;
-desc `tb_fm_category`;
-desc `tb_fm_list`;
-desc `tb_fm_images`;
-desc `tb_fm_rsvn`;
+-- desc `tb_user`;
+-- desc `tb_contracts`;
+-- desc `tb_tours`;
+-- desc `tb_reviews`;
+-- desc `tb_wishlists`;
+-- desc `tb_board_type`;
+-- desc `tb_posts`;
+-- desc `tb_comments`;
+-- desc `tb_files`;
+-- desc `tb_banner_images`;
+-- desc `tb_houses`;
+-- desc `tb_houses_images`;
+-- desc `tb_rooms`;
+-- desc `tb_rooms_images`;
+-- desc `tb_fm_category`;
+-- desc `tb_fm_list`;
+-- desc `tb_fm_images`;
+-- desc `tb_fm_rsvn`;
