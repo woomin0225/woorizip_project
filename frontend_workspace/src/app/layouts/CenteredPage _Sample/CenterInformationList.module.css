@@ -1,0 +1,17 @@
+/*
+src/features/board/pages//Information/CenterInformationList.module.css
+InformationList.jsx의 CenteredPageLayout 적용 샘플
+*/
+
+.content {
+  width: 100%;
+}
+
+.banner {
+  position: sticky;
+  top: 16px;
+  height: 420px;
+  border: 1px solid #eee;
+  border-radius: 12px;
+  background: #fff;
+}

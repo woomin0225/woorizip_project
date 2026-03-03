@@ -1,6 +1,7 @@
 // src/features/facility/hooks/category/useCategoryList.js
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { getFacilityCategories } from '../../api/facilityApi';
+import { unwrapApi } from '../../../../shared/utils/apiUnwrap';
 
 export const useCategoryList = () => {
   const [categories, setCategories] = useState([]);
@@ -12,11 +13,12 @@ export const useCategoryList = () => {
       setLoading(true);
       setError(null);
 
-      const data = await getFacilityCategories();
+      const response = await getFacilityCategories();
+      const data = unwrapApi(response);
       setCategories(data);
     } catch (err) {
       setError(err);
-      console.error('카테고리 목록 로딩 실패:', err);
+      console.error(err.message);
     } finally {
       setLoading(false);
     }

@@ -1,6 +1,7 @@
 // src/features/facility/hooks/reservation/useReservationDetail.js
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { getReservationDetail } from '../../api/reservationApi';
+import { unwrapApi } from '../../../../shared/utils/apiUnwrap';
 
 export const useReservationDetail = (reservationNo) => {
   const [reservationDetails, setReservationDetails] = useState(null);
@@ -13,25 +14,34 @@ export const useReservationDetail = (reservationNo) => {
       setLoading(true);
       setError(null);
 
-      const data = await getReservationDetail(reservationNo);
+      const response = await getReservationDetail(reservationNo);
+      const data = unwrapApi(response);
       setReservationDetails(data);
     } catch (err) {
       setError(err);
-      console.error('시설 정보 로딩 실패:', err);
+      console.error(err.message);
     } finally {
       setLoading(false);
     }
   }, [reservationNo]);
 
   const sortedDetails = useMemo(() => {
-    if (!reservationDetails || !reservationDetails.facilityImages) return reservationDetails;
-    const sortedImages = [...reservationDetails.facilityImages].sort((a, b) => a.facilityImageNo - b.facilityImageNo);
-    return {...reservationDetails, facilityImages: sortedImages}
+    if (!reservationDetails || !reservationDetails.facilityImages)
+      return reservationDetails;
+    const sortedImages = [...reservationDetails.facilityImages].sort(
+      (a, b) => a.facilityImageNo - b.facilityImageNo
+    );
+    return { ...reservationDetails, facilityImages: sortedImages };
   }, [reservationDetails]);
 
   useEffect(() => {
     loadReservationDetails();
   }, [loadReservationDetails]);
 
-  return { reservationDetails: sortedDetails, loading, error, refresh: loadReservationDetails };
+  return {
+    reservationDetails: sortedDetails,
+    loading,
+    error,
+    refresh: loadReservationDetails,
+  };
 };

@@ -1,5 +1,25 @@
-.title { font-weight: 700; margin-bottom: 10px; }
-.list { display: grid; gap: 8px; }
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.title {
+  font-weight: 700;
+  margin-bottom: 10px;
+  flex-shrink: 0;
+}
+
+.list {
+  display: grid;
+  gap: 8px;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  align-content: start;
+  padding-right: 2px;
+}
 
 .item {
   border: 1px solid #ddd;

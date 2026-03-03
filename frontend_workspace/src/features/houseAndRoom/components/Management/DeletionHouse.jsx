@@ -1,1 +1,0 @@
-// 건물 삭제용 버튼. 건물 이름 표시. 클릭시 DeleteConfirmModal로 확인

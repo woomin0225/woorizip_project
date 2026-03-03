@@ -19,6 +19,8 @@ import org.team4p.woorizip.board.post.jpa.entity.PostEntity;
 import org.team4p.woorizip.board.post.jpa.repository.PostRepository;
 import org.team4p.woorizip.board.post.model.dto.PostDto;
 import org.team4p.woorizip.common.exception.NotFoundException;
+import org.team4p.woorizip.user.jpa.entity.UserEntity;
+import org.team4p.woorizip.user.jpa.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,6 +34,7 @@ public class EventServiceImpl implements EventService {
 	private final PostRepository postRepository;
 	private final FileRepository fileRepository;
 	private final BannerImageRepository bannerImageRepository;
+	private final UserRepository userRepository;
 
 	// 이벤트 타입 고정
 	private static final String BOARD_TYPE_NO = "E1";
@@ -42,6 +45,11 @@ public class EventServiceImpl implements EventService {
 
 	    for (PostEntity entity : page) {
 	        PostDto dto = PostDto.fromEntity(entity);
+	        UserEntity user = userRepository.findById(entity.getUserNo()).orElse(null);
+	        
+	        if(user == null || "Y".equals(user.getDeletedYn())) {
+	        		dto.setUserNo("알 수 없는 사용자");
+	        }
 
 	        // 일반 첨부파일
 	        dto.setFiles(getFiles(entity.getPostNo()));
@@ -111,6 +119,12 @@ public class EventServiceImpl implements EventService {
 				.filter(entity -> BOARD_TYPE_NO.equals(entity.getBoardTypeNo()))
 				.map(entity -> {
 					PostDto dto = PostDto.fromEntity(entity);
+					UserEntity user = userRepository.findById(entity.getUserNo()).orElse(null);
+			        
+			        if(user == null || "Y".equals(user.getDeletedYn())) {
+			        		dto.setUserNo("알 수 없는 사용자");
+			        }
+			        
 					dto.setFiles(getFiles(entity.getPostNo()));
 					
 					bannerImageRepository.findByPostNo(postNo)
@@ -167,6 +181,7 @@ public class EventServiceImpl implements EventService {
 
 		// 이벤트 게시글 저장
 		PostEntity saved = postRepository.save(postDto.toEntity());
+		boolean hasFiles = postDto.getFiles() != null && !postDto.getFiles().isEmpty();
 
 		if (saved.getPostNo() == null)
 			throw new IllegalStateException("이벤트 게시글 등록에 실패했습니다.");
@@ -174,11 +189,13 @@ public class EventServiceImpl implements EventService {
 		Integer postNo = saved.getPostNo();
 
 		// 일반 첨부 파일 저장
-		if (postDto.getFiles() != null) {
-			for (FileDto fileDto : postDto.getFiles()) {
-				fileDto.setPostNo(postNo);
+		if(hasFiles) {
+			for(FileDto fileDto : postDto.getFiles()) {
+				fileDto.setPostNo(saved.getPostNo());
 				fileRepository.save(fileDto.toEntity());
 			}
+			
+			saved.setPostFilesYn(true);
 		}
 
 		// 배너 이미지 저장
@@ -199,12 +216,6 @@ public class EventServiceImpl implements EventService {
 		entity.setPostTitle(postDto.getPostTitle());
 	    entity.setPostContent(postDto.getPostContent());
 	    entity.setUserNo(postDto.getUserNo());
-	    
-	    //첨부 파일 확인 
-	    boolean hasExistingFiles = fileRepository.existsById(entity.getPostNo());
-	    boolean hasNewFiles = postDto.getFiles() != null && !postDto.getFiles().isEmpty();
-
-	    entity.setPostFilesYn(hasExistingFiles || hasNewFiles);
 
 		// 기존 파일 삭제
 		if (deleteFileNo != null && !deleteFileNo.isEmpty()) {
@@ -214,6 +225,8 @@ public class EventServiceImpl implements EventService {
 		}
 
 		// 새 파일 추가
+		boolean hasNewFiles = postDto.getFiles() != null && !postDto.getFiles().isEmpty();
+		
 		if (hasNewFiles) {
 	        for (FileDto fileDto : postDto.getFiles()) {
 	            fileDto.setPostNo(entity.getPostNo());
@@ -237,6 +250,9 @@ public class EventServiceImpl implements EventService {
 		            bannerImageRepository.save(bannerDto.toEntity());
 				});
 		}
+		
+		boolean hasFiles = !fileRepository.findByPostNo(entity.getPostNo()).isEmpty();
+		entity.setPostFilesYn(hasFiles);
 
 		return 1;
 	}

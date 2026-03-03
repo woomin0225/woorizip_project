@@ -17,6 +17,8 @@ import org.team4p.woorizip.board.post.jpa.entity.PostEntity;
 import org.team4p.woorizip.board.post.jpa.repository.PostRepository;
 import org.team4p.woorizip.board.post.model.dto.PostDto;
 import org.team4p.woorizip.common.exception.NotFoundException;
+import org.team4p.woorizip.user.jpa.entity.UserEntity;
+import org.team4p.woorizip.user.jpa.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +31,7 @@ public class NoticeServiceImpl implements NoticeService {
 
 	private final PostRepository postRepository;
 	private final FileRepository fileRepository;
+	private final UserRepository userRepository;
 
 	// 공지사항 타입 고정
 	private static final String BOARD_TYPE_NO = "N1";
@@ -38,6 +41,12 @@ public class NoticeServiceImpl implements NoticeService {
 		ArrayList<PostDto> list = new ArrayList<>();
 		for (PostEntity entity : page) {
 			PostDto dto = PostDto.fromEntity(entity);
+			UserEntity user = userRepository.findById(entity.getUserNo()).orElse(null);
+
+			if(user == null || "Y".equals(user.getDeletedYn())) {
+				dto.setUserNo("알 수 없는 사용자");
+			}
+	        
 			dto.setFiles(getFiles(entity.getPostNo()));
 			list.add(dto);
 		}
@@ -88,6 +97,12 @@ public class NoticeServiceImpl implements NoticeService {
 				);
 		
 		PostDto dto = PostDto.fromEntity(entity);
+		UserEntity user = userRepository.findById(entity.getUserNo()).orElse(null);
+        
+        if(user == null || "Y".equals(user.getDeletedYn())) {
+        		dto.setUserNo("알 수 없는 사용자");
+        }
+        
 		dto.setFiles(getFiles(entity.getPostNo()));
 		
 		return dto;
@@ -124,16 +139,19 @@ public class NoticeServiceImpl implements NoticeService {
 		postDto.setPostNo(null);
 		
 		PostEntity saved = postRepository.save(postDto.toEntity());
+		boolean hasFiles = postDto.getFiles() != null && !postDto.getFiles().isEmpty();
 		
 		if(saved.getPostNo() == null) {
 			throw new IllegalStateException("공지사항 게시글 등록에 실패했습니다.");
 		}
 		
-		if(postDto.getFiles() != null) {
+		if(hasFiles) {
 			for(FileDto fileDto : postDto.getFiles()) {
 				fileDto.setPostNo(saved.getPostNo());
 				fileRepository.save(fileDto.toEntity());
 			}
+			
+			saved.setPostFilesYn(true);
 		}
 		
 		return 1;
@@ -161,12 +179,15 @@ public class NoticeServiceImpl implements NoticeService {
 		}
 		
 		//새 파일 추가 
-		if(postDto.getFiles() != null) {
+		if(postDto.getFiles() != null && !postDto.getFiles().isEmpty()) {
 			for(FileDto fileDto : postDto.getFiles()) {
 				fileDto.setPostNo(postDto.getPostNo());
 				fileRepository.save(fileDto.toEntity());
 			}
 		}
+		
+		boolean hasFiles = !fileRepository.findByPostNo(postDto.getPostNo()).isEmpty();
+		entity.setPostFilesYn(hasFiles);
 		
 		return 1;
 	}

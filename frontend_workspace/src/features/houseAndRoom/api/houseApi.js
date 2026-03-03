@@ -84,3 +84,11 @@ export async function getRoomsInHouseMarker(houseNo, cond={}, page=0, size=10){
     const {data} = await apiJson().get(`/api/houses/${houseNo}/search`, {params: {...cond, page, size},});
     return unwrap(data);    // Slice<RoomSearchResponse>
 }
+
+// 조회수 높은 순 houseNo 조회
+export async function getViewsRankingOfHouses(period, limit) {
+    // period: {DAY1: 최근1일, DAY7: 최근7일, DAY: 30: 최근30일}
+    // limit: 조회할 갯수
+  const { data } = await apiJson().get('/api/houses/view/popular', {params: {period, limit}});   //  @ModelAttribute: params로 보냄
+  return unwrap(data); // ApiResponse<List<HouseMarkerResponse>>
+}
