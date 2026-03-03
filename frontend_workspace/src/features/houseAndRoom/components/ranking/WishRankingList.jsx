@@ -13,10 +13,10 @@ export default function WishRankingList({ list = [] }) {
     <Card className={styles.card}>
       <CardBody className={styles.cardBody}>
         <Row className={styles.headRow}>
-          <Col className={styles.rankCol}>Rank</Col>
-          <Col className={styles.imageCol}>Image</Col>
-          <Col className={styles.infoCol}>Room</Col>
-          <Col className={styles.sideCol}>Wish / Views</Col>
+          <Col className={styles.rankCol}>순위</Col>
+          <Col className={styles.imageCol}>사진</Col>
+          <Col className={styles.infoCol}>방</Col>
+          <Col className={styles.sideCol}>찜 / 조회수</Col>
         </Row>
 
         {list.length === 0 ? (
@@ -72,9 +72,9 @@ export default function WishRankingList({ list = [] }) {
                 <Col className={styles.sideCol}>
                   {hasWishCount ? (
                     <>
-                      <div className={styles.mainText}>{`Wish ${wishCount}`}</div>
+                      <div className={styles.mainText}>{`찜 ${wishCount}`}</div>
                       <div className={styles.subText}>
-                        {hasViewCount ? `Views ${viewCount}` : 'Views -'}
+                        {hasViewCount ? `조회수 ${viewCount}` : '조회수 -'}
                       </div>
                     </>
                   ) : (
