@@ -286,7 +286,7 @@ export default function Signup() {
                                   ? '인증 중...'
                                   : isPhoneVerified
                                     ? '인증완료'
-                                    : 'PASS 본인인증'}
+                                    : '본인 인증'}
                               </Button>
                             </div>
                           </FormGroup>

@@ -113,7 +113,7 @@ export default function FindId() {
                                 ? '인증 중...'
                                 : isVerified
                                   ? '인증완료'
-                                  : 'PASS 인증'}
+                                  : '본인 인증'}
                             </Button>
                             <FormFeedback>번호를 입력해 주세요.</FormFeedback>
                           </InputGroup>
