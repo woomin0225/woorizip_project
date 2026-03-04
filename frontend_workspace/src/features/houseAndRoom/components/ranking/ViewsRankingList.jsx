@@ -6,24 +6,10 @@ import styles from './ViewsRankingList.module.css';
 import woorizipLogo from '../../../../assets/images/logo-muted.png';
 import { getRoomReviews } from '../../api/roomApi';
 import { getFacilityList } from '../../../facility/api/facilityApi';
+import { getFacilityIcon } from '../../constants/facilityIcons';
 
 const REVIEW_LIMIT = 3;
 const FACILITY_LIMIT = 2;
-
-const FACILITY_ICON_MAP = [
-  { keys: ['wifi', '와이파이'], icon: '📶' },
-  { keys: ['주차'], icon: '🅿️' },
-  { keys: ['세탁'], icon: '🧺' },
-  { keys: ['헬스', 'gym', 'fitness'], icon: '🏋️' },
-  { keys: ['엘리베이터', '승강기'], icon: '🛗' },
-  { keys: ['카페'], icon: '☕' },
-  { keys: ['주방'], icon: '🍳' },
-  { keys: ['독서', '스터디'], icon: '📚' },
-  { keys: ['라운지', '휴게'], icon: '🛋️' },
-  { keys: ['보안', 'cctv'], icon: '🛡️' },
-  { keys: ['택배'], icon: '📦' },
-  { keys: ['수영'], icon: '🏊' },
-];
 
 function toStars(rating) {
   const safe = Math.max(0, Math.min(5, Math.round(Number(rating || 0))));
@@ -38,15 +24,6 @@ function getPageContent(pageLike) {
 
 function getFacilityItems(res) {
   return Array.isArray(res) ? res : (res?.data ?? []);
-}
-
-function getFacilityIcon(name) {
-  const text = String(name || '');
-  const lower = text.toLowerCase();
-  const hit = FACILITY_ICON_MAP.find((entry) =>
-    entry.keys.some((k) => lower.includes(String(k).toLowerCase()))
-  );
-  return hit?.icon || '🏠';
 }
 
 ViewsRankingList.propTypes = {
