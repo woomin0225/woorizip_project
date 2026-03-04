@@ -3,6 +3,10 @@ import { apiJson } from '../../../app/http/request';
 const PASS_START_ENDPOINT = '/auth/pass/start';
 const PASS_RESULT_ENDPOINT = '/auth/pass/result';
 const MOCK_DELAY_MS = 700;
+const PUBLIC_REQUEST_OPTIONS = {
+  skipAttachAccess: true,
+  skipAuthRefresh: true,
+};
 
 function toBoolean(value, fallback = false) {
   if (value === undefined || value === null || value === '') return fallback;
@@ -31,13 +35,18 @@ export function maskPhone(phone) {
 }
 
 export async function startPassVerification(payload) {
-  const { data } = await apiJson().post(PASS_START_ENDPOINT, payload);
+  const { data } = await apiJson().post(
+    PASS_START_ENDPOINT,
+    payload,
+    PUBLIC_REQUEST_OPTIONS
+  );
   return data;
 }
 
 export async function getPassVerificationResult(txId) {
   const { data } = await apiJson().get(PASS_RESULT_ENDPOINT, {
     params: { txId },
+    ...PUBLIC_REQUEST_OPTIONS,
   });
   return data;
 }
@@ -62,4 +71,3 @@ export async function verifyPassMock(payload = {}) {
     },
   };
 }
-

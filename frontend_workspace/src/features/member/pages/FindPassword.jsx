@@ -100,7 +100,7 @@ export default function FindPassword() {
                               ? '인증 중...'
                               : isVerified
                                 ? '인증완료'
-                                : 'PASS 인증'}
+                                : '본인 인증'}
                           </Button>
                         </InputGroup>
                       </FormGroup>
