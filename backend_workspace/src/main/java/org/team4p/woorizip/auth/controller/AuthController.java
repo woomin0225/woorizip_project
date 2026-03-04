@@ -15,11 +15,19 @@ public class AuthController {
 
     private final AuthService authService;
 
+    /**
+     * 로그인
+     * POST /auth/login
+     */
     @PostMapping("/login")
     public ResponseEntity<TokenResponse> login(@RequestBody LoginRequest req) {
         return ResponseEntity.ok(authService.login(req));
     }
 
+    /**
+     * 토큰 재발급
+     * POST /auth/refresh
+     */
     @PostMapping("/refresh")
     public ResponseEntity<TokenResponse> refresh(
             @RequestHeader("RefreshToken") String refreshToken,
@@ -29,6 +37,10 @@ public class AuthController {
         return ResponseEntity.ok(authService.refresh(stripBearer(refreshToken), extend));
     }
 
+    /**
+     * 로그아웃
+     * POST /auth/logout
+     */
     @PostMapping("/logout")
     public ResponseEntity<?> logout(@RequestHeader(value = "Authorization", required = false) String accessToken) {
         authService.logout(accessToken);

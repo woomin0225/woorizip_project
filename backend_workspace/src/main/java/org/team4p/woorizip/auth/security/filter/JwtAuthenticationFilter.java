@@ -32,7 +32,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String uri = request.getRequestURI();
         String method = request.getMethod();
         
-        	if (uri.startsWith("/upload/") || uri.startsWith("/contract-docs/")) return true;
+        // 정적/공개 리소스는 JWT 검사 제외
+        if (uri.startsWith("/upload/") || uri.startsWith("/contract-docs/")) return true;
 
         if (HttpMethod.OPTIONS.matches(method)) return true;
 
@@ -120,6 +121,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 null,
                 principal.getAuthorities()
         );
+        // 인가 단계에서 사용할 인증 주체 등록
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         chain.doFilter(request, response);

@@ -34,6 +34,10 @@ public class ContractController {
 
     private final ContractService contractService;
 
+    /**
+     * 계약 단건 조회
+     * GET /api/contract/{contractNo}
+     */
     @GetMapping("/{contractNo}")
     public ResponseEntity<ApiResponse<ContractDto>> selectContract(@PathVariable("contractNo") String contractNo) {
         ContractDto contract = contractService.selectContract(contractNo);
@@ -44,6 +48,10 @@ public class ContractController {
         return ResponseEntity.ok(ApiResponse.ok("계약 조회 성공", contract));
     }
 
+    /**
+     * 내 계약 목록 조회
+     * GET /api/contract/user/me
+     */
     @GetMapping("/user/me")
     public ResponseEntity<ApiResponse<PageResponse<ContractDto>>> selectListContract(
             @AuthenticationPrincipal CustomUserPrincipal userPrincipal,
@@ -53,6 +61,10 @@ public class ContractController {
         return ResponseEntity.ok(ApiResponse.ok("내 계약 목록 조회 성공", body));
     }
 
+    /**
+     * 임대인 계약 목록 조회
+     * GET /api/contract/list/owner
+     */
     @GetMapping("/list/owner")
     public ResponseEntity<ApiResponse<PageResponse<ContractDto>>> selectOwnerListContract(
             @AuthenticationPrincipal CustomUserPrincipal userPrincipal,
@@ -62,6 +74,10 @@ public class ContractController {
         return ResponseEntity.ok(ApiResponse.ok("임대인 계약 목록 조회 성공", body));
     }
 
+    /**
+     * 입주 신청 등록
+     * POST /api/contract/insert/{roomNo}
+     */
     @PostMapping("/insert/{roomNo}")
     public ResponseEntity<ApiResponse<ContractDto>> insertContract(
             @PathVariable("roomNo") String roomNo,
@@ -80,6 +96,10 @@ public class ContractController {
         }
     }
 
+    /**
+     * 계약 수정 요청 등록
+     * POST /api/contract/amendment/request/{originalContractNo}
+     */
     @PostMapping("/amendment/request/{originalContractNo}")
     public ResponseEntity<ApiResponse<Void>> requestAmendment(
             @PathVariable("originalContractNo") String originalNo,
@@ -94,6 +114,10 @@ public class ContractController {
                 : ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
     }
 
+    /**
+     * 계약 수정 요청 승인/거절
+     * POST /api/contract/amendment/decide/{amendmentNo}
+     */
     @PostMapping("/amendment/decide/{amendmentNo}")
     public ResponseEntity<ApiResponse<Void>> decideAmendment(
             @PathVariable("amendmentNo") String amendmentNo,
@@ -104,6 +128,10 @@ public class ContractController {
                 : ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
     }
 
+    /**
+     * 계약 취소 처리
+     * POST /api/contract/cancel/{contractNo}
+     */
     @PostMapping("/cancel/{contractNo}")
     public ResponseEntity<ApiResponse<Void>> cancelContract(
             @PathVariable("contractNo") String contractNo,
@@ -115,6 +143,10 @@ public class ContractController {
                 : ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.fail("계약 취소 요청 실패", null));
     }
 
+    /**
+     * 전자계약서 생성
+     * POST /api/contract/e-contract/{contractNo}
+     */
     @PostMapping("/e-contract/{contractNo}")
     public ResponseEntity<ApiResponse<ContractDto>> createElectronicContract(
             @PathVariable("contractNo") String contractNo,
@@ -127,6 +159,10 @@ public class ContractController {
         }
     }
 
+    /**
+     * 전자서명 검증
+     * POST /api/contract/signature/verify/{contractNo}
+     */
     @PostMapping("/signature/verify/{contractNo}")
     public ResponseEntity<ApiResponse<ContractDto>> verifyElectronicSignature(
             @PathVariable("contractNo") String contractNo,
@@ -139,6 +175,10 @@ public class ContractController {
         }
     }
 
+    /**
+     * 계약 결제 요청 처리
+     * POST /api/contract/payment/{contractNo}
+     */
     @PostMapping("/payment/{contractNo}")
     public ResponseEntity<ApiResponse<ContractDto>> requestContractPayment(
             @PathVariable("contractNo") String contractNo,
@@ -151,6 +191,10 @@ public class ContractController {
         }
     }
 
+    /**
+     * 계약 승인/거절 처리
+     * POST /api/contract/decision/{contractNo}
+     */
     @PostMapping("/decision/{contractNo}")
     public ResponseEntity<ApiResponse<Void>> decideContract(
             @PathVariable("contractNo") String contractNo,

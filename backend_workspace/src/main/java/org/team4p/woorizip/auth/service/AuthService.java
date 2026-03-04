@@ -46,6 +46,7 @@ public class AuthService {
             String access = jwtTokenProvider.createAccessToken(userNo, emailId, role, name);
             String refresh = jwtTokenProvider.createRefreshToken(userNo, emailId, role, name);
 
+            // 로그인 시 refresh 토큰 DB 상태 갱신
             LocalDateTime now = LocalDateTime.now();
             refreshTokenService.upsert(emailId, refresh, now, now.plusDays(1));
 
@@ -76,6 +77,7 @@ public class AuthService {
 
             String newRefresh = null;
             if (extendLogin) {
+                // 로그인 연장 요청 시 refresh 토큰 재발급
                 newRefresh = jwtTokenProvider.createRefreshToken(userNo, emailId, role, name);
                 LocalDateTime now = LocalDateTime.now();
                 refreshTokenService.upsert(emailId, newRefresh, now, now.plusDays(1));

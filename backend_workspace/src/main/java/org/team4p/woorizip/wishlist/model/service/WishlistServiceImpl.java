@@ -26,7 +26,7 @@ public class WishlistServiceImpl implements WishlistService {
     @Override
     @Transactional
     public int insertWishlist(WishlistDto dto) {
-        // 중복 체크
+        // 동일 사용자-매물 조합은 1건만 허용
         if (wishlistRepository.existsByUserNoAndRoomNo(dto.getUserNo(), dto.getRoomNo())) {
             return 0;
         }
