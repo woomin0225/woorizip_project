@@ -16,6 +16,8 @@ export async function createRoom(houseNo, roomDto, newImages = []){
     const fd = new FormData();
 
     roomDto.forEach(([key, value])=>{
+        if(value === null || value === undefined) return;
+        if(value === "null" || value === "undefined") return;
         fd.append(key, value);
     });
     

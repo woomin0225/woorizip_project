@@ -173,7 +173,7 @@ CREATE TABLE `tb_houses` (
   `house_elevator_yn` BOOLEAN NOT NULL COMMENT '엘리베이터유무',
   `house_pet_yn` BOOLEAN NOT NULL COMMENT '애완동물가능여부',
   `house_female_limit` BOOLEAN NOT NULL COMMENT '여성전용',
-  `house_parking_max` TINYINT NOT NULL COMMENT '주차대수',
+  `house_parking_max` INT NOT NULL COMMENT '주차대수',
   `house_abstract` TEXT COMMENT '소개글',
   `house_image_count` TINYINT NOT NULL COMMENT '첨부사진갯수',
   `house_lat` DECIMAL(10, 8) COMMENT '지도API사용을 위한 위도(-90 - 90, 소수점 8자리)',

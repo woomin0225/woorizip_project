@@ -50,7 +50,7 @@ export default function Search() {
     neLng: 127.1505,
 
     options: '',
-    roomRoomCount: 1,
+    roomRoomCount: null,
     houseElevatorYn: true,
     housePetYn: false,
     houseFemaleLimit: false,
@@ -149,6 +149,12 @@ export default function Search() {
       ]);
 
       if (numberFields.has(name)) {
+        if((name == 'maxDeposit' && value == 0) || (name == 'maxTax' && value == 0)){
+          return {
+            ...current, [name]: null
+          }
+        }
+        
         return {
           ...current,
           [name]: value === '' || value === null ? null : Number(value),
