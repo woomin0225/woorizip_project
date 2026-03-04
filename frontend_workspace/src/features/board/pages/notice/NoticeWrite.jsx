@@ -14,6 +14,7 @@ export default function NoticeWrite() {
     onChange,
     newFiles,
     setNewFiles,
+    filePreviewUrls,
     submitting,
     handleSubmit,
   } = useNoticeWrite({ navigate });
@@ -25,6 +26,10 @@ export default function NoticeWrite() {
       onChange={onChange}
       newFiles={newFiles}
       setNewFiles={setNewFiles}
+      filePreviewUrls={filePreviewUrls}
+      getFileUrl={(f) =>
+        `http://localhost:8080/upload/notice/${f.updatedFileName}`
+      }
       submitting={submitting}
       onSubmit={handleSubmit}
       onCancel={() => navigate('/notices')}

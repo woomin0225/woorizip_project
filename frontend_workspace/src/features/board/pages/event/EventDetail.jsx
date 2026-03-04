@@ -27,6 +27,42 @@ export default function EventDetail() {
     ? `http://localhost:8080/upload/event/banner/${banner.updatedFileName}`
     : null;
 
+  const isImageFile = (f) => {
+    const name = (
+      f?.originalFileName ||
+      f?.updatedFileName ||
+      ''
+    ).toLowerCase();
+    return (
+      (typeof f?.fileType === 'string' && f.fileType.startsWith('image/')) ||
+      name.endsWith('.png') ||
+      name.endsWith('.jpg') ||
+      name.endsWith('.jpeg') ||
+      name.endsWith('.gif') ||
+      name.endsWith('.webp')
+    );
+  };
+
+  const getEventFileUrl = (f) => {
+    // 백엔드 정적서빙 경로에 맞춰 필요시만 바꿔주세요
+    // (지금 배너처럼 /upload_files/event/... 형태를 쓴다는 가정)
+    return `http://localhost:8080/upload/event/${f.updatedFileName}`;
+  };
+
+  const imagesHtml = (event?.files || [])
+    .filter(isImageFile)
+    .map(
+      (f) =>
+        `<div style="margin-top:12px;">
+         <img src="${getEventFileUrl(f)}"
+              alt="${f.originalFileName || '첨부 이미지'}"
+              style="max-width:100%; height:auto; display:block; margin-top:12px; border-radius:6px;" />
+       </div>`
+    )
+    .join('');
+
+  const finalHtml = `${imagesHtml}${contentHtml || ''}`;
+
   return (
     <div style={{ maxWidth: 900, margin: '0 auto', padding: 24 }}>
       <h2 style={{ textAlign: 'center', marginBottom: 40 }}>이벤트 상세</h2>
@@ -57,7 +93,7 @@ export default function EventDetail() {
           minHeight: 200,
           marginBottom: 30,
         }}
-        dangerouslySetInnerHTML={{ __html: contentHtml }}
+        dangerouslySetInnerHTML={{ __html: finalHtml }}
       />
 
       {/* 🔵 첨부파일 */}

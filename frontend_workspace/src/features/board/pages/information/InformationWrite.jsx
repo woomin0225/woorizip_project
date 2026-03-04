@@ -14,6 +14,7 @@ export default function InformationWrite() {
     onChange,
     newFiles,
     setNewFiles,
+    filePreviewUrls,
     submitting,
     handleSubmit,
   } = useInformationWrite({ navigate });
@@ -25,6 +26,10 @@ export default function InformationWrite() {
       onChange={onChange}
       newFiles={newFiles}
       setNewFiles={setNewFiles}
+      filePreviewUrls={filePreviewUrls}
+      getFileUrl={(f) =>
+        `http://localhost:8080/upload_files/information/${f.updatedFileName}`
+      }
       submitting={submitting}
       onSubmit={handleSubmit}
       onCancel={() => navigate('/information')}
