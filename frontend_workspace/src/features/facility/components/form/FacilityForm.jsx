@@ -4,6 +4,8 @@ import { useFacilityForm } from '../../hooks/facility/useFacilityForm';
 import styles from './Form.module.css';
 
 export default function FacilityForm() {
+  const FAC_IMG_DIR = 'http://localhost:8080/upload/facility_image';
+
   const { houseNo, facilityNo } = useParams();
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
@@ -21,6 +23,7 @@ export default function FacilityForm() {
     updateMode,
     existingImages,
     setImages: setFormFiles,
+    setDeleteImageNos,
   } = useFacilityForm(houseNo, facilityNo);
 
   const [images, setImages] = useState([]);
@@ -34,7 +37,12 @@ export default function FacilityForm() {
   useEffect(() => {
     if (updateMode && existingImages?.length > 0) {
       const formatted = existingImages.map((img) => ({
-        preview: img.imageUrl,
+        facilityImageNo: img.facilityImageNo,
+        preview:
+          img.imageUrl ||
+          (img.facilityStoredImageName
+            ? `${FAC_IMG_DIR}/${img.facilityStoredImageName}`
+            : ''),
         isExisting: true,
       }));
       setImages(formatted);
@@ -71,11 +79,26 @@ export default function FacilityForm() {
   const removeImage = (index) => {
     setImages((prev) => {
       const target = prev[index];
-      if (target.preview && !target.isExisting)
+
+      if (!target) return prev;
+      if (target.preview && !target.isExisting) {
         URL.revokeObjectURL(target.preview);
+      }
+
+      if (target.isExisting && target.facilityImageNo != null) {
+        setDeleteImageNos((nos) =>
+          nos.includes(target.facilityImageNo)
+            ? nos
+            : [...nos, target.facilityImageNo]
+        );
+      }
+
+      if (!target.isExisting && target.file) {
+        setFormFiles((files) => files.filter((file) => file !== target.file));
+      }
+
       return prev.filter((_, i) => i !== index);
     });
-    setFormFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
   if (loading)

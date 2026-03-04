@@ -8,7 +8,8 @@ import {
   verifyPassMock,
 } from '../api/passAuthApi';
 
-const STORAGE_KEY = 'passVerificationStateV1';
+const STORAGE_KEY_PREFIX = 'passVerificationStateV2';
+// 본인인증 유효시간(30분)
 const VERIFICATION_TTL_MS = 30 * 60 * 1000;
 const POLLING_INTERVAL_MS = 2000;
 const POLLING_TIMEOUT_MS = 120000;
@@ -24,25 +25,33 @@ function isExpired(verifiedAt) {
   return now() - t > VERIFICATION_TTL_MS;
 }
 
-function readSaved() {
+function getStorageKey(purpose = 'GENERAL') {
+  return `${STORAGE_KEY_PREFIX}:${purpose}`;
+}
+
+function readSaved(purpose = 'GENERAL') {
   try {
-    const raw = sessionStorage.getItem(STORAGE_KEY);
+    const raw = sessionStorage.getItem(getStorageKey(purpose));
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     if (!parsed?.verifiedAt || isExpired(parsed.verifiedAt)) return null;
+    if (parsed?.purpose && parsed.purpose !== purpose) return null;
     return parsed;
   } catch {
     return null;
   }
 }
 
-function writeSaved(state) {
+function writeSaved(state, purpose = 'GENERAL') {
   try {
+    const key = getStorageKey(purpose);
     if (!state) {
-      sessionStorage.removeItem(STORAGE_KEY);
+      sessionStorage.removeItem(key);
+      // 이전 버전 전역 키 정리
+      sessionStorage.removeItem('passVerificationStateV1');
       return;
     }
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    sessionStorage.setItem(key, JSON.stringify(state));
   } catch {
     // 저장 실패는 무시
   }
@@ -59,7 +68,8 @@ function finalStatus(status) {
 }
 
 export function usePassVerification(defaultOptions = {}) {
-  const [verification, setVerification] = useState(() => readSaved());
+  const defaultPurpose = defaultOptions.purpose || 'GENERAL';
+  const [verification, setVerification] = useState(() => readSaved(defaultPurpose));
   const [isVerifying, setIsVerifying] = useState(false);
   const [verificationError, setVerificationError] = useState('');
 
@@ -71,8 +81,8 @@ export function usePassVerification(defaultOptions = {}) {
   const resetVerification = useCallback(() => {
     setVerification(null);
     setVerificationError('');
-    writeSaved(null);
-  }, []);
+    writeSaved(null, defaultPurpose);
+  }, [defaultPurpose]);
 
   const startVerification = useCallback(
     async (options = {}) => {
@@ -106,6 +116,7 @@ export function usePassVerification(defaultOptions = {}) {
 
           const startedAt = now();
           let polled = null;
+          // PASS 결과를 완료 상태까지 폴링
           while (now() - startedAt < POLLING_TIMEOUT_MS) {
             await wait(POLLING_INTERVAL_MS);
             polled = await getPassVerificationResult(txId);
@@ -138,11 +149,11 @@ export function usePassVerification(defaultOptions = {}) {
         };
 
         setVerification(next);
-        writeSaved(next);
+        writeSaved(next, purpose);
         return next;
       } catch (error) {
         setVerification(null);
-        writeSaved(null);
+        writeSaved(null, purpose);
         setVerificationError(
           error?.message || '휴대폰 본인인증 처리 중 오류가 발생했습니다.'
         );
@@ -151,7 +162,7 @@ export function usePassVerification(defaultOptions = {}) {
         setIsVerifying(false);
       }
     },
-    [defaultOptions.purpose]
+    [defaultPurpose]
   );
 
   return {

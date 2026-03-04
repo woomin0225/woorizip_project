@@ -26,7 +26,9 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    // key: name|phone
     private final Map<String, PhoneVerificationCode> codeStore = new ConcurrentHashMap<>();
+    // 인증 완료 후 비밀번호 재설정 허용 토큰 저장소
     private final Map<String, PasswordResetToken> tokenStore = new ConcurrentHashMap<>();
 
     @Override
@@ -251,6 +253,7 @@ public class UserServiceImpl implements UserService {
         if (user != null) {
             return user;
         }
+        // DB 저장 포맷(010-0000-0000) 대응
         String rawPhone = phone != null ? phone.replaceFirst("^(010)(\\d{4})(\\d{4})$", "$1-$2-$3") : null;
         if (rawPhone != null && !rawPhone.equals(phone)) {
             return userRepository.findByNameAndPhone(name, rawPhone);

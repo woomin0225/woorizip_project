@@ -73,6 +73,7 @@ export default function ReservationList() {
               setPage(query.page);
             }}
             facilityNo={facilityNo}
+            isOwner={isOwner}
           />
         </Modal>
       )}

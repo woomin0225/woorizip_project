@@ -9,6 +9,7 @@ import java.nio.file.StandardOpenOption;
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.Date;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Locale;
 import java.util.Set;
@@ -48,6 +49,7 @@ import lombok.extern.slf4j.Slf4j;
 @Transactional(readOnly = true)
 public class ContractServiceImpl implements ContractService {
 
+    // 동일 입주일 중복 신청 차단 대상 상태
     private static final Set<String> ACTIVE_CONTRACT_STATUSES =
             Set.of("APPLIED", "APPROVED", "PAID", "ACTIVE", "AMENDMENT_REQUESTED");
 
@@ -156,6 +158,7 @@ public class ContractServiceImpl implements ContractService {
         }
 
         if (approved) {
+            // 승인 시 원본 계약을 수정안 값으로 동기화
             original.updateFromAmendment(amendment);
             original.setStatus("APPROVED");
             amendment.setStatus("APPROVED");
@@ -259,7 +262,7 @@ public class ContractServiceImpl implements ContractService {
 
     private String writeContractPdf(ContractEntity target, ContractElectronicCreateRequest request) {
         try {
-            Path root = uploadProperties.contractDocDirPath().toAbsolutePath().normalize();
+            Path root = resolveContractDocRoot();
             Files.createDirectories(root);
 
             String fileName = "contract-" + target.getContractNo() + ".pdf";
@@ -275,11 +278,23 @@ public class ContractServiceImpl implements ContractService {
                     StandardOpenOption.TRUNCATE_EXISTING
             );
 
+            // FE 접근용 상대 URL 반환
             return normalizeUrlPrefix(contractDocUrlPrefix) + "/" + fileName;
         } catch (Exception e) {
-            log.error("계약서 파일 저장 실패: contractNo={}, message={}", target.getContractNo(), e.getMessage());
+            log.error("계약서 파일 저장 실패: contractNo={}", target.getContractNo(), e);
             throw new IllegalStateException("계약서 PDF 저장에 실패했습니다.");
         }
+    }
+
+    private Path resolveContractDocRoot() {
+        String configured = uploadProperties.contractDocDir();
+        if (configured != null && !configured.isBlank()) {
+            return Path.of(configured).toAbsolutePath().normalize();
+        }
+        return Path.of(
+                Objects.requireNonNullElse(uploadProperties.uploadDir(), "C:/upload_files"),
+                "contract_docs"
+        ).toAbsolutePath().normalize();
     }
 
     private String buildContractHtml(ContractEntity target, ContractElectronicCreateRequest request) {
@@ -320,8 +335,8 @@ public class ContractServiceImpl implements ContractService {
         String now = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
 
         return """
-                <!doctype html>
-                <html lang="ko">
+                <!DOCTYPE html>
+                <html lang="ko" xmlns="http://www.w3.org/1999/xhtml">
                 <head>
                   <meta charset="UTF-8" />
                   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -380,13 +395,22 @@ public class ContractServiceImpl implements ContractService {
     }
 
     private byte[] renderPdfBytes(String html) throws Exception {
+        try {
+            return renderPdfBytes(html, true);
+        } catch (Exception first) {
+            log.warn("PDF 렌더링 1차 실패(폰트 포함). 폰트 제외 재시도: {}", first.getMessage());
+            return renderPdfBytes(html, false);
+        }
+    }
+
+    private byte[] renderPdfBytes(String html, boolean useWindowsFont) throws Exception {
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
             PdfRendererBuilder builder = new PdfRendererBuilder();
             builder.useFastMode();
-            builder.withHtmlContent(html, null);
+            builder.withHtmlContent(normalizeHtmlForPdf(html), null);
 
             Path malgunPath = FileSystems.getDefault().getPath("C:", "Windows", "Fonts", "malgun.ttf");
-            if (Files.exists(malgunPath)) {
+            if (useWindowsFont && Files.exists(malgunPath)) {
                 builder.useFont(malgunPath.toFile(), "Malgun Gothic");
             }
 
@@ -394,6 +418,26 @@ public class ContractServiceImpl implements ContractService {
             builder.run();
             return outputStream.toByteArray();
         }
+    }
+
+    private String normalizeHtmlForPdf(String html) {
+        if (html == null) {
+            return "<html><body></body></html>";
+        }
+
+        // XML parser가 문서 시작 전 BOM/불필요 문자에 민감하므로 제거
+        String normalized = html.replace("\uFEFF", "").trim();
+        int firstTag = normalized.indexOf('<');
+        if (firstTag > 0) {
+            normalized = normalized.substring(firstTag);
+        }
+
+        // XHTML 루트 보정
+        String lower = normalized.toLowerCase(Locale.ROOT);
+        if (!lower.startsWith("<!doctype") && !lower.startsWith("<html")) {
+            normalized = "<html><body>" + escapeHtml(normalized) + "</body></html>";
+        }
+        return normalized;
     }
 
     private String normalizeUrlPrefix(String prefix) {

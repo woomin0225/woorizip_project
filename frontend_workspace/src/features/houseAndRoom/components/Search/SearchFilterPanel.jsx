@@ -1,5 +1,6 @@
 import { useState } from "react";
 import styles from "./SearchFilterPanel.module.css";
+import { PropTypes } from 'prop-types';
 
 const OPTION_LIST = ["WiFi", "냉장고", "세탁기", "에어컨", "침대", "책상", "옷장", "TV", "신발장"];
 
@@ -11,6 +12,29 @@ function parseOptions(value) {
   }
   return [];
 }
+
+SearchFilterPanel.propTypes = {
+  cond: PropTypes.shape({
+    keyword: PropTypes.string,
+    
+    minDeposit: PropTypes.number,
+    maxDeposit: PropTypes.number,
+    minTax: PropTypes.number,
+    maxTax: PropTypes.number,
+
+    swLat: PropTypes.number,
+    swLng: PropTypes.number,
+    neLat: PropTypes.number,
+    neLng: PropTypes.number,
+
+    options: PropTypes.string,
+    roomRoomCount: PropTypes.number,
+    houseElevatorYn: PropTypes.bool,
+    housePetYn: PropTypes.bool,
+    houseFemaleLimit: PropTypes.bool,
+    houseParking: PropTypes.bool,
+  }),
+};
 
 export default function SearchFilterPanel({
   cond,

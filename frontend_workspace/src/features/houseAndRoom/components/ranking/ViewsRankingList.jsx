@@ -6,24 +6,10 @@ import styles from './ViewsRankingList.module.css';
 import woorizipLogo from '../../../../assets/images/logo-muted.png';
 import { getRoomReviews } from '../../api/roomApi';
 import { getFacilityList } from '../../../facility/api/facilityApi';
+import { getFacilityIcon } from '../../constants/facilityIcons';
 
 const REVIEW_LIMIT = 3;
-const FACILITY_LIMIT = 8;
-
-const FACILITY_ICON_MAP = [
-  { keys: ['wifi', '와이파이'], icon: '📶' },
-  { keys: ['주차'], icon: '🅿️' },
-  { keys: ['세탁'], icon: '🧺' },
-  { keys: ['헬스', 'gym', 'fitness'], icon: '🏋️' },
-  { keys: ['엘리베이터', '승강기'], icon: '🛗' },
-  { keys: ['카페'], icon: '☕' },
-  { keys: ['주방'], icon: '🍳' },
-  { keys: ['독서', '스터디'], icon: '📚' },
-  { keys: ['라운지', '휴게'], icon: '🛋️' },
-  { keys: ['보안', 'cctv'], icon: '🛡️' },
-  { keys: ['택배'], icon: '📦' },
-  { keys: ['수영'], icon: '🏊' },
-];
+const FACILITY_LIMIT = 2;
 
 function toStars(rating) {
   const safe = Math.max(0, Math.min(5, Math.round(Number(rating || 0))));
@@ -38,15 +24,6 @@ function getPageContent(pageLike) {
 
 function getFacilityItems(res) {
   return Array.isArray(res) ? res : (res?.data ?? []);
-}
-
-function getFacilityIcon(name) {
-  const text = String(name || '');
-  const lower = text.toLowerCase();
-  const hit = FACILITY_ICON_MAP.find((entry) =>
-    entry.keys.some((k) => lower.includes(String(k).toLowerCase()))
-  );
-  return hit?.icon || '🏠';
 }
 
 ViewsRankingList.propTypes = {
@@ -262,7 +239,8 @@ export default function ViewsRankingList({ list = [], type }) {
                   ) : visibleFacilities.length === 0 ? (
                     <div className={styles.sideEmpty}>시설 정보 없음</div>
                   ) : (
-                    <div className={styles.facilityList}>
+                    <div className={styles.facilityWrap}>
+                      <div className={styles.facilityList}>
                       {visibleFacilities.map((facility) => {
                         const name = facility?.facilityName || '시설';
                         return (
@@ -280,10 +258,35 @@ export default function ViewsRankingList({ list = [], type }) {
                           </span>
                         );
                       })}
+                        {facilities.length > FACILITY_LIMIT && (
+                          <span className={styles.facilityMore}>
+                            +{facilities.length - FACILITY_LIMIT}
+                          </span>
+                        )}
+                      </div>
                       {facilities.length > FACILITY_LIMIT && (
-                        <span className={styles.facilityMore}>
-                          +{facilities.length - FACILITY_LIMIT}
-                        </span>
+                        <div className={styles.facilityTooltip}>
+                          <div className={styles.facilityList}>
+                            {facilities.map((facility) => {
+                              const name = facility?.facilityName || '시설';
+                              return (
+                                <span
+                                  key={
+                                    facility?.facilityNo ||
+                                    `${item?.houseNo}-${name}-tooltip`
+                                  }
+                                  className={styles.facilityChip}
+                                  title={name}
+                                >
+                                  <span className={styles.facilityIcon}>
+                                    {getFacilityIcon(name)}
+                                  </span>
+                                  <span className={styles.facilityName}>{name}</span>
+                                </span>
+                              );
+                            })}
+                          </div>
+                        </div>
                       )}
                     </div>
                   )}

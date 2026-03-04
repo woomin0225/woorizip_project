@@ -51,6 +51,7 @@ async function request(path, options = {}) {
 
 async function requestCandidates(candidates = [], options = {}) {
   let lastError = null;
+  // 서버 버전별 엔드포인트 차이를 순차 시도
   for (const path of candidates) {
     try {
       return await request(path, options);
@@ -111,6 +112,7 @@ export async function updateTour(tourNo, payload) {
 
 export async function decideTour(tourNo, status, reason = '') {
   const normalizedStatus = String(status || '').toUpperCase();
+  // 반려 사유는 REJECTED일 때만 전달
   const body = JSON.stringify({
     status: normalizedStatus,
     rejectionReason: normalizedStatus === 'REJECTED' ? reason : '',

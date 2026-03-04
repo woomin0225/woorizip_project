@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useReservationDetail } from '../../hooks/reservation/useReservationDetail';
 import styles from './Detail.module.css';
 
-export default function ReservationDetail({ reservationNo, onClose, facilityNo }) {
+export default function ReservationDetail({ reservationNo, onClose, facilityNo, isOwner }) {
   const nav = useNavigate();
   const { reservationDetails, loading, error } =
     useReservationDetail(reservationNo);
@@ -56,12 +56,23 @@ export default function ReservationDetail({ reservationNo, onClose, facilityNo }
         </div>
 
         <div className={styles.btnGroup}>
-          <button
-            className={styles.primaryBtn}
-            onClick={() => nav(`/reservation/form/${facilityNo}/${reservationNo}`)}
-          >
-            수정하기
-          </button>
+          {isOwner ? (
+            <>
+              <button
+                className={styles.primaryBtn}
+                onClick={onClose}
+              >
+                확인
+              </button>
+            </>
+          ) : (
+            <button
+              className={styles.primaryBtn}
+              onClick={() => nav(`/reservation/form/${facilityNo}/${reservationNo}`)}
+            >
+              수정하기
+            </button>
+          )}
         </div>
       </div>
     </div>

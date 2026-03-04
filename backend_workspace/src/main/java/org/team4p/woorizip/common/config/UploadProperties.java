@@ -52,6 +52,11 @@ public record UploadProperties(
     public Path roomImageDir() {
     		return Path.of(uploadDir, "room_image");
     }
+    
+    /** 시설 사진 업로드 경로 */
+    public Path facilityImageDir() {
+    		return Path.of(uploadDir, "facility_image");
+    }
 
     /** 계약서 파일 저장 경로 */
     public Path contractDocDirPath() {

@@ -24,10 +24,22 @@ function buildUrl(path, query = {}) {
 }
 
 async function request(path, { method = 'GET', body, query, headers } = {}) {
+  // 인증 전 접근 가능한 공개 엔드포인트
+  const isPublicAuthEndpoint =
+    path === '/api/user/signup' ||
+    path === '/api/user/check-id' ||
+    path === '/api/user/find-id' ||
+    path === '/api/user/password/send-code' ||
+    path === '/api/user/password/verify-code' ||
+    path === '/api/user/find-password' ||
+    path === '/auth/login';
+
   const response = await fetch(buildUrl(path, query), {
     method,
     headers: {
-      ...getAuthHeaders(),
+      ...(isPublicAuthEndpoint
+        ? { 'Content-Type': 'application/json' }
+        : getAuthHeaders()),
       ...headers,
     },
     ...(body ? { body: JSON.stringify(body) } : {}),
@@ -59,6 +71,7 @@ function normalizeApiError(payload, status = 500) {
 }
 
 function unwrapData(payload) {
+  // 백엔드 응답 포맷 편차(data/body) 흡수
   return payload?.data ?? payload?.body ?? payload;
 }
 

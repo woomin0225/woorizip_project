@@ -1,5 +1,6 @@
 ﻿import { getApiBaseUrl } from '../../../app/config/env';
 import { parseJwt } from '../../../app/providers/utils/jwt';
+import { apiJson } from '../../../app/http/request';
 
 const API_BASE_URL = getApiBaseUrl();
 
@@ -18,6 +19,7 @@ function getNormalizedAccessToken() {
     return null;
   }
 
+  // 정규화된 토큰으로 저장 상태 통일
   if (token !== raw) {
     localStorage.setItem('accessToken', token);
   }
@@ -67,6 +69,7 @@ function getEmailFromAccessToken() {
 }
 
 function getCurrentUserEmail() {
+  // 우선순위: JWT > 로컬 캐시
   return (
     getEmailFromAccessToken() ||
     localStorage.getItem('emailId') ||
@@ -108,7 +111,8 @@ export function getIsLessorHint() {
   const tokenType = getUserTypeFromAccessToken();
   if (tokenType) return isLessorType(tokenType);
 
-  const cachedType = localStorage.getItem('userType') || sessionStorage.getItem('userType');
+  const cachedType =
+    localStorage.getItem('userType') || sessionStorage.getItem('userType');
   if (cachedType) return isLessorType(cachedType);
 
   return null;
@@ -124,8 +128,16 @@ export async function updateMyInfo(payload) {
 }
 
 export async function withdrawMyAccount() {
-  return request('/api/user/withdraw', {
-    method: 'PATCH',
-  });
+  try {
+    const { data } = await apiJson().patch('/api/user/withdraw');
+    return data?.data ?? data;
+  } catch (err) {
+    const status = err?.response?.status || 500;
+    const message =
+      err?.response?.data?.message ||
+      err?.response?.data?.error ||
+      err?.message ||
+      '회원탈퇴 처리에 실패했습니다.';
+    throw new Error(`[${status}] ${message}`);
+  }
 }
-
