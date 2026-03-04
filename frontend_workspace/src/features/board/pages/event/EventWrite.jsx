@@ -15,6 +15,7 @@ export default function EventWrite() {
     setBannerFile,
     newFiles,
     setNewFiles,
+    filePreviewUrls,
     submitting,
     handleSubmit,
   } = useEventWrite({ navigate });
@@ -29,6 +30,7 @@ export default function EventWrite() {
         setBannerFile={setBannerFile}
         newFiles={newFiles}
         setNewFiles={setNewFiles}
+        filePreviewUrls={filePreviewUrls}
         submitting={submitting}
         onSubmit={handleSubmit}
         onCancel={() => navigate('/event')}

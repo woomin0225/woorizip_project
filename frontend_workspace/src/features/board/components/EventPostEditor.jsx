@@ -122,6 +122,7 @@ export default function EventPostEditor({
         {isUpdate && existingFiles.length > 0 && (
           <div style={{ marginTop: 15 }}>
             <div>기존 첨부파일</div>
+
             {existingFiles.map((file) => (
               <div key={file.fileNo}>
                 <label>
@@ -132,6 +133,20 @@ export default function EventPostEditor({
                   />
                   {file.originalFileName}
                 </label>
+
+                {String(file.fileType || '').startsWith('image/') && (
+                  <div style={{ margin: '8px 0 12px 22px' }}>
+                    <img
+                      src={`http://localhost:8080/upload_files/event/${file.updatedFileName}`}
+                      alt={file.originalFileName}
+                      style={{
+                        maxWidth: 260,
+                        height: 'auto',
+                        display: 'block',
+                      }}
+                    />
+                  </div>
+                )}
               </div>
             ))}
           </div>

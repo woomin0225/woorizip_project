@@ -91,21 +91,33 @@ function Toolbar({ editor, disabled }) {
   const onLink = () => {
     run(() => {
       const prev = editor.getAttributes('link')?.href || '';
-      const url = window.prompt('링크 URL을 입력하세요.', prev);
-      if (url === null) return;
-      if (url.trim() === '') {
+      const input = window.prompt('링크 URL을 입력하세요.', prev);
+      if (input === null) return;
+
+      const url = input.trim();
+      if (!url) {
         editor.chain().focus().unsetLink().run();
         return;
       }
-      editor.chain().focus().setLink({ href: url.trim() }).run();
-    });
-  };
 
-  const onImage = () => {
-    run(() => {
-      const url = window.prompt('이미지 URL을 입력하세요.');
-      if (!url || !url.trim()) return;
-      editor.chain().focus().setImage({ src: url.trim() }).run();
+      const href = /^https?:\/\//i.test(url) ? url : `https://${url}`;
+
+      // ✅ 선택된 텍스트가 없으면: URL 텍스트 자체를 링크로 삽입
+      if (editor.state.selection.empty) {
+        editor
+          .chain()
+          .focus()
+          .insertContent({
+            type: 'text',
+            text: href,
+            marks: [{ type: 'link', attrs: { href } }],
+          })
+          .run();
+        return;
+      }
+
+      // ✅ 선택된 텍스트가 있으면: 선택 영역에 링크 적용
+      editor.chain().focus().extendMarkRange('link').setLink({ href }).run();
     });
   };
 
@@ -245,15 +257,6 @@ function Toolbar({ editor, disabled }) {
         type="button"
         style={btn(false)}
         disabled={disabled}
-        onClick={onImage}
-      >
-        <Icon.Image />
-      </button>
-
-      <button
-        type="button"
-        style={btn(false)}
-        disabled={disabled}
         onClick={() =>
           run(() => {
             editor.chain().focus().setContent('').run();
@@ -279,7 +282,15 @@ export default function RichTextEditor({
     () => [
       StarterKit,
       Underline,
-      Link.configure({ openOnClick: false, autolink: true, linkOnPaste: true }),
+      Link.configure({
+        openOnClick: true,
+        autolink: true,
+        linkOnPaste: true,
+        HTMLAttributes: {
+          target: '_blank',
+          rel: 'noopener noreferrer',
+        },
+      }),
       TextAlign.configure({ types: ['heading', 'paragraph'] }),
       Image.configure({ inline: false }),
     ],
@@ -329,6 +340,7 @@ export default function RichTextEditor({
         }
         .ProseMirror p { margin: 0; }
         .ProseMirror img { max-width: 100%; height: auto; }
+        .ProseMirror a { color: #2563eb; text-decoration: underline; cursor: pointer; }
       `}</style>
     </div>
   );

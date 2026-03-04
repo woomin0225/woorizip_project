@@ -23,6 +23,7 @@ export default function NoticeUpdate() {
     newFiles,
     setNewFiles,
 
+    filePreviewUrls,
     submitting,
     onSubmit,
   } = useNoticeUpdate({ postNo, nav });
@@ -40,6 +41,10 @@ export default function NoticeUpdate() {
       toggleDeleteFile={toggleDeleteFile}
       newFiles={newFiles}
       setNewFiles={setNewFiles}
+      filePreviewUrls={filePreviewUrls}
+      getFileUrl={(f) =>
+        `http://localhost:8080/upload/notice/${f.updatedFileName}`
+      }
       submitting={submitting}
       onSubmit={onSubmit}
       onCancel={() => nav(`/notices/${postNo}`)}

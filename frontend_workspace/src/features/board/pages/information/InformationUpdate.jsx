@@ -42,6 +42,9 @@ export default function InformationUpdate() {
       setNewFiles={setNewFiles}
       submitting={submitting}
       onSubmit={onSubmit}
+      getFileUrl={(f) =>
+        `http://localhost:8080/upload_files/information/${f.updatedFileName}`
+      }
       onCancel={() => nav(`/information/${postNo}`)}
     />
   );

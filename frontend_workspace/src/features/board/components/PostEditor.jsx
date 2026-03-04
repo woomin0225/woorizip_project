@@ -10,6 +10,7 @@ export default function PostEditor({
   existingFiles = [],
   deleteFileNos = [],
   toggleDeleteFile,
+  getFileUrl,
   newFiles = [],
   setNewFiles,
   submitting = false,
@@ -25,6 +26,22 @@ export default function PostEditor({
 
   const removeNewFile = (index) => {
     setNewFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const isImage = (file) => {
+    const name = (
+      file?.originalFileName ||
+      file?.updatedFileName ||
+      ''
+    ).toLowerCase();
+    return (
+      String(file?.fileType || '').startsWith('image/') ||
+      name.endsWith('.png') ||
+      name.endsWith('.jpg') ||
+      name.endsWith('.jpeg') ||
+      name.endsWith('.gif') ||
+      name.endsWith('.webp')
+    );
   };
 
   return (
@@ -43,9 +60,10 @@ export default function PostEditor({
       </div>
 
       {/* 기존 파일 (수정 모드) */}
-      {isUpdate && existingFiles.length > 0 && (
+      {existingFiles.length > 0 && (
         <div className={styles.formGroup}>
           <label className={styles.label}>기존 파일</label>
+
           {existingFiles.map((file) => (
             <div key={file.fileNo} className={styles.fileRow}>
               <label>
@@ -57,6 +75,22 @@ export default function PostEditor({
                 />
                 {file.originalFileName}
               </label>
+
+              {isImage(file) && (
+                <div style={{ marginTop: 8, marginLeft: 22 }}>
+                  <img
+                    src={getFileUrl ? getFileUrl(file) : ''}
+                    alt={file.originalFileName}
+                    style={{
+                      width: 160,
+                      height: 120,
+                      objectFit: 'cover',
+                      display: 'block',
+                      borderRadius: 6,
+                    }}
+                  />
+                </div>
+              )}
             </div>
           ))}
         </div>

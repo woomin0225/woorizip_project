@@ -25,7 +25,43 @@ export default function InformationDetail() {
   const writer = information.userName || '';
   const readCount = information.postViewCount ?? 0;
   const enrollDate = information.postCreatedAt || '';
-  const content = information.postContent || '';
+  const contentHtml = information.postContent || '';
+
+  const isImageFile = (f) => {
+    const name = (
+      f?.originalFileName ||
+      f?.updatedFileName ||
+      ''
+    ).toLowerCase();
+    return (
+      (typeof f?.fileType === 'string' && f.fileType.startsWith('image/')) ||
+      name.endsWith('.png') ||
+      name.endsWith('.jpg') ||
+      name.endsWith('.jpeg') ||
+      name.endsWith('.gif') ||
+      name.endsWith('.webp')
+    );
+  };
+
+  const getInformationFileUrl = (f) => {
+    // 백엔드 정적서빙 경로에 맞춰 필요시만 바꿔주세요
+    // (지금 배너처럼 /upload_files/information/... 형태를 쓴다는 가정)
+    return `http://localhost:8080/upload/information/${f.updatedFileName}`;
+  };
+
+  const imagesHtml = (information?.files || [])
+    .filter(isImageFile)
+    .map(
+      (f) =>
+        `<div style="margin-top:12px;">
+         <img src="${getInformationFileUrl(f)}"
+              alt="${f.originalFileName || '첨부 이미지'}"
+              style="max-width:100%; height:auto; display:block; margin-top:12px; border-radius:6px;" />
+       </div>`
+    )
+    .join('');
+
+  const finalHtml = `${imagesHtml}${contentHtml || ''}`;
 
   return (
     <div className={styles.container}>
@@ -51,7 +87,7 @@ export default function InformationDetail() {
           </tr>
           <tr>
             <th>내용</th>
-            <td dangerouslySetInnerHTML={{ __html: content }} />
+            <td dangerouslySetInnerHTML={{ __html: finalHtml }} />
           </tr>
           <tr>
             <th>첨부파일</th>
