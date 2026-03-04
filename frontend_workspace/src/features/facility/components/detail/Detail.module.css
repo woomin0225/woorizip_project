@@ -2,10 +2,10 @@
 @import '../../../../app/layouts/MyPageLayout.module.css';
 @import '../list/List.module.css';
 
-/* 1. 신규 등록 버튼: 레이아웃 버튼 스타일 상속 */
+
 .primaryBtn {
   composes: primaryBtn from '../../../../app/layouts/MyPageLayout.module.css';
-  padding: 10px 24px !important; /* 패딩값 강제 조정 */
+  padding: 10px 24px !important;
 }
 
 .facilityRow {
@@ -21,21 +21,19 @@
   color: #11cdef;
 }
 
-/* 2. 카테고리 리스트 그리드 */
 .grid2 {
   composes: grid2 from '../list/List.module.css';
   margin-top: 24px;
 }
 
-/* 3. 개별 카드 (라운지/카페 영역) */
 .itemCard {
   composes: mainCard from '../../../../app/layouts/MyPageLayout.module.css';
   display: flex;
   flex-direction: column;
-  padding: 0 !important; /* 내부 패딩은 infoSection에서 조절 */
+  padding: 0 !important;
   cursor: pointer;
   transition: transform 0.2s;
-  min-height: auto !important; /* 카드 높이 최적화 */
+  min-height: auto !important;
 }
 
 .itemCard:hover {
@@ -43,19 +41,16 @@
   border-color: #5e72e4 !important;
 }
 
-/* 4. 내부 정보 섹션 */
 .infoSection {
-  padding: 24px; /* 카드 내부 여백 */
+  padding: 24px;
 }
 
-/* 5. 카테고리 타이틀 */
 .itemTitle {
   composes: menuTitle from '../../../../app/layouts/MyPageLayout.module.css';
   font-size: 1.25rem !important;
   margin-bottom: 16px !important;
 }
 
-/* 6. 옵션 배지 스타일 */
 .optionGrid {
   display: flex;
   flex-wrap: wrap;
@@ -73,7 +68,6 @@
   border: 1px solid rgba(94, 114, 228, 0.1);
 }
 
-/* 7. 헤더 라인 */
 .headerRow {
   composes: headerRow from '../../../../app/layouts/MyPageLayout.module.css';
   display: flex;
@@ -84,7 +78,6 @@
 .title { composes: title from '../../../../app/layouts/MyPageLayout.module.css'; }
 .subTitle { composes: subTitle from '../../../../app/layouts/MyPageLayout.module.css'; }
 
-/* Facility detail image overflow guard */
 .detailContainer {
   min-width: 0;
   overflow: hidden;
@@ -127,4 +120,15 @@
     width: 110px;
     height: 110px;
   }
+}
+
+.btnGroup {
+  display: flex !important;
+  margin-top: 30px;
+  gap: 10px !important;
+}
+
+.descBox{
+  margin-top: 10px;
+  margin-bottom: 20px;
 }

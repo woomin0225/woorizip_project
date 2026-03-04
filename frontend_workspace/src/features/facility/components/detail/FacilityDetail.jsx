@@ -53,6 +53,9 @@ export default function FacilityDetail({
     images,
     displayOptionList,
     facilityRsvnRequiredYn,
+    maxRsvnPerDay,
+    facilityRsvnUnitMinutes,
+    facilityMaxDurationMinutes
   } = facilityDetails;
 
   return (
@@ -83,6 +86,14 @@ export default function FacilityDetail({
             <div className={styles.descBox}>
               <strong>운영 시간:</strong> {facilityOpenTime?.slice(0, 5)} ~{' '}
               {facilityCloseTime?.slice(0, 5)}
+              {facilityRsvnRequiredYn && (
+                <>
+                <br/>
+                <strong>일일 예약 가능 횟수:</strong> {maxRsvnPerDay}회 <br/>
+                <strong>예약 단위 시간:</strong> {facilityRsvnUnitMinutes}분 <br/>
+                <strong>1회 최대 예약 시간:</strong> {facilityMaxDurationMinutes/60}시간
+                </>
+              )}
             </div>
 
             <div className={styles.sectionBlock}>
@@ -107,12 +118,14 @@ export default function FacilityDetail({
                   >
                     수정하기
                   </button>
-                  <button
-                    className={styles.primaryBtn}
-                    onClick={() => nav(`/reservation/view/${facilityNo}`)}
-                  >
-                    예약조회
-                  </button>
+                  {facilityRsvnRequiredYn && (
+                    <button
+                      className={styles.primaryBtn}
+                      onClick={() => nav(`/reservation/view/${facilityNo}`)}
+                    >
+                      예약조회
+                    </button>
+                  )}
                 </>
               ) : (
                 facilityRsvnRequiredYn && (
