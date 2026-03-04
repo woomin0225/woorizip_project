@@ -46,6 +46,15 @@
 .menuList { display: flex; flex-direction: column; gap: 8px; }
 .menuItem { display: block; padding: 10px 12px; border-radius: 8px; color: #344767; font-weight: 600; text-decoration: none; background: #f8f9fe; }
 .menuItem:hover { background: #eef2ff; text-decoration: none; }
+.menuLabelOnly {
+  display: block;
+  padding: 10px 12px;
+  border-radius: 8px;
+  color: #344767;
+  font-weight: 700;
+  background: #eef2ff;
+  cursor: default;
+}
 .active { background: #11cdef; color: #fff; }
 .withdrawWrap {
   margin-top: auto;

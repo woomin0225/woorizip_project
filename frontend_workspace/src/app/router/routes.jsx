@@ -40,7 +40,6 @@ import MemberList from '../../features/member/pages/MemberList';
 import MyInfo from '../../features/user/pages/MyInfo';
 import MyInfoModify from '../../features/user/pages/MyInfoModify';
 import Withdraw from '../../features/user/pages/withdraw';
-import MyPageHome from '../../features/user/pages/MyPageHome';
 
 import WishlistPage from '../../features/wishlist/pages/WishlistPage';
 import TourApply from '../../features/tour/pages/TourApply';
@@ -91,7 +90,7 @@ export const router = createBrowserRouter([
       {
         element: <RequireAuth />,
         children: [
-          { path: ROUTES.MEMBER.MYPAGE, element: <MyPageHome /> },
+          { path: ROUTES.MEMBER.MYPAGE, element: <MyInfo /> },
           { path: ROUTES.MEMBER.MY_INFO, element: <MyInfo /> },
           { path: ROUTES.MEMBER.MY_INFO_EDIT, element: <MyInfoModify /> },
           { path: ROUTES.MEMBER.MY_WITHDRAW, element: <Withdraw /> },

@@ -57,6 +57,13 @@ export default function MyPageSideNav() {
     <div className={styles.sideNavWrap}>
       <nav className={styles.menuList}>
         {menus.map((item) => {
+          if (item.to === '/mypage') {
+            return (
+              <div key={item.to} className={styles.menuLabelOnly}>
+                {item.label}
+              </div>
+            );
+          }
           const active = location.pathname === item.to;
           return (
             <Link
