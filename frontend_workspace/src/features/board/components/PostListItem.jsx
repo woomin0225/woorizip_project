@@ -23,7 +23,7 @@ export default function PostListItem({ post, onClick, isAdmin, onTogglePin }) {
         <div className={styles.titleCell}>
           {hasFile && <span>📎</span>}
 
-          {isAdmin && (
+          {isAdmin && typeof onTogglePin === 'function' && (
             <button
               type="button"
               onClick={handlePinClick}
