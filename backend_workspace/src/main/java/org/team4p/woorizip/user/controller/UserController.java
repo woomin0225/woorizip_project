@@ -40,6 +40,10 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.ok("아이디 중복 체크 결과", (result == 0) ? "ok" : "dup"));
     }
     
+    /**
+     * 아이디 찾기
+     * POST /api/user/find-id
+     */
     @PostMapping("/find-id")
     public ResponseEntity<ApiResponse<String>> findId(@RequestBody UserDto userDto) {
         String emailId = userService.selectFindId(userDto);
@@ -50,6 +54,10 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.ok("아이디 찾기 성공", emailId));
     }
 
+    /**
+     * 비밀번호 재설정 인증번호 발송
+     * POST /api/user/password/send-code
+     */
     @PostMapping("/password/send-code")
     public ResponseEntity<ApiResponse<Void>> sendPasswordResetCode(
             @RequestBody @Valid PasswordResetCodeSendRequest request
@@ -58,6 +66,10 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.ok("인증번호가 발송되었습니다.", null));
     }
 
+    /**
+     * 비밀번호 재설정 인증번호 검증
+     * POST /api/user/password/verify-code
+     */
     @PostMapping("/password/verify-code")
     public ResponseEntity<ApiResponse<Map<String, String>>> verifyPasswordResetCode(
             @RequestBody @Valid PasswordResetCodeVerifyRequest request
@@ -73,6 +85,10 @@ public class UserController {
         );
     }
 
+    /**
+     * 비밀번호 재설정
+     * POST /api/user/find-password
+     */
     @PostMapping("/find-password")
     public ResponseEntity<ApiResponse<Void>> resetPassword(
             @RequestBody @Valid PasswordResetRequest request
@@ -102,6 +118,10 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.ok("회원 정보 조회 성공", user));
     }
 
+    /**
+     * 회원 정보 조회(회원번호)
+     * GET /api/user/no/{user_no}
+     */
     @GetMapping("/no/{user_no}")
     public ResponseEntity<ApiResponse<UserDto>> selectUserByUserNo(@PathVariable("user_no") String userNo) {
         UserDto user = userService.selectUserByUserNo(userNo);

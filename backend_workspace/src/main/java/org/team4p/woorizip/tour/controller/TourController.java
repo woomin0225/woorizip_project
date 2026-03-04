@@ -30,6 +30,10 @@ public class TourController {
 
     private final TourService tourService;
 
+    /**
+     * 투어 단건 조회
+     * GET /api/tour/{tour_no}
+     */
     @GetMapping("/{tour_no}")
     public ResponseEntity<ApiResponse<TourDto>> selectTour(@PathVariable("tour_no") String tourNo) {
         TourDto tour = tourService.selectTour(tourNo);
@@ -40,6 +44,10 @@ public class TourController {
         return ResponseEntity.ok(ApiResponse.ok("투어 조회 성공", tour));
     }
 
+    /**
+     * 내 투어 목록 조회
+     * GET /api/tour/list/me
+     */
     @GetMapping("/list/me")
     public ResponseEntity<ApiResponse<PageResponse<TourDto>>> selectListTour(
             @AuthenticationPrincipal CustomUserPrincipal userPrincipal,
@@ -49,6 +57,10 @@ public class TourController {
         return ResponseEntity.ok(ApiResponse.ok("내 투어 목록 조회 성공", body));
     }
 
+    /**
+     * 임대인 투어 목록 조회
+     * GET /api/tour/list/owner
+     */
     @GetMapping("/list/owner")
     public ResponseEntity<ApiResponse<PageResponse<TourDto>>> selectOwnerListTour(
             @AuthenticationPrincipal CustomUserPrincipal userPrincipal,
@@ -58,6 +70,10 @@ public class TourController {
         return ResponseEntity.ok(ApiResponse.ok("임대인 투어 목록 조회 성공", body));
     }
 
+    /**
+     * 투어 신청 등록
+     * POST /api/tour/insert/{roomNo}
+     */
     @PostMapping("/insert/{roomNo}")
     public ResponseEntity<ApiResponse<Void>> insertTour(
             @PathVariable("roomNo") String roomNo,
@@ -77,6 +93,10 @@ public class TourController {
                 : ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
     }
 
+    /**
+     * 투어 정보 수정
+     * POST /api/tour/update/{tourNo}
+     */
     @PostMapping("/update/{tourNo}")
     public ResponseEntity<ApiResponse<Void>> updateTour(
             @PathVariable("tourNo") String tourNo,
@@ -92,6 +112,10 @@ public class TourController {
                 : ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
     }
 
+    /**
+     * 투어 승인/거절 처리
+     * POST /api/tour/decision/{tourNo}
+     */
     @PostMapping("/decision/{tourNo}")
     public ResponseEntity<ApiResponse<Void>> decideTour(
             @PathVariable("tourNo") String tourNo,
