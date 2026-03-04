@@ -50,7 +50,7 @@ export default function Search() {
     neLng: 127.1505,
 
     options: '',
-    roomRoomCount: 1,
+    roomRoomCount: null,
     houseElevatorYn: true,
     housePetYn: false,
     houseFemaleLimit: false,
@@ -149,6 +149,17 @@ export default function Search() {
       ]);
 
       if (numberFields.has(name)) {
+        if((name == 'maxDeposit' || name == 'maxTax') && value == 0){
+          return {
+            ...current, [name]: null
+          }
+        }
+        if((name == 'minDeposit' || name == 'minTax') && value < 0){
+          return {
+            ...current, [name]: null
+          }
+        }
+        
         return {
           ...current,
           [name]: value === '' || value === null ? null : Number(value),
@@ -207,6 +218,9 @@ export default function Search() {
     }
     const merged = { ...firstCond, ...firstBbox };
     // console.log("SEARCH merged:", merged);
+
+    if(cond.roomType === 'L') setIsJeonse(true);
+    if(cond.roomType === 'M') setIsJeonse(false);
   }
 
   // 검색 버튼
@@ -342,6 +356,9 @@ export default function Search() {
     setMarkerPopup(null);
   }
 
+  const [isJeonse, setIsJeonse] = useState(cond.roomType==='L' || false);
+
+
   return (
     <div className={styles.page}>
       {/* 상단: 필터(가로 한 줄로 만들 영역) */}
@@ -366,6 +383,7 @@ export default function Search() {
             loading={loadingRooms}
             wishMap={wishMap}
             onToggleWish={toggleWish}
+            isJeonse={isJeonse}
           />
         </div>
 

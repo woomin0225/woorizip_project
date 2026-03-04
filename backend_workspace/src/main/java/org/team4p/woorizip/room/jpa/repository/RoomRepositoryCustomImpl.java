@@ -51,7 +51,7 @@ public class RoomRepositoryCustomImpl implements RoomRepositoryCustom {
 		BooleanBuilder where = getWhere(cond);
 		
 		// 정렬 기준 추출
-		OrderSpecifier<?> order = getOrder(cond.getCriterion(), qroomEntity); 
+		OrderSpecifier<?> order = getOrder(cond.getCriterion(), qroomEntity, cond.getRoomType()); 
 		
 		List<RoomEntity> rows = queryFactory
 										.selectFrom(qroomEntity)
@@ -79,10 +79,19 @@ public class RoomRepositoryCustomImpl implements RoomRepositoryCustom {
 	}
 	
 	// 정렬기준 설정 메소드
-	private OrderSpecifier<?> getOrder(SearchCriterion criterion, QRoomEntity qroomEntity){
+	private OrderSpecifier<?> getOrder(SearchCriterion criterion, QRoomEntity qroomEntity, RoomType method){
 		switch (criterion) {
 		case LATEST: return qroomEntity.roomUpdatedAt.desc();
 		case AREA: return qroomEntity.roomArea.desc();
+//		case MOST_LIKED: return qroomEntity;
+		case LOW_DEPOSIT: 
+			return qroomEntity.roomDeposit.asc();
+		case HIGH_DEPOSIT:
+			return qroomEntity.roomDeposit.desc();
+		case LOW_TAX:
+			return qroomEntity.roomMonthly.asc();
+		case HIGH_TAX:
+			return qroomEntity.roomMonthly.desc(); 
 		default : return qroomEntity.roomUpdatedAt.desc();
 		}
 		// MOST_LIKED 추가 예정(QWishlistEntity 필요)
@@ -105,7 +114,11 @@ public class RoomRepositoryCustomImpl implements RoomRepositoryCustom {
 		
 		// 키워드 단어를 방 또는 건물 이름이 포함하는지
 		if(StringUtils.hasText(cond.getKeyword())) {
-			where.and(qroomEntity.roomName.contains(cond.getKeyword()).or(qhouseEntity.houseName.contains(cond.getKeyword())));
+			where.and(
+					qroomEntity.roomName.contains(cond.getKeyword())
+					.or(qhouseEntity.houseName.contains(cond.getKeyword()))
+					.or(qhouseEntity.houseAddress.contains(cond.getKeyword()))
+					);
 		}
 		
 		// 전/월세 적용, 월세면 세액 범위 지정, 전세면 보증금 범위 지정
@@ -174,11 +187,12 @@ public class RoomRepositoryCustomImpl implements RoomRepositoryCustom {
 		}
 		
 		where.and(qhouseEntity.deleted.isFalse());
+		where.and(qroomEntity.deleted.isFalse());
 		
 		return where;
 	}
 	
-	@Override
+	@Override	
 	public Slice<RoomEntity> searchRooms(RoomSearchCondition cond, Pageable pageable, String houseNo) {
 		// 지도 마커 클릭시 방 목록 조회
 		
@@ -186,7 +200,7 @@ public class RoomRepositoryCustomImpl implements RoomRepositoryCustom {
 		where.and(qhouseEntity.houseNo.eq(houseNo));
 		
 		// 정렬 기준 추출
-		OrderSpecifier<?> order = getOrder(cond.getCriterion(), qroomEntity); 
+		OrderSpecifier<?> order = getOrder(cond.getCriterion(), qroomEntity, cond.getRoomType()); 
 		
 		List<RoomEntity> rows = queryFactory
 										.selectFrom(qroomEntity)

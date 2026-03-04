@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import styles from "./FacilityList.module.css";
 import { getFacilityList } from "../../../facility/api/facilityApi";
-
+import { getFacilityIcon } from "../../constants/facilityIcons";
 export default function FacilityList({ houseNo }) {
   const [items, setItems] = useState([]);
 
@@ -24,11 +24,15 @@ export default function FacilityList({ houseNo }) {
   return (
     <div className={styles.wrap}>
       {items.length === 0 && <div className={styles.empty}>공용시설 정보가 없습니다.</div>}
-      {items.map((f) => (
-        <span key={f.facilityNo || f.facilityName} className={styles.chip}>
-          {f.facilityName}
-        </span>
-      ))}
+      {items.map((f) => {
+        const name = f?.facilityName || '시설';
+        return (
+          <span key={f?.facilityNo || name} className={styles.chip} title={name}>
+            <span className={styles.chipIcon}>{getFacilityIcon(name)}</span>
+            <span className={styles.chipName}>{name}</span>
+          </span>
+        );
+      })}
     </div>
   );
 }
