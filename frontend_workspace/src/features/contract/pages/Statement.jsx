@@ -33,6 +33,8 @@ function contractStatusLabel(status) {
       return '결제완료';
     case 'ACTIVE':
       return '진행중';
+    case 'AMENDMENT_REQUESTED':
+      return '수정요청중';
     case 'ENDED':
       return '종료';
     case 'REJECTED':
