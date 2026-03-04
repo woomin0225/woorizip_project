@@ -22,6 +22,7 @@ import lombok.Setter;
 @AllArgsConstructor
 public class FacilityDetailResponseDTO {
 		private String facilityNo;
+		private Integer facilityCode;
 		private String facilityName;
 		private String facilityTitle;
 		private Map<String, Boolean> facilityOptionInfo;
@@ -49,6 +50,7 @@ public class FacilityDetailResponseDTO {
 		    
 		    return FacilityDetailResponseDTO.builder()
 		            .facilityNo(entity.getFacilityNo())
+		            .facilityCode(entity.getCategory().getFacilityCode())
 		            .facilityName(entity.getFacilityName())
 		            .facilityTitle(entity.getCategory().getFacilityType()+" "+entity.getFacilitySequence())
 		            .facilityOptionInfo(entity.getFacilityOptionInfo())

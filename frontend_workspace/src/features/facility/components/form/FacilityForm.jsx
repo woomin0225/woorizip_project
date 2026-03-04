@@ -52,12 +52,18 @@ export default function FacilityForm() {
   useEffect(() => {
     if (updateMode && values.facilityOptionInfo && defaultOptions?.length > 0) {
       const allKeys = Object.keys(values.facilityOptionInfo);
-      const extraKeys = allKeys.filter((key) => !defaultOptions.includes(key));
+      const extraKeys = allKeys.filter(
+        (key) =>
+          !defaultOptions.includes(key) &&
+          values.facilityOptionInfo[key] === true
+      );
 
       const nextInputs = ['', '', '', '', ''];
+
       extraKeys.forEach((key, i) => {
         if (i < 5) nextInputs[i] = key;
       });
+
       setCustomInputs(nextInputs);
     }
   }, [updateMode, values.facilityOptionInfo, defaultOptions]);
@@ -101,6 +107,32 @@ export default function FacilityForm() {
     });
   };
 
+  const handleFormSubmit = async (e) => {
+    e.preventDefault();
+
+    const extraOptionsList = customInputs
+      .map((val) => val.trim())
+      .filter((val) => val !== '');
+
+    const updatedOptionInfo = {};
+
+    defaultOptions.forEach((opt) => {
+      updatedOptionInfo[opt] = !!values.facilityOptionInfo?.[opt];
+    });
+
+    extraOptionsList.forEach((opt) => {
+      updatedOptionInfo[opt] = true;
+    });
+
+    const finalValues = {
+      ...values,
+      facilityOptionInfo: updatedOptionInfo,
+    };
+
+    console.log('최종 보낼 데이터:', finalValues);
+    await onSubmit(e, navigate, finalValues);
+  };
+
   if (loading)
     return <div className={styles.facilityEmpty}>시설 정보 로딩 중...</div>;
 
@@ -118,10 +150,7 @@ export default function FacilityForm() {
               </div>
             </div>
 
-            <form
-              onSubmit={(e) => onSubmit(e, navigate)}
-              className={styles.formBody}
-            >
+            <form onSubmit={handleFormSubmit} className={styles.formBody}>
               <div className={styles.sectionBlock}>
                 <h4 className={styles.sectionTitle}>시설 이미지</h4>
                 <div
@@ -330,7 +359,11 @@ export default function FacilityForm() {
                             <select
                               name="facilityMaxDurationMinutes"
                               className={styles.input}
-                              value={values.facilityMaxDurationMinutes || ''}
+                              value={
+                                values.facilityMaxDurationMinutes
+                                  ? String(values.facilityMaxDurationMinutes)
+                                  : ''
+                              }
                               onChange={handleChange}
                             >
                               <option value="">선택</option>
@@ -380,7 +413,6 @@ export default function FacilityForm() {
                           next[idx] = e.target.value;
                           setCustomInputs(next);
                         }}
-                        onBlur={() => val.trim() && addCustomOption(val.trim())}
                       />
                     ))}
                   </div>

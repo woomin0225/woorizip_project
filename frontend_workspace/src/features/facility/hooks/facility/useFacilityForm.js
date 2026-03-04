@@ -9,7 +9,7 @@ import {
 const schema = {
   houseNo: '',
   facilityCode: '',
-  facilityName: '', 
+  facilityName: '',
   facilityOptionInfo: {},
   facilityLocation: '',
   facilityCapacity: '',
@@ -45,33 +45,38 @@ export function useFacilityForm(houseNo, facilityNo = null) {
     fetchCategories();
   }, []);
 
-  const handleChange = useCallback((e) => {
-    const { name, value, type, checked } = e.target;
+  const handleChange = useCallback(
+    (e) => {
+      const { name, value, type, checked } = e.target;
 
-    if (name === 'facilityCode') {
-      const selected = categories.find(c => String(c.facilityCode) === String(value));
-      
-      if (selected && selected.facilityOptions) {
-        setDefaultOptions(selected.facilityOptions);
-        const newMap = {};
-        selected.facilityOptions.forEach(opt => {
-          newMap[opt] = true;
-        });
+      if (name === 'facilityCode') {
+        const selected = categories.find(
+          (c) => String(c.facilityCode) === String(value)
+        );
 
-        setValues(prev => ({
-          ...prev,
-          facilityCode: value,
-          facilityOptionInfo: newMap
-        }));
-        return;
+        if (selected && selected.facilityOptions) {
+          setDefaultOptions(selected.facilityOptions);
+          const newMap = {};
+          selected.facilityOptions.forEach((opt) => {
+            newMap[opt] = true;
+          });
+
+          setValues((prev) => ({
+            ...prev,
+            facilityCode: value,
+            facilityOptionInfo: newMap,
+          }));
+          return;
+        }
       }
-    }
 
-    setValues(prev => ({ 
-      ...prev, 
-      [name]: type === 'checkbox' ? checked : value 
-    }));
-  }, [categories]);
+      setValues((prev) => ({
+        ...prev,
+        [name]: type === 'checkbox' ? checked : value,
+      }));
+    },
+    [categories]
+  );
 
   useEffect(() => {
     if (updateMode && facilityNo) {
@@ -83,7 +88,9 @@ export function useFacilityForm(houseNo, facilityNo = null) {
 
           let loc = data.facilityLocation;
           if (typeof loc === 'string') {
-            loc = loc.toUpperCase().startsWith('B') ? '-' + loc.substring(1) : loc;
+            loc = loc.toUpperCase().startsWith('B')
+              ? '-' + loc.substring(1)
+              : loc;
           }
 
           setValues({
@@ -91,13 +98,20 @@ export function useFacilityForm(houseNo, facilityNo = null) {
             ...data,
             houseNo,
             facilityLocation: loc,
-            facilityOptionInfo: data.facilityOptionInfo || {}, 
+            facilityOptionInfo: data.facilityOptionInfo || {},
           });
 
-          if (data.facilityOptionInfo) {
-            setDefaultOptions(Object.keys(data.facilityOptionInfo));
+          if (categories.length > 0 && data.facilityCode) {
+            const matchedCategory = categories.find(
+              (c) => String(c.facilityCode) === String(data.facilityCode)
+            );
+
+            if (matchedCategory && matchedCategory.facilityOptions) {
+              // 진짜 '기본' 옵션 리스트만 딱 세팅! (이제 기타 옵션은 여기에 안 섞임)
+              setDefaultOptions(matchedCategory.facilityOptions);
+            }
           }
-          
+
           setExistingImages(data.images || data.facilityImages || []);
           setDeleteImageNos([]);
         } catch (err) {
@@ -110,50 +124,70 @@ export function useFacilityForm(houseNo, facilityNo = null) {
     }
   }, [facilityNo, updateMode, houseNo]);
 
+  useEffect(() => {
+  if (categories.length > 0 && values.facilityCode) {
+    const matchedCategory = categories.find(
+      (c) => String(c.facilityCode) === String(values.facilityCode)
+    );
+
+    if (matchedCategory && matchedCategory.facilityOptions) {
+      setDefaultOptions(matchedCategory.facilityOptions);
+    }
+  }
+}, [categories, values.facilityCode]);
+
   const handleOptionChange = useCallback((optionKey, isChecked) => {
-    setValues(prev => ({
+    setValues((prev) => ({
       ...prev,
       facilityOptionInfo: {
         ...prev.facilityOptionInfo,
-        [optionKey]: isChecked
-      }
+        [optionKey]: isChecked,
+      },
     }));
   }, []);
 
   const addCustomOption = useCallback((text) => {
     if (!text.trim()) return;
-    setValues(prev => ({
+    setValues((prev) => ({
       ...prev,
-      facilityOptionInfo: { ...prev.facilityOptionInfo, [text.trim()]: true }
+      facilityOptionInfo: { ...prev.facilityOptionInfo, [text.trim()]: true },
     }));
   }, []);
 
-  const onSubmit = async (e, navigate) => {
+  const onSubmit = async (e, navigate, manualValues = null) => {
     if (e) e.preventDefault();
     setSubmitting(true);
-    
+
+    const currentValues = manualValues || values;
     const formData = new FormData();
 
     const dtoData = {
-      ...(updateMode
-        ? { deleteImageNos }
-        : { houseNo: values.houseNo }),
+      ...(updateMode ? { deleteImageNos } : { houseNo: values.houseNo }),
       facilityCode: Number(values.facilityCode),
       facilityName: values.facilityName,
-      facilityOptionInfo: values.facilityOptionInfo,
+      facilityOptionInfo: currentValues.facilityOptionInfo,
       facilityLocation: Number(values.facilityLocation) || 0,
       facilityCapacity: Number(values.facilityCapacity) || 0,
       facilityOpenTime: values.facilityOpenTime,
       facilityCloseTime: values.facilityCloseTime,
       facilityRsvnRequiredYn: !!values.facilityRsvnRequiredYn,
-      maxRsvnPerDay: values.facilityRsvnRequiredYn ? Number(values.maxRsvnPerDay) : null,
-      facilityRsvnUnitMinutes: values.facilityRsvnRequiredYn ? Number(values.facilityRsvnUnitMinutes) : null,
-      facilityMaxDurationMinutes: values.facilityRsvnRequiredYn ? Number(values.facilityMaxDurationMinutes) : null,
+      maxRsvnPerDay: values.facilityRsvnRequiredYn
+        ? Number(values.maxRsvnPerDay)
+        : null,
+      facilityRsvnUnitMinutes: values.facilityRsvnRequiredYn
+        ? Number(values.facilityRsvnUnitMinutes)
+        : null,
+      facilityMaxDurationMinutes: values.facilityRsvnRequiredYn
+        ? Number(values.facilityMaxDurationMinutes)
+        : null,
     };
 
-    formData.append('dto', new Blob([JSON.stringify(dtoData)], { type: 'application/json' }));
-    
-    images.forEach(imgFile => {
+    formData.append(
+      'dto',
+      new Blob([JSON.stringify(dtoData)], { type: 'application/json' })
+    );
+
+    images.forEach((imgFile) => {
       if (imgFile instanceof File) {
         formData.append('files', imgFile);
       }
@@ -165,7 +199,7 @@ export function useFacilityForm(houseNo, facilityNo = null) {
       } else {
         await createFacility(formData);
       }
-      alert("성공적으로 저장되었습니다.");
+      alert('성공적으로 저장되었습니다.');
       navigate(`/facility/view/${houseNo}`);
     } catch (err) {
       console.error('제출 에러:', err.message);
@@ -189,6 +223,6 @@ export function useFacilityForm(houseNo, facilityNo = null) {
     submitting,
     onSubmit,
     updateMode,
-    existingImages
+    existingImages,
   };
 }
