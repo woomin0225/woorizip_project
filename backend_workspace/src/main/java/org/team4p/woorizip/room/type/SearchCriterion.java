@@ -2,6 +2,10 @@ package org.team4p.woorizip.room.type;
 
 public enum SearchCriterion {
 	LATEST,
-//	MOST_LIKED,
-	AREA
+	AREA,
+	MOST_LIKED,
+	LOW_DEPOSIT,
+	HIGH_DEPOSIT,
+	LOW_TAX,
+	HIGH_TAX,
 }
