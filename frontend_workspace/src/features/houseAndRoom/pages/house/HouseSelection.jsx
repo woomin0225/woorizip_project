@@ -3,6 +3,7 @@
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import styles from "./HouseSelection.module.css";
+import ScrollToTopButton from "../../../../shared/components/ScrollToTopButton";
 
 import { getMyHouses } from "../../api/houseApi";
 
@@ -43,13 +44,14 @@ export default function HouseSelection() {
               <div className={styles.name}>{h.houseName || h.houseNo}</div>
               <div className={styles.addr}>{h.houseAddress ?? ""} {h.houseAddressDetail ?? ""}</div>
 
-              <Link className={styles.selectBtn} to={`/estate/houses/${h.houseNo}/rooms/new`}>
+              <Link className={styles.selectBtn} to={`/estate/houses/${h.houseNo}/rooms/new`} state={{houseName: h.houseName}}>
                 이 건물에 방 등록
               </Link>
             </div>
           ))}
         </div>
       )}
+      <ScrollToTopButton />
     </div>
   );
 }

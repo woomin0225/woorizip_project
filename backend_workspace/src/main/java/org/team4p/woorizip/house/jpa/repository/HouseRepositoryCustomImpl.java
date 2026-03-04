@@ -54,7 +54,11 @@ public class HouseRepositoryCustomImpl implements HouseRepositoryCustom {
 		
 		// 키워드 단어를 방 또는 건물 이름이 포함하는지
 		if(StringUtils.hasText(cond.getKeyword())) {
-			where.and(qroomEntity.roomName.contains(cond.getKeyword()).or(qhouseEntity.houseName.contains(cond.getKeyword())));
+			where.and(
+					qroomEntity.roomName.contains(cond.getKeyword())
+					.or(qhouseEntity.houseName.contains(cond.getKeyword()))
+					.or(qhouseEntity.houseAddress.contains(cond.getKeyword()))
+					);
 		}
 		
 		// 전/월세 적용, 월세면 세액 범위 지정, 전세면 보증금 범위 지정
@@ -104,16 +108,16 @@ public class HouseRepositoryCustomImpl implements HouseRepositoryCustom {
 		}
 		
 		// 승강기 유무 조건
-		if(cond.getHouseElevatorYn() != null) {
+		if(cond.getHouseElevatorYn() != null && cond.getHouseElevatorYn() == true) {
 			where.and(qhouseEntity.houseElevatorYn.eq(cond.getHouseElevatorYn()));
 		}
 		
 		// 애완동물 가능 여부
-		if(cond.getHousePetYn() != null) {
+		if(cond.getHousePetYn() != null && cond.getHousePetYn() == true) {
 			where.and(qhouseEntity.housePetYn.eq(cond.getHousePetYn()));
 		}
 		// 여성전용 여부
-		if(cond.getHouseFemaleLimit() != null) {
+		if(cond.getHouseFemaleLimit() != null && cond.getHouseFemaleLimit() == true) {
 			where.and(qhouseEntity.houseFemaleLimit.eq(cond.getHouseFemaleLimit()));
 		}
 		

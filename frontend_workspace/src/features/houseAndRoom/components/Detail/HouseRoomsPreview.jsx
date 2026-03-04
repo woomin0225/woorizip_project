@@ -1,8 +1,41 @@
-// 건물 소속 방 미리보기(방 이름만 표시) 누르면 상세보기가 해당 방의 상세보기로 전환됨. 상세보기 페이지 전체의 사이드바 처럼 쓰이는 컴포넌트
-// 누르면 이곳의 방이름Item 버튼은 강조표시됨
+import { useState } from 'react';
 import styles from './HouseRoomsPreview.module.css';
 
-export default function HouseRoomsPreview({ rooms = [], selectedRoomNo, onSelect }) {
+export default function HouseRoomsPreview({
+  rooms = [],
+  selectedRoomNo,
+  onSelect,
+  wishMap = {},
+  onToggleWish,
+  isAuthed = false,
+  onRequireLogin,
+}) {
+  const [pendingRoomNo, setPendingRoomNo] = useState(null);
+
+  async function handleToggleWish(e, roomNo, isWished) {
+    e.stopPropagation();
+    e.preventDefault();
+    if (!isAuthed) {
+      onRequireLogin?.();
+      return;
+    }
+    if (!onToggleWish || pendingRoomNo === roomNo) return;
+
+    setPendingRoomNo(roomNo);
+    try {
+      await onToggleWish(roomNo, !isWished);
+    } finally {
+      setPendingRoomNo(null);
+    }
+  }
+
+  function handleKeyDown(e, roomNo) {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      onSelect?.(roomNo);
+    }
+  }
+
   return (
     <div className={styles.container}>
       <div className={styles.title}>방 목록</div>
@@ -12,16 +45,33 @@ export default function HouseRoomsPreview({ rooms = [], selectedRoomNo, onSelect
           const roomNo = r.roomNo;
           const isSelected = roomNo === selectedRoomNo;
           const isOccupied = r.roomEmptyYn === false;
+          const isWished = Boolean(wishMap?.[roomNo]);
+          const isPending = pendingRoomNo === roomNo;
 
           return (
-            <button
+            <div
               key={roomNo}
               className={`${styles.item} ${isSelected ? styles.selected : ''} ${isOccupied ? styles.occupied : ''}`}
+              role="button"
+              tabIndex={0}
               onClick={() => onSelect?.(roomNo)}
+              onKeyDown={(e) => handleKeyDown(e, roomNo)}
             >
               <div className={styles.roomName}>{r.roomName ?? roomNo}</div>
-              <div className={styles.badge}>{r.roomEmptyYn ? '공실' : '거주중'}</div>
-            </button>
+
+              <div className={styles.itemRight}>
+                <div className={styles.badge}>{r.roomEmptyYn ? '공실' : '거주중'}</div>
+                <button
+                  type="button"
+                  className={`${styles.wishBtn} ${isWished ? styles.wished : ''}`}
+                  onClick={(e) => handleToggleWish(e, roomNo, isWished)}
+                  aria-label={isWished ? '찜 해제' : '찜 추가'}
+                  disabled={isPending}
+                >
+                  {isWished ? '★' : '☆'}
+                </button>
+              </div>
+            </div>
           );
         })}
       </div>

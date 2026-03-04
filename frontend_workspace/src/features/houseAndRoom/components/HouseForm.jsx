@@ -32,7 +32,7 @@ export default function HouseForm({
     <form className={styles.form} onSubmit={onSubmit}>
       <div className={styles.row}>
         <label>건물명</label>
-        <input name="houseName" value={house.houseName || ""} onChange={onChange} />
+        <input name="houseName" value={house.houseName || ""} onChange={onChange} maxLength={20}/>
       </div>
 
       <div className={styles.row}>
@@ -45,33 +45,33 @@ export default function HouseForm({
 
       <div className={styles.row}>
         <label>주소</label>
-        <input name="houseAddress" value={house.houseAddress || ""} onChange={onChange} readOnly />
+        <input name="houseAddress" value={house.houseAddress || ""} onChange={onChange} readOnly maxLength={40} />
       </div>
 
       <div className={styles.row}>
         <label>상세주소</label>
-        <input name="houseAddressDetail" value={house.houseAddressDetail || ""} onChange={onChange} />
+        <input name="houseAddressDetail" value={house.houseAddressDetail || ""} onChange={onChange} maxLength={40}/>
       </div>
 
       <div className={styles.grid2}>
         <div className={styles.row}>
           <label>준공년도</label>
-          <input type="number" name="houseCompletionYear" value={house.houseCompletionYear ?? ""} onChange={onChange} />
+          <input type="number" name="houseCompletionYear" value={house.houseCompletionYear ?? ""} onChange={onChange} min='0' max={new Date().getFullYear()} />
         </div>
 
         <div className={styles.row}>
           <label>층수</label>
-          <input type="number" name="houseFloors" value={house.houseFloors ?? ""} onChange={onChange} />
+          <input type="number" name="houseFloors" value={house.houseFloors ?? ""} onChange={onChange} min='1' max='100'/>
         </div>
 
         <div className={styles.row}>
           <label>총 세대</label>
-          <input type="number" name="houseHouseHolds" value={house.houseHouseHolds ?? ""} onChange={onChange} />
+          <input type="number" name="houseHouseHolds" value={house.houseHouseHolds ?? ""} onChange={onChange} min='1' max='1000'/>
         </div>
 
         <div className={styles.row}>
           <label>주차 대수</label>
-          <input type="number" name="houseParkingMax" value={house.houseParkingMax ?? ""} onChange={onChange} />
+          <input type="number" name="houseParkingMax" value={house.houseParkingMax ?? ""} onChange={onChange} min='0' max='1000'/>
         </div>
       </div>
 

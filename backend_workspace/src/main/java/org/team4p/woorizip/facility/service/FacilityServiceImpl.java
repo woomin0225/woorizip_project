@@ -1,5 +1,8 @@
 package org.team4p.woorizip.facility.service;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -11,6 +14,8 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+import org.team4p.woorizip.common.config.UploadProperties;
 import org.team4p.woorizip.common.exception.ForbiddenException;
 import org.team4p.woorizip.common.exception.NotFoundException;
 import org.team4p.woorizip.common.validator.LesseeValidator;
@@ -49,6 +54,8 @@ public class FacilityServiceImpl implements FacilityService {
 	private final UserRepository userRepository;
 	private final LesseeValidator lesseeValidator;
 	
+	private final UploadProperties upload;
+	
 	// 시설 목록 조회
 	@Override
 	@Transactional(readOnly = true)
@@ -72,7 +79,7 @@ public class FacilityServiceImpl implements FacilityService {
 	// 시설 신규 등록
 	@Override
 	@Transactional
-	public void createFacility(FacilityCreateRequestDTO dto, String userNo) {
+	public void createFacility(List<MultipartFile> files, FacilityCreateRequestDTO dto, String userNo) {
 		UserEntity user = userRepository.findById(userNo)
 				.orElseThrow(() -> new NotFoundException("사용자 정보를 찾을 수 없습니다."));
 		
@@ -161,19 +168,42 @@ public class FacilityServiceImpl implements FacilityService {
 				.maxRsvnPerDay(finalMaxRsvn)
 				.facilityRsvnUnitMinutes(finalUnitMin)
 				.facilityMaxDurationMinutes(finalMaxDur).build();
-
-		// 이미지 입력
-		if (dto.getImages() != null) {
-			for (FacilityImageDTO imageDto : dto.getImages()) {
-				FacilityImageEntity imageEntity = FacilityImageEntity
+		
+		// 이미지 저장 : 파일저장소 -> DB
+		File saveDir = upload.facilityImageDir().toFile();
+		if (!saveDir.exists()) saveDir.mkdirs();
+		List<FacilityImageDTO> imageDtos = dto.getImages();
+		for(int i = 0; i < files.size(); i++) {
+			File saveFile = new File(saveDir, imageDtos.get(i).getFacilityStoredImageName());
+			try {
+	            files.get(i).transferTo(saveFile);	// 파일저장소에 먼저 저장
+	        } catch (Exception e) {
+	            continue;	// 파일저장소에 저장 실패하면 DB에도 저장하지 않음
+	        }
+			
+			// DB에 이름 저장
+			FacilityImageEntity entity = FacilityImageEntity
 						.builder()
-						.facilityOriginalImageName(imageDto.getFacilityOriginalImageName())
-						.facilityStoredImageName(imageDto.getFacilityStoredImageName())
+						.facilityOriginalImageName(imageDtos.get(i).getFacilityOriginalImageName())
+						.facilityStoredImageName(imageDtos.get(i).getFacilityStoredImageName())
 						.facility(facility)
 						.build();
-				facility.getImages().add(imageEntity);
-			}
+			facility.getImages().add(entity);
 		}
+		
+//		// 이미지 입력
+//		if (dto.getImages() != null) {
+//			for (FacilityImageDTO imageDto : dto.getImages()) {
+//		        // 이미지 DB에 이름 저장
+//				FacilityImageEntity imageEntity = FacilityImageEntity
+//						.builder()
+//						.facilityOriginalImageName(imageDto.getFacilityOriginalImageName())
+//						.facilityStoredImageName(imageDto.getFacilityStoredImageName())
+//						.facility(facility)
+//						.build();
+//				facility.getImages().add(imageEntity);
+//			}
+//		}
 
 		facilityRepository.save(facility);
 	}
@@ -239,7 +269,7 @@ public class FacilityServiceImpl implements FacilityService {
 
 	@Override
 	@Transactional
-	public void modifyFacility(String facilityNo, FacilityModifyRequestDTO dto, String currentUserNo) {
+	public void modifyFacility(List<MultipartFile> files, String facilityNo, FacilityModifyRequestDTO dto, String currentUserNo) {
 		// 시설 정보 찾기
 		FacilityEntity entity = facilityRepository.findById(facilityNo)
 				.orElseThrow(() -> new NotFoundException("해당 시설 정보를 찾을 수 없습니다."));
@@ -283,11 +313,49 @@ public class FacilityServiceImpl implements FacilityService {
 	    }
 	    
 		// 이미지 삭제 후 재업로드
-		if (dto.getImages() != null) {
-			entity.getImages().clear();
-			for (FacilityImageDTO imageDto : dto.getImages()) {
-				FacilityImageEntity imageEntity = FacilityImageEntity
-						.builder()
+		File fileDir = upload.facilityImageDir().toFile();
+
+		List<Integer> deleteImageNos = dto.getDeleteImageNos();
+		if (deleteImageNos != null && !deleteImageNos.isEmpty()) {
+			for (Integer deleteImageNo : deleteImageNos) {
+				if (deleteImageNo == null) continue;
+
+				FacilityImageEntity target = entity.getImages().stream()
+						.filter(img -> img.getFacilityImageNo() == deleteImageNo)
+						.findFirst()
+						.orElse(null);
+				if (target == null) continue;
+
+				entity.getImages().remove(target);
+
+				File deleteFile = new File(fileDir, target.getFacilityStoredImageName());
+				try {
+					Files.deleteIfExists(deleteFile.toPath());
+				} catch (IOException e) {
+					throw new RuntimeException("공용시설 사진 삭제 중 오류가 발생했습니다: " + deleteFile);
+				}
+			}
+		}
+
+		List<FacilityImageDTO> imageDtos = dto.getImages();
+		if (files != null && !files.isEmpty()) {
+			if (imageDtos == null || imageDtos.size() != files.size()) {
+				throw new RuntimeException("시설 이미지 정보가 올바르지 않습니다.");
+			}
+
+			if (!fileDir.exists()) fileDir.mkdirs();
+
+			for (int i = 0; i < files.size(); i++) {
+				MultipartFile file = files.get(i);
+				FacilityImageDTO imageDto = imageDtos.get(i);
+				File saveFile = new File(fileDir, imageDto.getFacilityStoredImageName());
+				try {
+					file.transferTo(saveFile);
+				} catch (Exception e) {
+					throw new RuntimeException("공용시설 이미지 저장에 실패했습니다.");
+				}
+
+				FacilityImageEntity imageEntity = FacilityImageEntity.builder()
 						.facilityOriginalImageName(imageDto.getFacilityOriginalImageName())
 						.facilityStoredImageName(imageDto.getFacilityStoredImageName())
 						.facility(entity)

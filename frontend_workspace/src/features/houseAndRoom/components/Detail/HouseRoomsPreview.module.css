@@ -34,6 +34,11 @@
   gap: 10px;
 }
 
+.item:focus-visible {
+  outline: 2px solid #6b5b95;
+  outline-offset: 2px;
+}
+
 .selected {
   border-color: #6b5b95;
   box-shadow: 0 0 0 2px rgba(107, 91, 149, 0.15);
@@ -43,3 +48,27 @@
 
 .roomName { font-weight: 600; }
 .badge { font-size: 12px; border: 1px solid #eee; padding: 4px 8px; border-radius: 999px; background: #fff; }
+
+.itemRight {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.wishBtn {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  background: #fff;
+  cursor: pointer;
+}
+
+.wishBtn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.wished {
+  color: #000000;
+}

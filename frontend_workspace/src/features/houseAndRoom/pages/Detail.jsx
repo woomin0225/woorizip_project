@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
 import styles from './Detail.module.css';
 
@@ -15,11 +15,17 @@ import RoomOptionList from './../components/Detail/RoomOptionList';
 import FacilityList from './../components/Detail/FacilityList';
 import ReviewList from './../components/Detail/ReviewList';
 import ScrollToTopButton from '../../../shared/components/ScrollToTopButton';
+import { ROUTES } from '../../../shared/constants/routes';
 
 import { useAuth } from '../../../app/providers/AuthProvider';
 
 import { getRoom, getRoomImages, getRoomReviews } from './../api/roomApi';
 import { getHouse, getHouseImages, getRoomByHouseNo } from './../api/houseApi';
+import {
+  addWishlist,
+  deleteWishlist,
+  getWishlistByUser,
+} from '../../wishlist/api/wishlistAPI';
 
 const REVIEW_PAGE_SIZE = 5;
 
@@ -41,7 +47,8 @@ function toKrwText(value) {
 }
 
 export default function Detail() {
-  const { userNo: currentUserNo } = useAuth();
+  const navigate = useNavigate();
+  const { isAuthed, userNo: currentUserNo } = useAuth();
   const { roomNo: routeRoomNo, houseNo: routeHouseNo } = useParams();
   const [selectedRoomNo, setSelectedRoomNo] = useState(routeRoomNo || '');
   const roomNameSectionRef = useRef(null);
@@ -51,6 +58,7 @@ export default function Detail() {
   const [house, setHouse] = useState(null);
 
   const [houseRooms, setHouseRooms] = useState([]);
+  const [wishMap, setWishMap] = useState({});
 
   const [roomImageNames, setRoomImageNames] = useState([]);
   const [houseImageNames, setHouseImageNames] = useState([]);
@@ -67,6 +75,61 @@ export default function Detail() {
     const page = await getRoomReviews(selectedRoomNo, reviewPageNo, REVIEW_PAGE_SIZE);
     setReviewPage(page);
   };
+
+  function buildWishMap(list) {
+    const map = {};
+    (list || []).forEach((item) => {
+      if (!item?.roomNo) return;
+      map[item.roomNo] = item.wishNo || true;
+    });
+    return map;
+  }
+
+  async function loadWishlistMap() {
+    if (!currentUserNo) {
+      setWishMap({});
+      return;
+    }
+
+    try {
+      const list = await getWishlistByUser(currentUserNo, 1, 200);
+      setWishMap(buildWishMap(list));
+    } catch {
+      setWishMap({});
+    }
+  }
+
+  async function toggleWish(roomNo, nextWished) {
+    if (!currentUserNo) {
+      alert('찜 기능은 로그인 후 사용할 수 있습니다.');
+      navigate(ROUTES.AUTH.LOGIN, { replace: true });
+      return false;
+    }
+
+    try {
+      if (nextWished) {
+        await addWishlist(roomNo);
+      } else {
+        const wishNo = wishMap?.[roomNo];
+        if (wishNo && wishNo !== true) {
+          await deleteWishlist(wishNo);
+        } else {
+          const list = await getWishlistByUser(currentUserNo, 1, 200);
+          const target = list.find((item) => String(item.roomNo) === String(roomNo));
+          if (target?.wishNo) await deleteWishlist(target.wishNo);
+        }
+      }
+      await loadWishlistMap();
+      return true;
+    } catch (e) {
+      alert(e.message || '찜 처리에 실패했습니다.');
+      return false;
+    }
+  }
+
+  useEffect(() => {
+    loadWishlistMap();
+  }, [currentUserNo]);
 
   useEffect(() => {
     setSelectedRoomNo(routeRoomNo || '');
@@ -169,13 +232,26 @@ export default function Detail() {
     // 라우트 작업 이후: navigate(`/rooms/${nextRoomNo}`)
   }
 
+  function handleRequireLoginForWish() {
+    alert('찜 기능은 로그인 후 사용할 수 있습니다.');
+    navigate(ROUTES.AUTH.LOGIN, { replace: true });
+  }
+
   return (
     <div className={styles.wrap}>
       {/* 좌측 */}
       <aside className={styles.sidebar}>
         <div className={styles.sidebarSticky}>
           <div className={styles.roomListWrap}>
-            <HouseRoomsPreview rooms={houseRooms} selectedRoomNo={selectedRoomNo} onSelect={onSelectRoom} />
+            <HouseRoomsPreview
+              rooms={houseRooms}
+              selectedRoomNo={selectedRoomNo}
+              onSelect={onSelectRoom}
+              wishMap={wishMap}
+              onToggleWish={toggleWish}
+              isAuthed={isAuthed}
+              onRequireLogin={handleRequireLoginForWish}
+            />
           </div>
 
           <div className={styles.sideButtons}>
