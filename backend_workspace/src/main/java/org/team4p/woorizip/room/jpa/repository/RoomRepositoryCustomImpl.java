@@ -183,6 +183,7 @@ public class RoomRepositoryCustomImpl implements RoomRepositoryCustom {
 		}
 		
 		where.and(qhouseEntity.deleted.isFalse());
+		where.and(qroomEntity.deleted.isFalse());
 		
 		return where;
 	}
