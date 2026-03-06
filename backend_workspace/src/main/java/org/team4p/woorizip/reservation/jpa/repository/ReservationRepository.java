@@ -54,6 +54,6 @@ public interface ReservationRepository extends JpaRepository<ReservationEntity, 
 			ReservationStatus status, LocalDate time);
 	
 	// facilityStatus == FacilityStatus.UNAVAILABLE 시 해당 날짜에 예약이 있는지 조회하는 메서드
-	List<ReservationEntity> findByFacility_FacilityNoAndReservationDateBetween(String facilityNo, LocalDate startDate,
+	List<ReservationEntity> findByFacility_FacilityNoAndReservationDateBetweenAndReservationStatus(String facilityNo, LocalDate startDate,
 			LocalDate endDate, ReservationStatus status);
 }

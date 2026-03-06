@@ -8,6 +8,8 @@ import {
   getMyContractsPage,
   getOwnerContractsPage,
 } from '../../contract/api/contractAPI';
+import { getHouse, getHouseMarkers } from '../../houseAndRoom/api/houseApi';
+import { getRoom } from '../../houseAndRoom/api/roomApi';
 import { getMyInfo, isLessorType } from '../../user/api/userAPI';
 import layoutStyles from '../../../app/layouts/MyPageLayout.module.css';
 import styles from './OccupyApply.module.css';
@@ -48,7 +50,30 @@ function fmtTime(v) {
   return String(v).slice(0, 5);
 }
 
-function getRoomName(item) {
+function getRoomName(item, fallbackLabel = '') {
+  const fallback = String(fallbackLabel || '').trim();
+  if (fallback) return fallback;
+
+  const house = [
+    item?.houseName,
+    item?.house_name,
+    item?.room?.houseName,
+    item?.room?.house_name,
+  ].find((v) => typeof v === 'string' && v.trim());
+
+  const roomName = [
+    item?.roomName,
+    item?.room_name,
+    item?.room?.roomName,
+    item?.room?.room_name,
+  ].find((v) => typeof v === 'string' && v.trim());
+
+  if (house && roomName) {
+    return `${house.trim()} ${roomName.trim()}`;
+  }
+  if (roomName) return roomName.trim();
+  if (house) return house.trim();
+
   const abstractValue = [
     item?.roomAbstract,
     item?.room_abstract,
@@ -61,7 +86,7 @@ function getRoomName(item) {
     if (name) return name;
   }
 
-  return item?.roomName || item?.room_name || item?.roomNo || '-';
+  return item?.roomNo ? `방 #${item.roomNo}` : '-';
 }
 
 export default function OccupyApply() {
@@ -74,6 +99,8 @@ export default function OccupyApply() {
   const [contractItems, setContractItems] = useState([]);
   const [contractPage, setContractPage] = useState(1);
   const [contractTotalPages, setContractTotalPages] = useState(0);
+  const [roomLabelByNo, setRoomLabelByNo] = useState({});
+  const [houseNameMap, setHouseNameMap] = useState({});
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
 
@@ -141,6 +168,99 @@ export default function OccupyApply() {
       }
     })();
   }, [isLessor, loadTours, loadContracts, userTypeLoaded]);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const markers = await getHouseMarkers({});
+        if (!mounted || !Array.isArray(markers)) return;
+        const map = {};
+        markers.forEach((m) => {
+          const no = String(m?.houseNo || '').trim();
+          const name = String(m?.houseName || '').trim();
+          if (no && name) map[no] = name;
+        });
+        setHouseNameMap(map);
+      } catch {
+        // marker 조회 실패 시 room/house 개별조회 fallback 사용
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    const roomNos = Array.from(
+      new Set(
+        [...tourItems, ...contractItems]
+          .map((item) => item?.roomNo)
+          .filter((v) => v !== null && v !== undefined && v !== '')
+      )
+    );
+    const missing = roomNos.filter((roomNo) => !roomLabelByNo[roomNo]);
+    if (missing.length === 0) return;
+
+    let mounted = true;
+    (async () => {
+      const results = await Promise.all(
+        missing.map(async (roomNo) => {
+          try {
+            const room = await getRoom(roomNo);
+            const roomName = String(room?.roomName || room?.room_name || '').trim();
+            let houseName = String(room?.houseName || room?.house_name || '').trim();
+
+            if (!houseName && room?.houseNo) {
+              const houseNo = String(room.houseNo);
+              if (houseNameMap[houseNo]) {
+                houseName = houseNameMap[houseNo];
+              }
+            }
+
+            if (!houseName && room?.houseNo) {
+              const houseNo = String(room.houseNo);
+              try {
+                const house = await getHouse(houseNo);
+                houseName = String(house?.houseName || '').trim();
+              } catch {
+                houseName = '';
+              }
+            }
+
+            let label = '';
+            if (houseName && roomName) label = `${houseName} ${roomName}`;
+            else if (houseName) label = `${houseName} 방 #${roomNo}`;
+            else if (roomName) label = roomName;
+
+            if (!label && room?.houseNo) {
+              label = `건물 #${room.houseNo} 방 #${roomNo}`;
+            }
+
+            if (!label) {
+              label = `방 #${roomNo}`;
+            }
+            return [roomNo, label];
+          } catch {
+            return [roomNo, `방 #${roomNo}`];
+          }
+        })
+      );
+
+      if (!mounted) return;
+      setRoomLabelByNo((prev) => {
+        const next = { ...prev };
+        results.forEach(([roomNo, label]) => {
+          if (label) next[roomNo] = label;
+        });
+        return next;
+      });
+    })();
+
+    return () => {
+      mounted = false;
+    };
+  }, [tourItems, contractItems, roomLabelByNo, houseNameMap]);
 
   const canReviewTour = useCallback((item) => {
     const status = String(item?.status || '').toUpperCase();
@@ -249,7 +369,7 @@ export default function OccupyApply() {
                             key={item.tourNo}
                             className={`${styles.listRow} ${isLessor ? styles.listRowLessor : ''}`}
                           >
-                            <span className={styles.oneLine}>{getRoomName(item)}</span>
+                            <span className={styles.oneLine}>{getRoomName(item, roomLabelByNo[item.roomNo])}</span>
                             <span>{fmtDate(item.visitDate)}</span>
                             <span>{fmtTime(item.visitTime)}</span>
                             <span>{statusLabel(item.status)}</span>
@@ -357,7 +477,7 @@ export default function OccupyApply() {
                             key={item.contractNo}
                             className={`${styles.listRow} ${isLessor ? styles.listRowLessor : ''}`}
                           >
-                            <span className={styles.oneLine}>{getRoomName(item)}</span>
+                            <span className={styles.oneLine}>{getRoomName(item, roomLabelByNo[item.roomNo])}</span>
                             <span>{fmtDate(item.moveInDate)}</span>
                             <span>{item.termMonths ? `${item.termMonths}개월` : '-'}</span>
                             <span>{statusLabel(item.status)}</span>

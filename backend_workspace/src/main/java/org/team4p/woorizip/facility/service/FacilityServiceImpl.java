@@ -306,7 +306,7 @@ public class FacilityServiceImpl implements FacilityService {
 	    // 사용 불가 지정 기간 내에 예약이 있는지 확인
 	    if (dto.getFacilityStatus() == FacilityStatus.UNAVAILABLE) {
 	    	// 해당 기간 내에 예약이 있는 날짜 확인
-	    	List<ReservationEntity> reservations = reservationRepository.findByFacility_FacilityNoAndReservationDateBetween(
+	    	List<ReservationEntity> reservations = reservationRepository.findByFacility_FacilityNoAndReservationDateBetweenAndReservationStatus(
 	    		    facilityNo, 
 	    		    dto.getBlockedStartTime().toLocalDate(), 
 	    		    dto.getBlockedEndTime().toLocalDate(),

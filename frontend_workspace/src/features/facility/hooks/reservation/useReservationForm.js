@@ -3,6 +3,7 @@ import {
   createReservation,
   modifyReservation,
   getReservationDetail,
+  getReservationTime
 } from '../../api/reservationApi';
 
 const schema = {
@@ -16,6 +17,7 @@ const schema = {
 
 export function useReservationForm(facilityNoInput = null, reservationNo = null) {
   const [values, setValues] = useState(schema);
+  const [reservedList, setReservedList] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -59,6 +61,22 @@ export function useReservationForm(facilityNoInput = null, reservationNo = null)
     }
   }, [reservationNo, updateMode]);
 
+  useEffect(() => {
+    const fetchTimes = async () => {
+      if (values.reservationDate && facilityNo) {
+        try {
+          const response = await getReservationTime(facilityNo, values.reservationDate);
+          const data = response?.data || response; 
+          setReservedList(data || []);
+        } catch (err) {
+          console.error("기존 예약 시간 리스트 조회 실패:", err.message);
+          setReservedList([]);
+        }
+      }
+    };
+    fetchTimes();
+  }, [values.reservationDate, facilityNo]);
+
   const handleChange = useCallback((e) => {
     const { name, value } = e.target;
     setValues((prev) => ({
@@ -98,6 +116,7 @@ export function useReservationForm(facilityNoInput = null, reservationNo = null)
 
   return {
     values,
+    reservedList,
     handleChange,
     onSubmit,
     loading,

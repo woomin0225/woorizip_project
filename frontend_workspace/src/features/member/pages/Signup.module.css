@@ -1,3 +1,16 @@
+.heroSection :global(.bg-gradient-info) {
+  background: linear-gradient(
+    135deg,
+    #cf7440 0%,
+    #e39a63 46%,
+    #efc89a 100%
+  ) !important;
+}
+
+.heroSection :global(.shape-style-1 span) {
+  background: rgba(255, 244, 232, 0.2) !important;
+}
+
 .formSection {
   border: 1px solid #e6ebf1;
   border-radius: 12px;
@@ -24,6 +37,33 @@
   min-width: 96px;
   border-radius: 8px;
   margin-left: 10px;
+}
+
+.primaryActionBtn {
+  border-color: #c9713f !important;
+  background: #c9713f !important;
+  color: #fff !important;
+}
+
+.primaryActionBtn:hover {
+  border-color: #b86334 !important;
+  background: #b86334 !important;
+}
+
+.softActionBtn {
+  border-color: #e5c4ad !important;
+  background: #fff6ee !important;
+  color: #8a4c2d !important;
+}
+
+.softActionBtn:hover {
+  background: #faece0 !important;
+}
+
+.doneActionBtn {
+  border-color: #a45a2f !important;
+  background: #a45a2f !important;
+  color: #fff !important;
 }
 
 .hintText {
@@ -95,8 +135,8 @@
 }
 
 .typePillActive {
-  border-color: #11cdef;
-  background: #11cdef;
+  border-color: #c9713f;
+  background: #c9713f;
   color: #fff;
 }
 

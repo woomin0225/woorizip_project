@@ -9,7 +9,7 @@ export default function ReservationForm({
   onCancel,
 }) {
   const navigate = useNavigate();
-  const { values, handleChange, loading, submitting, onSubmit } =
+  const { values, reservedList, handleChange, loading, submitting, onSubmit } =
     useReservationForm(facilityNo, reservationNo);
 
   const updateMode = !!reservationNo;
@@ -85,6 +85,22 @@ export default function ReservationForm({
                       />
                     </div>
                   </div>
+                  {values.reservationDate && (
+                    <div className={styles.reservationStatus}>
+                      <p className={styles.statusTitle}>🚫 선택하신 날짜의 예약 현황</p>
+                      <div className={styles.timeTagContainer}>
+                        {reservedList && reservedList.length > 0 ? (
+                          reservedList.map((res, index) => (
+                            <span key={index} className={styles.timeTag}>
+                              {res.reservationStartTime.substring(0, 5)} ~ {res.reservationEndTime.substring(0, 5)}
+                            </span>
+                          ))
+                        ) : (
+                          <span className={styles.emptyStatus}>예약된 내역이 없습니다.</span>
+                        )}
+                      </div>
+                    </div>
+                  )}
                   <div className={styles.grid2}>
                     <div className={styles.fieldRow}>
                       <div className={styles.fieldLabel}>시작 시간</div>

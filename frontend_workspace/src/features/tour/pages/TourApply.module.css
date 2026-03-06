@@ -106,10 +106,23 @@
   padding: 8px 12px;
 }
 
+.timeBtnAvailable {
+  background: #fff;
+  color: #344767;
+}
+
 .timeBtnActive {
   border-color: #11cdef;
   background: #11cdef;
   color: #fff;
+}
+
+.timeBtnDisabled {
+  background: #e9ecef;
+  border-color: #d2d6da;
+  color: #8c96a5;
+  opacity: 1;
+  cursor: not-allowed;
 }
 
 .textarea {

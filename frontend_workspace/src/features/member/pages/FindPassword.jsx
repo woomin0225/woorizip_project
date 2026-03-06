@@ -13,6 +13,7 @@ import {
   Row,
   Col,
 } from 'reactstrap';
+import styles from './FindPassword.module.css';
 
 export default function FindPassword() {
   const mainRef = useRef(null);
@@ -38,7 +39,9 @@ export default function FindPassword() {
   return (
     <>
       <main ref={mainRef}>
-        <section className="section section-shaped section-lg">
+        <section
+          className={`section section-shaped section-lg ${styles.heroSection}`}
+        >
           <div className="shape shape-style-1 bg-gradient-info">
             <span />
             <span />
@@ -93,6 +96,7 @@ export default function FindPassword() {
                             outline
                             size="sm"
                             type="button"
+                            className={`${styles.inlineActionBtn} ${isVerified ? styles.doneActionBtn : styles.primaryActionBtn}`}
                             onClick={handleSendCode}
                             disabled={loading || isVerified || isVerifying}
                           >
@@ -116,6 +120,7 @@ export default function FindPassword() {
                                 color="secondary"
                                 size="sm"
                                 type="button"
+                                className={`${styles.inlineActionBtn} ${styles.softActionBtn}`}
                                 onClick={handleResetVerification}
                               >
                                 인증 초기화
@@ -156,7 +161,7 @@ export default function FindPassword() {
                       )}
                       <div className="text-center">
                         <Button
-                          className="my-4"
+                          className={`my-4 ${styles.primaryActionBtn}`}
                           color="info"
                           type="submit"
                           disabled={loading || !isVerified}
