@@ -67,16 +67,18 @@ export function useReservationForm(facilityNoInput = null, reservationNo = null)
     }));
   }, []);
 
-  const onSubmit = async (e, navigate) => {
+  const onSubmit = async (e, navigate, manualValues) => {
     if (e) e.preventDefault();
     setSubmitting(true);
+    const targetValues = manualValues || values;
+    const { reservationStatus, ...dataToCreate } = targetValues;
 
     try {
       let response;
       if (updateMode) {
-        response = await modifyReservation(reservationNo, values);
+        response = await modifyReservation(reservationNo, targetValues);
       } else {
-        response = await createReservation(facilityNo, values);
+        response = await createReservation(facilityNo, dataToCreate);
       }
 
       const result = response?.data || response;
