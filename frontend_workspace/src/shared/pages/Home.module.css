@@ -1,3 +1,16 @@
+.heroSection :global(.bg-gradient-info) {
+  background: linear-gradient(
+    135deg,
+    #d37a3d 0%,
+    #e79c61 42%,
+    #f0bf88 100%
+  ) !important;
+}
+
+.heroSection :global(.shape-style-1 span) {
+  background: rgba(255, 245, 235, 0.2) !important;
+}
+
 .quickLinksContainer {
   margin-top: -30px;
   position: relative;

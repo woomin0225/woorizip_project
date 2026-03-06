@@ -6,6 +6,7 @@ import { getTour, updateTour } from '../api/tourAPI';
 import { cancelContract, getContract, requestContractAmendment } from '../../contract/api/contractAPI';
 import { getMyInfo, isLessorType } from '../../user/api/userAPI';
 import { getRoom } from '../../houseAndRoom/api/roomApi';
+import { getHouse } from '../../houseAndRoom/api/houseApi';
 import InlineCalendar from '../../../shared/components/InlineCalendar';
 import layoutStyles from '../../../app/layouts/MyPageLayout.module.css';
 import styles from './ApplicationDetail.module.css';
@@ -67,7 +68,9 @@ function toSqlDateTimeString(d) {
   return `${y}-${m}-${day} ${hh}:${mm}:${ss}`;
 }
 
-function getRoomName(item) {
+function getRoomName(item, displayName = '') {
+  if (typeof displayName === 'string' && displayName.trim()) return displayName.trim();
+  if (typeof item?.roomDisplayName === 'string' && item.roomDisplayName.trim()) return item.roomDisplayName.trim();
   const abstractValue = [
     item?.roomAbstract,
     item?.room_abstract,
@@ -108,6 +111,7 @@ export default function ApplicationDetail() {
   const [contractCancelReason, setContractCancelReason] = useState('');
   const todayIso = useMemo(() => getTodayLocalIso(), []);
   const [roomAvailableDateIso, setRoomAvailableDateIso] = useState('');
+  const [, setRoomDisplayName] = useState('');
   const minDate = todayIso;
   const contractMinDate = useMemo(() => {
     if (!roomAvailableDateIso) return todayIso;
@@ -117,8 +121,8 @@ export default function ApplicationDetail() {
   const canRender = isTour || isContract;
   const tourStatus = String(item?.status || '').toUpperCase();
   const contractStatus = String(item?.status || '').toUpperCase();
-  const canEditTour = isTour && ['PENDING', 'APPROVED'].includes(tourStatus);
-  const canCancelTour = isTour && ['PENDING', 'APPROVED'].includes(tourStatus);
+  const canEditTour = isTour && ['PENDING'].includes(tourStatus);
+  const canCancelTour = isTour && ['PENDING'].includes(tourStatus);
   const canEditContract = isContract && ['APPLIED', 'APPROVED'].includes(contractStatus);
   const canCancelContract = isContract && ['APPLIED', 'APPROVED', 'AMENDMENT_REQUESTED'].includes(contractStatus);
 
@@ -200,6 +204,87 @@ export default function ApplicationDetail() {
       mounted = false;
     };
   }, [isContract, item?.roomNo]);
+
+  const roomNoForDisplay = item?.roomNo;
+  const itemRoomName = (item?.roomName || item?.room_name || '').toString().trim();
+  const itemRoomAbstract = (item?.roomAbstract || item?.room_abstract || '').toString().trim();
+  const itemHouseName = (item?.houseName || item?.house_name || '').toString().trim();
+  const itemHouseNo = item?.houseNo || item?.house?.houseNo;
+  const fallbackRoomNameFromItem = getRoomName({
+    roomNo: roomNoForDisplay,
+    roomName: itemRoomName,
+    roomAbstract: itemRoomAbstract,
+    room_abstract: itemRoomAbstract,
+  });
+
+  useEffect(() => {
+    if (!roomNoForDisplay) {
+      setRoomDisplayName('');
+      return;
+    }
+    let mounted = true;
+    (async () => {
+      try {
+        const room = await getRoom(roomNoForDisplay);
+        if (!mounted) return;
+
+        const abstractValue = [
+          room?.roomAbstract,
+          room?.room_abstract,
+          room?.room?.roomAbstract,
+          room?.room?.room_abstract,
+        ].find((v) => typeof v === 'string' && v.trim());
+        const roomNameFromAbstract = abstractValue ? abstractValue.split(',')[0].trim() : '';
+        const roomName = (
+          roomNameFromAbstract ||
+          room?.roomName ||
+          room?.room_name ||
+          itemRoomName ||
+          room?.roomNo ||
+          roomNoForDisplay ||
+          ''
+        ).toString().trim();
+
+        let houseName = (
+          room?.houseName ||
+          room?.house_name ||
+          room?.house?.houseName ||
+          room?.house?.house_name ||
+          itemHouseName ||
+          ''
+        ).toString().trim();
+
+        const houseNo = room?.houseNo || room?.house?.houseNo || itemHouseNo;
+        if (!houseName && houseNo) {
+          try {
+            const house = await getHouse(houseNo);
+            if (!mounted) return;
+            houseName = (house?.houseName || house?.house_name || '').toString().trim();
+          } catch {
+            // fallback only
+          }
+        }
+
+        const nextRoomDisplayName = [houseName, roomName].filter(Boolean).join(' ').trim();
+        const resolvedRoomDisplayName = nextRoomDisplayName || fallbackRoomNameFromItem;
+        setRoomDisplayName(resolvedRoomDisplayName);
+        setItem((prev) => {
+          if (!prev || prev.roomDisplayName === resolvedRoomDisplayName) return prev;
+          return { ...prev, roomDisplayName: resolvedRoomDisplayName };
+        });
+      } catch {
+        if (!mounted) return;
+        setRoomDisplayName(fallbackRoomNameFromItem);
+        setItem((prev) => {
+          if (!prev || prev.roomDisplayName === fallbackRoomNameFromItem) return prev;
+          return { ...prev, roomDisplayName: fallbackRoomNameFromItem };
+        });
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, [roomNoForDisplay, itemRoomName, itemRoomAbstract, itemHouseName, itemHouseNo, fallbackRoomNameFromItem]);
 
   useEffect(() => {
     if (!isContract || !contractDate || !contractMinDate) return;
@@ -456,7 +541,11 @@ export default function ApplicationDetail() {
                             </div>
                           </div>
                           {!canEditTour && !canCancelTour && (
-                            <p className={styles.hint}>현재 상태에서는 수정/취소가 불가능합니다.</p>
+                            <p className={styles.hint}>
+                              {tourStatus === 'APPROVED'
+                                ? '임대인이 승인한 투어는 사용자 수정/취소가 불가능합니다.'
+                                : '현재 상태에서는 수정/취소가 불가능합니다.'}
+                            </p>
                           )}
                         </>
                       )}

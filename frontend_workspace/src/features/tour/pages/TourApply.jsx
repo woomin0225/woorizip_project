@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Container, Row, Col, Card, CardBody } from 'reactstrap';
-import { createTour } from '../api/tourAPI';
+import { createTour, getReservedTourTimes } from '../api/tourAPI';
 import { getRoom, getRoomImages } from '../../houseAndRoom/api/roomApi';
 import { getMyInfo } from '../../user/api/userAPI';
 import InlineCalendar from '../../../shared/components/InlineCalendar';
@@ -23,6 +23,7 @@ export default function TourApply() {
   const [thumb, setThumb] = useState('');
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedTime, setSelectedTime] = useState('');
+  const [reservedTimes, setReservedTimes] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [form, setForm] = useState({ name: '', phone: '', inquiry: '' });
 
@@ -30,6 +31,7 @@ export default function TourApply() {
     () => ['14:00', '15:00', '16:00', '17:00', '18:00', '19:00'],
     []
   );
+  const reservedTimeSet = useMemo(() => new Set(reservedTimes), [reservedTimes]);
   const minDate = useMemo(() => getTodayLocalIso(), []);
 
   useEffect(() => {
@@ -79,6 +81,36 @@ export default function TourApply() {
       }
     })();
   }, []);
+
+  useEffect(() => {
+    if (!roomNo || !selectedDate) {
+      setReservedTimes([]);
+      return;
+    }
+
+    let mounted = true;
+    (async () => {
+      try {
+        const times = await getReservedTourTimes(roomNo, selectedDate);
+        if (!mounted) return;
+        setReservedTimes(Array.isArray(times) ? times : []);
+      } catch {
+        if (!mounted) return;
+        setReservedTimes([]);
+      }
+    })();
+
+    return () => {
+      mounted = false;
+    };
+  }, [roomNo, selectedDate]);
+
+  useEffect(() => {
+    if (!selectedTime) return;
+    if (reservedTimeSet.has(selectedTime)) {
+      setSelectedTime('');
+    }
+  }, [reservedTimeSet, selectedTime]);
 
   const onSubmit = async (e) => {
     e.preventDefault();
@@ -168,16 +200,22 @@ export default function TourApply() {
                     <>
                       <label className={styles.label}>투어 희망 시간</label>
                       <div className={styles.timeSlots}>
-                        {timeSlots.map((time) => (
-                          <button
-                            key={time}
-                            type="button"
-                            className={`${styles.timeBtn} ${selectedTime === time ? styles.timeBtnActive : ''}`}
-                            onClick={() => setSelectedTime(time)}
-                          >
-                            {time}
-                          </button>
-                        ))}
+                        {timeSlots.map((time) => {
+                          const disabled = reservedTimeSet.has(time);
+                          return (
+                            <button
+                              key={time}
+                              type="button"
+                              className={`${styles.timeBtn} ${disabled ? styles.timeBtnDisabled : styles.timeBtnAvailable} ${selectedTime === time ? styles.timeBtnActive : ''}`}
+                              onClick={() => {
+                                if (!disabled) setSelectedTime(time);
+                              }}
+                              disabled={disabled}
+                            >
+                              {time}
+                            </button>
+                          );
+                        })}
                       </div>
                     </>
                   )}

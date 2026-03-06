@@ -5,6 +5,7 @@ import { ROUTES } from './../../../shared/constants/routes';
 import logo from '../../../logo.png';
 import { axiosInstance } from '../../http/axiosInstance';
 import { useAuth } from '../../providers/AuthProvider';
+import { parseJwt } from '../../providers/utils/jwt';
 
 import {
   Button,
@@ -58,19 +59,19 @@ export default function Header() {
     const syncUserState = () => {
       if (!token) return;
 
-      try {
-        const base64Url = token.split('.')[1];
-        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-        const jsonPayload = decodeURIComponent(
-          atob(base64)
-            .split('')
-            .map(function (c) {
-              return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-            })
-            .join('')
-        );
-        const decodedToken = JSON.parse(jsonPayload);
+      const decodedToken = parseJwt(token);
+      if (!decodedToken) {
+        // Invalid/legacy token in storage should not crash header render.
+        clearTokens();
+        localStorage.removeItem('userName');
+        localStorage.removeItem('userNo');
+        setIsLessor(false);
+        setUserName('');
+        setMyPageRoute(ROUTES.MEMBER.MYPAGE);
+        return;
+      }
 
+      try {
         // ✅ LESSOR 여부 확인: /api/user/{emailId} 호출해서 type 체크
         setIsLessor(false); // 기본값
 
@@ -114,7 +115,7 @@ export default function Header() {
       window.removeEventListener('profile-updated', syncUserState);
       window.removeEventListener('storage', syncUserState);
     };
-  }, [token]);
+  }, [token, clearTokens]);
 
   useEffect(() => {
     // Route change can leave navbar-collapse overlay classes behind on mobile.
@@ -251,7 +252,7 @@ export default function Header() {
                   </span>
                   <div className={styles.authButtonsRow}>
                     <Button
-                      className={`btn-neutral btn-icon ${styles.loggedInButton}`}
+                      className={`btn-icon ${styles.loggedInButton} ${styles.authBtnNeutral}`}
                       color="default"
                       size="sm"
                       to={myPageRoute}
@@ -261,7 +262,7 @@ export default function Header() {
                     </Button>
 
                     <Button
-                      className={`btn-info btn-icon ${styles.loggedInButton}`}
+                      className={`btn-icon ${styles.loggedInButton} ${styles.authBtnPrimary}`}
                       color="default"
                       size="sm"
                       onClick={handleLogout}
@@ -276,7 +277,7 @@ export default function Header() {
                 >
                   <div className={styles.authButtonsRow}>
                     <Button
-                      className="btn-neutral btn-icon"
+                      className={`btn-icon ${styles.authBtnNeutral}`}
                       color="default"
                       size="sm"
                       to="/login"
@@ -285,7 +286,7 @@ export default function Header() {
                       <span className="nav-link-inner--text">로그인</span>
                     </Button>
                     <Button
-                      className="btn-info btn-icon"
+                      className={`btn-icon ${styles.authBtnPrimary}`}
                       color="default"
                       size="sm"
                       to="/signup"
