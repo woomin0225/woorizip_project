@@ -112,10 +112,38 @@
   border-radius: 999px !important;
   font-weight: 700 !important;
   padding: 6px 14px !important;
+  border: 1px solid #e6c8b2 !important;
+  background: #fff6ee !important;
+  color: #8d4f2f !important;
 }
 
 :global(#navbar-main) .zoomButtonActive {
-  box-shadow: 0 0 0 2px rgba(17, 205, 239, 0.35) !important;
+  border-color: #c9713f !important;
+  background: #c9713f !important;
+  color: #fff !important;
+  box-shadow: 0 0 0 2px rgba(201, 113, 63, 0.3) !important;
+}
+
+:global(#navbar-main) .authBtnNeutral {
+  border: 1px solid #e5c4ad !important;
+  background: #fff6ee !important;
+  color: #8a4c2d !important;
+}
+
+:global(#navbar-main) .authBtnNeutral:hover {
+  background: #faece0 !important;
+  color: #7a4125 !important;
+}
+
+:global(#navbar-main) .authBtnPrimary {
+  border: 1px solid #c9713f !important;
+  background: #c9713f !important;
+  color: #fff !important;
+}
+
+:global(#navbar-main) .authBtnPrimary:hover {
+  border-color: #b86334 !important;
+  background: #b86334 !important;
 }
 
 @media (max-width: 991px) {

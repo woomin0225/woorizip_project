@@ -110,6 +110,60 @@ export async function updateTour(tourNo, payload) {
   return request(`/api/tour/update/${tourNo}`, { method: 'POST', body: JSON.stringify(payload) });
 }
 
+function toTimeHHMM(value) {
+  if (!value) return '';
+  const raw = String(value).trim();
+  const m = /(\d{2}):(\d{2})/.exec(raw);
+  if (m) return `${m[1]}:${m[2]}`;
+
+  const d = new Date(raw);
+  if (!Number.isNaN(d.getTime())) {
+    return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  }
+  return '';
+}
+
+function normalizeTourRows(data) {
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data?.content)) return data.content;
+  if (Array.isArray(data?.tours)) return data.tours;
+  if (Array.isArray(data?.reservations)) return data.reservations;
+  return [];
+}
+
+function isBlockingStatus(status) {
+  const normalized = String(status || '').toUpperCase();
+  return !['REJECTED', 'CANCELED', 'CANCELLED', 'EXPIRED'].includes(normalized);
+}
+
+export async function getReservedTourTimes(roomNo, visitDate) {
+  if (!roomNo || !visitDate) return [];
+
+  const query = `visitDate=${encodeURIComponent(visitDate)}`;
+  const data = await requestCandidates([
+    `/api/tour/reserved-times?roomNo=${encodeURIComponent(roomNo)}&${query}`,
+    `/api/tour/room/${roomNo}/schedule?${query}`,
+    `/api/tour/room/${roomNo}?${query}`,
+    `/api/tour/list/room/${roomNo}?${query}`,
+    `/api/tour/availability/${roomNo}?${query}`,
+    `/api/tour/reserved/${roomNo}?${query}`,
+  ]);
+
+  const rows = normalizeTourRows(data);
+  const times = rows
+    .filter((row) => {
+      if (typeof row === 'string') return true;
+      return isBlockingStatus(row?.status);
+    })
+    .map((row) => {
+      if (typeof row === 'string') return toTimeHHMM(row);
+      return toTimeHHMM(row?.visitTime || row?.time || row?.reservedTime);
+    })
+    .filter(Boolean);
+
+  return Array.from(new Set(times));
+}
+
 export async function decideTour(tourNo, status, reason = '') {
   const normalizedStatus = String(status || '').toUpperCase();
   // 반려 사유는 REJECTED일 때만 전달

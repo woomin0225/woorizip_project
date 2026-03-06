@@ -76,7 +76,7 @@ export default function Home() {
       <main>
         {/* 1. 슬라이드 배너 영역 */}
         <section
-          className="section-profile-cover section-shaped my-0"
+          className={`section-profile-cover section-shaped my-0 ${styles.heroSection}`}
           style={{ height: '500px', overflow: 'hidden' }}
         >
           <div className="shape shape-style-1 bg-gradient-info">
