@@ -15,6 +15,7 @@ import {
   Col,
   FormFeedback,
 } from 'reactstrap';
+import styles from './Login.module.css';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -43,7 +44,9 @@ export default function Login() {
   return (
     <>
       <main ref={mainRef}>
-        <section className="section section-shaped section-lg">
+        <section
+          className={`section section-shaped section-lg ${styles.heroSection}`}
+        >
           <div className="shape shape-style-1 bg-gradient-info">
             <span />
             <span />
@@ -102,7 +105,7 @@ export default function Login() {
                       )}
                       <div className="text-center">
                         <Button
-                          className="my-4"
+                          className={`my-4 ${styles.primaryActionBtn}`}
                           color="info"
                           type="submit"
                           disabled={loading}
@@ -120,7 +123,7 @@ export default function Login() {
                     </div>
                     <div className="btn-wrapper text-center">
                       <Button
-                        className="btn-neutral btn-icon"
+                        className={`btn-neutral btn-icon ${styles.socialBtn}`}
                         color="default"
                         onClick={() => handleSocialLogin('google')}
                       >
@@ -132,7 +135,7 @@ export default function Login() {
                         </span>
                       </Button>
                       <Button
-                        className="btn-neutral btn-icon"
+                        className={`btn-neutral btn-icon ${styles.socialBtn}`}
                         color="default"
                         onClick={() => handleSocialLogin('kakao')}
                       >

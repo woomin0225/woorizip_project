@@ -14,6 +14,7 @@ import {
   Col,
   FormFeedback,
 } from 'reactstrap';
+import styles from './FindId.module.css';
 
 export default function FindId() {
   const mainRef = useRef(null);
@@ -49,7 +50,9 @@ export default function FindId() {
   return (
     <>
       <main ref={mainRef}>
-        <section className="section section-shaped section-lg">
+        <section
+          className={`section section-shaped section-lg ${styles.heroSection}`}
+        >
           <div className="shape shape-style-1 bg-gradient-info">
             <span />
             <span />
@@ -106,6 +109,7 @@ export default function FindId() {
                               outline
                               size="sm"
                               type="button"
+                              className={`${styles.inlineActionBtn} ${isVerified ? styles.doneActionBtn : styles.primaryActionBtn}`}
                               onClick={handleSendCode}
                               disabled={isVerified || isVerifying}
                             >
@@ -130,6 +134,7 @@ export default function FindId() {
                                 color="secondary"
                                 size="sm"
                                 type="button"
+                                className={`${styles.inlineActionBtn} ${styles.softActionBtn}`}
                                 onClick={handleResetVerification}
                               >
                                 인증 초기화
@@ -149,7 +154,7 @@ export default function FindId() {
                         )}
                         <div className="text-center">
                           <Button
-                            className="my-4"
+                            className={`my-4 ${styles.primaryActionBtn}`}
                             color="info"
                             type="submit"
                             disabled={loading || !isVerified}
@@ -168,7 +173,13 @@ export default function FindId() {
                         <h4 className="display-4 text-primary mb-4">
                           {foundId}
                         </h4>
-                        <Button color="info" outline block href="/login">
+                        <Button
+                          color="info"
+                          outline
+                          block
+                          href="/login"
+                          className={styles.primaryActionBtn}
+                        >
                           로그인하기
                         </Button>
                         <Button color="link" block href="/find-password">

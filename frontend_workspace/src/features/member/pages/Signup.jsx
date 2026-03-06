@@ -62,7 +62,9 @@ export default function Signup() {
   return (
     <>
       <main ref={mainRef}>
-        <section className="section section-shaped section-lg">
+        <section
+          className={`section section-shaped section-lg ${styles.heroSection}`}
+        >
           <div className="shape shape-style-1 bg-gradient-info">
             <span />
             <span />
@@ -110,7 +112,7 @@ export default function Signup() {
                                 color={isIdChecked ? 'success' : 'info'}
                                 type="button"
                                 onClick={handleCheckId}
-                                className={styles.inlineActionBtn}
+                                className={`${styles.inlineActionBtn} ${isIdChecked ? styles.doneActionBtn : styles.primaryActionBtn}`}
                               >
                                 {isIdChecked ? '확인완료' : '중복확인'}
                               </Button>
@@ -280,7 +282,7 @@ export default function Signup() {
                                 type="button"
                                 onClick={handleSendPhoneCode}
                                 disabled={isPhoneVerifying}
-                                className={styles.inlineActionBtn}
+                                className={`${styles.inlineActionBtn} ${isPhoneVerified ? styles.doneActionBtn : styles.primaryActionBtn}`}
                               >
                                 {isPhoneVerifying
                                   ? '인증 중...'
@@ -306,7 +308,7 @@ export default function Signup() {
                                   color="secondary"
                                   type="button"
                                   onClick={handleResetPhoneVerification}
-                                  className={styles.inlineActionBtn}
+                                  className={`${styles.inlineActionBtn} ${styles.softActionBtn}`}
                                 >
                                   초기화
                                 </Button>
@@ -329,7 +331,7 @@ export default function Signup() {
 
                       <div className="text-center">
                         <Button
-                          className="mt-4"
+                          className={`mt-4 ${styles.primaryActionBtn}`}
                           color="info"
                           type="submit"
                           disabled={loading}
