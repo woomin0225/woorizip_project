@@ -120,7 +120,7 @@ export default function ReservationForm({
                 <button 
                   type="button" 
                   className={styles.secondaryBtn} 
-                  onClick={onCancel || (() => navigate(-1))}
+                  onClick={onCancel || (() => navigate('/facility/view'))}
                 >
                   취소
                 </button>

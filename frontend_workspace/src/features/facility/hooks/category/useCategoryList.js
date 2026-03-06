@@ -12,17 +12,10 @@ export const useCategoryList = () => {
     try {
       setLoading(true);
       setError(null);
-<<<<<<< Updated upstream
       const response = await getFacilityCategories();
       const actualData = response?.data || response;
       console.log('상세 데이터 로드 성공:', actualData);
       setCategories(actualData);
-=======
-
-      const response = await getFacilityCategories();
-      const data = unwrapApi(response);
-      setCategories(data);
->>>>>>> Stashed changes
     } catch (err) {
       setError(err);
       console.error(err.message);
