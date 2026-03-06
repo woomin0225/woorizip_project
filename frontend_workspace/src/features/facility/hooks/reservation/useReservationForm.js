@@ -3,7 +3,9 @@ import {
   createReservation,
   modifyReservation,
   getReservationDetail,
+  getReservationTime
 } from '../../api/reservationApi';
+import { getFacilityDetail } from '../../api/facilityApi';
 
 const schema = {
   reservationName: '',
@@ -16,10 +18,12 @@ const schema = {
 
 export function useReservationForm(facilityNoInput = null, reservationNo = null) {
   const [values, setValues] = useState(schema);
+  const [reservedList, setReservedList] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  
+  const [facilityDetail, setFacilityDetail] = useState(null);
+
   const updateMode = !!reservationNo;
 
   const facilityNo = 
@@ -59,6 +63,23 @@ export function useReservationForm(facilityNoInput = null, reservationNo = null)
     }
   }, [reservationNo, updateMode]);
 
+  useEffect(() => {
+    const fetchTimes = async () => {
+      if (values.reservationDate && facilityNo) {
+        try {
+          const response = await getReservationTime(facilityNo, values.reservationDate);
+          const actualData = response?.data?.data || response?.data || response;
+          console.log('기존 예약 데이터:', actualData);
+          setReservedList(actualData || []);
+        } catch (err) {
+          console.error("기존 예약 시간 리스트 조회 실패:", err.message);
+          setReservedList([]);
+        }
+      }
+    };
+    fetchTimes();
+  }, [values.reservationDate, facilityNo]);
+
   const handleChange = useCallback((e) => {
     const { name, value } = e.target;
     setValues((prev) => ({
@@ -83,9 +104,6 @@ export function useReservationForm(facilityNoInput = null, reservationNo = null)
 
       const result = response?.data || response;
       alert(result.message || '등록되었습니다.');
-      
-      const resNo = result.reservationNo || reservationNo;
-      const targetFNo = facilityNo || result.facilityNo;
       navigate('/reservation/view');
       
     } catch (err) {
@@ -98,6 +116,7 @@ export function useReservationForm(facilityNoInput = null, reservationNo = null)
 
   return {
     values,
+    reservedList,
     handleChange,
     onSubmit,
     loading,

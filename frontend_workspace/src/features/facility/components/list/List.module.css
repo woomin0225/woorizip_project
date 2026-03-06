@@ -39,11 +39,11 @@
 }
 
 .facilityHeader {
-  background: #f8f9fe;
+  background: #f2e1d5;
   border-bottom: 1px solid #e9ecef;
   font-size: 0.9rem;
   font-weight: 700;
-  color: #525f7f;
+  color: #c9713f;
 }
 
 .facilityRow {
@@ -59,8 +59,8 @@
 }
 
 .facilityRow:hover {
-  background-color: #f6f9fc;
-  color: #11cdef;
+  background-color: #fdf5f0;
+  color: #c9713f;
 }
 
 .oneLine {
@@ -75,7 +75,7 @@
 }
 
 .primaryBtn {
-  background: #5e72e4;
+  background: #c9713f;
   color: #fff;
   border: none;
   padding: 8px 16px; 
@@ -88,7 +88,7 @@
 }
 
 .primaryBtn:hover {
-  background: #4459e0;
+  background: #b86334;
   box-shadow: 0 4px 6px rgba(50, 50, 93, 0.11);
   transform: translateY(-1px);
 }
@@ -97,9 +97,9 @@
   padding: 24px;
   margin: 0;
   border-bottom: 1px solid #e9ecef;
-  background: #f8f9fe;
+  background: #f2e1d5;
   font-weight: 600;
-  color: #525f7f;
+  color: #c9713f;
 }
 
 .facilityEmpty {

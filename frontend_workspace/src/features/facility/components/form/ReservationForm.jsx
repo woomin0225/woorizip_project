@@ -1,7 +1,9 @@
 import React from 'react';
+import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useReservationForm } from '../../hooks/reservation/useReservationForm';
 import styles from './Form.module.css';
+import { useFacilityDetail } from './../../hooks/facility/useFacilityDetail';
 
 export default function ReservationForm({
   facilityNo,
@@ -9,12 +11,100 @@ export default function ReservationForm({
   onCancel,
 }) {
   const navigate = useNavigate();
-  const { values, handleChange, loading, submitting, onSubmit } =
-    useReservationForm(facilityNo, reservationNo);
+  const {
+    values,
+    reservedList,
+    handleChange,
+    loading: resLoading,
+    submitting,
+    onSubmit,
+  } = useReservationForm(facilityNo, reservationNo);
+  const { facilityDetails, loading: facLoading } =
+    useFacilityDetail(facilityNo);
 
   const updateMode = !!reservationNo;
 
-  if (loading)
+  const generateTimeOptions = (selectedDate, open, close, unit) => {
+    if (!selectedDate || !open || !close || !unit) return [];
+
+    const options = [];
+
+    let current = new Date(`${selectedDate}T${open}`);
+    const end = new Date(`${selectedDate}T${close}`);
+
+    while (current <= end) {
+      const hh = String(current.getHours()).padStart(2, '0');
+      const mm = String(current.getMinutes()).padStart(2, '0');
+      options.push(`${hh}:${mm}`);
+
+      current.setMinutes(current.getMinutes() + unit);
+    }
+    return options;
+  };
+
+  const timeOptions = useMemo(() => {
+    return generateTimeOptions(
+      values.reservationDate,
+      facilityDetails?.facilityOpenTime,
+      facilityDetails?.facilityCloseTime,
+      facilityDetails?.facilityRsvnUnitMinutes
+    );
+  }, [values.reservationDate, facilityDetails]);
+
+  const finalTimeOptions = useMemo(() => {
+  if (!timeOptions.length) return [];
+
+  return timeOptions.filter(time => {
+    const isOverlapped = reservedList?.some(res => {
+      const start = res.reservationStartTime.substring(0, 5);
+      const end = res.reservationEndTime.substring(0, 5);
+      
+      return time >= start && time < end;
+    });
+
+    return !isOverlapped;
+  });
+}, [timeOptions, reservedList]);
+
+ const endTimeOptions = useMemo(() => {
+  if (!values.reservationStartTime || !facilityDetails) return [];
+
+  const options = [];
+  const unit = facilityDetails.facilityRsvnUnitMinutes;
+  const maxDuration = facilityDetails.facilityMaxDurationMinutes;
+  const closeTime = facilityDetails.facilityCloseTime;
+
+  const selectedDate = values.reservationDate;
+  const startTimeStr = values.reservationStartTime.substring(0, 5);
+  let current = new Date(`${selectedDate}T${startTimeStr}`);
+  const startTimestamp = current.getTime();
+  
+  const endLimit = new Date(`${selectedDate}T${closeTime}`);
+
+  while (true) {
+    current.setMinutes(current.getMinutes() + unit);
+    
+    const duration = (current.getTime() - startTimestamp) / (1000 * 60);
+    if (duration > maxDuration) break;
+
+    if (current > endLimit) break;
+
+    const currentTimeStr = current.toTimeString().substring(0, 5);
+    const isBlocked = reservedList?.some(res => {
+      const resStart = res.reservationStartTime.substring(0, 5);
+      const resEnd = res.reservationEndTime.substring(0, 5);
+      return currentTimeStr > resStart && currentTimeStr <= resEnd;
+    });
+    
+    if (isBlocked) break;
+
+    options.push(currentTimeStr);
+  }
+
+  return options;
+}, [values.reservationStartTime, values.reservationDate, facilityDetails, reservedList]);
+
+  if (facLoading || resLoading)
     return <div className={styles.facilityEmpty}>데이터를 불러오는 중...</div>;
 
   return (
@@ -89,27 +179,44 @@ export default function ReservationForm({
                     <div className={styles.fieldRow}>
                       <div className={styles.fieldLabel}>시작 시간</div>
                       <div className={styles.fieldControl}>
-                        <input
-                          type="time"
+                        <select
                           name="reservationStartTime"
                           className={styles.input}
                           value={values.reservationStartTime || ''}
                           onChange={handleChange}
                           required
-                        />
+                        >
+                          <option value="">시작 시간 선택</option>
+                          {finalTimeOptions.map((time) => (
+                            <option key={time} value={`${time}:00`}>
+                              {time}
+                            </option>
+                          ))}
+                        </select>
                       </div>
                     </div>
                     <div className={styles.fieldRow}>
                       <div className={styles.fieldLabel}>종료 시간</div>
                       <div className={styles.fieldControl}>
-                        <input
-                          type="time"
+                        <select
                           name="reservationEndTime"
                           className={styles.input}
                           value={values.reservationEndTime || ''}
                           onChange={handleChange}
+                          disabled={!values.reservationStartTime}
                           required
-                        />
+                        >
+                          <option value="">
+                            {!values.reservationStartTime
+                              ? '시작 시간을 먼저 선택하세요'
+                              : '종료 시간 선택'}
+                          </option>
+                          {endTimeOptions.map((time) => (
+                            <option key={time} value={`${time}:00`}>
+                              {time}
+                            </option>
+                          ))}
+                        </select>
                       </div>
                     </div>
                   </div>

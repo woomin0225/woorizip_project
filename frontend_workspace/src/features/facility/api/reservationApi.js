@@ -29,6 +29,14 @@ export async function createReservation(facilityNo, dto) {
   return data;
 }
 
+// 예약 등록 시 기존 예약 시간 조회
+export async function getReservationTime(facilityNo, date) {
+  const { data } = await apiJson().get(`/api/facilities/${facilityNo}/reservations/check`,
+    { params: { date } }
+  );
+  return data;
+}
+
 // 예약 내용 수정
 export async function modifyReservation(reservationNo, dto) {
   const { data } = await apiJson().patch(`/api/reservations/${reservationNo}`, dto);

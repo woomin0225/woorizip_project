@@ -13,7 +13,6 @@ export default function FacilityList({ isLessor, isAdmin, houseNo: propsHouseNo 
   const currentHouseNo = propsHouseNo || urlHouseNo;
   const [selectedFacilityNo, setSelectedFacilityNo] = useState(null);
 
-  // 관리자(isAdmin)이거나 임대인(isLessor)인데 건물 번호가 없으면 건물 리스트를 가져옴
   const showHouseSelection = (isLessor || isAdmin) && !currentHouseNo;
 
   const { houses, loading: hLoading } = useHouseList(showHouseSelection);
@@ -29,9 +28,7 @@ export default function FacilityList({ isLessor, isAdmin, houseNo: propsHouseNo 
           {showHouseSelection ? '건물 선택' : '공용시설'}
         </h2>
         
-        {/* 버튼 분기 로직 */}
         {isAdmin ? (
-          // 1. 관리자일 때: 카테고리 조회 버튼
           <button
             className={styles.primaryBtn}
             onClick={() => nav(`/admin/category`)}
@@ -39,7 +36,6 @@ export default function FacilityList({ isLessor, isAdmin, houseNo: propsHouseNo 
             카테고리 조회
           </button>
         ) : isLessor ? (
-          // 2. 임대인일 때: 건물 번호가 있으면 시설 등록 버튼
           currentHouseNo && (
             <button
               className={styles.primaryBtn}
@@ -49,7 +45,6 @@ export default function FacilityList({ isLessor, isAdmin, houseNo: propsHouseNo 
             </button>
           )
         ) : (
-          // 3. 임차인일 때: 내 예약 내역 버튼
           <button
             className={styles.primaryBtn}
             onClick={() => nav(`/reservation/view`)}
@@ -79,7 +74,6 @@ export default function FacilityList({ isLessor, isAdmin, houseNo: propsHouseNo 
         <div className={styles.facilityContainer}>
           <div className={styles.facilityHeader}>
             <span>시설 명칭</span>
-            <span className={styles.textMuted}>상세보기</span>
           </div>
           {facilities?.length > 0 ? (
             facilities.map((f) => (

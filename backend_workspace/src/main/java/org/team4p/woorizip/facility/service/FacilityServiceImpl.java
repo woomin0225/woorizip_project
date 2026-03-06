@@ -286,10 +286,6 @@ public class FacilityServiceImpl implements FacilityService {
 		    throw new ForbiddenException("해당 시설의 정보를 수정할 권한이 없습니다."); 
 		}
 		
-		if(entity.getFacilityRsvnRequiredYn() == true || dto.getFacilityRsvnRequiredYn() == false) {
-			throw new ForbiddenException("해당 시설의 정보를 수정할 권한이 없습니다.");
-		}
-		
 		// 예약이 있으면 예약 필요 여부 변경 불가
 		if(entity.getFacilityRsvnRequiredYn() && !dto.getFacilityRsvnRequiredYn()) {
 			if(hasReservation(facilityNo)) throw new ForbiddenException("예정된 예약이 있어 예약 필요 여부를 변경할 수 없습니다.");
@@ -306,7 +302,7 @@ public class FacilityServiceImpl implements FacilityService {
 	    // 사용 불가 지정 기간 내에 예약이 있는지 확인
 	    if (dto.getFacilityStatus() == FacilityStatus.UNAVAILABLE) {
 	    	// 해당 기간 내에 예약이 있는 날짜 확인
-	    	List<ReservationEntity> reservations = reservationRepository.findByFacility_FacilityNoAndReservationDateBetween(
+	    	List<ReservationEntity> reservations = reservationRepository.findByFacility_FacilityNoAndReservationDateBetweenAndReservationStatus(
 	    		    facilityNo, 
 	    		    dto.getBlockedStartTime().toLocalDate(), 
 	    		    dto.getBlockedEndTime().toLocalDate(),

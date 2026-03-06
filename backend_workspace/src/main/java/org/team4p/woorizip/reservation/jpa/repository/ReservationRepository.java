@@ -28,20 +28,27 @@ public interface ReservationRepository extends JpaRepository<ReservationEntity, 
 	List<ReservationEntity> findByFacility_FacilityNo(String facilityNo, Pageable pageable);
 
 	// 신규 예약 시 예약 횟수 검증용 메서드
-	long countByUser_UserNoAndFacility_FacilityNoAndReservationDate(String user, String facility, LocalDate date);
+	long countByUser_UserNoAndFacility_FacilityNoAndReservationDateAndReservationStatus(String user, String facility, LocalDate date, ReservationStatus status);
 
 	// 신규 예약 시 중복 예약 확인용 메서드
-	boolean existsByFacility_FacilityNoAndReservationDateAndReservationStartTimeBeforeAndReservationEndTimeAfter(
-			String facilityNo, LocalDate date, LocalTime endTime, LocalTime startTime);
+	boolean existsByFacility_FacilityNoAndReservationDateAndReservationStartTimeBeforeAndReservationEndTimeAfterAndReservationStatus(
+			String facilityNo, LocalDate date, LocalTime endTime, LocalTime startTime, ReservationStatus status);
 
+	// 신규 예약 시 특정 날짜 시간대 중복 확인 메서드
+	boolean existsByUser_UserNoAndReservationDateAndReservationStartTimeBeforeAndReservationEndTimeAfterAndReservationStatus(
+	        String userNo, LocalDate date, LocalTime end, LocalTime start, ReservationStatus status);
+	
 	// 기존 예약 수정 시 예약 횟수 검증용 메서드
-	long countByUser_UserNoAndFacility_FacilityNoAndReservationDateAndReservationNoNot(String userNo, String facilityNo,
-			LocalDate date, String reservationNo);
+	long countByUser_UserNoAndFacility_FacilityNoAndReservationDateAndReservationNoNotAndReservationStatus(String userNo, String facilityNo,
+			LocalDate date, String reservationNo, ReservationStatus status);
 
 	// 기존 예약 수정 시 중복 예약 확인용 메서드
-	boolean existsByFacility_FacilityNoAndReservationDateAndReservationStartTimeBeforeAndReservationEndTimeAfterAndReservationNoNot(
-			String facilityNo, LocalDate date, LocalTime endTime, LocalTime startTime, String reservationNo);
+	boolean existsByFacility_FacilityNoAndReservationDateAndReservationStartTimeBeforeAndReservationEndTimeAfterAndReservationNoNotAndReservationStatus(
+			String facilityNo, LocalDate date, LocalTime endTime, LocalTime startTime, String reservationNo, ReservationStatus status);
 
+	// 기존 예약 수정 시 특정 날짜 시간대 중복 확인 메서드
+	boolean existsByUser_UserNoAndReservationDateAndReservationStartTimeBeforeAndReservationEndTimeAfterAndReservationNoNotAndReservationStatus(
+	        String userNo, LocalDate date, LocalTime end, LocalTime start, String excludeRsvnNo, ReservationStatus status);
 	// facilityStatus를 modify할 경우 막아둔 예약을 모두 제거하는 메서드
 	@Transactional
 	@Modifying
@@ -54,6 +61,6 @@ public interface ReservationRepository extends JpaRepository<ReservationEntity, 
 			ReservationStatus status, LocalDate time);
 	
 	// facilityStatus == FacilityStatus.UNAVAILABLE 시 해당 날짜에 예약이 있는지 조회하는 메서드
-	List<ReservationEntity> findByFacility_FacilityNoAndReservationDateBetween(String facilityNo, LocalDate startDate,
+	List<ReservationEntity> findByFacility_FacilityNoAndReservationDateBetweenAndReservationStatus(String facilityNo, LocalDate startDate,
 			LocalDate endDate, ReservationStatus status);
 }
