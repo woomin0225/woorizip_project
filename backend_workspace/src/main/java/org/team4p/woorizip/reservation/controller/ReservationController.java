@@ -1,10 +1,12 @@
 package org.team4p.woorizip.reservation.controller;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -44,6 +46,14 @@ public class ReservationController {
 		reservationService.createReservation(dto, currentUserNo, facilityNo);
 		return ResponseEntity.ok(ApiResponse.ok("예약이 성공적으로 등록되었습니다.", "reservationCreateSuccess"));
 
+	}
+	
+	@GetMapping("/api/facilities/{facilityNo}/reservations/check")
+	public ResponseEntity<ApiResponse<List<ReservationListResponseDTO>>> getAvailability(
+	        @PathVariable String facilityNo,
+	        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+	    List<ReservationListResponseDTO> list = reservationService.selectList(facilityNo, date);
+	    return ResponseEntity.ok(ApiResponse.ok("해당 일자 예약 목록 조회 성공", list));
 	}
 
 	// 예약 목록 조회
