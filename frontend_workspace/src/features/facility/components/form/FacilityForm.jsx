@@ -126,7 +126,7 @@ export default function FacilityForm() {
 
     const correctedCloseTime =
       values.facilityCloseTime === '24:00:00'
-        ? '23:59:59'
+        ? '23:59:00'
         : values.facilityCloseTime;
 
     const finalValues = {
@@ -151,6 +151,16 @@ export default function FacilityForm() {
     const hh = String(h).padStart(2, '0');
     baseOptions.push(`${hh}:00`, `${hh}:30`);
   }
+
+  const getCloseTimeOptions = () => {
+    const openTime = values.facilityOpenTime || '00:00:00';
+    const shortOpenTime = openTime.substring(0, 5);
+    const filtered = baseOptions.filter((time) => time > shortOpenTime);
+
+    return [...filtered, '24:00'];
+  };
+
+  const closeTimeOptions = getCloseTimeOptions();
 
   if (loading)
     return <div className={styles.facilityEmpty}>시설 정보 로딩 중...</div>;
@@ -288,7 +298,7 @@ export default function FacilityForm() {
                           disabled={values.isAllDay}
                         >
                           {operationTimeOptions.map((time) => (
-                            <option key={time} value={time}>
+                            <option key={time} value={`${time}:00`}>
                               {time}
                             </option>
                           ))}
@@ -297,16 +307,20 @@ export default function FacilityForm() {
                         <select
                           name="facilityCloseTime"
                           className={styles.input}
-                          value={values.facilityCloseTime || '22:00'}
+                          value={values.facilityCloseTime}
                           onChange={handleChange}
                           disabled={values.isAllDay}
                         >
-                          {baseOptions.map((time) => (
-                            <option key={time} value={`${time}:00`}>
+                          {closeTimeOptions.map((time) => (
+                            <option
+                              key={time}
+                              value={
+                                time.length === 5 ? `${time}:00` : `${time}:00`
+                              }
+                            >
                               {time}
                             </option>
                           ))}
-                          <option value="24:00:00">24:00</option>
                         </select>
 
                         <label className={styles.allDayCheck}>

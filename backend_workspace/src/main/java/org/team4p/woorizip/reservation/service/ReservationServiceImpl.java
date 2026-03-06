@@ -263,7 +263,7 @@ public class ReservationServiceImpl implements ReservationService {
 	        }
 	    }
 
-	    // 중복 예약 확인
+	    // 시설 중복 예약 확인
 	    boolean isOverlapped;
 	    if (excludeRsvnNo == null) {
 	        isOverlapped = reservationRepository.existsByFacility_FacilityNoAndReservationDateAndReservationStartTimeBeforeAndReservationEndTimeAfterAndReservationStatus(
@@ -274,7 +274,21 @@ public class ReservationServiceImpl implements ReservationService {
 	    }
 
 	    if (isOverlapped) {
-	        throw new ForbiddenException("해당 시간에는 다른 예약이 존재합니다.");
+	        throw new ForbiddenException("해당 시간에는 다른 사용자의 예약이 존재합니다.");
+	    }
+	    
+	    // 다른 시설 중복 예약 확인
+	    boolean isUserBusy;
+	    if (excludeRsvnNo == null) {
+	        isUserBusy = reservationRepository.existsByUser_UserNoAndReservationDateAndReservationStartTimeBeforeAndReservationEndTimeAfterAndReservationStatus(
+	                userNo, date, end, start, ReservationStatus.APPROVED);
+	    } else {
+	        isUserBusy = reservationRepository.existsByUser_UserNoAndReservationDateAndReservationStartTimeBeforeAndReservationEndTimeAfterAndReservationNoNotAndReservationStatus(
+	                userNo, date, end, start, excludeRsvnNo, ReservationStatus.APPROVED);
+	    }
+
+	    if (isUserBusy) {
+	        throw new ForbiddenException("해당 시간대에 다른 시설 예약 내역이 존재합니다.");
 	    }
 	}
 }

@@ -34,6 +34,10 @@ public interface ReservationRepository extends JpaRepository<ReservationEntity, 
 	boolean existsByFacility_FacilityNoAndReservationDateAndReservationStartTimeBeforeAndReservationEndTimeAfterAndReservationStatus(
 			String facilityNo, LocalDate date, LocalTime endTime, LocalTime startTime, ReservationStatus status);
 
+	// 신규 예약 시 특정 날짜 시간대 중복 확인 메서드
+	boolean existsByUser_UserNoAndReservationDateAndReservationStartTimeBeforeAndReservationEndTimeAfterAndReservationStatus(
+	        String userNo, LocalDate date, LocalTime end, LocalTime start, ReservationStatus status);
+	
 	// 기존 예약 수정 시 예약 횟수 검증용 메서드
 	long countByUser_UserNoAndFacility_FacilityNoAndReservationDateAndReservationNoNotAndReservationStatus(String userNo, String facilityNo,
 			LocalDate date, String reservationNo, ReservationStatus status);
@@ -42,6 +46,9 @@ public interface ReservationRepository extends JpaRepository<ReservationEntity, 
 	boolean existsByFacility_FacilityNoAndReservationDateAndReservationStartTimeBeforeAndReservationEndTimeAfterAndReservationNoNotAndReservationStatus(
 			String facilityNo, LocalDate date, LocalTime endTime, LocalTime startTime, String reservationNo, ReservationStatus status);
 
+	// 기존 예약 수정 시 특정 날짜 시간대 중복 확인 메서드
+	boolean existsByUser_UserNoAndReservationDateAndReservationStartTimeBeforeAndReservationEndTimeAfterAndReservationNoNotAndReservationStatus(
+	        String userNo, LocalDate date, LocalTime end, LocalTime start, String excludeRsvnNo, ReservationStatus status);
 	// facilityStatus를 modify할 경우 막아둔 예약을 모두 제거하는 메서드
 	@Transactional
 	@Modifying

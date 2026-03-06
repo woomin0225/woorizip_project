@@ -3,14 +3,12 @@
 @import '../list/List.module.css';
 @import '../detail/Detail.module.css';
 
-/* 1. 최상단 섹션 여백 */
 .contentSection {
   composes: contentSection from '../../../../app/layouts/MyPageLayout.module.css';
   padding-top: 40px !important;
   min-height: auto !important;
 }
 
-/* 2. 이미지 섹션 및 카운트 (추가된 부분) */
 .imageSection {
   border: 2px dashed #e9ecef;
   border-radius: 12px;
@@ -22,20 +20,18 @@
 }
 
 .imageSection:hover {
-  border-color: #11cdef;
-  background-color: #f2fbff;
+  border-color: #c9713f;
+  background-color: #f2e1d5;
 }
 
-/* 이미지 개수 표시 (0/5) 스타일 */
 .imageCount {
   display: block;
   margin-top: 8px;
   font-size: 0.85rem;
-  color: #8898aa;
+  color: #c9713f;
   font-weight: 600;
 }
 
-/* 업로드된 이미지 미리보기 그리드 */
 .imagePreviewGrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
@@ -43,7 +39,6 @@
   margin-top: 15px;
 }
 
-/* 3. 제목 및 레이아웃 */
 .headerRow {
   composes: headerRow from '../../../../app/layouts/MyPageLayout.module.css';
   margin-bottom: 30px !important;
@@ -74,7 +69,6 @@
   width: 100% !important;
 }
 
-/* 5. 섹션 및 버튼 */
 .sectionBlock {
   composes: sectionBlock from '../../../../app/layouts/MyPageLayout.module.css';
   border-top: 1px solid #f0f2f5;

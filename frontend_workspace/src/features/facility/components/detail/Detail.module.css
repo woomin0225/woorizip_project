@@ -60,12 +60,12 @@
 
 .optionBadge {
   padding: 7px 14px;
-  background: #eef2ff;
-  color: #5e72e4;
+  background: #fdf5f0;
+  color: #c9713f;
   border-radius: 20px;
   font-size: 0.85rem;
   font-weight: 700;
-  border: 1px solid rgba(94, 114, 228, 0.1);
+  border: 1px solid #c9713f;
 }
 
 .headerRow {
