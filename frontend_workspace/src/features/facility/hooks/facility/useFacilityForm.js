@@ -25,6 +25,7 @@ export function useFacilityForm(houseNo, facilityNo = null) {
   const [values, setValues] = useState({ ...schema, houseNo: houseNo || '' });
   const [categories, setCategories] = useState([]);
   const [defaultOptions, setDefaultOptions] = useState([]);
+  const [error, setError] = useState(null);
   const [images, setImages] = useState([]);
   const [existingImages, setExistingImages] = useState([]);
   const [deleteImageNos, setDeleteImageNos] = useState([]);
@@ -39,44 +40,12 @@ export function useFacilityForm(houseNo, facilityNo = null) {
         const data = response?.data || response || [];
         setCategories(data);
       } catch (err) {
-        console.error('카테고리 로드 실패:', err);
+        setError(err);
+        console.error('카테고리 로드 실패:', err.message);
       }
     };
     fetchCategories();
   }, []);
-
-  const handleChange = useCallback(
-    (e) => {
-      const { name, value, type, checked } = e.target;
-
-      if (name === 'facilityCode') {
-        const selected = categories.find(
-          (c) => String(c.facilityCode) === String(value)
-        );
-
-        if (selected && selected.facilityOptions) {
-          setDefaultOptions(selected.facilityOptions);
-          const newMap = {};
-          selected.facilityOptions.forEach((opt) => {
-            newMap[opt] = true;
-          });
-
-          setValues((prev) => ({
-            ...prev,
-            facilityCode: value,
-            facilityOptionInfo: newMap,
-          }));
-          return;
-        }
-      }
-
-      setValues((prev) => ({
-        ...prev,
-        [name]: type === 'checkbox' ? checked : value,
-      }));
-    },
-    [categories]
-  );
 
   useEffect(() => {
     if (updateMode && facilityNo) {
@@ -101,21 +70,11 @@ export function useFacilityForm(houseNo, facilityNo = null) {
             facilityOptionInfo: data.facilityOptionInfo || {},
           });
 
-          if (categories.length > 0 && data.facilityCode) {
-            const matchedCategory = categories.find(
-              (c) => String(c.facilityCode) === String(data.facilityCode)
-            );
-
-            if (matchedCategory && matchedCategory.facilityOptions) {
-              // 진짜 '기본' 옵션 리스트만 딱 세팅! (이제 기타 옵션은 여기에 안 섞임)
-              setDefaultOptions(matchedCategory.facilityOptions);
-            }
-          }
-
           setExistingImages(data.images || data.facilityImages || []);
           setDeleteImageNos([]);
         } catch (err) {
-          console.error('상세 정보 로드 실패:', err);
+          setError(err);
+          console.error('상세 정보 로드 실패:', err.message);
         } finally {
           setLoading(false);
         }
@@ -125,16 +84,47 @@ export function useFacilityForm(houseNo, facilityNo = null) {
   }, [facilityNo, updateMode, houseNo]);
 
   useEffect(() => {
-  if (categories.length > 0 && values.facilityCode) {
-    const matchedCategory = categories.find(
-      (c) => String(c.facilityCode) === String(values.facilityCode)
-    );
-
-    if (matchedCategory && matchedCategory.facilityOptions) {
-      setDefaultOptions(matchedCategory.facilityOptions);
+    if (categories.length > 0 && values.facilityCode) {
+      const matchedCategory = categories.find(
+        (c) => String(c.facilityCode) === String(values.facilityCode)
+      );
+      if (matchedCategory && matchedCategory.facilityOptions) {
+        setDefaultOptions(matchedCategory.facilityOptions);
+      }
     }
-  }
-}, [categories, values.facilityCode]);
+  }, [categories, values.facilityCode]);
+
+  const handleChange = useCallback(
+    (e) => {
+      const { name, value, type, checked } = e.target;
+
+      if (name === 'facilityCode') {
+        const selected = categories.find(
+          (c) => String(c.facilityCode) === String(value)
+        );
+        if (selected && selected.facilityOptions) {
+          setDefaultOptions(selected.facilityOptions);
+          const newMap = {};
+          selected.facilityOptions.forEach((opt) => {
+            newMap[opt] = true;
+          });
+
+          setValues((prev) => ({
+            ...prev,
+            facilityCode: value,
+            facilityOptionInfo: newMap,
+          }));
+          return;
+        }
+      }
+
+      setValues((prev) => ({
+        ...prev,
+        [name]: type === 'checkbox' ? checked : value,
+      }));
+    },
+    [categories]
+  );
 
   const handleOptionChange = useCallback((optionKey, isChecked) => {
     setValues((prev) => ({
@@ -166,7 +156,7 @@ export function useFacilityForm(houseNo, facilityNo = null) {
       facilityCode: Number(values.facilityCode),
       facilityName: values.facilityName,
       facilityOptionInfo: currentValues.facilityOptionInfo,
-      facilityLocation: Number(values.facilityLocation) || 0,
+      facilityLocation: String(values.facilityLocation) || '0',
       facilityCapacity: Number(values.facilityCapacity) || 0,
       facilityOpenTime: values.facilityOpenTime,
       facilityCloseTime: values.facilityCloseTime,
@@ -202,9 +192,9 @@ export function useFacilityForm(houseNo, facilityNo = null) {
       alert('성공적으로 저장되었습니다.');
       navigate(`/facility/view/${houseNo}`);
     } catch (err) {
+      setError(err);
       console.error('제출 에러:', err.message);
-      const serverMsg = err.response?.data?.message;
-      alert(`저장 실패: ${serverMsg}`);
+      alert('저장 실패', err.message);
     } finally {
       setSubmitting(false);
     }
@@ -212,11 +202,13 @@ export function useFacilityForm(houseNo, facilityNo = null) {
 
   return {
     values,
+    setValues,
     categories,
     defaultOptions,
     handleChange,
     handleOptionChange,
     addCustomOption,
+    images,
     setImages,
     setDeleteImageNos,
     loading,
@@ -224,5 +216,6 @@ export function useFacilityForm(houseNo, facilityNo = null) {
     onSubmit,
     updateMode,
     existingImages,
+    error,
   };
 }

@@ -11,6 +11,7 @@ const schema = {
   reservationDate: '',
   reservationStartTime: '',
   reservationEndTime: '',
+  reservationStatus: ''
 };
 
 export function useReservationForm(facilityNoInput = null, reservationNo = null) {
@@ -79,11 +80,11 @@ export function useReservationForm(facilityNoInput = null, reservationNo = null)
       }
 
       const result = response?.data || response;
-      alert(result.message);
+      alert(result.message || '등록되었습니다.');
       
       const resNo = result.reservationNo || reservationNo;
       const targetFNo = facilityNo || result.facilityNo;
-      navigate(`/reservation/view/${targetFNo}/${resNo}`);
+      navigate('/reservation/view');
       
     } catch (err) {
       setError(err);

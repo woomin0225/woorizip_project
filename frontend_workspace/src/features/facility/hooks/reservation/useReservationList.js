@@ -28,6 +28,7 @@ export const useReservationList = (facilityNo) => {
         setResponse(pageData);
       } catch (err) {
         setError(err);
+        console.error(err.message);
       } finally {
         setLoading(false);
       }
@@ -35,18 +36,23 @@ export const useReservationList = (facilityNo) => {
     fetchReservations();
   }, [query, facilityNo]);
 
-  const reservationList = useMemo(() => {
-    return response?.content || [];
-  }, [response]);
-
   const pageResponse = useMemo(() => {
     if (!response) return null;
-    return {
-      page: response.page,
-      totalPages: response.totalPages,
-      totalElements: response.totalElements,
-    };
-  }, [response]);
+    return { ...response, page: query.page };
+  }, [response, query.page]);
 
-  return { query, loading, error, setPage, pageResponse, reservationList };
+  const reservationList = useMemo(() => {
+    return pageResponse?.content || [];
+  }, [pageResponse]);
+
+  return {
+    query,
+    setQuery,
+    loading,
+    error,
+    setPage,
+    pageResponse,
+    reservationList,
+    setResponse
+  };
 };

@@ -129,7 +129,7 @@ export default function ReservationForm({
                   className={styles.primaryBtn} 
                   disabled={submitting}
                 >
-                  {submitting ? '저장 중...' : updateMode ? '수정' : '예약하기'}
+                  {submitting ? '저장 중...' : updateMode ? '수정' : '예약'}
                 </button>
               </div>
             </form>
