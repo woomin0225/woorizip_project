@@ -50,8 +50,8 @@ public class ReservationController {
 	
 	@GetMapping("/api/facilities/{facilityNo}/reservations/check")
 	public ResponseEntity<ApiResponse<List<ReservationListResponseDTO>>> getAvailability(
-	        @PathVariable String facilityNo,
-	        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+	        @PathVariable("facilityNo") String facilityNo,
+	        @RequestParam(name = "date") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
 	    List<ReservationListResponseDTO> list = reservationService.selectList(facilityNo, date);
 	    return ResponseEntity.ok(ApiResponse.ok("해당 일자 예약 목록 조회 성공", list));
 	}

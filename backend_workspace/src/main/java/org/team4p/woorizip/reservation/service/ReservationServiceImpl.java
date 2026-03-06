@@ -226,16 +226,26 @@ public class ReservationServiceImpl implements ReservationService {
 	    if (!end.isAfter(start)) {
 	        throw new NotFoundException("예약 시작 시간이 예약 종료 시간보다 빨라야 합니다.");
 	    }
+	    
+	    // 운영 종료 시간이 23:59일 때
+	    boolean isLastTimeFull = end.equals(facility.getFacilityCloseTime());
 
-	    // 예약 단위/최대 시간 검증
+	    // 예약 단위/최대 시간 검증 수정
 	    int unit = facility.getFacilityRsvnUnitMinutes();
-	    int duration = (int) java.time.Duration.between(start, end).toMinutes();
+	    long duration;
 
-	    if (start.getMinute() % unit != 0 || duration % unit != 0) {
+	    if (isLastTimeFull && end.toString().startsWith("23:59")) {
+	        duration = java.time.Duration.between(start, end).toMinutes() + 1;
+	    } else {
+	        duration = java.time.Duration.between(start, end).toMinutes();
+	    }
+	    int finalDuration = (int) duration;
+
+	    if (start.getMinute() % unit != 0 || finalDuration % unit != 0) {
 	        throw new ForbiddenException("예약 시간은 " + unit + "분 단위로 지정되어야 합니다.");
 	    }
 
-	    if (duration > facility.getFacilityMaxDurationMinutes()) {
+	    if (finalDuration > facility.getFacilityMaxDurationMinutes()) {
 	        throw new ForbiddenException("최대 예약 가능 시간을 초과하였습니다.");
 	    }
 
@@ -243,9 +253,9 @@ public class ReservationServiceImpl implements ReservationService {
 	    if (!isAdmin) {
 	        long count;
 	        if (excludeRsvnNo == null) {
-	            count = reservationRepository.countByUser_UserNoAndFacility_FacilityNoAndReservationDate(userNo, facility.getFacilityNo(), date);
+	            count = reservationRepository.countByUser_UserNoAndFacility_FacilityNoAndReservationDateAndReservationStatus(userNo, facility.getFacilityNo(), date, ReservationStatus.APPROVED);
 	        } else {
-	            count = reservationRepository.countByUser_UserNoAndFacility_FacilityNoAndReservationDateAndReservationNoNot(userNo, facility.getFacilityNo(), date, excludeRsvnNo);
+	            count = reservationRepository.countByUser_UserNoAndFacility_FacilityNoAndReservationDateAndReservationNoNotAndReservationStatus(userNo, facility.getFacilityNo(), date, excludeRsvnNo, ReservationStatus.APPROVED);
 	        }
 	        
 	        if (count >= facility.getMaxRsvnPerDay()) {
@@ -256,11 +266,11 @@ public class ReservationServiceImpl implements ReservationService {
 	    // 중복 예약 확인
 	    boolean isOverlapped;
 	    if (excludeRsvnNo == null) {
-	        isOverlapped = reservationRepository.existsByFacility_FacilityNoAndReservationDateAndReservationStartTimeBeforeAndReservationEndTimeAfter(
-	                facility.getFacilityNo(), date, end, start);
+	        isOverlapped = reservationRepository.existsByFacility_FacilityNoAndReservationDateAndReservationStartTimeBeforeAndReservationEndTimeAfterAndReservationStatus(
+	                facility.getFacilityNo(), date, end, start, ReservationStatus.APPROVED);
 	    } else {
-	        isOverlapped = reservationRepository.existsByFacility_FacilityNoAndReservationDateAndReservationStartTimeBeforeAndReservationEndTimeAfterAndReservationNoNot(
-	                facility.getFacilityNo(), date, end, start, excludeRsvnNo);
+	        isOverlapped = reservationRepository.existsByFacility_FacilityNoAndReservationDateAndReservationStartTimeBeforeAndReservationEndTimeAfterAndReservationNoNotAndReservationStatus(
+	                facility.getFacilityNo(), date, end, start, excludeRsvnNo, ReservationStatus.APPROVED);
 	    }
 
 	    if (isOverlapped) {

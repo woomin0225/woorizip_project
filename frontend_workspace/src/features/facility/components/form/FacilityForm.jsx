@@ -124,14 +124,33 @@ export default function FacilityForm() {
       updatedOptionInfo[opt] = true;
     });
 
+    const correctedCloseTime =
+      values.facilityCloseTime === '24:00:00'
+        ? '23:59:59'
+        : values.facilityCloseTime;
+
     const finalValues = {
       ...values,
       facilityOptionInfo: updatedOptionInfo,
+      facilityCloseTime: correctedCloseTime,
     };
 
     console.log('최종 보낼 데이터:', finalValues);
     await onSubmit(e, navigate, finalValues);
   };
+
+  const operationTimeOptions = [];
+  for (let h = 0; h < 24; h++) {
+    const hh = String(h).padStart(2, '0');
+    operationTimeOptions.push(`${hh}:00`);
+    operationTimeOptions.push(`${hh}:30`);
+  }
+
+  const baseOptions = [];
+  for (let h = 0; h < 24; h++) {
+    const hh = String(h).padStart(2, '0');
+    baseOptions.push(`${hh}:00`, `${hh}:30`);
+  }
 
   if (loading)
     return <div className={styles.facilityEmpty}>시설 정보 로딩 중...</div>;
@@ -249,6 +268,76 @@ export default function FacilityForm() {
                         onChange={handleChange}
                         required
                       />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className={styles.sectionBlock}>
+                <h4 className={styles.sectionTitle}>운영 시간 설정</h4>
+                <div className={styles.surveyBox}>
+                  <div className={styles.fieldRow}>
+                    <div className={styles.fieldLabel}>운영 시간</div>
+                    <div className={styles.fieldControl}>
+                      <div className={styles.timeInputGroup}>
+                        <select
+                          name="facilityOpenTime"
+                          className={styles.input}
+                          value={values.facilityOpenTime}
+                          onChange={handleChange}
+                          disabled={values.isAllDay}
+                        >
+                          {operationTimeOptions.map((time) => (
+                            <option key={time} value={time}>
+                              {time}
+                            </option>
+                          ))}
+                        </select>
+                        <span className={styles.timeSeparator}>~</span>
+                        <select
+                          name="facilityCloseTime"
+                          className={styles.input}
+                          value={values.facilityCloseTime || '22:00'}
+                          onChange={handleChange}
+                          disabled={values.isAllDay}
+                        >
+                          {baseOptions.map((time) => (
+                            <option key={time} value={`${time}:00`}>
+                              {time}
+                            </option>
+                          ))}
+                          <option value="24:00:00">24:00</option>
+                        </select>
+
+                        <label className={styles.allDayCheck}>
+                          <input
+                            type="checkbox"
+                            name="isAllDay"
+                            checked={!!values.isAllDay}
+                            onChange={(e) => {
+                              const checked = e.target.checked;
+                              handleChange({
+                                target: { name: 'isAllDay', value: checked },
+                              });
+                              if (checked) {
+                                handleChange({
+                                  target: {
+                                    name: 'facilityOpenTime',
+                                    value: '00:00:00',
+                                  },
+                                });
+                                handleChange({
+                                  target: {
+                                    name: 'facilityCloseTime',
+                                    value: '24:00:00',
+                                  },
+                                });
+                              }
+                            }}
+                          />
+                          <span> 하루종일</span>
+                        </label>
+                      </div>
                     </div>
                   </div>
                 </div>
