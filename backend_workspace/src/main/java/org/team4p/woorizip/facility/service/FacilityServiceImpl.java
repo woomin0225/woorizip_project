@@ -286,10 +286,6 @@ public class FacilityServiceImpl implements FacilityService {
 		    throw new ForbiddenException("해당 시설의 정보를 수정할 권한이 없습니다."); 
 		}
 		
-		if(entity.getFacilityRsvnRequiredYn() == true || dto.getFacilityRsvnRequiredYn() == false) {
-			throw new ForbiddenException("해당 시설의 정보를 수정할 권한이 없습니다.");
-		}
-		
 		// 예약이 있으면 예약 필요 여부 변경 불가
 		if(entity.getFacilityRsvnRequiredYn() && !dto.getFacilityRsvnRequiredYn()) {
 			if(hasReservation(facilityNo)) throw new ForbiddenException("예정된 예약이 있어 예약 필요 여부를 변경할 수 없습니다.");
