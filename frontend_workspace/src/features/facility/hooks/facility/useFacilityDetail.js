@@ -1,6 +1,7 @@
 // src/features/facility/hooks/facility/useFacilityDetail.js
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { getFacilityDetail } from '../../api/facilityApi';
+import { unwrapApi } from '../../../../shared/utils/apiUnwrap';
 
 export const useFacilityDetail = (facilityNo) => {
   const [facilityDetails, setFacilityDetails] = useState(null);
@@ -33,16 +34,12 @@ export const useFacilityDetail = (facilityNo) => {
       ? [...images].sort((a, b) => a.facilityImageNo - b.facilityImageNo)
       : [];
 
-    let rawOptions = facilityDetails.facilityOptionInfo;
-    if (typeof rawOptions === 'string') {
-      try {
-        rawOptions = JSON.parse(rawOptions);
-      } catch (e) { rawOptions = {}; }
-    }
-
+    const rawOptions = typeof facilityDetails.facilityOptionInfo === 'string'
+      ? JSON.parse(facilityDetails.facilityOptionInfo)
+      : facilityDetails.facilityOptionInfo;
 
     const displayOptionList = rawOptions 
-      ? Object.keys(rawOptions).filter(key => rawOptions[key] === true || rawOptions[key] === "Y") : [];
+      ? Object.keys(rawOptions).filter(key => rawOptions[key] === true) : [];
 
     return {
       ...facilityDetails,

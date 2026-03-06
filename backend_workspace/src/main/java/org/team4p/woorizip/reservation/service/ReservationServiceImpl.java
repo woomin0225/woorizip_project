@@ -79,6 +79,16 @@ public class ReservationServiceImpl implements ReservationService {
 		reservationRepository.save(reservation);
 	}
 
+	// 예약 신규 시 기존 예약 확인용 메서드
+	public List<ReservationListResponseDTO> selectList(String facilityNo, LocalDate date) {
+	    return reservationRepository
+	        .findByFacility_FacilityNoAndReservationDateAndReservationStatus(
+	            facilityNo, date, ReservationStatus.APPROVED)
+	        .stream()
+	        .map(ReservationListResponseDTO::from)
+	        .toList();
+	}
+	
 	// 예약 목록 페이지 조회
     @Override
     public int selectListCount(String userNo, String facilityNo) {

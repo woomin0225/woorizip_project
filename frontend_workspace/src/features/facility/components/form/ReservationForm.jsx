@@ -9,32 +9,32 @@ export default function ReservationForm({
   onCancel,
 }) {
   const navigate = useNavigate();
-  const { values, handleChange, loading, submitting, onSubmit } = useReservationForm(
-    facilityNo,
-    reservationNo
-  );
+  const { values, handleChange, loading, submitting, onSubmit } =
+    useReservationForm(facilityNo, reservationNo);
 
   const updateMode = !!reservationNo;
 
-  if (loading) return <div className={styles.facilityEmpty}>데이터를 불러오는 중...</div>;
+  if (loading)
+    return <div className={styles.facilityEmpty}>데이터를 불러오는 중...</div>;
 
   return (
     <div className={styles.contentSection}>
       <div className="container">
         <div className={styles.detailContainer}>
           <div className={styles.infoSection}>
-            
             <div className={styles.headerRow}>
               <div>
                 <h2 className={styles.title}>
                   {updateMode ? '예약 정보 수정' : '시설 이용 예약'}
                 </h2>
-                <p className={styles.subTitle}>예약에 필요한 정보를 입력해주세요.</p>
+                <p className={styles.subTitle}>
+                  예약에 필요한 정보를 입력해주세요.
+                </p>
               </div>
             </div>
 
-            <form 
-              onSubmit={(e) => onSubmit(e, navigate)} 
+            <form
+              onSubmit={(e) => onSubmit(e, navigate)}
               className={styles.formBody}
             >
               <div className={styles.sectionBlock}>
@@ -117,19 +117,35 @@ export default function ReservationForm({
               </div>
 
               <div className={styles.btnGroup}>
-                <button 
-                  type="button" 
-                  className={styles.secondaryBtn} 
-                  onClick={onCancel || (() => navigate(-1))}
+                {!!updateMode && (
+                  <button
+                    type="button"
+                    className={styles.secondaryBtn}
+                    onClick={async () => {
+                      if (window.confirm('해당 예약을 취소하시겠습니까?')) {
+                        await onSubmit(null, navigate, {
+                          ...values,
+                          reservationStatus: 'CANCELED',
+                        });
+                      }
+                    }}
+                  >
+                    예약 취소
+                  </button>
+                )}
+                <button
+                  type="button"
+                  className={styles.secondaryBtn}
+                  onClick={onCancel || (() => navigate('/facility/view'))}
                 >
                   취소
                 </button>
-                <button 
-                  type="submit" 
-                  className={styles.primaryBtn} 
+                <button
+                  type="submit"
+                  className={styles.primaryBtn}
                   disabled={submitting}
                 >
-                  {submitting ? '저장 중...' : updateMode ? '수정' : '예약하기'}
+                  {submitting ? '저장 중...' : updateMode ? '수정' : '예약'}
                 </button>
               </div>
             </form>

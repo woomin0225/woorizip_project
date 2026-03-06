@@ -104,6 +104,7 @@ export default function FacilityList({ isLessor, isAdmin, houseNo: propsHouseNo 
             facilityNo={selectedFacilityNo}
             owner={isLessor || isAdmin} // 관리자도 수정/삭제 권한을 가질 수 있게 owner로 취급
             houseNo={currentHouseNo}
+            onClose={() => setSelectedFacilityNo(null)}
           />
         </Modal>
       )}

@@ -11,6 +11,7 @@ const schema = {
   reservationDate: '',
   reservationStartTime: '',
   reservationEndTime: '',
+  reservationStatus: ''
 };
 
 export function useReservationForm(facilityNoInput = null, reservationNo = null) {
@@ -66,24 +67,26 @@ export function useReservationForm(facilityNoInput = null, reservationNo = null)
     }));
   }, []);
 
-  const onSubmit = async (e, navigate) => {
+  const onSubmit = async (e, navigate, manualValues) => {
     if (e) e.preventDefault();
     setSubmitting(true);
+    const targetValues = manualValues || values;
+    const { reservationStatus, ...dataToCreate } = targetValues;
 
     try {
       let response;
       if (updateMode) {
-        response = await modifyReservation(reservationNo, values);
+        response = await modifyReservation(reservationNo, targetValues);
       } else {
-        response = await createReservation(facilityNo, values);
+        response = await createReservation(facilityNo, dataToCreate);
       }
 
       const result = response?.data || response;
-      alert(result.message);
+      alert(result.message || '등록되었습니다.');
       
       const resNo = result.reservationNo || reservationNo;
       const targetFNo = facilityNo || result.facilityNo;
-      navigate(`/reservation/view/${targetFNo}/${resNo}`);
+      navigate('/reservation/view');
       
     } catch (err) {
       setError(err);

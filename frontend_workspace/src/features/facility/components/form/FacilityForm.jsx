@@ -52,12 +52,18 @@ export default function FacilityForm() {
   useEffect(() => {
     if (updateMode && values.facilityOptionInfo && defaultOptions?.length > 0) {
       const allKeys = Object.keys(values.facilityOptionInfo);
-      const extraKeys = allKeys.filter((key) => !defaultOptions.includes(key));
+      const extraKeys = allKeys.filter(
+        (key) =>
+          !defaultOptions.includes(key) &&
+          values.facilityOptionInfo[key] === true
+      );
 
       const nextInputs = ['', '', '', '', ''];
+
       extraKeys.forEach((key, i) => {
         if (i < 5) nextInputs[i] = key;
       });
+
       setCustomInputs(nextInputs);
     }
   }, [updateMode, values.facilityOptionInfo, defaultOptions]);
@@ -101,6 +107,32 @@ export default function FacilityForm() {
     });
   };
 
+  const handleFormSubmit = async (e) => {
+    e.preventDefault();
+
+    const extraOptionsList = customInputs
+      .map((val) => val.trim())
+      .filter((val) => val !== '');
+
+    const updatedOptionInfo = {};
+
+    defaultOptions.forEach((opt) => {
+      updatedOptionInfo[opt] = !!values.facilityOptionInfo?.[opt];
+    });
+
+    extraOptionsList.forEach((opt) => {
+      updatedOptionInfo[opt] = true;
+    });
+
+    const finalValues = {
+      ...values,
+      facilityOptionInfo: updatedOptionInfo,
+    };
+
+    console.log('최종 보낼 데이터:', finalValues);
+    await onSubmit(e, navigate, finalValues);
+  };
+
   if (loading)
     return <div className={styles.facilityEmpty}>시설 정보 로딩 중...</div>;
 
@@ -118,10 +150,7 @@ export default function FacilityForm() {
               </div>
             </div>
 
-            <form
-              onSubmit={(e) => onSubmit(e, navigate)}
-              className={styles.formBody}
-            >
+            <form onSubmit={handleFormSubmit} className={styles.formBody}>
               <div className={styles.sectionBlock}>
                 <h4 className={styles.sectionTitle}>시설 이미지</h4>
                 <div
@@ -184,23 +213,28 @@ export default function FacilityForm() {
                           />
                         </div>
                       ) : (
-                        <select
-                          name="facilityCode"
-                          className={styles.input}
-                          value={values.facilityCode || ''}
-                          onChange={handleChange}
-                          required
-                        >
-                          <option value="">-- 선택하세요 --</option>
-                          {categories.map((cat) => (
-                            <option
-                              key={cat.facilityCode}
-                              value={cat.facilityCode}
-                            >
-                              {cat.facilityType}
-                            </option>
-                          ))}
-                        </select>
+                        <>
+                          <p className={styles.helpText}>
+                            * 카테고리는 최초 등록 후 수정이 불가능합니다.
+                          </p>
+                          <select
+                            name="facilityCode"
+                            className={styles.input}
+                            value={values.facilityCode || ''}
+                            onChange={handleChange}
+                            required
+                          >
+                            <option value="">-- 선택하세요 --</option>
+                            {categories.map((cat) => (
+                              <option
+                                key={cat.facilityCode}
+                                value={cat.facilityCode}
+                              >
+                                {cat.facilityType}
+                              </option>
+                            ))}
+                          </select>
+                        </>
                       )}
                     </div>
                   </div>
@@ -213,70 +247,77 @@ export default function FacilityForm() {
                         className={styles.input}
                         value={values.facilityName || ''}
                         onChange={handleChange}
+                        required
                       />
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div className={styles.sectionBlock}>
-                <h4 className={styles.sectionTitle}>운영 정보</h4>
-                <div className={styles.grid2}>
+              {!!updateMode && (
+                <div className={styles.sectionBlock}>
+                  <h4 className={styles.sectionTitle}>시설 상태 관리</h4>
                   <div className={styles.surveyBox}>
-                    <div className={styles.fieldRow}>
-                      <div className={styles.fieldLabel}>위치(층)</div>
-                      <div className={styles.fieldControl}>
-                        <input
-                          type="number"
-                          name="facilityLocation"
-                          className={styles.input}
-                          value={values.facilityLocation ?? ''}
-                          onChange={handleChange}
-                        />
+                    <label className={styles.confirmCheck}>
+                      <input
+                        type="checkbox"
+                        name="facilityStatus"
+                        checked={values.facilityStatus === 'UNAVAILABLE'}
+                        onChange={(e) => {
+                          const nextStatus = e.target.checked
+                            ? 'UNAVAILABLE'
+                            : 'AVAILABLE';
+                          handleChange({
+                            target: {
+                              name: 'facilityStatus',
+                              value: nextStatus,
+                            },
+                          });
+                        }}
+                      />
+                      <span> 시설 사용 불가 기간을 설정합니다.</span>
+                    </label>
+                    {values.facilityStatus === 'UNAVAILABLE' && (
+                      <div className={styles.rsvnDetail}>
+                        <div className={styles.grid2}>
+                          <div className={styles.fieldRow}>
+                            <div className={styles.fieldLabel}>
+                              사용 불가 시작
+                            </div>
+                            <div className={styles.fieldControl}>
+                              <input
+                                type="datetime-local"
+                                name="blockedStartTime"
+                                className={styles.input}
+                                value={values.blockedStartTime || ''}
+                                onChange={handleChange}
+                                step="3600"
+                                required
+                              />
+                            </div>
+                          </div>
+                          <div className={styles.fieldRow}>
+                            <div className={styles.fieldLabel}>
+                              사용 가능 시점
+                            </div>
+                            <div className={styles.fieldControl}>
+                              <input
+                                type="datetime-local"
+                                name="blockedEndTime"
+                                className={styles.input}
+                                value={values.blockedEndTime || ''}
+                                onChange={handleChange}
+                                step="3600"
+                                required
+                              />
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                    <div className={styles.fieldRow}>
-                      <div className={styles.fieldLabel}>수용 인원</div>
-                      <div className={styles.fieldControl}>
-                        <input
-                          type="number"
-                          name="facilityCapacity"
-                          className={styles.input}
-                          value={values.facilityCapacity || ''}
-                          onChange={handleChange}
-                          min="0"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  <div className={styles.surveyBox}>
-                    <div className={styles.fieldRow}>
-                      <div className={styles.fieldLabel}>여는 시간</div>
-                      <div className={styles.fieldControl}>
-                        <input
-                          type="time"
-                          name="facilityOpenTime"
-                          className={styles.input}
-                          value={values.facilityOpenTime || ''}
-                          onChange={handleChange}
-                        />
-                      </div>
-                    </div>
-                    <div className={styles.fieldRow}>
-                      <div className={styles.fieldLabel}>닫는 시간</div>
-                      <div className={styles.fieldControl}>
-                        <input
-                          type="time"
-                          name="facilityCloseTime"
-                          className={styles.input}
-                          value={values.facilityCloseTime || ''}
-                          onChange={handleChange}
-                        />
-                      </div>
-                    </div>
+                    )}
                   </div>
                 </div>
-              </div>
+              )}
 
               <div className={styles.sectionBlock}>
                 <h4 className={styles.sectionTitle}>예약 시스템</h4>
@@ -307,7 +348,9 @@ export default function FacilityForm() {
                       </div>
                       <div className={styles.grid2}>
                         <div className={styles.fieldRow}>
-                          <div className={styles.fieldLabel}>단위(분)</div>
+                          <div className={styles.fieldLabel}>
+                            예약 단위 시간(분)
+                          </div>
                           <div className={styles.fieldControl}>
                             <select
                               name="facilityRsvnUnitMinutes"
@@ -330,7 +373,11 @@ export default function FacilityForm() {
                             <select
                               name="facilityMaxDurationMinutes"
                               className={styles.input}
-                              value={values.facilityMaxDurationMinutes || ''}
+                              value={
+                                values.facilityMaxDurationMinutes
+                                  ? String(values.facilityMaxDurationMinutes)
+                                  : ''
+                              }
                               onChange={handleChange}
                             >
                               <option value="">선택</option>
@@ -380,7 +427,6 @@ export default function FacilityForm() {
                           next[idx] = e.target.value;
                           setCustomInputs(next);
                         }}
-                        onBlur={() => val.trim() && addCustomOption(val.trim())}
                       />
                     ))}
                   </div>
@@ -388,10 +434,26 @@ export default function FacilityForm() {
               </div>
 
               <div className={styles.btnGroup}>
+                {!!updateMode && (
+                  <button
+                    type="button"
+                    className={styles.secondaryBtn}
+                    onClick={async () => {
+                      if (window.confirm('해당 시설을 삭제하시겠습니까?')) {
+                        await onSubmit(null, navigate, {
+                          ...values,
+                          facilityStatus: 'DELETED',
+                        });
+                      }
+                    }}
+                  >
+                    시설 삭제
+                  </button>
+                )}
                 <button
                   type="button"
                   className={styles.secondaryBtn}
-                  onClick={() => navigate(-1)}
+                  onClick={() => navigate(`/facility/view/${houseNo}`)}
                 >
                   취소
                 </button>

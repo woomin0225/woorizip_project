@@ -56,7 +56,7 @@ export default function ReservationDetail({ reservationNo, onClose, facilityNo, 
         </div>
 
         <div className={styles.btnGroup}>
-          {isOwner ? (
+          {isOwner || reservationStatus === 'CANCELED' ? (
             <>
               <button
                 className={styles.primaryBtn}

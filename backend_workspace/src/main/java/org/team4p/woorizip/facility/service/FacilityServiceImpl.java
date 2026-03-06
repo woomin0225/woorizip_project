@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,6 +35,7 @@ import org.team4p.woorizip.facility.jpa.repository.FacilityCategoryRepository;
 import org.team4p.woorizip.facility.jpa.repository.FacilityRepository;
 import org.team4p.woorizip.house.jpa.entity.HouseEntity;
 import org.team4p.woorizip.house.jpa.repository.HouseRepository;
+import org.team4p.woorizip.reservation.enums.ReservationStatus;
 import org.team4p.woorizip.reservation.jpa.entity.ReservationEntity;
 import org.team4p.woorizip.reservation.jpa.repository.ReservationRepository;
 import org.team4p.woorizip.reservation.service.ReservationServiceImpl;
@@ -283,6 +285,20 @@ public class FacilityServiceImpl implements FacilityService {
 		if (!isAdmin && !userNo.equals(currentUserNo)) {
 		    throw new ForbiddenException("해당 시설의 정보를 수정할 권한이 없습니다."); 
 		}
+		
+		if(entity.getFacilityRsvnRequiredYn() == true || dto.getFacilityRsvnRequiredYn() == false) {
+			throw new ForbiddenException("해당 시설의 정보를 수정할 권한이 없습니다.");
+		}
+		
+		// 예약이 있으면 예약 필요 여부 변경 불가
+		if(entity.getFacilityRsvnRequiredYn() && !dto.getFacilityRsvnRequiredYn()) {
+			if(hasReservation(facilityNo)) throw new ForbiddenException("예정된 예약이 있어 예약 필요 여부를 변경할 수 없습니다.");
+		}
+		
+		// 예약이 있으면 시설 삭제 불가
+	    if(dto.getFacilityStatus() == FacilityStatus.DELETED) {
+	    	if(hasReservation(facilityNo)) throw new ForbiddenException("예정된 예약이 있어 시설을 삭제할 수 없습니다.");
+	    };
 	    
 	    // 임대인이 이전에 사용 불가 기간을 설정한 적이 있다면 해당 예약 내역 전부 삭제
 	    reservationRepository.deleteByFacility_FacilityNoAndUser_UserNo(facilityNo, userNo);
@@ -293,7 +309,8 @@ public class FacilityServiceImpl implements FacilityService {
 	    	List<ReservationEntity> reservations = reservationRepository.findByFacility_FacilityNoAndReservationDateBetween(
 	    		    facilityNo, 
 	    		    dto.getBlockedStartTime().toLocalDate(), 
-	    		    dto.getBlockedEndTime().toLocalDate());
+	    		    dto.getBlockedEndTime().toLocalDate(),
+	    		    ReservationStatus.APPROVED);
 	    	List<LocalDate> datesWithReservation = reservations.stream()
 	    			.map(ReservationEntity::getReservationDate)
 	    		    .distinct()
@@ -374,5 +391,14 @@ public class FacilityServiceImpl implements FacilityService {
 	            userNo
 	        );
 	    }
+	}
+	
+	private boolean hasReservation(String facilityNo) {
+		boolean hasActiveRsvn = reservationRepository.existsByFacility_FacilityNoAndReservationStatusAndReservationDateAfter(
+    			facilityNo, ReservationStatus.APPROVED, LocalDate.now());
+    	boolean hasRsvnToday = reservationRepository.existsByFacility_FacilityNoAndReservationStatusAndReservationDateAndReservationEndTimeAfter(
+    			facilityNo, ReservationStatus.APPROVED, LocalDate.now(), LocalTime.now());
+    	if(hasActiveRsvn || hasRsvnToday) return true;
+    	return false;
 	}
 }
