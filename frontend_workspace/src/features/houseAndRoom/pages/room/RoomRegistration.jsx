@@ -1,5 +1,5 @@
 // src/features/houseAndRoom/pages/room/RoomRegistration.jsx
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useState } from "react";
 import styles from "./RoomRegistration.module.css";
 import RoomForm from "../../components/RoomForm";
@@ -9,16 +9,17 @@ import { createRoom } from "../../api/roomApi";
 export default function RoomRegistration() {
   const { houseNo } = useParams();
   const navigate = useNavigate();
+  const today = new Date().toISOString().slice(0, 10);
 
   const [room, setRoom] = useState({
     roomName: "",
     houseNo,
-    roomMethod: "",
+    roomMethod: "L",
     roomDeposit: 0,
     roomMonthly: 0,
-    roomArea: null,
-    roomFacing: "",
-    roomAvailableDate: "",
+    roomArea: 0,
+    roomFacing: "남향",
+    roomAvailableDate: today,
     roomAbstract: "",
     roomRoomCount: 1,
     roomBathCount: 1,
@@ -26,6 +27,9 @@ export default function RoomRegistration() {
     roomStatus: "ACTIVE",
     roomOptions: "",
   });
+
+  const location = useLocation();
+  const houseName = location?.state?.houseName;
 
   const [images, setImages] = useState([]);
   const [saving, setSaving] = useState(false);
@@ -69,7 +73,24 @@ export default function RoomRegistration() {
     setSaving(true);
     try {
       // 백엔드 DTO 필드에 맞춰 entries로 전송
-      await createRoom(houseNo, Object.entries(room), images);
+      const payload = {
+        ...room,
+        roomName: room.roomName.trim(),
+        roomDeposit: room.roomDeposit ?? 0,
+        roomMonthly: room.roomMonthly ?? 0,
+        roomArea: room.roomArea ?? 0,
+        roomFacing: room.roomFacing || "남향",
+        roomAvailableDate: room.roomAvailableDate
+          ? String(room.roomAvailableDate).slice(0, 10)
+          : today,
+        roomRoomCount: room.roomRoomCount ?? 1,
+        roomBathCount: room.roomBathCount ?? 1,
+        roomEmptyYn: typeof room.roomEmptyYn === "boolean" ? room.roomEmptyYn : true,
+        roomStatus: room.roomStatus || "ACTIVE",
+        roomAbstract: room.roomAbstract ?? "",
+        roomOptions: room.roomOptions ?? "",
+      };
+      await createRoom(houseNo, Object.entries(payload), images);
       alert("방 등록 성공");
       navigate("/estate/manage");
     } catch (err) {
@@ -83,7 +104,7 @@ export default function RoomRegistration() {
   return (
     <div className={styles.wrap}>
       <h2 className={styles.title}>방 등록</h2>
-      <div className={styles.sub}>선택된 건물: {houseNo}</div>
+      <div className={styles.sub}>선택된 건물: {houseName??houseNo}</div>
 
       <RoomForm
         room={room}

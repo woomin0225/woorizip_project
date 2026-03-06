@@ -10,6 +10,7 @@ export default function ResultList({
   loading,
   wishMap,
   onToggleWish,
+  isJeonse,
 }) {
   function searchLatest() {
     onChangeCriterion("LATEST");
@@ -17,11 +18,27 @@ export default function ResultList({
   function searchLargest() {
     onChangeCriterion("AREA");
   }
+  function searchLowestDeposit(){
+    onChangeCriterion("LOW_DEPOSIT");
+  }
+  function searchHighestDeposit(){
+    onChangeCriterion("HIGH_DEPOSIT");
+  }
+  function searchLowestTax(){
+    onChangeCriterion("LOW_TAX");
+  }
+  function searchHighestTax(){
+    onChangeCriterion("HIGH_TAX");
+  }
   return (
     <div className={styles.wrap}>
       <div className={styles.sortBar}>
-        <button className={styles.sortBtn} onClick={searchLatest} value="LATEST" disabled={criterion === "LATEST"}>최신업데이트순</button>
-        <button className={styles.sortBtn} onClick={searchLargest} value="AREA" disabled={criterion === "AREA"}>면적큰순</button>
+        <button className={styles.sortBtn} onClick={searchLatest} value="LATEST" disabled={criterion === "LATEST"}>업데이트순</button>
+        <button className={styles.sortBtn} onClick={searchLargest} value="AREA" disabled={criterion === "AREA"}>큰 면적</button>
+        <button className={styles.sortBtn} onClick={searchLowestDeposit} value="LOW_DEPOSIT" disabled={criterion === "LOW_DEPOSIT"} >낮은 보증금</button>
+        <button className={styles.sortBtn} onClick={searchHighestDeposit} value="HIGH_DEPOSIT" disabled={criterion === "HIGH_DEPOSIT"}>높은 보증금</button>
+        <button className={styles.sortBtn} onClick={searchLowestTax} value="LOW_TAX" disabled={criterion === "LOW_TAX"} hidden={isJeonse}>낮은 월세</button>
+        <button className={styles.sortBtn} onClick={searchHighestTax} value="HIGH_TAX" disabled={criterion === "HIGH_TAX"} hidden={isJeonse}>높은 월세</button>
       </div>
 
       {slice.map((room) => (

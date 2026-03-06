@@ -7,12 +7,18 @@ export default function HouseRoomsPreview({
   onSelect,
   wishMap = {},
   onToggleWish,
+  isAuthed = false,
+  onRequireLogin,
 }) {
   const [pendingRoomNo, setPendingRoomNo] = useState(null);
 
   async function handleToggleWish(e, roomNo, isWished) {
     e.stopPropagation();
     e.preventDefault();
+    if (!isAuthed) {
+      onRequireLogin?.();
+      return;
+    }
     if (!onToggleWish || pendingRoomNo === roomNo) return;
 
     setPendingRoomNo(roomNo);

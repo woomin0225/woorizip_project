@@ -1,6 +1,11 @@
 // src/features/board/api/noticeApi.js
 import { apiJson, apiForm } from '../../../app/http/request';
 
+//고정글 분리
+export async function fetchNoticePinned() {
+  return apiJson().get('/api/notice/pinned');
+}
+
 // 상단 고정
 export function toggleNoticePin(postNo) {
   return apiJson().patch(`/api/notice/${postNo}/pin`);

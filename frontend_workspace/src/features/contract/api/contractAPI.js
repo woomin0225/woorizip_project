@@ -51,6 +51,7 @@ async function request(path, options = {}) {
 
 async function requestCandidates(candidates = [], options = {}) {
   let lastError = null;
+  // 서버 라우트 편차를 고려한 fallback 요청
   for (const path of candidates) {
     try {
       return await request(path, options);
@@ -158,6 +159,7 @@ export async function decideContract(contractNo, status, reason = '', currentSta
   }
 
   if (normalizedCurrentStatus === 'AMENDMENT_REQUESTED') {
+    // 수정요청 건은 전용 승인/반려 API 사용
     return request(`/api/contract/amendment/decide/${contractNo}`, {
       method: 'POST',
       body: JSON.stringify({
@@ -172,6 +174,7 @@ export async function decideContract(contractNo, status, reason = '', currentSta
   }
 
   if (normalizedStatus === 'APPROVED') {
+    // 일반 승인 시 전자계약 생성으로 연결
     return createElectronicContract(contractNo, {});
   }
 

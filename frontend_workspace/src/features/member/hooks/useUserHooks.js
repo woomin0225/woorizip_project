@@ -542,6 +542,11 @@ export function useFindPassword() {
     resetVerification,
   } = usePassVerification({ purpose: 'FIND_PASSWORD' });
 
+  useEffect(() => {
+    resetVerification();
+    setVerificationToken('');
+  }, [resetVerification]);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));

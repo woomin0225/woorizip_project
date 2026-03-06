@@ -25,6 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 @Transactional(readOnly = true)
 public class TourServiceImpl implements TourService {
 
+    // 동일 시간대 예약 중복 체크 대상 상태
     private static final Set<String> ACTIVE_TOUR_STATUSES = Set.of("PENDING", "APPROVED");
 
     private final TourRepository tourRepository;
@@ -75,6 +76,7 @@ public class TourServiceImpl implements TourService {
         TourEntity entity = tourDto.toEntity();
         entity.setStatus("PENDING");
 
+        // 선조회로 중복 예약 차단
         boolean alreadyReserved = tourRepository.existsByRoomNoAndVisitDateAndVisitTimeAndStatusIn(
                 entity.getRoomNo(),
                 entity.getVisitDate(),
@@ -110,6 +112,7 @@ public class TourServiceImpl implements TourService {
             LocalDate targetVisitDate = tourDto.getVisitDate() != null ? tourDto.getVisitDate() : existing.getVisitDate();
             String targetVisitTime = tourDto.getVisitTime() != null ? tourDto.getVisitTime() : existing.getVisitTime();
 
+            // 자기 자신 제외 후 충돌 여부 확인
             boolean alreadyReserved = tourRepository.existsByRoomNoAndVisitDateAndVisitTimeAndStatusInAndTourNoNot(
                     targetRoomNo,
                     targetVisitDate,

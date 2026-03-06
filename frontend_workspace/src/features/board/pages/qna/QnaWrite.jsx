@@ -14,6 +14,7 @@ export default function QnaWrite() {
     onChange,
     newFiles,
     setNewFiles,
+    filePreviewUrls,
     submitting,
     handleSubmit,
   } = useQnaWrite({ navigate });
@@ -25,6 +26,10 @@ export default function QnaWrite() {
       onChange={onChange}
       newFiles={newFiles}
       setNewFiles={setNewFiles}
+      filePreviewUrls={filePreviewUrls}
+      getFileUrl={(f) =>
+        `http://localhost:8080/upload_files/qna/${f.updatedFileName}`
+      }
       submitting={submitting}
       onSubmit={handleSubmit}
       onCancel={() => navigate('/qna')}

@@ -6,6 +6,7 @@ import {
   fetchNoticeList,
   searchNotice,
   toggleNoticePin,
+  fetchNoticePinned,
 } from '../api/NoticeApi';
 import { useAuth } from '../../../app/providers/AuthProvider';
 
@@ -28,6 +29,7 @@ export function useNoticeList() {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState('');
   const [pageResponse, setPageResponse] = useState(null);
+  const [pinned, setPinned] = useState([]);
 
   const content = useMemo(() => pageResponse?.content || [], [pageResponse]);
 
@@ -59,6 +61,18 @@ export function useNoticeList() {
     setErr('');
 
     try {
+      if (query.mode !== 'search' && query.page === 1) {
+        try {
+          const pinnedResp = await fetchNoticePinned();
+          const pinnedBody = unwrapApi(pinnedResp);
+          setPinned(Array.isArray(pinnedBody) ? pinnedBody : []);
+        } catch (e) {
+          console.error(e);
+          setPinned([]);
+        }
+      } else {
+        setPinned([]);
+      }
       const baseReq = {
         page: query.page,
         size: query.size,
@@ -187,6 +201,7 @@ export function useNoticeList() {
     // derived state
     pageResponse,
     content,
+    pinned,
     loading,
     err,
 

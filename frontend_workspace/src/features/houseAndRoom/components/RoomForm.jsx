@@ -2,7 +2,7 @@
 import ImageUploadField from "./ImageUploadField";
 import styles from "./RoomForm.module.css";
 import { PropTypes } from 'prop-types';
-import { useEffect, useMemo } from 'react';
+import { useEffect } from 'react';
 
 const OPTIONS = ["WiFi", "냉장고", "세탁기", "에어컨", "침대", "책상", "옷장", "TV", "신발장"];
 
@@ -43,20 +43,17 @@ export default function RoomForm({
   const raw = room.roomAvailableDate ? String(room.roomAvailableDate).slice(0, 10) : "";
   useEffect(() => {
     // 입주 가능 날짜가 비어있으면 기본값을 오늘로 세팅(부모 state도 같이 바뀜)
-    if(!raw) return;
-    if(raw < today){
+    if (!raw || raw < today) {
       onChange?.({ target: { name: "roomAvailableDate", value: today } });
     }
-  }, [raw, today]);
-  const availableDateValue = (room.roomAvailableDate ? String(room.roomAvailableDate).slice(0, 10) : today);
-
+  }, [raw, today, onChange]);
   const isJeonse = room.roomMethod === "L";
 
   return (
     <form className={styles.form} onSubmit={onSubmit}>
       <div className={styles.row}>
         <label>호실명</label>
-        <input name="roomName" value={room.roomName || ""} onChange={onChange} placeholder="101호" />
+        <input name="roomName" value={room.roomName || ""} onChange={onChange} maxLength={20} />
       </div>
 
       <div className={styles.grid2}>
@@ -121,7 +118,8 @@ export default function RoomForm({
             name="roomDeposit"
             value={room.roomDeposit ?? ""}
             onChange={onChange}
-            placeholder="0"
+            min={0}
+            max={10000000000}
           />
         </div>
 
@@ -133,7 +131,8 @@ export default function RoomForm({
             value={room.roomMonthly ?? ""}
             onChange={onChange}
             disabled={isJeonse && !!room.roomMethod}
-            placeholder="0"
+            min={0}
+            max={100000000}
           />
         </div>
       </div>
@@ -141,13 +140,12 @@ export default function RoomForm({
       <div className={styles.grid2}>
         <div className={styles.row}>
           <label>면적(㎡)</label>
-          <input type="number" name="roomArea" value={room.roomArea ?? ""} onChange={onChange} />
+          <input type="number" step={0.01} name="roomArea" value={room.roomArea ?? ""} onChange={onChange} min={0.0} max={999.99}/>
         </div>
 
         <div className={styles.row}>
           <label>방향</label>
           <select name="roomFacing" value={room.roomFacing || ""} onChange={onChange}>
-            <option value="">선택</option>
             <option value="동향">동향</option>
             <option value="서향">서향</option>
             <option value="남향">남향</option>

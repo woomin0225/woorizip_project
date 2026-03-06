@@ -109,7 +109,7 @@ public class EventServiceImpl implements EventService {
 	@Override
 	public ArrayList<PostDto> selectList(Pageable pageable) {
 	    return toList(
-	        postRepository.findByBoardTypeNoOrderByPostPinnedYnDescPostNoDesc(BOARD_TYPE_NO, pageable)
+	        postRepository.findByBoardTypeNoOrderByPostNoDesc(BOARD_TYPE_NO, pageable)
 	    );
 	}
 

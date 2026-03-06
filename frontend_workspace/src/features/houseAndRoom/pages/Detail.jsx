@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
 import styles from './Detail.module.css';
 
@@ -15,6 +15,7 @@ import RoomOptionList from './../components/Detail/RoomOptionList';
 import FacilityList from './../components/Detail/FacilityList';
 import ReviewList from './../components/Detail/ReviewList';
 import ScrollToTopButton from '../../../shared/components/ScrollToTopButton';
+import { ROUTES } from '../../../shared/constants/routes';
 
 import { useAuth } from '../../../app/providers/AuthProvider';
 
@@ -46,7 +47,8 @@ function toKrwText(value) {
 }
 
 export default function Detail() {
-  const { userNo: currentUserNo } = useAuth();
+  const navigate = useNavigate();
+  const { isAuthed, userNo: currentUserNo } = useAuth();
   const { roomNo: routeRoomNo, houseNo: routeHouseNo } = useParams();
   const [selectedRoomNo, setSelectedRoomNo] = useState(routeRoomNo || '');
   const roomNameSectionRef = useRef(null);
@@ -99,7 +101,8 @@ export default function Detail() {
 
   async function toggleWish(roomNo, nextWished) {
     if (!currentUserNo) {
-      alert('로그인 후 사용할 수 있습니다.');
+      alert('찜 기능은 로그인 후 사용할 수 있습니다.');
+      navigate(ROUTES.AUTH.LOGIN, { replace: true });
       return false;
     }
 
@@ -229,6 +232,11 @@ export default function Detail() {
     // 라우트 작업 이후: navigate(`/rooms/${nextRoomNo}`)
   }
 
+  function handleRequireLoginForWish() {
+    alert('찜 기능은 로그인 후 사용할 수 있습니다.');
+    navigate(ROUTES.AUTH.LOGIN, { replace: true });
+  }
+
   return (
     <div className={styles.wrap}>
       {/* 좌측 */}
@@ -241,6 +249,8 @@ export default function Detail() {
               onSelect={onSelectRoom}
               wishMap={wishMap}
               onToggleWish={toggleWish}
+              isAuthed={isAuthed}
+              onRequireLogin={handleRequireLoginForWish}
             />
           </div>
 

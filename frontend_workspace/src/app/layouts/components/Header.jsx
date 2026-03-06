@@ -26,16 +26,33 @@ import {
 import styles from './Header.module.css';
 
 export default function Header() {
+  const LARGE_VIEW_KEY = 'ui-large-view';
   const { clearTokens } = useAuth();
   const [isLessor, setIsLessor] = useState(false);
   const [collapseClasses, setCollapseClasses] = useState('');
   const [userName, setUserName] = useState('');
+  const [isLargeView, setIsLargeView] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const [myPageRoute, setMyPageRoute] = useState(ROUTES.MEMBER.MYPAGE);
 
   const token = localStorage.getItem('accessToken');
   const isLoggedIn = !!token;
+
+  useEffect(() => {
+    const saved = localStorage.getItem(LARGE_VIEW_KEY) === '1';
+    setIsLargeView(saved);
+    document.body.classList.toggle('large-view', saved);
+  }, []);
+
+  const toggleLargeView = () => {
+    setIsLargeView((prev) => {
+      const next = !prev;
+      localStorage.setItem(LARGE_VIEW_KEY, next ? '1' : '0');
+      document.body.classList.toggle('large-view', next);
+      return next;
+    });
+  };
 
   useEffect(() => {
     const syncUserState = () => {
@@ -212,6 +229,19 @@ export default function Header() {
             </Nav>
 
             <Nav className="align-items-lg-center ml-lg-auto" navbar>
+              <NavItem className={styles.zoomItem}>
+                <Button
+                  className={`${styles.zoomButton} ${
+                    isLargeView ? styles.zoomButtonActive : ''
+                  }`}
+                  color={isLargeView ? 'info' : 'secondary'}
+                  size="sm"
+                  onClick={toggleLargeView}
+                >
+                  크게보기
+                </Button>
+              </NavItem>
+
               {isLoggedIn ? (
                 <NavItem
                   className={`d-none d-lg-flex ${styles.authSlot} ${styles.authSlotLoggedIn}`}

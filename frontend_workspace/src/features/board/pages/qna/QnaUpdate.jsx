@@ -23,6 +23,7 @@ export default function QnaUpdate() {
     newFiles,
     setNewFiles,
 
+    filePreviewUrls,
     submitting,
     onSubmit,
   } = useQnaUpdate({ postNo, nav });
@@ -42,6 +43,10 @@ export default function QnaUpdate() {
       setNewFiles={setNewFiles}
       submitting={submitting}
       onSubmit={onSubmit}
+      filePreviewUrls={filePreviewUrls}
+      getFileUrl={(f) =>
+        `http://localhost:8080/upload_files/qna/${f.updatedFileName}`
+      }
       onCancel={() => nav(`/qna/${postNo}`)}
     />
   );

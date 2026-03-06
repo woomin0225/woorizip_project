@@ -7,6 +7,95 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+body.large-view {
+  font-size: 18px;
+  line-height: 1.72;
+  letter-spacing: 0.01em;
+  text-rendering: optimizeLegibility;
+  color: #111 !important;
+}
+
+body.large-view p,
+body.large-view li,
+body.large-view a,
+body.large-view button,
+body.large-view input,
+body.large-view select,
+body.large-view textarea,
+body.large-view label,
+body.large-view span {
+  font-size: 1.06em;
+  color: #111 !important;
+}
+
+body.large-view h1 {
+  font-size: 3rem;
+}
+
+body.large-view h2 {
+  font-size: 2.5rem;
+}
+
+body.large-view h3 {
+  font-size: 2rem;
+}
+
+body.large-view h4 {
+  font-size: 1.6rem;
+}
+
+body.large-view h5 {
+  font-size: 1.35rem;
+}
+
+body.large-view .btn {
+  font-size: 1.02rem !important;
+  font-weight: 700 !important;
+}
+
+body.large-view .btn,
+body.large-view .btn span,
+body.large-view .btn .nav-link-inner--text {
+  color: inherit !important;
+}
+
+body.large-view .btn-info,
+body.large-view .btn-primary,
+body.large-view .btn-default {
+  color: #fff !important;
+}
+
+body.large-view .btn-neutral,
+body.large-view .btn-light,
+body.large-view .btn-secondary {
+  color: #111 !important;
+}
+
+body.large-view .text-muted,
+body.large-view .text-secondary,
+body.large-view .text-light,
+body.large-view .text-white-50,
+body.large-view .text-default {
+  color: #111 !important;
+  opacity: 1 !important;
+}
+
+body.large-view .nav-link,
+body.large-view .dropdown-item,
+body.large-view .card-title,
+body.large-view .card-text,
+body.large-view .form-control,
+body.large-view .form-check-label,
+body.large-view .small,
+body.large-view small {
+  color: #111 !important;
+}
+
+body.large-view a {
+  color: #111 !important;
+  text-decoration-thickness: 2px;
+}
+
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;

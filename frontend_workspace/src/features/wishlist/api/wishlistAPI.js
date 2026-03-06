@@ -34,6 +34,7 @@ async function request(path, options = {}) {
     ...options,
   });
   const text = await response.text();
+  // wishlist API는 JSON 응답을 전제로 처리
   const json = text ? JSON.parse(text) : null;
   if (!response.ok) throw new Error(json?.message || 'Wishlist request failed');
   return json?.data ?? json;
