@@ -3,7 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { useReservationDetail } from '../../hooks/reservation/useReservationDetail';
 import styles from './Detail.module.css';
 
-export default function ReservationDetail({ reservationNo, onClose, facilityNo, isOwner }) {
+export default function ReservationDetail({
+  reservationNo,
+  onClose,
+  facilityNo,
+  isOwner,
+}) {
   const nav = useNavigate();
   const { reservationDetails, loading, error } =
     useReservationDetail(reservationNo);
@@ -26,21 +31,6 @@ export default function ReservationDetail({ reservationNo, onClose, facilityNo, 
 
   return (
     <div className={styles.detailContainer}>
-      <div className={styles.imageSection}>
-        {facilityImages && facilityImages.length > 0 ? (
-          facilityImages.map((img) => (
-            <img
-              key={img.facilityImageNo}
-              src={img.imagePath}
-              alt="시설 이미지"
-              className={styles.facilityImg}
-            />
-          ))
-        ) : (
-          <div className={styles.noImage}>이미지 없음</div>
-        )}
-      </div>
-
       <div className={styles.infoSection}>
         <div className={styles.headerRow}>
           <h2 className={styles.title}>예약 상세 정보</h2>
@@ -58,17 +48,18 @@ export default function ReservationDetail({ reservationNo, onClose, facilityNo, 
         <div className={styles.btnGroup}>
           {isOwner || reservationStatus === 'CANCELED' ? (
             <>
-              <button
-                className={styles.primaryBtn}
-                onClick={onClose}
-              >
+              <button className={styles.primaryBtn} onClick={onClose}>
                 확인
               </button>
             </>
           ) : (
             <button
               className={styles.primaryBtn}
-              onClick={() => nav(`/reservation/form/${facilityNo}/${reservationNo}`)}
+              onClick={() =>
+                nav(
+                  `/reservation/form/${reservationDetails.facilityNo}/${reservationNo}`
+                )
+              }
             >
               수정하기
             </button>
