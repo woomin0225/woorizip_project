@@ -1,10 +1,11 @@
-// src/features/board/pages/notice/NoticeDetail.jsx
 import React from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
 import styles from './NoticeDetail.module.css';
 import FileDownloadButton from '../../components/FileDownloadButton';
+import AiSummaryPanel from '../../components/AiSummaryPanel';
 import { useNoticeDetail } from '../../hooks/useNoticeDetail';
+import { useBoardSummary } from '../../hooks/useBoardSummary';
 import { downloadNoticeFile } from '../../api/NoticeApi';
 
 // 라우트가 다르면 여기만 수정
@@ -17,15 +18,26 @@ export default function NoticeDetail() {
   const { isAdmin, notice, loading, deleting, error, handleDelete } =
     useNoticeDetail({ postNo, nav });
 
+  const {
+    opened,
+    summaryData,
+    summaryLoading,
+    summaryError,
+    loadSummary,
+    toggleOpened,
+    hasLoaded,
+  } = useBoardSummary(postNo);
+
   if (loading) return <div className={styles.loading}>Loading.....</div>;
   if (error) return <div className={styles.error}>{error}</div>;
   if (!notice) return <div className={styles.error}>데이터 없음</div>;
 
   const title = notice.postTitle || '(제목 없음)';
-  const writer = notice.userNo || '';
+  const writer = notice.userName || '-';
   const readCount = notice.postViewCount ?? 0;
-  const enrollDate = notice.postCreatedAt || '';
+  const enrollDate = notice.postCreatedAt || '-';
   const contentHtml = notice.postContent || '';
+  const files = notice.files || [];
 
   const isImageFile = (f) => {
     const name = (
@@ -49,90 +61,110 @@ export default function NoticeDetail() {
     return `http://localhost:8080/upload/notice/${f.updatedFileName}`;
   };
 
-  const imagesHtml = (notice?.files || [])
-    .filter(isImageFile)
-    .map(
-      (f) =>
-        `<div style="margin-top:12px;">
-         <img src="${getNoticeFileUrl(f)}"
-              alt="${f.originalFileName || '첨부 이미지'}"
-              style="max-width:100%; height:auto; display:block; margin-top:12px; border-radius:6px;" />
-       </div>`
-    )
-    .join('');
-
-  const finalHtml = `${imagesHtml}${contentHtml || ''}`;
+  const imageFiles = files.filter(isImageFile);
 
   return (
-    <div className={styles.container}>
-      <h2 className={styles.title}>공지사항 게시글 상세</h2>
+    <div className={styles.page}>
+      <div className={styles.container}>
+        <div className={styles.card}>
+          <h1 className={styles.postTitle}>{title}</h1>
 
-      <table className={styles.table}>
-        <tbody>
-          <tr>
-            <th>제목</th>
-            <td>{title}</td>
-          </tr>
-          <tr>
-            <th>작성자</th>
-            <td>{writer}</td>
-          </tr>
-          <tr>
-            <th>조회수</th>
-            <td>{readCount}</td>
-          </tr>
-          <tr>
-            <th>등록일</th>
-            <td>{enrollDate}</td>
-          </tr>
-          <tr>
-            <th>내용</th>
-            <td dangerouslySetInnerHTML={{ __html: finalHtml }} />
-          </tr>
-          <tr>
-            <th>첨부파일</th>
-            <td>
-              {notice.files && notice.files.length > 0
-                ? notice.files.map((f) => (
-                    <div key={f.fileNo}>
+          <div className={styles.metaRow}>
+            <span className={styles.metaItem}>작성자 {writer}</span>
+            <span className={styles.divider}>|</span>
+            <span className={styles.metaItem}>등록일 {enrollDate}</span>
+            <span className={styles.divider}>|</span>
+            <span className={styles.metaItem}>조회수 {readCount}</span>
+          </div>
+
+          <section className={styles.section}>
+            <h2 className={styles.sectionTitle}>첨부파일</h2>
+
+            <div className={styles.sectionBox}>
+              {files.length > 0 ? (
+                <div className={styles.fileList}>
+                  {files.map((f) => (
+                    <div
+                      key={f.fileNo || f.updatedFileName || f.originalFileName}
+                      className={styles.fileItem}
+                    >
                       <FileDownloadButton
                         postNo={postNo}
                         file={f}
                         downloadFn={downloadNoticeFile}
                       />
                     </div>
-                  ))
-                : '없음'}
-            </td>
-          </tr>
-        </tbody>
-      </table>
+                  ))}
+                </div>
+              ) : (
+                <div className={styles.emptyText}>첨부파일 없음</div>
+              )}
+            </div>
+          </section>
 
-      <div className={styles.buttonGroup}>
-        <Link to="/notices" className={styles.button}>
-          목록으로
-        </Link>
+          <section className={styles.section}>
+            <h2 className={styles.sectionTitle}>내용</h2>
 
-        {isAdmin && (
-          <>
-            <button
-              type="button"
-              className={styles.button}
-              onClick={() => nav(EDIT_PATH(postNo))}
-            >
-              수정하기
-            </button>
+            <div className={styles.contentBox}>
+              {imageFiles.length > 0 && (
+                <div className={styles.imageList}>
+                  {imageFiles.map((f) => (
+                    <img
+                      key={f.fileNo || f.updatedFileName || f.originalFileName}
+                      src={getNoticeFileUrl(f)}
+                      alt={f.originalFileName || '첨부 이미지'}
+                      className={styles.contentImage}
+                    />
+                  ))}
+                </div>
+              )}
 
-            <button
-              type="button"
-              className={styles.button}
-              onClick={handleDelete}
-              disabled={deleting}
-            >
-              {deleting ? '삭제 중...' : '삭제하기'}
-            </button>
-          </>
-        )}
+              <div
+                className={styles.content}
+                dangerouslySetInnerHTML={{ __html: contentHtml }}
+              />
+            </div>
+          </section>
+
+          <div className={styles.summaryWrap}>
+            <AiSummaryPanel
+              opened={opened}
+              hasLoaded={hasLoaded}
+              summaryLoading={summaryLoading}
+              summaryError={summaryError}
+              summaryData={summaryData}
+              onLoad={loadSummary}
+              onToggle={toggleOpened}
+            />
+          </div>
+
+          <div className={styles.buttonGroup}>
+            <Link to="/notices" className={styles.button}>
+              목록으로
+            </Link>
+
+            {isAdmin && (
+              <>
+                <button
+                  type="button"
+                  className={styles.button}
+                  onClick={() => nav(EDIT_PATH(postNo))}
+                >
+                  수정하기
+                </button>
+
+                <button
+                  type="button"
+                  className={styles.button}
+                  onClick={handleDelete}
+                  disabled={deleting}
+                >
+                  {deleting ? '삭제 중...' : '삭제하기'}
+                </button>
+              </>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

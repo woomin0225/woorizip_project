@@ -32,16 +32,28 @@
 
 .btn {
   height: 36px;
+  padding: 0 14px;
   border-radius: 10px;
-  padding: 0 12px;
-  border: 1px solid rgba(16, 24, 40, 0.14);
-  background: #fff;
+  border: 1px solid #e5c4ad;
+  background: #fff6ee;
+  color: #8a4c2d;
   cursor: pointer;
   font-weight: 800;
 }
 
+.btn:hover {
+  background: #faece0;
+  color: #7a4125;
+}
+
 .primary {
-  background: #1f6fe0;
-  border-color: transparent;
+  border: 1px solid #c9713f;
+  background: #c9713f;
+  color: #fff;
+}
+
+.primary:hover {
+  border-color: #b86334;
+  background: #b86334;
   color: #fff;
 }

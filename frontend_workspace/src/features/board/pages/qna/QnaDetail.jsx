@@ -1,29 +1,36 @@
-// src/features/board/pages/qna/QnaDetail.jsx
 import React from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
+import styles from '../notice/NoticeDetail.module.css';
 import FileDownloadButton from '../../components/FileDownloadButton';
+import CommentBox from '../../components/CommentBox';
 import { useQnaDetail } from '../../hooks/useQnaDetail';
 import { downloadQnaFile } from '../../api/QnaApi';
-import CommentBox from '../../components/CommentBox';
+
+// 라우트가 다르면 여기만 수정
+const EDIT_PATH = (postNo) => `/qna/${postNo}/edit`;
 
 export default function QnaDetail() {
   const { postNo } = useParams();
   const nav = useNavigate();
 
   const { qna, loading, deleting, error, isOwner, handleDelete } = useQnaDetail(
-    { postNo, nav }
+    {
+      postNo,
+      nav,
+    }
   );
 
-  if (loading) return <div>Loading...</div>;
-  if (error) return <div style={{ color: 'crimson' }}>{error}</div>;
-  if (!qna) return <div>데이터 없음</div>;
+  if (loading) return <div className={styles.loading}>Loading.....</div>;
+  if (error) return <div className={styles.error}>{error}</div>;
+  if (!qna) return <div className={styles.error}>데이터 없음</div>;
 
   const title = qna.postTitle || '(제목 없음)';
-  const writer = qna.userName || '';
+  const writer = qna.userName || qna.userNo || '-';
   const readCount = qna.postViewCount ?? 0;
-  const enrollDate = qna.postCreatedAt || '';
+  const enrollDate = qna.postCreatedAt || '-';
   const contentHtml = qna.postContent || '';
+  const files = qna.files || [];
 
   const isImageFile = (f) => {
     const name = (
@@ -47,100 +54,103 @@ export default function QnaDetail() {
     return `http://localhost:8080/upload/qna/${f.updatedFileName}`;
   };
 
-  const imagesHtml = (qna?.files || [])
-    .filter(isImageFile)
-    .map(
-      (f) =>
-        `<div style="margin-top:12px;">
-         <img src="${getQnaFileUrl(f)}"
-              alt="${f.originalFileName || '첨부 이미지'}"
-              style="max-width:100%; height:auto; display:block; margin-top:12px; border-radius:6px;" />
-       </div>`
-    )
-    .join('');
-
-  const finalHtml = `${imagesHtml}${contentHtml || ''}`;
+  const imageFiles = files.filter(isImageFile);
 
   return (
-    <div style={{ padding: 16 }}>
-      <h2 style={{ textAlign: 'center', marginBottom: 20 }}>Q&A 게시글 상세</h2>
+    <div className={styles.page}>
+      <div className={styles.container}>
+        <div className={styles.card}>
+          <h1 className={styles.postTitle}>{title}</h1>
 
-      <table
-        width="100%"
-        border="1"
-        cellPadding="8"
-        style={{ borderCollapse: 'collapse' }}
-      >
-        <tbody>
-          <tr>
-            <th width="15%">제목</th>
-            <td>{title}</td>
-          </tr>
-          <tr>
-            <th>작성자</th>
-            <td>{writer}</td>
-          </tr>
-          <tr>
-            <th>조회수</th>
-            <td>{readCount}</td>
-          </tr>
-          <tr>
-            <th>등록일</th>
-            <td>{enrollDate}</td>
-          </tr>
-          <tr>
-            <th>내용</th>
-            <td dangerouslySetInnerHTML={{ __html: finalHtml }} />
-          </tr>
-          <tr>
-            <th>첨부파일</th>
-            <td>
-              {qna.files && qna.files.length > 0
-                ? qna.files.map((f) => (
-                    <div key={f.fileNo}>
+          <div className={styles.metaRow}>
+            <span className={styles.metaItem}>작성자 {writer}</span>
+            <span className={styles.divider}>|</span>
+            <span className={styles.metaItem}>등록일 {enrollDate}</span>
+            <span className={styles.divider}>|</span>
+            <span className={styles.metaItem}>조회수 {readCount}</span>
+          </div>
+
+          <section className={styles.section}>
+            <h2 className={styles.sectionTitle}>첨부파일</h2>
+
+            <div className={styles.sectionBox}>
+              {files.length > 0 ? (
+                <div className={styles.fileList}>
+                  {files.map((f) => (
+                    <div
+                      key={f.fileNo || f.updatedFileName || f.originalFileName}
+                      className={styles.fileItem}
+                    >
                       <FileDownloadButton
                         postNo={postNo}
                         file={f}
                         downloadFn={downloadQnaFile}
                       />
                     </div>
-                  ))
-                : '없음'}
-            </td>
-          </tr>
-        </tbody>
-      </table>
+                  ))}
+                </div>
+              ) : (
+                <div className={styles.emptyText}>첨부파일 없음</div>
+              )}
+            </div>
+          </section>
 
-      <div style={{ marginTop: 20, textAlign: 'center' }}>
-        <Link to="/qna">
-          <button type="button">목록으로</button>
-        </Link>
+          <section className={styles.section}>
+            <h2 className={styles.sectionTitle}>내용</h2>
 
-        {isOwner && (
-          <>
-            <button
-              type="button"
-              onClick={() => nav(`/qna/${postNo}/edit`)}
-              style={{ marginLeft: 10 }}
-            >
-              수정하기
-            </button>
+            <div className={styles.contentBox}>
+              {imageFiles.length > 0 && (
+                <div className={styles.imageList}>
+                  {imageFiles.map((f) => (
+                    <img
+                      key={f.fileNo || f.updatedFileName || f.originalFileName}
+                      src={getQnaFileUrl(f)}
+                      alt={f.originalFileName || '첨부 이미지'}
+                      className={styles.contentImage}
+                    />
+                  ))}
+                </div>
+              )}
 
-            <button
-              type="button"
-              onClick={handleDelete}
-              disabled={deleting}
-              style={{ marginLeft: 10 }}
-            >
-              {deleting ? '삭제 중...' : '삭제하기'}
-            </button>
-          </>
-        )}
-      </div>
+              <div
+                className={styles.content}
+                dangerouslySetInnerHTML={{ __html: contentHtml }}
+              />
+            </div>
+          </section>
 
-      {/* 댓글 영역 */}
-      <div style={{ marginTop: 40 }}>
-        <CommentBox postNo={Number(postNo)} />
+          <div className={styles.buttonGroup}>
+            <Link to="/qna" className={styles.button}>
+              목록으로
+            </Link>
+
+            {isOwner && (
+              <>
+                <button
+                  type="button"
+                  className={styles.button}
+                  onClick={() => nav(EDIT_PATH(postNo))}
+                >
+                  수정하기
+                </button>
+
+                <button
+                  type="button"
+                  className={styles.button}
+                  onClick={handleDelete}
+                  disabled={deleting}
+                >
+                  {deleting ? '삭제 중...' : '삭제하기'}
+                </button>
+              </>
+            )}
+          </div>
+
+          {/* 댓글 영역 */}
+          <div style={{ marginTop: 40 }}>
+            <CommentBox postNo={Number(postNo)} />
+          </div>
+        </div>
       </div>
     </div>
   );

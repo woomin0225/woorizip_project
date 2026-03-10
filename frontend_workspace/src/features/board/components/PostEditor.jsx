@@ -99,13 +99,22 @@ export default function PostEditor({
       {/* 파일 추가 */}
       <div className={styles.formGroup}>
         <label className={styles.label}>파일 추가</label>
+
         <input
+          id="post-file-upload"
           type="file"
           multiple
           onChange={handleFileChange}
           disabled={submitting}
-          className={styles.fileInput}
+          className={styles.hiddenFileInput}
         />
+
+        <label
+          htmlFor="post-file-upload"
+          className={`${styles.fileSelectBtn} ${submitting ? styles.disabledBtn : ''}`}
+        >
+          파일 선택
+        </label>
 
         {newFiles.length > 0 && (
           <div className={styles.newFileList}>
