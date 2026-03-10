@@ -2550,4 +2550,4 @@ VALUES
 -- 18. 부대시설 예약 (tb_fm_rsvn)
 INSERT INTO `tb_fm_rsvn` (`rsvn_no`, `facility_no`, `user_no`, `rsvn_name`, `rsvn_phone`, `rsvn_date`, `rsvn_start_time`, `rsvn_end_time`, `rsvn_status`, `rsvn_created_at`) 
 VALUES 
-('rsvn1', 'fac1', 'user1', '박일번', '010-2222-2222', '2026-02-27', '19:00:00', '21:00:00', 'APPROVED', '2026-02-10 00:00:01');
+('rsvn1', 'fac_house1_6', 'user1', '박일번', '010-2222-2222', '2026-02-27', '19:00:00', '21:00:00', 'APPROVED', '2026-02-10 00:00:01');
