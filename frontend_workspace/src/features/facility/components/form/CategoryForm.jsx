@@ -1,4 +1,3 @@
-// src/features/facility/components/form/CategoryForm.jsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useCategoryForm } from '../../hooks/category/useCategoryForm';
@@ -11,17 +10,22 @@ export default function CategoryForm() {
   const { values, handleChange, onSubmit, loading, submitting, updateMode } =
     useCategoryForm(facilityCode ? parseInt(facilityCode) : null);
 
+  // 옵션 리스트 상태
   const [optionList, setOptionList] = useState(['', '', '', '', '']);
 
   useEffect(() => {
-    if (values.facilityOptions) {
+    // values.facilityOptions가 문자열로 들어올 때 (예: "옵션1,옵션2")
+    if (values.facilityOptions !== undefined) {
       const savedOptions = values.facilityOptions
-        .split(',')
-        .map((opt) => opt.trim());
+        ? values.facilityOptions.split(',').map((opt) => opt.trim())
+        : [];
+
       const newOptions = ['', '', '', '', ''];
       savedOptions.forEach((opt, i) => {
         if (i < 5) newOptions[i] = opt;
       });
+
+      // 현재 상태와 다를 때만 업데이트해서 무한 루프 방지
       setOptionList(newOptions);
     }
   }, [values.facilityOptions]);
@@ -31,13 +35,17 @@ export default function CategoryForm() {
     newOptions[index] = value;
     setOptionList(newOptions);
 
-    const syntheticEvent = {
+    // 백엔드로 보낼 땐 다시 콤마로 합쳐서 values에 저장
+    const combinedOptions = newOptions
+      .filter((opt) => opt.trim() !== '')
+      .join(',');
+
+    handleChange({
       target: {
         name: 'facilityOptions',
-        value: newOptions.filter((opt) => opt.trim() !== '').join(','),
+        value: combinedOptions,
       },
-    };
-    handleChange(syntheticEvent);
+    });
   };
 
   if (loading) {
@@ -69,9 +77,11 @@ export default function CategoryForm() {
                   type="text"
                   name="facilityType"
                   className={styles.input}
-                  placeholder="시설 이름"
-                  value={values.facilityType}
+                  placeholder="예: 수영장, 회의실"
+                  // ★ values.facilityType이 확실히 연결되었는지 확인
+                  value={values.facilityType || ''}
                   onChange={handleChange}
+                  required
                 />
               </div>
 
@@ -84,8 +94,8 @@ export default function CategoryForm() {
                       <input
                         type="text"
                         className={styles.input}
-                        placeholder={`${idx + 1}번째 시설 기본 옵션`}
-                        value={opt}
+                        placeholder={`${idx + 1}번째 기본 옵션 (선택)`}
+                        value={opt || ''}
                         onChange={(e) =>
                           handleOptionChange(idx, e.target.value)
                         }
@@ -108,7 +118,7 @@ export default function CategoryForm() {
                   className={styles.primaryBtn}
                   disabled={submitting}
                 >
-                  저장
+                  {submitting ? '저장 중...' : '저장'}
                 </button>
               </div>
             </form>
