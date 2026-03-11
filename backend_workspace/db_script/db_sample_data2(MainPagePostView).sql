@@ -152,3 +152,11 @@ VALUES
 (29, 'event_29_long_term_thanks.png',    '20260303120619.png', '2026-03-03 12:06:19'),
 (27, 'event_27_summer_premium.png',      '20260303123646.png', '2026-03-03 12:07:40'),
 (31, 'event_31_consultation_premium.png','20260303120934.png', '2026-03-03 12:09:34');
+
+INSERT INTO `tb_files`
+(`file_no`, `post_no`, `original_file_name`, `updated_file_name`)
+VALUES
+(2, 6,  '20260305101856.pdf', '20260309182315.pdf'),
+(4, 22, 'guide.pdf',          '20260311100857.pdf'),
+(5, 1,  '공사안내문.pdf',      '20260311133342.pdf'),
+(6, 11, '소방 점검.pdf',       '20260311134117.pdf');

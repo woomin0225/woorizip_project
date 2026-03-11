@@ -39,12 +39,67 @@ function CommentItem({ comment, onReply, onEdit, onDelete }) {
           </div>
           <p>{comment.commentContent}</p>
 
-          <div style={{ marginTop: '5px' }}>
-            <button onClick={() => setIsReplying(!isReplying)}>답글</button>
+          <div
+            style={{
+              marginTop: '8px',
+              display: 'flex',
+              gap: '8px',
+              flexWrap: 'wrap',
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => setIsReplying(!isReplying)}
+              style={{
+                height: 36,
+                padding: '0 14px',
+                border: '1px solid #c9713f',
+                background: '#c9713f',
+                color: '#fff',
+                borderRadius: 10,
+                cursor: 'pointer',
+                fontWeight: 800,
+                fontSize: 14,
+              }}
+            >
+              답글
+            </button>
+
             {isMyComment && (
               <>
-                <button onClick={() => setIsEditing(true)}>수정</button>
-                <button onClick={() => onDelete(comment.commentNo)}>
+                <button
+                  type="button"
+                  onClick={() => setIsEditing(true)}
+                  style={{
+                    height: 36,
+                    padding: '0 14px',
+                    border: '1px solid #c9713f',
+                    background: '#c9713f',
+                    color: '#fff',
+                    borderRadius: 10,
+                    cursor: 'pointer',
+                    fontWeight: 800,
+                    fontSize: 14,
+                  }}
+                >
+                  수정
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => onDelete(comment.commentNo)}
+                  style={{
+                    height: 36,
+                    padding: '0 14px',
+                    border: '1px solid #c9713f',
+                    background: '#c9713f',
+                    color: '#fff',
+                    borderRadius: 10,
+                    cursor: 'pointer',
+                    fontWeight: 800,
+                    fontSize: 14,
+                  }}
+                >
                   삭제
                 </button>
               </>
