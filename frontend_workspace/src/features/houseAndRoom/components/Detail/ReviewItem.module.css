@@ -1,0 +1,35 @@
+.row {
+  border-top: 1px solid #eee;
+  padding: 10px 0;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas:
+    "stars meta"
+    "content actions";
+  column-gap: 12px;
+  row-gap: 6px;
+  align-items: start;
+}
+.stars {
+  grid-area: stars;
+  font-weight: 700;
+}
+.meta {
+  grid-area: meta;
+  justify-self: end;
+  display: flex;
+  gap: 10px;
+  color: #666;
+  font-size: 12px;
+}
+.actions {
+  grid-area: actions;
+  justify-self: end;
+  display: flex;
+  gap: 6px;
+}
+.content {
+  grid-area: content;
+  color: #333;
+  white-space: pre-wrap;
+}

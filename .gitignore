@@ -15,3 +15,6 @@
 **/target/
 .gradle/
 build/
+
+# Querydsl (Generated source files)
+**/src/main/generated/

@@ -1,0 +1,65 @@
+package org.team4p.woorizip.common.config;
+
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.stereotype.Component;
+
+import java.nio.file.Path;
+
+// OS 변경 시 properties만 수정하면 됨. 경로 규칙이 한 곳에 모임. React 연동 API에서도 일관성 유지
+
+@ConfigurationProperties(prefix = "app")  // 이 클래스는 properties 와 연결된다는 어노테이션임, (prefix = "app") == app.* 의미함
+public record UploadProperties(
+        String uploadDir,   // app.upload-dir 프로퍼티 값으로 매핑됨. uploadDir == C:/upload_files (base 경로)
+        String contractDocDir // 계약서 전용 저장 경로 (예: C:/contract_docs)
+) {
+
+    /** 공지사항 업로드 경로 */
+    public Path noticeDir() {
+        return Path.of(uploadDir, "notice");  // C:/upload_files/notice
+    }
+
+    /** qna 업로드 경로 */
+    public Path qnaDir() {
+        return Path.of(uploadDir, "qna");  // C:/upload_files/qna
+    }
+    
+    /** event 업로드 경로 */
+    public Path eventDir() {
+        return Path.of(uploadDir, "event");  // C:/upload_files/event
+    }
+    
+    /** event banner 업로드 경로 */
+    public Path eventBannerDir() {
+        return Path.of(uploadDir, "event", "banner");  // C:/upload_files/event/banner
+    }
+    
+    /** information 업로드 경로 */
+    public Path informationDir() {
+        return Path.of(uploadDir, "information");  // C:/upload_files/information
+    }
+
+    /** 회원 사진 업로드 경로 */
+    public Path photoDir() {
+        return Path.of(uploadDir, "photo");  // C:/upload_files/photo
+    }
+    
+    /** 건물 사진 업로드 경로 */
+    public Path houseImageDir() {
+    		return Path.of(uploadDir, "house_image");
+    }
+    
+    /** 방 사진 업로드 경로 */
+    public Path roomImageDir() {
+    		return Path.of(uploadDir, "room_image");
+    }
+    
+    /** 시설 사진 업로드 경로 */
+    public Path facilityImageDir() {
+    		return Path.of(uploadDir, "facility_image");
+    }
+
+    /** 계약서 파일 저장 경로 */
+    public Path contractDocDirPath() {
+        return Path.of(contractDocDir);
+    }
+}

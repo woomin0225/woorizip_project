@@ -1,0 +1,134 @@
+﻿/* src/features/facility/components/detail/Detail.module.css */
+@import '../../../../app/layouts/MyPageLayout.module.css';
+@import '../list/List.module.css';
+
+
+.primaryBtn {
+  composes: primaryBtn from '../../../../app/layouts/MyPageLayout.module.css';
+  padding: 10px 24px !important;
+}
+
+.facilityRow {
+  composes: facilityRow from '../list/List.module.css';
+}
+
+.facilityRow:last-of-type {
+  border-bottom: none;
+}
+
+.facilityRow:hover {
+  background-color: #f6f9fc;
+  color: #11cdef;
+}
+
+.grid2 {
+  composes: grid2 from '../list/List.module.css';
+  margin-top: 24px;
+}
+
+.itemCard {
+  composes: mainCard from '../../../../app/layouts/MyPageLayout.module.css';
+  display: flex;
+  flex-direction: column;
+  padding: 0 !important;
+  cursor: pointer;
+  transition: transform 0.2s;
+  min-height: auto !important;
+}
+
+.itemCard:hover {
+  transform: translateY(-4px);
+  border-color: #5e72e4 !important;
+}
+
+.infoSection {
+  padding: 24px;
+}
+
+.itemTitle {
+  composes: menuTitle from '../../../../app/layouts/MyPageLayout.module.css';
+  font-size: 1.25rem !important;
+  margin-bottom: 16px !important;
+}
+
+.optionGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.optionBadge {
+  padding: 7px 14px;
+  background: #fdf5f0;
+  color: #c9713f;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  border: 1px solid #c9713f;
+}
+
+.headerRow {
+  composes: headerRow from '../../../../app/layouts/MyPageLayout.module.css';
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.title { composes: title from '../../../../app/layouts/MyPageLayout.module.css'; }
+.subTitle { composes: subTitle from '../../../../app/layouts/MyPageLayout.module.css'; }
+
+.detailContainer {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.imageSection {
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 10px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 8px;
+  background: #fff;
+  margin: 0 auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.facilityImg {
+  display: block;
+  width: 140px;
+  height: 140px;
+  flex: 0 0 auto;
+  object-fit: cover;
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+  margin: 0;
+}
+
+.imageSection .facilityImg + .facilityImg {
+  margin-top: 0;
+}
+
+@media (max-width: 768px) {
+  .facilityImg {
+    width: 110px;
+    height: 110px;
+  }
+}
+
+.btnGroup {
+  display: flex !important;
+  margin-top: 30px;
+  gap: 10px !important;
+}
+
+.descBox{
+  margin-top: 10px;
+  margin-bottom: 20px;
+}

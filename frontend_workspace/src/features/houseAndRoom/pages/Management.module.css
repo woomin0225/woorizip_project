@@ -1,0 +1,32 @@
+.wrap {
+  padding: 16px;
+}
+.title {
+  margin: 0 0 12px 0;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.card {
+  text-decoration: none;
+  border: 1px solid #eee;
+  border-radius: 12px;
+  padding: 14px;
+  background: #fff;
+  color: #222;
+}
+.cardTitle {
+  font-weight: 800;
+  margin-bottom: 6px;
+}
+.cardDesc {
+  color: #666;
+  font-size: 13px;
+}
+.note {
+  margin-top: 12px;
+  color: #777;
+  font-size: 12px;
+}

@@ -1,0 +1,74 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.title {
+  font-weight: 700;
+  margin-bottom: 10px;
+  flex-shrink: 0;
+}
+
+.list {
+  display: grid;
+  gap: 8px;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  align-content: start;
+  padding-right: 2px;
+}
+
+.item {
+  border: 1px solid #ddd;
+  background: #fff;
+  border-radius: 10px;
+  padding: 10px;
+  cursor: pointer;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.item:focus-visible {
+  outline: 2px solid #6b5b95;
+  outline-offset: 2px;
+}
+
+.selected {
+  border-color: #6b5b95;
+  box-shadow: 0 0 0 2px rgba(107, 91, 149, 0.15);
+}
+
+.occupied { background: #f2f2f2; color: #777; }
+
+.roomName { font-weight: 600; }
+.badge { font-size: 12px; border: 1px solid #eee; padding: 4px 8px; border-radius: 999px; background: #fff; }
+
+.itemRight {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.wishBtn {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  background: #fff;
+  cursor: pointer;
+}
+
+.wishBtn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.wished {
+  color: #000000;
+}

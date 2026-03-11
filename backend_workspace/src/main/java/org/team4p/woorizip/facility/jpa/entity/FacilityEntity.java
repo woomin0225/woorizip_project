@@ -1,0 +1,122 @@
+package org.team4p.woorizip.facility.jpa.entity;
+
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import org.hibernate.annotations.CreationTimestamp;
+import org.team4p.woorizip.facility.dto.FacilityModifyRequestDTO;
+import org.team4p.woorizip.facility.enums.FacilityStatus;
+import org.team4p.woorizip.house.jpa.entity.HouseEntity;
+
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Entity
+@Table(name = "tb_fm_list")
+@Getter
+@Setter
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
+public class FacilityEntity {
+	@Id
+	@Column(name = "facility_no", columnDefinition = "char(36)", nullable = false)
+	private String facilityNo;
+	
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "house_no")
+	private HouseEntity house;
+	
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "facility_code")
+	private FacilityCategoryEntity category;
+	
+	@Column(name = "facility_name", length = 20, nullable = false)
+	private String facilityName;
+	
+	@Column(name = "facility_sequence")
+	private Integer facilitySequence;
+	
+	@Column(name = "facility_option_info", columnDefinition = "TEXT", nullable = false)
+	@Convert(converter = MapToJsonConverter.class)
+	private Map<String, Boolean> facilityOptionInfo;
+	
+	@Column(name = "facility_location", nullable = false)
+	private int facilityLocation;
+	
+	@Column(name = "facility_open_time", nullable = false)
+	private LocalTime facilityOpenTime;
+	
+	@Column(name = "facility_close_time", nullable = false)
+	private LocalTime facilityCloseTime;
+	
+	@Column(name = "facility_status", nullable = false)
+	@Enumerated(EnumType.STRING)
+	private FacilityStatus facilityStatus;
+	
+	@Column(name = "facility_rsvn_required_yn", nullable = false)
+	private Boolean facilityRsvnRequiredYn;
+	
+	@Column(name = "facility_capacity", nullable = false)
+	private Integer facilityCapacity;
+	
+	@Column(name = "facility_created_at")
+	@CreationTimestamp
+	private LocalDateTime facilityCreatedAt;
+	
+	@Column(name = "facility_updated_at")
+	private LocalDateTime facilityUpdatedAt;
+	
+	@Column(name = "facility_deleted_at")
+	private LocalDateTime facilityDeletedAt;
+	
+	@Column(name = "max_rsvn_per_day")
+	private Integer maxRsvnPerDay;
+	
+	@Column(name = "facility_rsvn_unit_minutes")
+	private Integer facilityRsvnUnitMinutes;
+	
+	@Column(name = "facility_max_duration_minutes")
+	private Integer facilityMaxDurationMinutes;
+	
+	@Builder.Default
+	@OneToMany(mappedBy = "facility", cascade = CascadeType.ALL, orphanRemoval = true)
+	private List<FacilityImageEntity> images = new ArrayList<>();
+
+	public void updateFacility(FacilityModifyRequestDTO dto) {
+		 if (dto.getFacilityName() != null && !dto.getFacilityName().isBlank()) this.facilityName = dto.getFacilityName();
+		 if (dto.getFacilityOptionInfo() != null) this.facilityOptionInfo = dto.getFacilityOptionInfo() ;
+		 if (dto.getFacilityLocation() != null) this.facilityLocation = dto.getFacilityLocation();
+		 if (dto.getFacilityOpenTime() != null) this.facilityOpenTime = dto.getFacilityOpenTime();
+		 if (dto.getFacilityCloseTime() != null) this.facilityCloseTime = dto.getFacilityCloseTime();
+		 if (dto.getFacilityStatus() != null) {
+			 this.facilityStatus = dto.getFacilityStatus();
+			 if (this.facilityStatus == FacilityStatus.DELETED) this.facilityDeletedAt = LocalDateTime.now();
+			 else this.facilityDeletedAt = null;
+		 	}
+		 if (dto.getFacilityRsvnRequiredYn() != null) this.facilityRsvnRequiredYn = dto.getFacilityRsvnRequiredYn();
+		 if (dto.getFacilityCapacity() != null) this.facilityCapacity = dto.getFacilityCapacity();
+		 if (dto.getMaxRsvnPerDay() != null) this.maxRsvnPerDay = dto.getMaxRsvnPerDay();
+		 if (dto.getFacilityRsvnUnitMinutes() != null) this.facilityRsvnUnitMinutes = dto.getFacilityRsvnUnitMinutes();
+		 if (dto.getFacilityMaxDurationMinutes() != null) this.facilityMaxDurationMinutes = dto.getFacilityMaxDurationMinutes();
+		 this.facilityUpdatedAt = LocalDateTime.now();
+	}
+}

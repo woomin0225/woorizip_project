@@ -1,0 +1,295 @@
+package org.team4p.woorizip.board.notice.model.service;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.team4p.woorizip.board.file.jpa.entity.FileEntity;
+import org.team4p.woorizip.board.file.jpa.repository.FileRepository;
+import org.team4p.woorizip.board.file.model.dto.FileDto;
+import org.team4p.woorizip.board.post.jpa.entity.PostEntity;
+import org.team4p.woorizip.board.post.jpa.repository.PostRepository;
+import org.team4p.woorizip.board.post.model.dto.PostDto;
+import org.team4p.woorizip.common.exception.NotFoundException;
+import org.team4p.woorizip.user.jpa.entity.UserEntity;
+import org.team4p.woorizip.user.jpa.repository.UserRepository;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
+@Service
+@RequiredArgsConstructor
+@Transactional(readOnly = true)
+public class NoticeServiceImpl implements NoticeService {
+
+	private final PostRepository postRepository;
+	private final FileRepository fileRepository;
+	private final UserRepository userRepository;
+
+	// 공지사항 타입 고정
+	private static final String BOARD_TYPE_NO = "N1";
+
+	// ================Page -> List 변환 공통 메소드==============
+	private ArrayList<PostDto> toList(Page<PostEntity> page) {
+		ArrayList<PostDto> list = new ArrayList<>();
+		for (PostEntity entity : page) {
+			PostDto dto = PostDto.fromEntity(entity);
+			UserEntity user = userRepository.findById(entity.getUserNo()).orElse(null);
+
+			if(user == null || "Y".equals(user.getDeletedYn())) {
+				dto.setUserName("알 수 없는 사용자");
+			} else {
+				dto.setUserName(user.getName());
+			}
+	        
+			dto.setFiles(getFiles(entity.getPostNo()));
+			list.add(dto);
+		}
+		return list;
+	}
+
+	private List<FileDto> getFiles(Integer postNo) {
+		List<FileEntity> files = fileRepository.findByPostNo(postNo);
+		List<FileDto> list = new ArrayList<>();
+		for (FileEntity file : files) {
+			list.add(FileDto.fromEntity(file));
+		}
+		return list;
+	}
+
+	// =========================상단 고정================================
+	@Transactional
+	@Override
+	public void togglePin(int postNo) {
+		PostEntity entity = postRepository.findById(postNo)
+				.filter(e -> BOARD_TYPE_NO.equals(e.getBoardTypeNo()))
+				.orElseThrow(() -> new NotFoundException("해당 공지사항 게시글이 없습니다."));
+		
+		entity.setPostPinnedYn(!Boolean.TRUE.equals(entity.getPostPinnedYn()));
+	}
+	// =========================기본 조회================================
+	@Override
+	public ArrayList<PostDto> selectTop5() {
+		List<PostEntity> entities = 
+				postRepository.findTop5ByBoardTypeNoOrderByPostViewCountDesc(BOARD_TYPE_NO);
+
+		ArrayList<PostDto> list = new ArrayList<>();
+		for (PostEntity entity : entities) {
+			PostDto dto = PostDto.fromEntity(entity);
+			dto.setFiles(getFiles(entity.getPostNo()));
+			list.add(dto);
+		}
+		return list;
+	}
+
+	@Override
+	public int selectListCount() {
+		return (int) postRepository.countByBoardTypeNoAndPostTitleContainingIgnoreCase(BOARD_TYPE_NO, "");
+	}
+
+	@Override
+	public ArrayList<PostDto> selectList(Pageable pageable) {
+		return toList(postRepository.findByBoardTypeNoOrderByPostNoDesc(BOARD_TYPE_NO, pageable));
+	}
+
+	@Override
+	public PostDto selectNotice(int postNo) {
+		
+		PostEntity entity = postRepository.findById(postNo)
+				.filter(e -> BOARD_TYPE_NO.equals(e.getBoardTypeNo()))
+				.orElseThrow(() -> 
+						new NotFoundException("해당 공지사항 게시글이 없습니다.")
+				);
+		
+		PostDto dto = PostDto.fromEntity(entity);
+		UserEntity user = userRepository.findById(entity.getUserNo()).orElse(null);
+        
+        if(user == null || "Y".equals(user.getDeletedYn())) {
+        		dto.setUserName("알 수 없는 사용자");
+        } else {
+        		dto.setUserName(user.getName());
+        }
+        
+		dto.setFiles(getFiles(entity.getPostNo()));
+		
+		return dto;
+	}
+
+	@Override
+	public PostDto selectLast() {
+		
+		PostEntity entity = postRepository.findTopByBoardTypeNoOrderByPostNoDesc(BOARD_TYPE_NO);
+
+		if (entity == null) {
+			throw new NotFoundException("해당 공지사항 게시글이 없습니다.");
+		}
+
+		PostDto dto = PostDto.fromEntity(entity);
+		dto.setFiles(getFiles(entity.getPostNo()));
+		return dto;
+	}
+	
+	@Override
+	public ArrayList<PostDto> selectPinnedList() {
+		List<PostEntity> entities = 
+				postRepository.findByBoardTypeNoAndPostPinnedYnTrueOrderByPostNoDesc(BOARD_TYPE_NO);
+		
+		ArrayList<PostDto> list = new ArrayList<>();
+		for(PostEntity entity : entities) {
+			PostDto dto = PostDto.fromEntity(entity);
+			
+			//기존 toList()와 동일
+			UserEntity user = userRepository.findById(entity.getUserNo()).orElse(null);
+			if(user == null || "Y".equals(user.getDeletedYn())) dto.setUserName("알 수 없는 사용자");
+			else dto.setUserName(user.getName());
+			
+			dto.setFiles(getFiles(entity.getPostNo()));
+			list.add(dto);
+		}
+		
+		return list;
+	}
+
+	// ===========================조회수============================
+	@Override
+	@Transactional
+	public void updateAddReadCount(int postNo) {
+		postRepository.incrementViewCount(postNo);
+	}
+
+	//DML
+	//========================등록======================
+	@Override
+	@Transactional
+	public int insertNotice(PostDto postDto) {
+		
+		postDto.setBoardTypeNo(BOARD_TYPE_NO);
+		postDto.setPostNo(null);
+		
+		PostEntity saved = postRepository.save(postDto.toEntity());
+		boolean hasFiles = postDto.getFiles() != null && !postDto.getFiles().isEmpty();
+		
+		if(saved.getPostNo() == null) {
+			throw new IllegalStateException("공지사항 게시글 등록에 실패했습니다.");
+		}
+		
+		if(hasFiles) {
+			for(FileDto fileDto : postDto.getFiles()) {
+				fileDto.setPostNo(saved.getPostNo());
+				fileRepository.save(fileDto.toEntity());
+			}
+			
+			saved.setPostFilesYn(true);
+		}
+		
+		return 1;
+	}
+
+	//========================수정======================
+	@Override
+	@Transactional
+	public int updateNotice(PostDto postDto, List<Integer> deleteFileNo) {
+		
+		PostEntity entity = postRepository.findById(postDto.getPostNo())
+				.filter(e -> BOARD_TYPE_NO.equals(e.getBoardTypeNo()))
+				.orElseThrow(() -> 
+						new NotFoundException("수정할 공지사항 게시글이 없습니다."));
+		
+		entity.setPostTitle(postDto.getPostTitle());
+		entity.setPostContent(postDto.getPostContent());
+		entity.setPostUpdatedAt(postDto.getPostUpdatedAt());
+		
+		//선택 삭제 파일 제거
+		if(deleteFileNo != null && !deleteFileNo.isEmpty()) {
+			for(Integer fileNo : deleteFileNo) {
+				fileRepository.deleteById(fileNo);
+			}
+		}
+		
+		//새 파일 추가 
+		if(postDto.getFiles() != null && !postDto.getFiles().isEmpty()) {
+			for(FileDto fileDto : postDto.getFiles()) {
+				fileDto.setPostNo(postDto.getPostNo());
+				fileRepository.save(fileDto.toEntity());
+			}
+		}
+		
+		boolean hasFiles = !fileRepository.findByPostNo(postDto.getPostNo()).isEmpty();
+		entity.setPostFilesYn(hasFiles);
+		
+		return 1;
+	}
+
+	//========================삭	제======================
+	@Override
+	@Transactional
+	public int deleteNotice(int postNo) {
+		
+		if(!postRepository.existsById(postNo)) {
+			throw new NotFoundException("삭제할 공지사항 게시글이 없습니다.");
+		}
+		
+		fileRepository.deleteByPostNo(postNo);
+		postRepository.deleteById(postNo);
+		
+		return 1;
+	}
+
+	// ===============검색====================
+	@Override
+	public int selectSearchTitleCount(String keyword) {
+		return postRepository
+				.countByBoardTypeNoAndPostTitleContainingIgnoreCase(BOARD_TYPE_NO, keyword);
+	}
+
+	@Override
+	public int selectSearchContentCount(String keyword) {
+		return postRepository
+				.countByBoardTypeNoAndPostContentContainingIgnoreCase(BOARD_TYPE_NO, keyword);
+	}
+
+	@Override
+	public int selectSearchDateCount(LocalDate begin, LocalDate end) {
+
+		LocalDateTime start = begin.atStartOfDay();
+		LocalDateTime finish = end.atTime(LocalTime.MAX);
+
+		return postRepository
+				.countByBoardTypeNoAndPostCreatedAtBetween(BOARD_TYPE_NO, start, finish);
+	}
+
+	@Override
+	public ArrayList<PostDto> selectSearchTitle(String keyword, Pageable pageable) {
+		return toList(
+				postRepository
+					.findByBoardTypeNoAndPostTitleContainingIgnoreCaseOrderByPostNoDesc(
+							BOARD_TYPE_NO, keyword, pageable));
+	}
+
+	@Override
+	public ArrayList<PostDto> selectSearchContent(String keyword, Pageable pageable) {
+		return toList(
+				postRepository
+					.findByBoardTypeNoAndPostContentContainingIgnoreCaseOrderByPostNoDesc(
+							BOARD_TYPE_NO, keyword, pageable));
+	}
+
+	@Override
+	public ArrayList<PostDto> selectSearchDate(LocalDate begin, LocalDate end, Pageable pageable) {
+
+		LocalDateTime start = begin.atStartOfDay();
+		LocalDateTime finish = end.atTime(LocalTime.MAX);
+
+		return toList(
+				postRepository
+					.findByBoardTypeNoAndPostCreatedAtBetweenOrderByPostNoDesc(
+							BOARD_TYPE_NO, start, finish, pageable));
+	}
+}

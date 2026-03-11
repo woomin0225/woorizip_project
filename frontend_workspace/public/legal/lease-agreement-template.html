@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <title>주택 임대차 전자계약서(우리집)</title>
+  <style>
+    body { font-family: "Malgun Gothic", sans-serif; line-height: 1.6; margin: 24px; color: #111; }
+    h1 { text-align: center; font-size: 24px; margin-bottom: 14px; }
+    h2 { font-size: 16px; margin: 16px 0 8px; }
+    p, li { font-size: 13px; }
+    table { width: 100%; border-collapse: collapse; margin: 8px 0 14px; }
+    th, td { border: 1px solid #444; padding: 8px; font-size: 12px; vertical-align: top; }
+    th { background: #f5f5f5; width: 22%; }
+  </style>
+</head>
+<body>
+  <h1>주택 임대차 전자계약서(간편 양식)</h1>
+  <p>본 계약서는 우리집(Woorizip) 플랫폼에서 임대인과 임차인이 전자적으로 체결하는 주택 임대차 계약서입니다.</p>
+
+  <h2>1. 당사자</h2>
+  <table>
+    <tr><th>임대인</th><td>{{landlord_name}} / 연락처 {{landlord_phone}}</td></tr>
+    <tr><th>임차인</th><td>{{tenant_name}} / 연락처 {{tenant_phone}}</td></tr>
+  </table>
+
+  <h2>2. 목적물</h2>
+  <table>
+    <tr><th>주소</th><td>{{property_address}} {{property_address_detail}}</td></tr>
+    <tr><th>호실</th><td>{{room_name}}</td></tr>
+  </table>
+
+  <h2>3. 계약 조건</h2>
+  <table>
+    <tr><th>입주 예정일</th><td>{{move_in_date}}</td></tr>
+    <tr><th>계약기간</th><td>{{term_months}}개월 (종료 예정일: {{contract_end_date}})</td></tr>
+    <tr><th>보증금</th><td>{{deposit_krw}}원</td></tr>
+    <tr><th>월 차임</th><td>{{monthly_rent_krw}}원 (지급일: 매월 {{rent_pay_day}}일)</td></tr>
+  </table>
+
+  <h2>4. 특약</h2>
+  <p>{{special_terms}}</p>
+
+  <h2>5. 서명</h2>
+  <p>임대인 서명: {{landlord_signature}}</p>
+  <p>임차인 서명: {{tenant_signature}}</p>
+  <p>작성일: {{contract_written_date}}</p>
+</body>
+</html>

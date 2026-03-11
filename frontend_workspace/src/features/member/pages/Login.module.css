@@ -1,0 +1,94 @@
+.heroSection :global(.bg-gradient-info) {
+  background: linear-gradient(
+    135deg,
+    #cf7440 0%,
+    #e39a63 46%,
+    #efc89a 100%
+  ) !important;
+}
+
+.heroSection :global(.shape-style-1 span) {
+  background: rgba(255, 244, 232, 0.2) !important;
+}
+
+.primaryActionBtn {
+  border-color: #c9713f !important;
+  background: #c9713f !important;
+  color: #fff !important;
+}
+
+.primaryActionBtn:hover {
+  border-color: #b86334 !important;
+  background: #b86334 !important;
+}
+
+.socialBtn {
+  border: 1px solid #e5c4ad !important;
+  background: #fff6ee !important;
+}
+
+.socialBtn:hover {
+  background: #faece0 !important;
+}
+
+/* src/features/user/pages/Login.module.css */
+.container {
+  max-width: 400px;
+  margin: 4rem auto;
+  padding: 2.5rem 2rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+.container h2 {
+  text-align: center;
+  margin-bottom: 2rem;
+  color: #1e293b;
+}
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.group label {
+  font-weight: 600;
+  color: #475569;
+  font-size: 0.9rem;
+}
+.group input {
+  padding: 0.75rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  outline: none;
+}
+.group input:focus {
+  border-color: #3b82f6;
+}
+.btn {
+  padding: 0.8rem;
+  background: #2563eb;
+  color: #fff;
+  cursor: pointer;
+  border: none;
+  border-radius: 6px;
+  font-weight: bold;
+  transition: background 0.2s;
+}
+.btn:hover {
+  background: #1d4ed8;
+}
+.btn:disabled {
+  background: #94a3b8;
+  cursor: not-allowed;
+}
+.error {
+  color: #ef4444;
+  font-size: 0.85rem;
+  text-align: center;
+  font-weight: 500;
+}

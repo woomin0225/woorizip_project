@@ -1,0 +1,112 @@
+.page {
+  padding: 140px 0 60px;
+}
+
+.title {
+  margin: 0 0 8px;
+  color: #166534;
+}
+
+.desc {
+  margin: 0 0 12px;
+  color: #14532d;
+}
+
+.summaryCard {
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+  background: #fff;
+  padding: 14px;
+  margin-bottom: 12px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 10px;
+  padding: 7px 0;
+  border-bottom: 1px dashed #edf2f7;
+  color: #344767;
+  font-size: 0.9rem;
+}
+
+.row span:first-child {
+  color: #525f7f;
+  font-weight: 700;
+}
+
+.row:last-child {
+  border-bottom: 0;
+}
+
+.notice {
+  margin: 0 0 12px;
+  color: #5e72e4;
+  font-size: 0.84rem;
+}
+
+.noticeBox {
+  border: 1px solid #dbeafe;
+  background: #f8fbff;
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 12px;
+}
+
+.noticeTitle {
+  margin: 0 0 6px;
+  color: #1e3a8a;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.noticeDesc {
+  margin: 0 0 8px;
+  color: #334155;
+  font-size: 0.84rem;
+}
+
+.buttonRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.linkBtn,
+.secondaryBtn,
+.primaryBtn {
+  border-radius: 8px;
+  padding: 9px 12px;
+  font-size: 0.84rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.linkBtn {
+  border: 1px solid #fb6340;
+  color: #fb6340;
+  background: #fff;
+}
+
+.secondaryBtn {
+  border: 1px solid #d2d6da;
+  color: #525f7f;
+  background: #fff;
+}
+
+.primaryBtn {
+  border: 1px solid transparent;
+  color: #fff;
+  background: #11cdef;
+}
+
+@media (max-width: 991px) {
+  .row {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+
+  .buttonRow {
+    flex-direction: column;
+  }
+}

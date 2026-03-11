@@ -1,0 +1,153 @@
+.heroSection :global(.bg-gradient-info) {
+  background: linear-gradient(
+    135deg,
+    #cf7440 0%,
+    #e39a63 46%,
+    #efc89a 100%
+  ) !important;
+}
+
+.heroSection :global(.shape-style-1 span) {
+  background: rgba(255, 244, 232, 0.2) !important;
+}
+
+.formSection {
+  border: 1px solid #e6ebf1;
+  border-radius: 12px;
+  background: #ffffff;
+  padding: 16px;
+  margin-bottom: 14px;
+}
+
+.sectionBody {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.sectionTitle {
+  margin: 0 0 12px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #344767;
+}
+
+.inlineActionBtn {
+  min-width: 96px;
+  border-radius: 8px;
+  margin-left: 10px;
+}
+
+.primaryActionBtn {
+  border-color: #c9713f !important;
+  background: #c9713f !important;
+  color: #fff !important;
+}
+
+.primaryActionBtn:hover {
+  border-color: #b86334 !important;
+  background: #b86334 !important;
+}
+
+.softActionBtn {
+  border-color: #e5c4ad !important;
+  background: #fff6ee !important;
+  color: #8a4c2d !important;
+}
+
+.softActionBtn:hover {
+  background: #faece0 !important;
+}
+
+.doneActionBtn {
+  border-color: #a45a2f !important;
+  background: #a45a2f !important;
+  color: #fff !important;
+}
+
+.hintText {
+  margin-top: 8px;
+  color: #8898aa;
+  font-size: 0.78rem;
+}
+
+.derivedBox {
+  border: 1px solid #d7e4ff;
+  background: #f6f9ff;
+  border-radius: 10px;
+  padding: 10px 12px;
+  color: #344767;
+  font-size: 0.88rem;
+}
+
+.rrnMask {
+  min-width: 84px;
+  justify-content: center;
+  letter-spacing: 2px;
+  color: #8898aa;
+}
+
+.rrnBackInput {
+  max-width: 72px;
+  flex: 0 0 72px;
+  text-align: center;
+}
+
+.rrnWrap {
+  width: min(250px, 100%);
+}
+
+.narrowInputWrap {
+  width: min(540px, 100%);
+}
+
+.inlineInputAction {
+  width: min(540px, 100%);
+  display: flex;
+  align-items: center;
+}
+
+.inlineInputAction :global(.input-group) {
+  flex: 1;
+  min-width: 0;
+}
+
+.typeField {
+  width: min(360px, 100%);
+}
+
+.typePills {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.typePill {
+  border: 1px solid #dbe4f0;
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: #f8fbff;
+  color: #344767;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+}
+
+.typePillActive {
+  border-color: #c9713f;
+  background: #c9713f;
+  color: #fff;
+}
+
+@media (max-width: 767px) {
+  .inlineInputAction {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .inlineActionBtn {
+    margin-left: 0;
+  }
+}

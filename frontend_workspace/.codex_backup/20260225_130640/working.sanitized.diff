@@ -1,0 +1,1075 @@
+﻿diff --git a/frontend_workspace/src/app/layouts/MainLayout.module.css b/frontend_workspace/src/app/layouts/MainLayout.module.css
+index d453597..cd6c6a8 100644
+--- a/frontend_workspace/src/app/layouts/MainLayout.module.css
++++ b/frontend_workspace/src/app/layouts/MainLayout.module.css
+@@ -1,4 +1,4 @@
+-.wrapper {
++.wrapper {
+   display: flex;
+   flex-direction: column;
+   min-height: 100vh;
+diff --git a/frontend_workspace/src/app/router/guards/RequireAuth.jsx b/frontend_workspace/src/app/router/guards/RequireAuth.jsx
+index 666d470..490e2da 100644
+--- a/frontend_workspace/src/app/router/guards/RequireAuth.jsx
++++ b/frontend_workspace/src/app/router/guards/RequireAuth.jsx
+@@ -6,8 +6,10 @@ import { useAuth } from '../../providers/AuthProvider';
+ export default function RequireAuth({ redirectTo = '/login' }) {
+   const { isAuthed } = useAuth();
+   const location = useLocation();
++  const hasStoredToken = Boolean(localStorage.getItem('accessToken'));
+ 
+-  if (!isAuthed) {
++  // 로그인 직후 AuthProvider 상태 반영 전에도 localStorage 토큰이 있으면 통과시킨다.
++  if (!isAuthed && !hasStoredToken) {
+     return <Navigate to={redirectTo} replace state={{ from: location }} />;
+   }
+   return <Outlet />;
+diff --git a/frontend_workspace/src/app/router/routes.jsx b/frontend_workspace/src/app/router/routes.jsx
+index 4ff6a40..e7e6616 100644
+--- a/frontend_workspace/src/app/router/routes.jsx
++++ b/frontend_workspace/src/app/router/routes.jsx
+@@ -1,5 +1,4 @@
+-// src/app/router/routes.jsx
+-import React from 'react';
++import React from 'react';
+ import { createBrowserRouter } from 'react-router-dom';
+ 
+ import MainLayout from '../layouts/MainLayout';
+@@ -7,106 +6,76 @@ import RequireAuth from './guards/RequireAuth';
+ import RequireRole from './guards/RequireRole';
+ import { ROLES } from '../../shared/constants/roles';
+ import { ROUTES } from '../../shared/constants/routes';
++
+ import Login from '../../features/member/pages/Login';
+ import Signup from '../../features/member/pages/Signup';
+-import Home from '../../shared/pages/Home';
+-
+-import EventList from '../../features/board/pages/event/eventList';
+-
+-import NoticeList from '../../features/notice/pages/NoticeList';
+-import NoticeDetail from '../../features/notice/pages/NoticeDetail';
+-import NoticeWrite from '../../features/notice/pages/NoticeWrite';
+-import NoticeUpdate from '../../features/notice/pages/NoticeUpdate';
+-
+-import BoardList from '../../features/board/pages/BoardList';
+-import BoardWrite from '../../features/board/pages/BoardWrite';
+-import BoardDetail from '../../features/board/pages/BoardDetail';
+-import BoardUpdate from '../../features/board/pages/BoardUpdate';
+-
++import FindId from '../../features/member/pages/FindId';
++import FindPassword from '../../features/member/pages/FindPassword';
++import OAuth2RedirectHandler from '../../features/member/pages/OAuth2RedirectHandler';
+ import MemberList from '../../features/member/pages/MemberList';
+-// import MemberInfo from '../../features/member/pages/MemberInfo';
+-
+-import FacilityCategoryList from '../../features/facility/pages/category/FacilityCategoryList';
+-import FacilityCategoryForm from './../../features/facility/pages/category/FacilityCategoryForm';
+ 
+-import FacilityView from './../../features/facility/pages/facility/FacilityView';
+-import FacilityForm from './../../features/facility/pages/facility/FacilityForm';
+-
+-import ReservationView from './../../features/facility/pages/reservation/ReservationView';
+-import ReservationForm from './../../features/facility/pages/reservation/ReservationForm';
++import Home from '../../shared/pages/Home';
++import NoticeList from '../../features/board/pages/notice/NoticeList';
++import NoticeDetail from '../../features/board/pages/notice/NoticeDetail';
+ 
+-import { Routes } from 'react-router-dom';
++import FacilityCategoryList from '../../features/facility/pages/category/FacilityCategoryList';
++import FacilityCategoryForm from '../../features/facility/pages/category/FacilityCategoryForm';
++import FacilityView from '../../features/facility/pages/facility/FacilityView';
++import FacilityForm from '../../features/facility/pages/facility/FacilityForm';
++import ReservationView from '../../features/facility/pages/reservation/ReservationView';
++import ReservationForm from '../../features/facility/pages/reservation/ReservationForm';
++
++import TourApply from '../../features/tour/pages/TourApply';
++import OccupyApply from '../../features/tour/pages/OccupyApply';
++import ContractCreate from '../../features/contract/pages/ContractCreate';
++import Statement from '../../features/contract/pages/Statement';
++import Completion from '../../features/contract/pages/Completion';
++import WishlistPage from '../../features/wishlist/pages/WishlistPage';
+ 
+ export const router = createBrowserRouter([
+   {
+     element: <MainLayout />,
+     children: [
+-      // 메인 홈
+       { path: '/', element: <Home /> },
+ 
+       { path: ROUTES.AUTH.LOGIN, element: <Login /> },
+       { path: ROUTES.AUTH.SIGNUP, element: <Signup /> },
++      { path: ROUTES.AUTH.FIND_ID, element: <FindId /> },
++      { path: ROUTES.AUTH.FIND_PASSWORD, element: <FindPassword /> },
++      { path: ROUTES.AUTH.OAUTH_REDIRECT, element: <OAuth2RedirectHandler /> },
+ 
+       { path: '/notices', element: <NoticeList /> },
+       { path: '/notices/:noticeNo', element: <NoticeDetail /> },
+ 
+-      // { path: '/boards', element: <BoardList /> },
+-      // { path: '/boards/:boardNum', element: <BoardDetail /> },
+-
+-      { path: '/rooms', element: <Search /> }, // 방 찾기 페이지
+-      { path: '/rooms/:roomNo', element: <Detail /> }, // 방 상세보기 페이지
+-
+-      // 로그인 필요
+       {
+         element: <RequireAuth />,
+         children: [
+-          { path: '/boards/new', element: <BoardWrite /> },
+-          { path: '/boards/:boardNum/edit', element: <BoardUpdate /> },
+-          // { path: ROUTES.MEMBER.MYPAGE, element: <MemberInfo /> },
+-          // { path: '/boards/new', element: <BoardWrite /> },
+-          // { path: '/boards/:boardNum/edit', element: <BoardUpdate /> },
+-          // { path: ROUTES.MEMBER.MYPAGE, element: <MemberInfo /> },
+-          {
+-            path: ROUTES.USER.FACILITY,
+-            element: <FacilityView />,
+-          },
+-          {
+-            path: ROUTES.USER.FACILITY_FORM,
+-            element: <FacilityForm />,
+-          },
+-          {
+-            path: ROUTES.USER.RESERVATION,
+-            element: <ReservationView />,
+-          },
+-          {
+-            path: ROUTES.USER.RESERVATION_FORM,
+-            element: <ReservationForm />,
+-          },
+-
+-          { path: '/rooms/:roomNo/reviews/new', element: <ReviewCreate /> }, // 리뷰 등록 페이지
+-          {
+-            path: '/rooms/:roomNo/reviews/:reviewNo/edit',
+-            element: <ReviewModify />,
+-          }, // 리뷰 수정 페이지
++          { path: ROUTES.MEMBER.MYPAGE, element: <WishlistPage /> },
++          { path: ROUTES.WISHLIST.LIST, element: <WishlistPage /> },
++
++          { path: ROUTES.TOUR.APPLY, element: <TourApply /> },
++          { path: ROUTES.TOUR.LIST, element: <OccupyApply /> },
++
++          { path: ROUTES.CONTRACT.APPLY, element: <ContractCreate /> },
++          { path: ROUTES.CONTRACT.LIST, element: <Statement /> },
++          { path: ROUTES.CONTRACT.DETAIL, element: <Statement /> },
++          { path: ROUTES.CONTRACT.AMEND_REQUEST, element: <Statement /> },
++          { path: ROUTES.CONTRACT.AMEND_DECIDE, element: <Statement /> },
++          { path: ROUTES.CONTRACT.COMPLETION, element: <Completion /> },
++
++          { path: ROUTES.USER.FACILITY, element: <FacilityView /> },
++          { path: ROUTES.USER.FACILITY_FORM, element: <FacilityForm /> },
++          { path: ROUTES.USER.RESERVATION, element: <ReservationView /> },
++          { path: ROUTES.USER.RESERVATION_FORM, element: <ReservationForm /> },
+         ],
+       },
+ 
+-      // 관리자만
+       {
+         element: <RequireRole allowedRoles={[ROLES.ADMIN]} />,
+         children: [
+-          // { path: ROUTES.ADMIN.MEMBERS, element: <MemberList /> },
+-          // { path: '/notices/new', element: <NoticeWrite /> },
+-          // { path: '/notices/:noticeNo/edit', element: <NoticeUpdate /> },
+-
+-          {
+-            path: ROUTES.ADMIN.CATEGORY,
+-            element: <FacilityCategoryList />,
+-          },
+-          {
+-            path: ROUTES.ADMIN.CATEGORY_FORM,
+-            element: <FacilityCategoryForm />,
+-          },
++          { path: ROUTES.ADMIN.MEMBERS, element: <MemberList /> },
++          { path: ROUTES.ADMIN.CATEGORY, element: <FacilityCategoryList /> },
++          { path: ROUTES.ADMIN.CATEGORY_FORM, element: <FacilityCategoryForm /> },
+         ],
+       },
+     ],
+diff --git a/frontend_workspace/src/features/contract/api/contractAPI.js b/frontend_workspace/src/features/contract/api/contractAPI.js
+index ff7bd09..460dac2 100644
+--- a/frontend_workspace/src/features/contract/api/contractAPI.js
++++ b/frontend_workspace/src/features/contract/api/contractAPI.js
+@@ -1 +1,25 @@
+-// placeholder
++import { getApiBaseUrl } from '../../../app/config/env';
++const API_BASE_URL = getApiBaseUrl();
++
++function authHeader() {
++  const token = localStorage.getItem('accessToken');
++  return token ? { Authorization: `Bearer ${token}` } : {};
++}
++
++async function request(path, { method = 'GET', body } = {}) {
++  const response = await fetch(`${API_BASE_URL}${path}`, {
++    method,
++    headers: { 'Content-Type': 'application/json', ...authHeader() },
++    ...(body ? { body: JSON.stringify(body) } : {}),
++  });
++  const raw = await response.text();
++  const payload = raw ? JSON.parse(raw) : null;
++  if (!response.ok) throw new Error(payload?.message || 'Contract API request failed');
++  return payload?.data ?? payload;
++}
++
++export async function getMyContracts() { const data = await request('/api/contract/user/me'); return Array.isArray(data) ? data : []; }
++export async function getContract(contractNo) { return request(`/api/contract/${contractNo}`); }
++export async function applyContract(roomNo, payload) { return request(`/api/contract/insert/${roomNo}`, { method: 'POST', body: payload }); }
++export async function requestContractAmendment(originalContractNo, payload) { return request(`/api/contract/amendment/request/${originalContractNo}`, { method: 'POST', body: payload }); }
++export async function decideContractAmendment(amendmentNo, payload) { return request(`/api/contract/amendment/decide/${amendmentNo}`, { method: 'POST', body: payload }); }
+diff --git a/frontend_workspace/src/features/contract/components/ContractCompletionView.js b/frontend_workspace/src/features/contract/components/ContractCompletionView.js
+index ff7bd09..8034d76 100644
+--- a/frontend_workspace/src/features/contract/components/ContractCompletionView.js
++++ b/frontend_workspace/src/features/contract/components/ContractCompletionView.js
+@@ -1 +1,3 @@
+-// placeholder
++import React from 'react';
++import styles from './ContractCompletionView.module.css';
++export default function ContractCompletionView() { return <section className={styles.box}><h2>전자계약 및 결제가 완료되었습니다.</h2><p>마이페이지에서 계약 상태를 확인할 수 있습니다.</p></section>; }
+diff --git a/frontend_workspace/src/features/contract/components/ContractCompletionView.module.css b/frontend_workspace/src/features/contract/components/ContractCompletionView.module.css
+index 545eb34..ff22c78 100644
+--- a/frontend_workspace/src/features/contract/components/ContractCompletionView.module.css
++++ b/frontend_workspace/src/features/contract/components/ContractCompletionView.module.css
+@@ -1 +1,3 @@
+-/* placeholder */
++.box { border: 1px solid #bbf7d0; border-radius: 12px; padding: 18px; background: #f0fdf4; }
++.box h2 { margin: 0 0 8px; color: #166534; }
++.box p { margin: 0; color: #14532d; }
+diff --git a/frontend_workspace/src/features/contract/components/ContractDetail.jsx b/frontend_workspace/src/features/contract/components/ContractDetail.jsx
+index ff7bd09..8aae9d6 100644
+--- a/frontend_workspace/src/features/contract/components/ContractDetail.jsx
++++ b/frontend_workspace/src/features/contract/components/ContractDetail.jsx
+@@ -1 +1,6 @@
+-// placeholder
++import React from 'react';
++import styles from './ContractDetail.module.css';
++export default function ContractDetail({ contract }) {
++  if (!contract) return <p className={styles.empty}>선택된 계약이 없습니다.</p>;
++  return <div className={styles.box}><h3>계약 상세</h3><ul><li>계약번호: {contract.contractNo}</li><li>사용자번호: {contract.userNo}</li><li>방번호: {contract.roomNo}</li><li>입주일: {contract.moveInDate}</li><li>계약기간: {contract.termMonths}개월</li><li>상태: {contract.status}</li></ul></div>;
++}
+diff --git a/frontend_workspace/src/features/contract/components/ContractDetail.module.css b/frontend_workspace/src/features/contract/components/ContractDetail.module.css
+index 545eb34..771f16d 100644
+--- a/frontend_workspace/src/features/contract/components/ContractDetail.module.css
++++ b/frontend_workspace/src/features/contract/components/ContractDetail.module.css
+@@ -1 +1,4 @@
+-/* placeholder */
++.box { border: 1px solid #e5e7eb; border-radius: 12px; background: #fff; padding: 14px; }
++.box h3 { margin: 0 0 8px; }
++.box ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
++.empty { margin: 0; color: #6b7280; }
+diff --git a/frontend_workspace/src/features/contract/components/ContractListTable.jsx b/frontend_workspace/src/features/contract/components/ContractListTable.jsx
+index ff7bd09..c67327f 100644
+--- a/frontend_workspace/src/features/contract/components/ContractListTable.jsx
++++ b/frontend_workspace/src/features/contract/components/ContractListTable.jsx
+@@ -1 +1,22 @@
+-// placeholder
++import React from 'react';
++import styles from './ContractListTable.module.css';
++
++export default function ContractListTable({ contracts, onSelect }) {
++  if (!contracts.length) return <p className={styles.empty}>계약 내역이 없습니다.</p>;
++  return (
++    <div className={styles.grid}>
++      {contracts.map((contract) => (
++        <article key={contract.contractNo} className={styles.card}>
++          <div className={styles.thumbWrap}><div className={styles.thumbPlaceholder}>계약 매물 이미지</div></div>
++          <div className={styles.body}>
++            <h3 className={styles.title}>계약 #{contract.contractNo}</h3>
++            <p className={styles.meta}>방번호: {contract.roomNo}</p>
++            <p className={styles.meta}>입주일: {contract.moveInDate}</p>
++            <p className={styles.meta}>기간: {contract.termMonths}개월</p>
++            <div className={styles.footerRow}><span className={styles.status}>{contract.status || '-'}</span><button type="button" onClick={() => onSelect(contract.contractNo)}>상세</button></div>
++          </div>
++        </article>
++      ))}
++    </div>
++  );
++}
+diff --git a/frontend_workspace/src/features/contract/components/ContractListTable.module.css b/frontend_workspace/src/features/contract/components/ContractListTable.module.css
+index 545eb34..8ed844c 100644
+--- a/frontend_workspace/src/features/contract/components/ContractListTable.module.css
++++ b/frontend_workspace/src/features/contract/components/ContractListTable.module.css
+@@ -1 +1,12 @@
+-/* placeholder */
++.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
++.card { display: flex; gap: 12px; border: 1px solid #e9ecef; border-radius: 12px; padding: 12px; background: #fff; min-height: 190px; }
++.thumbWrap { width: 42%; min-width: 140px; }
++.thumbPlaceholder { width: 100%; min-height: 160px; border-radius: 8px; background: linear-gradient(135deg, #dbeafe, #e0f2fe); color: #334155; font-size: 0.85rem; font-weight: 700; display: flex; align-items: center; justify-content: center; }
++.body { flex: 1; display: flex; flex-direction: column; }
++.title { margin: 0 0 8px; font-size: 1rem; color: #1f2a44; }
++.meta { margin: 0 0 4px; color: #475569; font-size: 0.9rem; }
++.footerRow { margin-top: auto; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
++.status { font-size: 0.85rem; font-weight: 700; color: #1d4ed8; }
++.footerRow button { border: 0; border-radius: 6px; padding: 6px 10px; background: #2563eb; color: #fff; font-weight: 600; }
++.empty { margin: 0; color: #8898aa; }
++@media (max-width: 992px) { .grid { grid-template-columns: 1fr; } }
+diff --git a/frontend_workspace/src/features/contract/components/ContractStatementView.jsx b/frontend_workspace/src/features/contract/components/ContractStatementView.jsx
+index ff7bd09..fb81b30 100644
+--- a/frontend_workspace/src/features/contract/components/ContractStatementView.jsx
++++ b/frontend_workspace/src/features/contract/components/ContractStatementView.jsx
+@@ -1 +1,6 @@
+-// placeholder
++import React from 'react';
++import styles from './ContractStatementView.module.css';
++export default function ContractStatementView({ mode }) {
++  const textByMode = { list: '계약 조회 목록입니다.', detail: '선택한 계약의 상세 정보입니다.', amendmentRequest: '계약 수정 신청을 진행합니다.', amendmentDecide: '임대인이 수정 요청을 승인/반려합니다.' };
++  return <p className={styles.text}>{textByMode[mode] || textByMode.list}</p>;
++}
+diff --git a/frontend_workspace/src/features/contract/components/ContractStatementView.module.css b/frontend_workspace/src/features/contract/components/ContractStatementView.module.css
+index 545eb34..9cdcd32 100644
+--- a/frontend_workspace/src/features/contract/components/ContractStatementView.module.css
++++ b/frontend_workspace/src/features/contract/components/ContractStatementView.module.css
+@@ -1 +1 @@
+-/* placeholder */
++.text { margin: 0; color: #6b7280; }
+diff --git a/frontend_workspace/src/features/contract/components/ContractUpdateActions.jsx b/frontend_workspace/src/features/contract/components/ContractUpdateActions.jsx
+index ff7bd09..da7e05a 100644
+--- a/frontend_workspace/src/features/contract/components/ContractUpdateActions.jsx
++++ b/frontend_workspace/src/features/contract/components/ContractUpdateActions.jsx
+@@ -1 +1,3 @@
+-// placeholder
++import React from 'react';
++import styles from './ContractUpdateActions.module.css';
++export default function ContractUpdateActions({ onRequestAmend, onDecideAmend }) { return <div className={styles.actions}><button type="button" onClick={onRequestAmend}>계약 수정 신청</button><button type="button" onClick={onDecideAmend}>계약 수정 승인/반려</button></div>; }
+diff --git a/frontend_workspace/src/features/contract/components/ContractUpdateActions.module.css b/frontend_workspace/src/features/contract/components/ContractUpdateActions.module.css
+index 545eb34..47d1177 100644
+--- a/frontend_workspace/src/features/contract/components/ContractUpdateActions.module.css
++++ b/frontend_workspace/src/features/contract/components/ContractUpdateActions.module.css
+@@ -1 +1,2 @@
+-/* placeholder */
++.actions { display: flex; gap: 8px; }
++.actions button { border: 0; border-radius: 8px; background: #2563eb; color: #fff; padding: 8px 12px; }
+diff --git a/frontend_workspace/src/features/contract/components/StepHeader.jsx b/frontend_workspace/src/features/contract/components/StepHeader.jsx
+index ff7bd09..db60a41 100644
+--- a/frontend_workspace/src/features/contract/components/StepHeader.jsx
++++ b/frontend_workspace/src/features/contract/components/StepHeader.jsx
+@@ -1 +1,3 @@
+-// placeholder
++import React from 'react';
++import styles from './StepHeader.module.css';
++export default function StepHeader({ title, description }) { return <header className={styles.header}><h1>{title}</h1>{description && <p>{description}</p>}</header>; }
+diff --git a/frontend_workspace/src/features/contract/components/StepHeader.module.css b/frontend_workspace/src/features/contract/components/StepHeader.module.css
+index 545eb34..3ac1796 100644
+--- a/frontend_workspace/src/features/contract/components/StepHeader.module.css
++++ b/frontend_workspace/src/features/contract/components/StepHeader.module.css
+@@ -1 +1,2 @@
+-/* placeholder */
++.header h1 { margin: 0 0 6px; font-size: 1.7rem; }
++.header p { margin: 0; color: #6b7280; }
+diff --git a/frontend_workspace/src/features/contract/pages/Completion.jsx b/frontend_workspace/src/features/contract/pages/Completion.jsx
+index ff7bd09..6d6f0d1 100644
+--- a/frontend_workspace/src/features/contract/pages/Completion.jsx
++++ b/frontend_workspace/src/features/contract/pages/Completion.jsx
+@@ -1 +1,5 @@
+-// placeholder
++import React from 'react';
++import StepHeader from '../components/StepHeader';
++import ContractCompletionView from '../components/ContractCompletionView';
++import styles from './Completion.module.css';
++export default function Completion() { return <div className={styles.page}><StepHeader title="계약 완료" description="전자계약 및 결제 완료 화면" /><ContractCompletionView /></div>; }
+diff --git a/frontend_workspace/src/features/contract/pages/Completion.module.css b/frontend_workspace/src/features/contract/pages/Completion.module.css
+index 545eb34..41f6c86 100644
+--- a/frontend_workspace/src/features/contract/pages/Completion.module.css
++++ b/frontend_workspace/src/features/contract/pages/Completion.module.css
+@@ -1 +1 @@
+-/* placeholder */
++.page { max-width: 960px; margin: 0 auto; padding: 28px 20px; display: grid; gap: 12px; }
+diff --git a/frontend_workspace/src/features/contract/pages/ContractCreate.jsx b/frontend_workspace/src/features/contract/pages/ContractCreate.jsx
+index ff7bd09..256d9de 100644
+--- a/frontend_workspace/src/features/contract/pages/ContractCreate.jsx
++++ b/frontend_workspace/src/features/contract/pages/ContractCreate.jsx
+@@ -1 +1,34 @@
+-// placeholder
++import React, { useState } from 'react';
++import { useNavigate, useParams } from 'react-router-dom';
++import StepHeader from '../components/StepHeader';
++import { applyContract } from '../api/contractAPI';
++import { ROUTES } from '../../../shared/constants/routes';
++import styles from './ContractCreate.module.css';
++
++export default function ContractCreate() {
++  const navigate = useNavigate();
++  const { roomNo } = useParams();
++  const [form, setForm] = useState({ moveInDate: '', termMonths: 12 });
++  const handleChange = (e) => setForm((p) => ({ ...p, [e.target.name]: e.target.value }));
++
++  const handleSubmit = async (e) => {
++    e.preventDefault();
++    try {
++      await applyContract(roomNo, { moveInDate: form.moveInDate, termMonths: Number(form.termMonths) });
++      alert('입주 신청이 완료되었습니다.');
++      navigate(ROUTES.CONTRACT.LIST);
++    } catch (err) { alert(err.message || '입주 신청 실패'); }
++  };
++
++  return (
++    <div className={styles.page}>
++      <StepHeader title="입주 신청" description="방 번호 기준 계약 신청을 진행합니다." />
++      <form className={styles.form} onSubmit={handleSubmit}>
++        <label><span>방 번호</span><input value={roomNo || ''} disabled /></label>
++        <label><span>입주 희망일</span><input name="moveInDate" type="date" value={form.moveInDate} onChange={handleChange} required /></label>
++        <label><span>계약 기간(개월)</span><input name="termMonths" type="number" min="1" value={form.termMonths} onChange={handleChange} required /></label>
++        <button type="submit">입주 신청</button>
++      </form>
++    </div>
++  );
++}
+diff --git a/frontend_workspace/src/features/contract/pages/ContractCreate.module.css b/frontend_workspace/src/features/contract/pages/ContractCreate.module.css
+index 545eb34..45bc4e4 100644
+--- a/frontend_workspace/src/features/contract/pages/ContractCreate.module.css
++++ b/frontend_workspace/src/features/contract/pages/ContractCreate.module.css
+@@ -1 +1,5 @@
+-/* placeholder */
++.page { max-width: 960px; margin: 0 auto; padding: 28px 20px; display: grid; gap: 12px; }
++.form { display: grid; gap: 12px; border: 1px solid #e5e7eb; border-radius: 12px; background: #fff; padding: 16px; }
++.form label { display: grid; gap: 6px; }
++.form input { border: 1px solid #d1d5db; border-radius: 8px; padding: 10px; }
++.form button { width: 120px; border: 0; border-radius: 8px; background: #2563eb; color: #fff; padding: 10px 12px; }
+diff --git a/frontend_workspace/src/features/contract/pages/Statement.jsx b/frontend_workspace/src/features/contract/pages/Statement.jsx
+index ff7bd09..69fe269 100644
+--- a/frontend_workspace/src/features/contract/pages/Statement.jsx
++++ b/frontend_workspace/src/features/contract/pages/Statement.jsx
+@@ -1 +1,63 @@
+-// placeholder
++import React, { useEffect, useMemo, useState } from 'react';
++import { Link, useLocation, useParams } from 'react-router-dom';
++import { Container, Row, Col, Card, CardBody } from 'reactstrap';
++import StepHeader from '../components/StepHeader';
++import ContractStatementView from '../components/ContractStatementView';
++import ContractListTable from '../components/ContractListTable';
++import ContractDetail from '../components/ContractDetail';
++import ContractUpdateActions from '../components/ContractUpdateActions';
++import { getMyContracts, getContract, requestContractAmendment, decideContractAmendment } from '../api/contractAPI';
++import styles from './Statement.module.css';
++
++function resolveMode(pathname) {
++  if (pathname.includes('/amend/request/')) return 'amendmentRequest';
++  if (pathname.includes('/amend/decide/')) return 'amendmentDecide';
++  if (pathname.includes('/contract/')) return 'detail';
++  return 'list';
++}
++
++export default function Statement() {
++  const location = useLocation();
++  const { contractNo, originalContractNo, amendmentNo } = useParams();
++  const [contracts, setContracts] = useState([]);
++  const [selected, setSelected] = useState(null);
++  const mode = useMemo(() => resolveMode(location.pathname), [location.pathname]);
++
++  async function loadContracts() { setContracts(await getMyContracts()); }
++  async function loadSelected(no) { if (!no) return; setSelected(await getContract(no)); }
++
++  useEffect(() => { loadContracts().catch((e) => alert(e.message || '계약 목록 조회 실패')); }, []);
++  useEffect(() => { if (contractNo) loadSelected(contractNo).catch((e) => alert(e.message || '계약 상세 조회 실패')); }, [contractNo]);
++
++  const handleRequestAmend = async () => {
++    if (!originalContractNo) return alert('수정 신청 경로로 접근해주세요.');
++    try { await requestContractAmendment(originalContractNo, { moveInDate: selected?.moveInDate, termMonths: selected?.termMonths || 12 }); alert('수정 신청이 접수되었습니다.'); }
++    catch (e) { alert(e.message || '수정 신청 실패'); }
++  };
++
++  const handleDecideAmend = async () => {
++    if (!amendmentNo) return alert('수정 승인/반려 경로로 접근해주세요.');
++    try { await decideContractAmendment(amendmentNo, { approved: true, reason: '승인' }); alert('수정 요청 처리가 완료되었습니다.'); }
++    catch (e) { alert(e.message || '수정 처리 실패'); }
++  };
++
++  const menuItems = [
++    { label: '내정보 보기', to: '/mypage/info', disabled: true },
++    { label: '내정보 수정', to: '/mypage/edit', disabled: true },
++    { label: '찜목록', to: '/wishlist' },
++    { label: '신청현황', to: '/tour/list' },
++    { label: '계약 내역', to: '/contract/list' },
++  ];
++
++  return (
++    <>
++      <section className={`section section-shaped section-lg ${styles.heroSection}`}><div className="shape shape-style-1 bg-gradient-info"><span /><span /><span /><span /><span /><span /><span /><span /></div></section>
++      <section className={styles.contentSection}>
++        <Container><Row>
++          <Col lg="3" className="mb-4"><Card className={`shadow border-0 ${styles.mainCard}`}><CardBody><h4 className={styles.menuTitle}>마이페이지</h4><nav className={styles.menuList}>{menuItems.map((item)=>{const active=location.pathname===item.to; if(item.disabled) return <span key={item.label} className={`${styles.menuItem} ${styles.disabled}`}>{item.label}</span>; return <Link key={item.label} to={item.to} className={`${styles.menuItem} ${active ? styles.active : ''}`}>{item.label}</Link>;})}</nav></CardBody></Card></Col>
++          <Col lg="9"><Card className={`shadow border-0 ${styles.mainCard}`}><CardBody><div className={styles.headerRow}><h2 className={styles.title}>계약 내역</h2><p className={styles.subTitle}>계약 조회, 수정 신청 및 승인 현황</p></div><StepHeader title="계약 조회/수정" description="조회, 수정 신청, 수정 승인 처리까지 확인합니다." /><ContractStatementView mode={mode} /><div className={styles.actionRow}><ContractUpdateActions onRequestAmend={handleRequestAmend} onDecideAmend={handleDecideAmend} /></div><ContractListTable contracts={contracts} onSelect={loadSelected} /><div className={styles.detailBox}><ContractDetail contract={selected} /></div></CardBody></Card></Col>
++        </Row></Container>
++      </section>
++    </>
++  );
++}
+diff --git a/frontend_workspace/src/features/contract/pages/Statement.module.css b/frontend_workspace/src/features/contract/pages/Statement.module.css
+index 545eb34..134e42f 100644
+--- a/frontend_workspace/src/features/contract/pages/Statement.module.css
++++ b/frontend_workspace/src/features/contract/pages/Statement.module.css
+@@ -1 +1,14 @@
+-/* placeholder */
++.heroSection { min-height: 210px; margin-bottom: 0; }
++.contentSection { margin-top: -120px; position: relative; z-index: 5; padding-bottom: 40px; min-height: calc(100vh - 180px); }
++.menuTitle { margin: 0 0 14px; font-size: 1rem; font-weight: 700; color: #344767; }
++.menuList { display: flex; flex-direction: column; gap: 8px; }
++.menuItem { display: block; padding: 10px 12px; border-radius: 8px; color: #344767; font-weight: 600; text-decoration: none; background: #f8f9fe; }
++.menuItem:hover { background: #eef2ff; text-decoration: none; }
++.active { background: #11cdef; color: #fff; }
++.disabled { opacity: 0.55; cursor: default; }
++.headerRow { margin-bottom: 18px; }
++.title { margin: 0; font-size: 1.6rem; color: #32325d; }
++.subTitle { margin: 6px 0 0; color: #8898aa; }
++.actionRow { margin: 10px 0 12px; }
++.detailBox { margin-top: 14px; }
++.mainCard { min-height: 72vh; }
+diff --git a/frontend_workspace/src/features/tour/api/tourAPI.js b/frontend_workspace/src/features/tour/api/tourAPI.js
+index ff7bd09..6a3bee9 100644
+--- a/frontend_workspace/src/features/tour/api/tourAPI.js
++++ b/frontend_workspace/src/features/tour/api/tourAPI.js
+@@ -1 +1,32 @@
+-// placeholder
++import { getApiBaseUrl } from '../../../app/config/env';
++const API_BASE_URL = getApiBaseUrl();
++
++function authHeader() {
++  const token = localStorage.getItem('accessToken');
++  return token ? { Authorization: `Bearer ${token}` } : {};
++}
++
++async function request(path, { method = 'GET', body } = {}) {
++  const response = await fetch(`${API_BASE_URL}${path}`, {
++    method,
++    headers: { 'Content-Type': 'application/json', ...authHeader() },
++    ...(body ? { body: JSON.stringify(body) } : {}),
++  });
++  const raw = await response.text();
++  const payload = raw ? JSON.parse(raw) : null;
++  if (!response.ok) throw new Error(payload?.message || 'Tour API request failed');
++  return payload?.data ?? payload;
++}
++
++export async function createTour({ roomNo, visitDate, visitTime, message }) {
++  return request(`/api/tour/insert/${roomNo}`, { method: 'POST', body: { visitDate, visitTime, message } });
++}
++
++export async function updateTour({ tourNo, visitDate, visitTime, message }) {
++  return request(`/api/tour/update/${tourNo}`, { method: 'POST', body: { visitDate, visitTime, message } });
++}
++
++export async function getMyTours() {
++  const data = await request('/api/tour/list/me');
++  return Array.isArray(data) ? data : [];
++}
+diff --git a/frontend_workspace/src/features/tour/components/TourListTable.jsx b/frontend_workspace/src/features/tour/components/TourListTable.jsx
+index ff7bd09..e6b8ca8 100644
+--- a/frontend_workspace/src/features/tour/components/TourListTable.jsx
++++ b/frontend_workspace/src/features/tour/components/TourListTable.jsx
+@@ -1 +1,23 @@
+-// placeholder
++import React from 'react';
++import TourStatusBadge from './TourStatusBadge';
++import styles from './TourListTable.module.css';
++
++export default function TourListTable({ tours }) {
++  if (!tours.length) return <p className={styles.empty}>투어 신청 내역이 없습니다.</p>;
++  return (
++    <div className={styles.grid}>
++      {tours.map((tour) => (
++        <article key={tour.tourNo} className={styles.card}>
++          <div className={styles.thumbWrap}><div className={styles.thumbPlaceholder}>투어 매물 이미지</div></div>
++          <div className={styles.body}>
++            <h3 className={styles.title}>투어 #{tour.tourNo}</h3>
++            <p className={styles.meta}>방번호: {tour.roomNo}</p>
++            <p className={styles.meta}>방문일: {tour.visitDate}</p>
++            <p className={styles.meta}>방문시간: {tour.visitTime}</p>
++            <div className={styles.footerRow}><TourStatusBadge status={tour.status} /></div>
++          </div>
++        </article>
++      ))}
++    </div>
++  );
++}
+diff --git a/frontend_workspace/src/features/tour/components/TourListTable.module.css b/frontend_workspace/src/features/tour/components/TourListTable.module.css
+index 545eb34..8a6c55f 100644
+--- a/frontend_workspace/src/features/tour/components/TourListTable.module.css
++++ b/frontend_workspace/src/features/tour/components/TourListTable.module.css
+@@ -1 +1,10 @@
+-/* placeholder */
++.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
++.card { display: flex; gap: 12px; border: 1px solid #e9ecef; border-radius: 12px; padding: 12px; background: #fff; min-height: 190px; }
++.thumbWrap { width: 42%; min-width: 140px; }
++.thumbPlaceholder { width: 100%; min-height: 160px; border-radius: 8px; background: linear-gradient(135deg, #dbeafe, #e0f2fe); color: #334155; font-size: 0.85rem; font-weight: 700; display: flex; align-items: center; justify-content: center; }
++.body { flex: 1; display: flex; flex-direction: column; }
++.title { margin: 0 0 8px; font-size: 1rem; color: #1f2a44; }
++.meta { margin: 0 0 4px; color: #475569; font-size: 0.9rem; }
++.footerRow { margin-top: auto; }
++.empty { margin: 0; color: #8898aa; }
++@media (max-width: 992px) { .grid { grid-template-columns: 1fr; } }
+diff --git a/frontend_workspace/src/features/tour/components/TourStatusBadge.jsx b/frontend_workspace/src/features/tour/components/TourStatusBadge.jsx
+index ff7bd09..9122f91 100644
+--- a/frontend_workspace/src/features/tour/components/TourStatusBadge.jsx
++++ b/frontend_workspace/src/features/tour/components/TourStatusBadge.jsx
+@@ -1 +1,3 @@
+-// placeholder
++import React from 'react';
++import styles from './TourStatusBadge.module.css';
++export default function TourStatusBadge({ status }) { return <span className={styles.badge}>{status || 'PENDING'}</span>; }
+diff --git a/frontend_workspace/src/features/tour/components/TourStatusBadge.module.css b/frontend_workspace/src/features/tour/components/TourStatusBadge.module.css
+index 545eb34..b89c104 100644
+--- a/frontend_workspace/src/features/tour/components/TourStatusBadge.module.css
++++ b/frontend_workspace/src/features/tour/components/TourStatusBadge.module.css
+@@ -1 +1 @@
+-/* placeholder */
++.badge { display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; color: #1d4ed8; background: #dbeafe; }
+diff --git a/frontend_workspace/src/features/tour/components/TourUpdateActions.js b/frontend_workspace/src/features/tour/components/TourUpdateActions.js
+index ff7bd09..cecc860 100644
+--- a/frontend_workspace/src/features/tour/components/TourUpdateActions.js
++++ b/frontend_workspace/src/features/tour/components/TourUpdateActions.js
+@@ -1 +1,3 @@
+-// placeholder
++import React from 'react';
++import styles from './TourUpdateActions.module.css';
++export default function TourUpdateActions({ onEdit }) { return <button type="button" className={styles.button} onClick={onEdit}>선택 건 일정 수정</button>; }
+diff --git a/frontend_workspace/src/features/tour/pages/OccupyApply.jsx b/frontend_workspace/src/features/tour/pages/OccupyApply.jsx
+index ff7bd09..40d6ef0 100644
+--- a/frontend_workspace/src/features/tour/pages/OccupyApply.jsx
++++ b/frontend_workspace/src/features/tour/pages/OccupyApply.jsx
+@@ -1 +1,50 @@
+-// placeholder
++import React, { useEffect, useState } from 'react';
++import { Link, useLocation } from 'react-router-dom';
++import { Container, Row, Col, Card, CardBody } from 'reactstrap';
++import TourListTable from '../components/TourListTable';
++import TourUpdateActions from '../components/TourUpdateActions';
++import { getMyTours, updateTour } from '../api/tourAPI';
++import styles from './OccupyApply.module.css';
++
++export default function OccupyApply() {
++  const location = useLocation();
++  const [tours, setTours] = useState([]);
++  const [selected, setSelected] = useState(null);
++
++  async function loadTours() {
++    const list = await getMyTours();
++    setTours(list);
++    if (list.length > 0) setSelected(list[0]);
++  }
++
++  useEffect(() => { loadTours().catch((e) => alert(e.message || '투어 내역 조회 실패')); }, []);
++
++  const handleQuickUpdate = async () => {
++    if (!selected) return alert('수정할 투어가 없습니다.');
++    try {
++      await updateTour({ tourNo: selected.tourNo, visitDate: selected.visitDate, visitTime: selected.visitTime, message: selected.message || '' });
++      alert('선택된 투어 일정이 수정되었습니다.');
++      await loadTours();
++    } catch (e) { alert(e.message || '투어 일정 수정 실패'); }
++  };
++
++  const menuItems = [
++    { label: '내정보 보기', to: '/mypage/info', disabled: true },
++    { label: '내정보 수정', to: '/mypage/edit', disabled: true },
++    { label: '찜목록', to: '/wishlist' },
++    { label: '신청현황', to: '/tour/list' },
++    { label: '계약 내역', to: '/contract/list' },
++  ];
++
++  return (
++    <>
++      <section className={`section section-shaped section-lg ${styles.heroSection}`}><div className="shape shape-style-1 bg-gradient-info"><span /><span /><span /><span /><span /><span /><span /><span /></div></section>
++      <section className={styles.contentSection}>
++        <Container><Row>
++          <Col lg="3" className="mb-4"><Card className={`shadow border-0 ${styles.mainCard}`}><CardBody><h4 className={styles.menuTitle}>마이페이지</h4><nav className={styles.menuList}>{menuItems.map((item)=>{const active=location.pathname===item.to; if(item.disabled) return <span key={item.label} className={`${styles.menuItem} ${styles.disabled}`}>{item.label}</span>; return <Link key={item.label} to={item.to} className={`${styles.menuItem} ${active ? styles.active : ''}`}>{item.label}</Link>;})}</nav></CardBody></Card></Col>
++          <Col lg="9"><Card className={`shadow border-0 ${styles.mainCard}`}><CardBody><div className={styles.headerRow}><h2 className={styles.title}>신청현황</h2><p className={styles.subTitle}>투어 및 입주 신청 현황 목록</p></div><div className={styles.actionRow}><TourUpdateActions onEdit={handleQuickUpdate} /></div><TourListTable tours={tours} /></CardBody></Card></Col>
++        </Row></Container>
++      </section>
++    </>
++  );
++}
+diff --git a/frontend_workspace/src/features/tour/pages/OccupyApply.module.css b/frontend_workspace/src/features/tour/pages/OccupyApply.module.css
+index 545eb34..a862e3e 100644
+--- a/frontend_workspace/src/features/tour/pages/OccupyApply.module.css
++++ b/frontend_workspace/src/features/tour/pages/OccupyApply.module.css
+@@ -1 +1,13 @@
+-/* placeholder */
++.heroSection { min-height: 210px; margin-bottom: 0; }
++.contentSection { margin-top: -120px; position: relative; z-index: 5; padding-bottom: 40px; min-height: calc(100vh - 180px); }
++.menuTitle { margin: 0 0 14px; font-size: 1rem; font-weight: 700; color: #344767; }
++.menuList { display: flex; flex-direction: column; gap: 8px; }
++.menuItem { display: block; padding: 10px 12px; border-radius: 8px; color: #344767; font-weight: 600; text-decoration: none; background: #f8f9fe; }
++.menuItem:hover { background: #eef2ff; text-decoration: none; }
++.active { background: #11cdef; color: #fff; }
++.disabled { opacity: 0.55; cursor: default; }
++.headerRow { margin-bottom: 18px; }
++.title { margin: 0; font-size: 1.6rem; color: #32325d; }
++.subTitle { margin: 6px 0 0; color: #8898aa; }
++.actionRow { margin-bottom: 12px; }
++.mainCard { min-height: 72vh; }
+diff --git a/frontend_workspace/src/features/tour/pages/TourApply.jsx b/frontend_workspace/src/features/tour/pages/TourApply.jsx
+index ff7bd09..ca1d2f9 100644
+--- a/frontend_workspace/src/features/tour/pages/TourApply.jsx
++++ b/frontend_workspace/src/features/tour/pages/TourApply.jsx
+@@ -1 +1,34 @@
+-// placeholder
++import React, { useState } from 'react';
++import { useNavigate } from 'react-router-dom';
++import { createTour } from '../api/tourAPI';
++import { ROUTES } from '../../../shared/constants/routes';
++import styles from './TourApply.module.css';
++
++export default function TourApply() {
++  const navigate = useNavigate();
++  const [form, setForm] = useState({ roomNo: '', visitDate: '', visitTime: '', message: '' });
++  const [loading, setLoading] = useState(false);
++
++  const handleChange = (e) => setForm((p) => ({ ...p, [e.target.name]: e.target.value }));
++
++  const handleSubmit = async (e) => {
++    e.preventDefault();
++    setLoading(true);
++    try { await createTour(form); alert('투어 신청이 완료되었습니다.'); navigate(ROUTES.TOUR.LIST); }
++    catch (err) { alert(err.message || '투어 신청 실패'); }
++    finally { setLoading(false); }
++  };
++
++  return (
++    <div className={styles.page}>
++      <h1 className={styles.title}>투어 신청</h1>
++      <form className={styles.form} onSubmit={handleSubmit}>
++        <label><span>방 번호</span><input name="roomNo" value={form.roomNo} onChange={handleChange} required /></label>
++        <label><span>방문 날짜</span><input name="visitDate" type="date" value={form.visitDate} onChange={handleChange} required /></label>
++        <label><span>방문 시간</span><input name="visitTime" type="time" value={form.visitTime} onChange={handleChange} required /></label>
++        <label><span>요청 메시지</span><textarea name="message" value={form.message} onChange={handleChange} rows={4} required /></label>
++        <button type="submit" disabled={loading}>{loading ? '신청 중...' : '투어 신청'}</button>
++      </form>
++    </div>
++  );
++}
+diff --git a/frontend_workspace/src/features/tour/pages/TourApply.module.css b/frontend_workspace/src/features/tour/pages/TourApply.module.css
+index 545eb34..a0e5cea 100644
+--- a/frontend_workspace/src/features/tour/pages/TourApply.module.css
++++ b/frontend_workspace/src/features/tour/pages/TourApply.module.css
+@@ -1 +1,6 @@
+-/* placeholder */
++.page { max-width: 860px; margin: 0 auto; padding: 28px 20px; }
++.title { margin: 0 0 14px; }
++.form { display: grid; gap: 12px; border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px; background: #fff; }
++.form label { display: grid; gap: 6px; }
++.form input, .form textarea { border: 1px solid #d1d5db; border-radius: 8px; padding: 10px; }
++.form button { width: 120px; border: 0; border-radius: 8px; background: #2563eb; color: #fff; padding: 10px 12px; }
+diff --git a/frontend_workspace/src/shared/constants/routes.js b/frontend_workspace/src/shared/constants/routes.js
+index 8c0f43a..1618acb 100644
+--- a/frontend_workspace/src/shared/constants/routes.js
++++ b/frontend_workspace/src/shared/constants/routes.js
+@@ -1,25 +1,38 @@
+-export const ROUTES = {
++export const ROUTES = {
+   AUTH: {
+     LOGIN: '/login',
+     SIGNUP: '/signup',
++    FIND_ID: '/find-id',
++    FIND_PASSWORD: '/find-password',
++    OAUTH_REDIRECT: '/oauth2/redirect',
+   },
+-
+   MEMBER: {
+     MYPAGE: '/mypage',
+   },
+-
++  TOUR: {
++    APPLY: '/tour/apply',
++    LIST: '/tour/list',
++  },
++  CONTRACT: {
++    APPLY: '/contract/apply/:roomNo',
++    LIST: '/contract/list',
++    DETAIL: '/contract/:contractNo',
++    AMEND_REQUEST: '/contract/amend/request/:originalContractNo',
++    AMEND_DECIDE: '/contract/amend/decide/:amendmentNo',
++    COMPLETION: '/contract/completion',
++  },
++  WISHLIST: {
++    LIST: '/wishlist',
++  },
+   ADMIN: {
+     MEMBERS: '/admin/members',
+-
+     CATEGORY: '/admin/categories',
+-    CATEGORY_FORM: '/admin/categories/:facilityCode'
++    CATEGORY_FORM: '/admin/categories/:facilityCode',
+   },
+-  
+   USER: {
+     FACILITY: '/facilities/list/:houseNo/:facilityNo',
+     FACILITY_FORM: '/facilities/form/:facilityNo',
+-    
+     RESERVATION: '/reservation/list/:houseNo',
+     RESERVATION_FORM: '/reservation/new/:facilityNo/',
+-  }
++  },
+ };
+diff --git a/frontend_workspace/src/shared/pages/Home.jsx b/frontend_workspace/src/shared/pages/Home.jsx
+index c920d97..ecd4002 100644
+--- a/frontend_workspace/src/shared/pages/Home.jsx
++++ b/frontend_workspace/src/shared/pages/Home.jsx
+@@ -1,8 +1,7 @@
+-import React, { useEffect } from 'react';
++import React, { useEffect } from 'react';
+ import { Link } from 'react-router-dom';
+ import { Container, Row, Col, Card, CardBody, CardHeader } from 'reactstrap';
+ 
+-
+ export default function Home() {
+   useEffect(() => {
+     window.scrollTo(0, 0);
+@@ -11,222 +10,88 @@ export default function Home() {
+   return (
+     <>
+       <style>{`
+-    .quick-links-container {
+-        margin-top: -30px;
+-        position: relative;
+-        z-index: 10;
+-    }
+-    @media (max-width: 768px) {
+-        .quick-links-container {
+-        margin-top: 20px; /* 모바일에서는 배너 아래로 분리 */
++        .quick-links-container { margin-top: -30px; position: relative; z-index: 10; }
++        @media (max-width: 768px) { .quick-links-container { margin-top: 20px; } }
++        .placeholder-box {
++          border: 2px dashed #90cdf4;
++          background-color: rgba(255, 255, 255, 0.1);
++          border-radius: 8px;
++          display: flex;
++          align-items: center;
++          justify-content: center;
++          color: white;
++          font-weight: bold;
+         }
+-    }
+-    .placeholder-box {
+-        border: 2px dashed #90cdf4;
+-        background-color: rgba(255, 255, 255, 0.1);
+-        border-radius: 8px;
+-        display: flex;
+-        align-items: center;
+-        justify-content: center;
+-        color: white;
+-        font-weight: bold;
+-    }
+-    
+-    /* 아이콘 관련 스타일 */
+-    .quick-links-wrapper {
+-        max-width: 450px;
+-        margin: 0 auto;   /* 가운데 정렬 */
+-    }
+-    .quick-icon {
+-        width: 36px !important;
+-        height: 36px !important;
+-        font-size: 1rem !important;
+-        margin-bottom: 4px;
+-    }
+-    /* 아이콘 아래 글자 크기 축소 */
+-    .quick-title {
+-        font-size: 0.75rem;
+-        font-weight: bold;
+-        color: #525f7f;
+-    }
+-    /* 아이콘 사이 간격 좁히기 */
+-    .quick-col {
+-        padding-left: 10px;
+-        padding-right: 10px;
+-    }
+-    `}</style>
++        .quick-links-wrapper { max-width: 450px; margin: 0 auto; }
++        .quick-icon { width: 36px !important; height: 36px !important; font-size: 1rem !important; margin-bottom: 4px; }
++        .quick-title { font-size: 0.75rem; font-weight: bold; color: #525f7f; }
++        .quick-col { padding-left: 10px; padding-right: 10px; }
++      `}</style>
+ 
+-      
+       <main>
+-        {/* 1. 슬라이드 배너 영역 (하늘색 테마 배경 + 임시 윤곽선) */}
+-        <section
+-          className="section-profile-cover section-shaped my-0"
+-          style={{ height: '450px' }}
+-        >
++        <section className="section-profile-cover section-shaped my-0" style={{ height: '450px' }}>
+           <div className="shape shape-style-1 bg-gradient-info">
+-            <span />
+-            <span />
+-            <span />
+-            <span />
+-            <span />
+-            <span />
+-            <span />
+-            <span />
++            <span /><span /><span /><span /><span /><span /><span /><span />
+           </div>
+           <Container className="d-flex align-items-center h-100 py-lg">
+             <div className="w-100 h-75 placeholder-box flex-column text-center p-4">
+               <h2 className="text-white mb-2">슬라이드 배너 영역</h2>
+-              <p className="text-white-50">
+-                나중에 이곳에 메인 배너 이미지나 캐러셀이 들어갑니다.
+-              </p>
++              <p className="text-white-50">메인 배너가 들어갈 영역입니다.</p>
+             </div>
+           </Container>
+         </section>
+ 
+-        {/* 2. 퀵 링크 (바로가기 아이콘) 영역 */}
+         <Container className="quick-links-container">
+           <div className="quick-links-wrapper">
+             <Card className="shadow-lg border-0">
+               <CardBody className="py-3 px-2">
+-                {' '}
+                 <Row className="text-center justify-content-center m-0">
+-                  <Col xs="auto" className="quick-col">
+-                    <div className="icon icon-shape bg-info text-white rounded-circle shadow quick-icon mx-auto">
+-                      <i className="ni ni-building" />
+-                    </div>
+-                    <h6 className="mb-0 quick-title">방찾기</h6>
+-                  </Col>
+-                  <Col xs="auto" className="quick-col">
+-                    <div className="icon icon-shape bg-success text-white rounded-circle shadow quick-icon mx-auto">
+-                      <i className="ni ni-notification-70" />
+-                    </div>
+-                    <h6 className="mb-0 quick-title">공지사항</h6>
+-                  </Col>
+-                  <Col xs="auto" className="quick-col">
+-                    <div className="icon icon-shape bg-warning text-white rounded-circle shadow quick-icon mx-auto">
+-                      <i className="ni ni-calendar-grid-58" />
+-                    </div>
+-                    <h6 className="mb-0 quick-title">이벤트</h6>
+-                  </Col>
+-                  <Col xs="auto" className="quick-col">
+-                    <div className="icon icon-shape bg-danger text-white rounded-circle shadow quick-icon mx-auto">
+-                      <i className="ni ni-books" />
+-                    </div>
+-                    <h6 className="mb-0 quick-title">정책안내</h6>
+-                  </Col>
+-                  <Col xs="auto" className="quick-col">
+-                    <div className="icon icon-shape bg-primary text-white rounded-circle shadow quick-icon mx-auto">
+-                      <i className="ni ni-chat-round" />
+-                    </div>
+-                    <h6 className="mb-0 quick-title">커뮤니티</h6>
+-                  </Col>
++                  <Col xs="auto" className="quick-col"><div className="icon icon-shape bg-info text-white rounded-circle shadow quick-icon mx-auto"><i className="ni ni-building" /></div><h6 className="mb-0 quick-title">방찾기</h6></Col>
++                  <Col xs="auto" className="quick-col"><div className="icon icon-shape bg-success text-white rounded-circle shadow quick-icon mx-auto"><i className="ni ni-notification-70" /></div><h6 className="mb-0 quick-title">공지사항</h6></Col>
++                  <Col xs="auto" className="quick-col"><div className="icon icon-shape bg-warning text-white rounded-circle shadow quick-icon mx-auto"><i className="ni ni-calendar-grid-58" /></div><h6 className="mb-0 quick-title">이벤트</h6></Col>
++                  <Col xs="auto" className="quick-col"><div className="icon icon-shape bg-danger text-white rounded-circle shadow quick-icon mx-auto"><i className="ni ni-books" /></div><h6 className="mb-0 quick-title">정책안내</h6></Col>
++                  <Col xs="auto" className="quick-col"><div className="icon icon-shape bg-primary text-white rounded-circle shadow quick-icon mx-auto"><i className="ni ni-chat-round" /></div><h6 className="mb-0 quick-title">커뮤니티</h6></Col>
+                 </Row>
+               </CardBody>
+             </Card>
+           </div>
+         </Container>
+ 
+-        {/* 3. 게시판 프리뷰 영역 */}
+         <section className="section bg-secondary mt-4">
+           <Container>
+             <Row>
+               <Col md="4" className="mb-4">
+                 <Card className="shadow border-0 h-100">
+-                  <CardHeader className="bg-white border-0 pb-0">
+-                    <h6 className="mb-0 text-info font-weight-bold">
+-                      공지사항 (인기글)
+-                    </h6>
+-                  </CardHeader>
++                  <CardHeader className="bg-white border-0 pb-0"><h6 className="mb-0 text-info font-weight-bold">공지사항 (인기글)</h6></CardHeader>
+                   <CardBody>
+                     <ul className="list-unstyled mb-0">
+-                      <li className="mb-2 text-sm text-truncate">
+-                        <Link to="#pablo" className="text-muted">
+-                          - [안내] 우리집 서비스 정기 점검
+-                        </Link>
+-                      </li>
+-                      <li className="mb-2 text-sm text-truncate">
+-                        <Link to="#pablo" className="text-muted">
+-                          - 신규 코리빙 지점 오픈 안내
+-                        </Link>
+-                      </li>
+-                      <li className="mb-2 text-sm text-truncate">
+-                        <Link to="#pablo" className="text-muted">
+-                          - 플랫폼 이용 가이드라인 개정
+-                        </Link>
+-                      </li>
+-                      <li className="text-sm text-truncate">
+-                        <Link to="#pablo" className="text-muted">
+-                          - 2026년 상반기 입주자 모집 완료
+-                        </Link>
+-                      </li>
++                      <li className="mb-2 text-sm text-truncate"><Link to="#" className="text-muted">- 서비스 점검 안내</Link></li>
++                      <li className="mb-2 text-sm text-truncate"><Link to="#" className="text-muted">- 신규 지점 오픈 안내</Link></li>
++                      <li className="mb-2 text-sm text-truncate"><Link to="#" className="text-muted">- 이용 가이드라인 개정</Link></li>
+                     </ul>
+                   </CardBody>
+                 </Card>
+               </Col>
+-
+               <Col md="4" className="mb-4">
+                 <Card className="shadow border-0 h-100">
+-                  <CardHeader className="bg-white border-0 pb-0">
+-                    <h6 className="mb-0 text-info font-weight-bold">
+-                      진행중인 이벤트
+-                    </h6>
+-                  </CardHeader>
++                  <CardHeader className="bg-white border-0 pb-0"><h6 className="mb-0 text-info font-weight-bold">진행중인 이벤트</h6></CardHeader>
+                   <CardBody>
+                     <ul className="list-unstyled mb-0">
+-                      <li className="mb-2 text-sm text-truncate">
+-                        <Link to="#pablo" className="text-muted">
+-                          - [이벤트] 친구 추천하고 월세 할인받자!
+-                        </Link>
+-                      </li>
+-                      <li className="mb-2 text-sm text-truncate">
+-                        <Link to="#pablo" className="text-muted">
+-                          - 웰컴 키트 증정 리뷰 이벤트
+-                        </Link>
+-                      </li>
+-                      <li className="mb-2 text-sm text-truncate">
+-                        <Link to="#pablo" className="text-muted">
+-                          - 루프탑 바베큐 파티 참여자 모집
+-                        </Link>
+-                      </li>
+-                      <li className="text-sm text-truncate">
+-                        <Link to="#pablo" className="text-muted">
+-                          - 우수 입주자 선정 발표 (5월)
+-                        </Link>
+-                      </li>
++                      <li className="mb-2 text-sm text-truncate"><Link to="#" className="text-muted">- 친구 추천 이벤트</Link></li>
++                      <li className="mb-2 text-sm text-truncate"><Link to="#" className="text-muted">- 웰컴키트 리뷰 이벤트</Link></li>
++                      <li className="mb-2 text-sm text-truncate"><Link to="#" className="text-muted">- 신규 입주자 프로모션</Link></li>
+                     </ul>
+                   </CardBody>
+                 </Card>
+               </Col>
+-
+               <Col md="4" className="mb-4">
+                 <Card className="shadow border-0 h-100">
+-                  <CardHeader className="bg-white border-0 pb-0">
+-                    <h6 className="mb-0 text-info font-weight-bold">
+-                      정책 및 정보 제공
+-                    </h6>
+-                  </CardHeader>
++                  <CardHeader className="bg-white border-0 pb-0"><h6 className="mb-0 text-info font-weight-bold">정책 및 정보 제공</h6></CardHeader>
+                   <CardBody>
+                     <ul className="list-unstyled mb-0">
+-                      <li className="mb-2 text-sm text-truncate">
+-                        <Link to="#pablo" className="text-muted">
+-                          - 청년 전세자금 대출 완벽 가이드
+-                        </Link>
+-                      </li>
+-                      <li className="mb-2 text-sm text-truncate">
+-                        <Link to="#pablo" className="text-muted">
+-                          - 2026년 주거 지원금 신청 방법
+-                        </Link>
+-                      </li>
+-                      <li className="mb-2 text-sm text-truncate">
+-                        <Link to="#pablo" className="text-muted">
+-                          - 임대차 계약 시 주의해야 할 3가지
+-                        </Link>
+-                      </li>
+-                      <li className="text-sm text-truncate">
+-                        <Link to="#pablo" className="text-muted">
+-                          - 전입신고 및 확정일자 받는 법
+-                        </Link>
+-                      </li>
++                      <li className="mb-2 text-sm text-truncate"><Link to="#" className="text-muted">- 전월세 가이드</Link></li>
++                      <li className="mb-2 text-sm text-truncate"><Link to="#" className="text-muted">- 주거 지원금 신청 방법</Link></li>
++                      <li className="mb-2 text-sm text-truncate"><Link to="#" className="text-muted">- 계약 시 주의사항</Link></li>
+                     </ul>
+                   </CardBody>
+                 </Card>
+

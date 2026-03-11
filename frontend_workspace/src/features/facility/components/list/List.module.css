@@ -1,0 +1,109 @@
+/* src/features/facility/components/facility/list/List.module.css */
+@import '../../../../app/layouts/MyPageLayout.module.css';
+
+.sectionBlock {
+  padding: 10px 0;
+}
+
+.headerRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end; 
+  margin-bottom: 35px;
+  padding-bottom: 10px;
+}
+
+.title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #32325d;
+  margin: 0;
+}
+
+.facilityContainer, .surveyBox {
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(50, 50, 93, 0.05);
+}
+
+
+.facilityHeader, .facilityRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  border: none;
+  background: #fff;
+}
+
+.facilityHeader {
+  background: #f2e1d5;
+  border-bottom: 1px solid #e9ecef;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #c9713f;
+}
+
+.facilityRow {
+  border-bottom: 1px solid #e9ecef;
+  font-size: 0.95rem;
+  color: #344767;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.facilityRow:last-of-type {
+  border-bottom: none;
+}
+
+.facilityRow:hover {
+  background-color: #fdf5f0;
+  color: #c9713f;
+}
+
+.oneLine {
+  flex: 1;
+  font-weight: 500;
+}
+
+.textMuted {
+  font-size: 0.85rem;
+  color: #8898aa;
+  text-align: right;
+}
+
+.primaryBtn {
+  background: #c9713f;
+  color: #fff;
+  border: none;
+  padding: 8px 16px; 
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  height: fit-content;
+}
+
+.primaryBtn:hover {
+  background: #b86334;
+  box-shadow: 0 4px 6px rgba(50, 50, 93, 0.11);
+  transform: translateY(-1px);
+}
+
+.surveyTitle {
+  padding: 24px;
+  margin: 0;
+  border-bottom: 1px solid #e9ecef;
+  background: #f2e1d5;
+  font-weight: 600;
+  color: #c9713f;
+}
+
+.facilityEmpty {
+  text-align: center;
+  padding: 60px;
+  color: #8898aa;
+}
