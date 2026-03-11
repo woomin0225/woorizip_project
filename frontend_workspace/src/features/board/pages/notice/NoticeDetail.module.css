@@ -14,6 +14,7 @@
   border-radius: 24px;
   padding: 32px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+  min-width: 0;
 }
 
 .postTitle {
@@ -165,4 +166,64 @@
   font-size: 18px;
   margin-top: 50px;
   color: #555;
+}
+
+@media (max-width: 1200px) {
+  .container {
+    max-width: 1100px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .container {
+    max-width: 1100px;
+  }
+}
+
+@media (max-width: 900px) {
+  .page {
+    padding: 20px 12px 40px;
+  }
+
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .card {
+    padding: 22px;
+  }
+
+  .postTitle {
+    font-size: 24px;
+  }
+}
+
+.fileButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid #c9713f;
+  border-radius: 10px;
+  background: #c9713f;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.fileButton:hover {
+  border-color: #b86334;
+  background: #b86334;
+  color: #fff;
+  text-decoration: none;
+}
+
+.fileButton:visited,
+.fileButton:active {
+  color: #fff;
+  text-decoration: none;
 }

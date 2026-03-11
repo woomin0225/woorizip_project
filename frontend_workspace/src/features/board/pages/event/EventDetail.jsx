@@ -120,6 +120,7 @@ export default function EventDetail() {
                         postNo={postNo}
                         file={f}
                         downloadFn={downloadEventFile}
+                        className={styles.fileButton}
                       />
                     </div>
                   ))}

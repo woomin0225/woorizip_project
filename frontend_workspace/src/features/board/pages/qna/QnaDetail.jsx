@@ -1,3 +1,4 @@
+// src/features/board/pages/qna/QnaDetail.jsx
 import React from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
@@ -85,6 +86,7 @@ export default function QnaDetail() {
                         postNo={postNo}
                         file={f}
                         downloadFn={downloadQnaFile}
+                        className={styles.fileButton}
                       />
                     </div>
                   ))}

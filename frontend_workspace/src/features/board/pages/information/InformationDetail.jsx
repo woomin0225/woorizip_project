@@ -93,6 +93,7 @@ export default function InformationDetail() {
                         postNo={postNo}
                         file={f}
                         downloadFn={downloadInformationFile}
+                        className={styles.fileButton}
                       />
                     </div>
                   ))}

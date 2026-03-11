@@ -1,3 +1,4 @@
+// src/features/board/pages/notice/NoticeDetail.jsx
 import React from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
@@ -8,7 +9,6 @@ import { useNoticeDetail } from '../../hooks/useNoticeDetail';
 import { useBoardSummary } from '../../hooks/useBoardSummary';
 import { downloadNoticeFile } from '../../api/NoticeApi';
 
-// 라우트가 다르면 여기만 수정
 const EDIT_PATH = (postNo) => `/notices/${postNo}/edit`;
 
 export default function NoticeDetail() {
@@ -45,6 +45,7 @@ export default function NoticeDetail() {
       f?.updatedFileName ||
       ''
     ).toLowerCase();
+
     return (
       (typeof f?.fileType === 'string' && f.fileType.startsWith('image/')) ||
       name.endsWith('.png') ||
@@ -92,6 +93,7 @@ export default function NoticeDetail() {
                         postNo={postNo}
                         file={f}
                         downloadFn={downloadNoticeFile}
+                        className={styles.fileButton}
                       />
                     </div>
                   ))}
@@ -126,18 +128,6 @@ export default function NoticeDetail() {
             </div>
           </section>
 
-          <div className={styles.summaryWrap}>
-            <AiSummaryPanel
-              opened={opened}
-              hasLoaded={hasLoaded}
-              summaryLoading={summaryLoading}
-              summaryError={summaryError}
-              summaryData={summaryData}
-              onLoad={loadSummary}
-              onToggle={toggleOpened}
-            />
-          </div>
-
           <div className={styles.buttonGroup}>
             <Link to="/notices" className={styles.button}>
               목록으로
@@ -166,6 +156,16 @@ export default function NoticeDetail() {
           </div>
         </div>
       </div>
+
+      <AiSummaryPanel
+        opened={opened}
+        hasLoaded={hasLoaded}
+        summaryLoading={summaryLoading}
+        summaryError={summaryError}
+        summaryData={summaryData}
+        onLoad={loadSummary}
+        onToggle={toggleOpened}
+      />
     </div>
   );
 }
