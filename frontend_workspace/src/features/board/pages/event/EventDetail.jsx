@@ -4,9 +4,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 
 import styles from '../notice/NoticeDetail.module.css';
 import FileDownloadButton from '../../components/FileDownloadButton';
-import AiSummaryPanel from '../../components/AiSummaryPanel';
 import { useEventDetail } from '../../hooks/useEventDetail';
-import { useBoardSummary } from '../../hooks/useBoardSummary';
 import { downloadEventFile } from '../../api/EventApi';
 
 const EDIT_PATH = (postNo) => `/event/${postNo}/edit`;
@@ -18,16 +16,6 @@ export default function EventDetail() {
 
   const { isAdmin, event, loading, deleting, error, handleDelete } =
     useEventDetail({ postNo, nav });
-
-  const {
-    opened,
-    summaryData,
-    summaryLoading,
-    summaryError,
-    loadSummary,
-    toggleOpened,
-    hasLoaded,
-  } = useBoardSummary(postNo);
 
   if (loading) return <div className={styles.loading}>Loading.....</div>;
   if (error) return <div className={styles.error}>{error}</div>;
@@ -154,18 +142,6 @@ export default function EventDetail() {
               />
             </div>
           </section>
-
-          <div className={styles.summaryWrap}>
-            <AiSummaryPanel
-              opened={opened}
-              hasLoaded={hasLoaded}
-              summaryLoading={summaryLoading}
-              summaryError={summaryError}
-              summaryData={summaryData}
-              onLoad={loadSummary}
-              onToggle={toggleOpened}
-            />
-          </div>
 
           <div className={styles.buttonGroup}>
             <Link to={LIST_PATH} className={styles.button}>

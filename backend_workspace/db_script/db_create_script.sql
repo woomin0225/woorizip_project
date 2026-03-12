@@ -329,6 +329,38 @@ ALTER TABLE `tb_contracts`
 
 ALTER TABLE tb_posts
   ADD COLUMN post_pinned_yn TINYINT(1) DEFAULT 0;
+  
+  ALTER TABLE `tb_contracts`
+  MODIFY COLUMN `status`
+  ENUM('APPLIED', 'APPROVED', 'PAID', 'ACTIVE', 'AMENDMENT_REQUESTED', 'ENDED', 'REJECTED')
+  NOT NULL
+  DEFAULT 'APPLIED'
+  COMMENT '계약상태(APPLIED, APPROVED, PAID, ACTIVE, AMENDMENT_REQUESTED, ENDED, REJECTED)';
+
+-- 1) 투어: 같은 room/date/time 에서 활성 신청(PENDING, APPROVED) 1건만 허용
+ALTER TABLE `tb_tours`
+  ADD COLUMN `active_flag` TINYINT GENERATED ALWAYS AS (
+    CASE
+      WHEN `status` IN ('PENDING', 'APPROVED') THEN 1
+      ELSE 0
+    END
+  ) STORED;
+
+ALTER TABLE `tb_tours`
+  ADD UNIQUE KEY `uk_tb_tours_room_slot_active` (`room_no`, `visit_date`, `visit_time`, `active_flag`);
+
+-- 2) 입주: 같은 room/move_in_date 에서 활성 신청 1건만 허용
+ALTER TABLE `tb_contracts`
+  ADD COLUMN `active_flag` TINYINT GENERATED ALWAYS AS (
+    CASE
+      WHEN `status` IN ('APPLIED', 'APPROVED', 'PAID', 'ACTIVE', 'AMENDMENT_REQUESTED') THEN 1
+      ELSE 0
+    END
+  ) STORED;
+
+ALTER TABLE `tb_contracts`
+  ADD UNIQUE KEY `uk_tb_contracts_room_date_active` (`room_no`, `move_in_date`, `active_flag`);
+
 
 -- desc `tb_user`;
 -- desc `tb_contracts`;
