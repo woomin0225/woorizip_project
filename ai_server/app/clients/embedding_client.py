@@ -3,7 +3,6 @@
 from sentence_transformers import SentenceTransformer
 
 from app.core.config import settings
-from openai import OpenAI
 
 
 # nlpai-lab/KURE-v1

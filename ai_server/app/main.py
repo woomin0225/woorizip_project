@@ -5,7 +5,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from transformers import AutoTokenizer
 
-from app.clients.embedding_client import KureEmbeddingClient, OpenaiEmbeddingClient
+from app.clients.embedding_client import KureEmbeddingClient
 from app.clients.llm_client import QwenLlmClient
 from app import embed_router, rag_router, summary_router
 from app.clients.qdrant_client import QdrantDbClient
@@ -15,12 +15,13 @@ from fastapi import Request
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # 앱시작시 구동될 클라이언트 작성
     app.state.llmClient=QwenLlmClient("Qwen/Qwen2.5-3B-Instruct")   # Qwen/Qwen3-4B-Instruct-2507 : 추후 상위모델로 교체
-    # app.state.embeddingClient=OpenaiEmbeddingClient()
     app.state.embeddingClient=KureEmbeddingClient()
     app.state.vectorClient=QdrantDbClient()
     app.state.tokenizer = AutoTokenizer.from_pretrained("nlpai-lab/KURE-v1")
     yield
+    # 앱 종료시
 
 app = FastAPI(lifespan=lifespan)
 app.include_router(
