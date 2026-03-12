@@ -1,20 +1,48 @@
-# IDE (Eclipse, STS)
-.metadata/
-.recommenders/
-.settings/
-.project
-.classpath
+# Python bytecode/cache
+__pycache__/
+*.py[cod]
+*$py.class
 
-# Frontend (Node, React)
-**/node_modules/
-**/build/
-.eslintcache
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
 
-# Backend (Gradle, Maven)
-**/bin/
-**/target/
-.gradle/
+# Environment files (keep sample template)
+.env
+.env.*
+!.env.example
+
+# IDE/editor
+.vscode/
+.idea/
+
+# Test/lint/type caches and coverage
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+
+# Build artifacts
 build/
+dist/
+*.egg-info/
 
-# Querydsl (Generated source files)
-**/src/main/generated/
+# Logs and OS clutter
+*.log
+.DS_Store
+Thumbs.db
+
+# Local databases
+*.db
+*.sqlite3
+
+# Local runtime/generated folders
+uploads/
+media/
+temp/
+tmp/
