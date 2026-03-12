@@ -27,6 +27,7 @@ import org.team4p.woorizip.common.config.UploadProperties;
 import org.team4p.woorizip.room.dto.RoomDto;
 import org.team4p.woorizip.room.dto.request.RoomSearchCondition;
 import org.team4p.woorizip.room.dto.response.ReviewRankingResponse;
+import org.team4p.woorizip.room.dto.response.RoomAiAnalyzeResponse;
 import org.team4p.woorizip.room.dto.response.RoomSearchResponse;
 import org.team4p.woorizip.room.dto.response.ViewsRankingResponse;
 import org.team4p.woorizip.room.dto.response.WishRankingResponse;
@@ -34,6 +35,7 @@ import org.team4p.woorizip.room.image.dto.RoomImageDto;
 import org.team4p.woorizip.room.image.service.RoomImageService;
 import org.team4p.woorizip.room.review.dto.ReviewDto;
 import org.team4p.woorizip.room.review.service.ReviewService;
+import org.team4p.woorizip.room.service.RoomAiService;
 import org.team4p.woorizip.room.service.RoomService;
 import org.team4p.woorizip.room.view.service.RoomViewService;
 
@@ -52,6 +54,7 @@ public class RoomController {
 	private final UploadProperties uploadProperties;
 	private final ReviewService reviewService;
 	private final RoomViewService rvService;
+	private final RoomAiService roomAiService;
 	
 	@GetMapping("/search")
 	public ResponseEntity<ApiResponse<Slice<RoomSearchResponse>>> searchRooms(@Valid @ModelAttribute RoomSearchCondition cond, Pageable pageable) {
@@ -255,6 +258,14 @@ public class RoomController {
 		// 위시 많은 순 방 목록 조회, limit개 조회함
 		List<WishRankingResponse> list = roomService.selectTopNByWish(limit);
 		return ResponseEntity.status(200).body(ApiResponse.ok("위시갯수기준 랭킹 조회 완료("+limit+"개)", list));
+	}
+	
+	@PostMapping(value = "/ai/analyze", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	public ResponseEntity<ApiResponse<RoomAiAnalyzeResponse>> analyzeRoomImages(
+			@RequestPart("images") List<MultipartFile> images
+			) {
+		RoomAiAnalyzeResponse result = roomAiService.analyzeRoomImages(images);
+		return ResponseEntity.status(200).body(ApiResponse.ok("방 이미지 AI 분석 성공", result));
 	}
 	
 }
