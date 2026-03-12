@@ -56,7 +56,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
         UserDto existingUser = userService.selectUser(UserDto.builder().emailId(email).build());
 
-        if (existingUser == null) {
+        if (existingUser == null || "Y".equalsIgnoreCase(existingUser.getDeletedYn())) {
             UserDto newUser = UserDto.builder()
                     .emailId(email)
                     .name(name)
@@ -68,7 +68,11 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                     .role("USER")
                     .build();
             userService.insertUser(newUser);
-            log.info("소셜 회원 자동 가입 완료!");
+            if (existingUser == null) {
+                log.info("소셜 회원 자동 가입 완료!");
+            } else {
+                log.info("소셜 탈퇴 계정 복구 완료: {}", email);
+            }
         }
 
         // 주의: nameAttributeKey를 "email"이나 "id"로 할 때 속성이 실제로 존재하는지 확인해야 함.
