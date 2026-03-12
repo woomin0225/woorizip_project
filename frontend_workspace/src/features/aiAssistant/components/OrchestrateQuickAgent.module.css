@@ -133,6 +133,29 @@
   box-shadow: 0 4px 10px rgba(209, 122, 66, 0.18);
 }
 
+.bubbleActions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  overflow-x: auto;
+}
+
+.bubbleActionBtn {
+  border: 1px solid #fdba74;
+  background: #fff7ed;
+  color: #9a3412;
+  border-radius: 999px;
+  padding: 5px 10px;
+  white-space: nowrap;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.bubbleActionBtn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
 .form {
   display: flex;
   gap: 10px;
