@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import org.team4p.woorizip.common.config.UploadProperties;
+import org.team4p.woorizip.room.image.analyze.service.RoomImageAnalysisService;
 import org.team4p.woorizip.room.image.dto.RoomImageDto;
 import org.team4p.woorizip.room.image.jpa.entity.RoomImageEntity;
 import org.team4p.woorizip.room.image.jpa.repository.RoomImageRepository;
@@ -23,6 +24,7 @@ import lombok.RequiredArgsConstructor;
 public class RoomImageServiceImpl implements RoomImageService {
 	private final RoomImageRepository roomImageRepository;
 	private final UploadProperties uploadProperties;
+	private final RoomImageAnalysisService roomImageAnalysisService;
 	
 	@Override
 	public List<RoomImageDto> selectRoomImages(String roomNo) {
@@ -70,15 +72,21 @@ public class RoomImageServiceImpl implements RoomImageService {
 										            		.roomOriginalImageName(originalImageName)
 										            		.roomStoredImageName(storedImageName)
 										            		.build();
-            try {
-            		roomImageRepository.save(roomImageEntity);
-            } catch(Exception e) {
-            		// DB에 사진이름 저장 실패하면 저장소에서 파일 삭제
-            		try {
-					Files.deleteIfExists(saveFile.toPath());
-				} catch (IOException e2) {continue;}
-            		continue;
-            }
+            RoomImageEntity savedEntity;
+            	try {
+					savedEntity = roomImageRepository.save(roomImageEntity);
+				} catch (Exception e) {
+					try {
+						Files.deleteIfExists(saveFile.toPath());
+					} catch (IOException e2) { continue; }
+						continue;
+					}
+            	
+            	try {
+					roomImageAnalysisService.analyzeAndSave(savedEntity);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
 		}
 		int imageCount = roomImageRepository.countByRoomNo(roomNo);
 		return imageCount;
