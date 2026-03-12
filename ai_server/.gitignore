@@ -1,3 +1,20 @@
+# python
+__pycache__/
+*.pyc
+.venv/
+.env
+.pytest_cache/
+# local artifacts
+chroma_data/
+audio_out/
+
+# Mac
+.DS_Store
+__MACOSX/
+._*
+
+# editor
+.vscode/
 # Python bytecode/cache
 __pycache__/
 *.py[cod]

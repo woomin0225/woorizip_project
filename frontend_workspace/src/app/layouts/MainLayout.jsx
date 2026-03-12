@@ -6,6 +6,7 @@ import { Outlet } from 'react-router-dom';
 import styles from './MainLayout.module.css';
 import Header from './components/Header';
 import Footer from './components/Footer';
+import OrchestrateQuickAgent from '../../features/aiAssistant/components/OrchestrateQuickAgent';
 
 export default function MainLayout() {
   return (
@@ -20,6 +21,7 @@ export default function MainLayout() {
 
       {/* 하단 푸터 */}
       <Footer />
+      <OrchestrateQuickAgent />
     </div>
   );
 }

@@ -146,6 +146,40 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public int insertUser(UserDto userDto) {
         try {
+            UserEntity existing = userRepository.findByEmailId(userDto.getEmailId());
+            if (existing != null) {
+                if ("Y".equalsIgnoreCase(existing.getDeletedYn())) {
+                    // 재가입은 신규 생성이 아니라 기존 계정 복구(user_no 유지)
+                    existing.setDeletedYn("N");
+                    existing.setWithdrawAt(null);
+                    existing.setUpdatedAt(new java.util.Date());
+                    if (userDto.getName() != null && !userDto.getName().isBlank()) {
+                        existing.setName(userDto.getName().trim());
+                    }
+                    if (userDto.getPhone() != null && !userDto.getPhone().isBlank()) {
+                        existing.setPhone(userDto.getPhone().trim());
+                    }
+                    if (userDto.getGender() != null && !userDto.getGender().isBlank()) {
+                        existing.setGender(convert_gender(userDto.getGender()));
+                    }
+                    if (userDto.getBirthDate() != null) {
+                        existing.setBirthDate(userDto.getBirthDate());
+                    }
+                    if (userDto.getType() != null && !userDto.getType().isBlank()) {
+                        existing.setType(userDto.getType().trim().toUpperCase());
+                    }
+                    if (userDto.getRole() != null && !userDto.getRole().isBlank()) {
+                        existing.setRole(userDto.getRole().trim().toUpperCase());
+                    }
+                    if (userDto.getPassword() != null && !userDto.getPassword().isBlank()) {
+                        existing.setPassword(passwordEncoder.encode(userDto.getPassword()));
+                    }
+                    return userRepository.save(existing) != null ? 1 : 0;
+                }
+                // 활성 계정 이메일 중복
+                return 0;
+            }
+
             userDto.setPassword(passwordEncoder.encode(userDto.getPassword()));
             return userRepository.save(userDto.toEntity()) != null ? 1 : 0;
         } catch (Exception e) {
@@ -202,7 +236,17 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public int withdrawUser(String emailId) {
         try {
-            return userRepository.markWithdrawnByEmailId(emailId);
+            int updated = userRepository.markWithdrawnByEmailId(emailId);
+            if (updated > 0) {
+                return updated;
+            }
+
+            UserEntity user = userRepository.findByEmailId(emailId);
+            if (user != null && "Y".equalsIgnoreCase(user.getDeletedYn())) {
+                // 이미 탈퇴된 계정은 멱등하게 성공 처리
+                return 1;
+            }
+            return 0;
         } catch (Exception e) {
             log.error("회원 탈퇴 처리 중 오류 발생: {}", e.getMessage());
             return 0;

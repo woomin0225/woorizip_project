@@ -4,9 +4,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 
 import styles from './NoticeDetail.module.css';
 import FileDownloadButton from '../../components/FileDownloadButton';
-import AiSummaryPanel from '../../components/AiSummaryPanel';
 import { useNoticeDetail } from '../../hooks/useNoticeDetail';
-import { useBoardSummary } from '../../hooks/useBoardSummary';
 import { downloadNoticeFile } from '../../api/NoticeApi';
 
 const EDIT_PATH = (postNo) => `/notices/${postNo}/edit`;
@@ -17,16 +15,6 @@ export default function NoticeDetail() {
 
   const { isAdmin, notice, loading, deleting, error, handleDelete } =
     useNoticeDetail({ postNo, nav });
-
-  const {
-    opened,
-    summaryData,
-    summaryLoading,
-    summaryError,
-    loadSummary,
-    toggleOpened,
-    hasLoaded,
-  } = useBoardSummary(postNo);
 
   if (loading) return <div className={styles.loading}>Loading.....</div>;
   if (error) return <div className={styles.error}>{error}</div>;
@@ -157,15 +145,6 @@ export default function NoticeDetail() {
         </div>
       </div>
 
-      <AiSummaryPanel
-        opened={opened}
-        hasLoaded={hasLoaded}
-        summaryLoading={summaryLoading}
-        summaryError={summaryError}
-        summaryData={summaryData}
-        onLoad={loadSummary}
-        onToggle={toggleOpened}
-      />
     </div>
   );
 }
