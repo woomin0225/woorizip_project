@@ -1,6 +1,9 @@
 import React, { useMemo, useState } from 'react';
 import { runOrchestrateCommand } from '../api/orchestrateApi';
 import { synthesizeTts } from '../api/ttsApi';
+import botIcon from '../../../assets/images/ai_bot.png';
+import { useAuth } from '../../../app/providers/AuthProvider';
+import { parseJwt } from '../../../app/providers/utils/jwt';
 import styles from './OrchestrateQuickAgent.module.css';
 
 function newSessionId() {
@@ -8,6 +11,19 @@ function newSessionId() {
 }
 
 export default function OrchestrateQuickAgent() {
+  const { accessToken, userId } = useAuth();
+  const userDisplayName = useMemo(() => {
+    const payload = parseJwt(accessToken);
+    const rawName =
+      payload?.name ||
+      payload?.userName ||
+      payload?.nickname ||
+      payload?.preferred_username;
+    if (rawName) return String(rawName).trim();
+    if (userId) return String(userId).split('@')[0].trim();
+    return '고객';
+  }, [accessToken, userId]);
+
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -15,7 +31,7 @@ export default function OrchestrateQuickAgent() {
   const [messages, setMessages] = useState([
     {
       role: 'assistant',
-      text: 'AI Agent 테스트용입니다. 명령을 입력해보세요.',
+      text: `안녕하세요! 저는 ${userDisplayName} 님만을 위한 비서 우리봇이에요! 도움이 필요하거나 궁금한 것이 있다면 아래 대화창에 입력해주세요!`,
     },
   ]);
   const [sessionId] = useState(newSessionId);
@@ -25,6 +41,19 @@ export default function OrchestrateQuickAgent() {
     () => [...messages].reverse().find((msg) => msg.role === 'assistant')?.text || '',
     [messages]
   );
+
+  const getPageContext = () => {
+    const sourceNode = document.querySelector('main') || document.body;
+    const raw = sourceNode?.innerText || '';
+    const normalized = raw.replace(/\s+/g, ' ').trim();
+    const contentExcerpt = normalized.slice(0, 2200);
+
+    return {
+      url: window.location.href,
+      title: document.title || '',
+      contentExcerpt,
+    };
+  };
 
   const playLatestVoice = async () => {
     const sourceText = (latestAssistantMessage || '').split('\n(intent:')[0].trim();
@@ -68,6 +97,12 @@ export default function OrchestrateQuickAgent() {
         sessionId,
         context: {
           path: window.location.pathname,
+          pageSnapshot: getPageContext(),
+          siteProfile: {
+            serviceName: '우리집',
+            channel: 'web',
+            language: 'ko-KR',
+          },
         },
       });
       const reply =
@@ -104,10 +139,22 @@ export default function OrchestrateQuickAgent() {
 
   return (
     <div className={styles.root}>
-      {open ? (
+      <button
+        type="button"
+        className={styles.launcher}
+        onClick={() => setOpen((prev) => !prev)}
+        aria-label="AI Agent 열기"
+      >
+        <img src={botIcon} alt="AI 챗봇" className={styles.launcherIcon} />
+      </button>
+
+      {open && (
         <section className={styles.panel} aria-label="AI Agent Panel">
           <header className={styles.header}>
-            <strong>AI Agent</strong>
+            <div className={styles.headerIdentity}>
+              <img src={botIcon} alt="AI 챗봇" className={styles.headerIcon} />
+              <strong>우리봇</strong>
+            </div>
             <div className={styles.headerActions}>
               <button
                 type="button"
@@ -123,7 +170,7 @@ export default function OrchestrateQuickAgent() {
                 onClick={() => setOpen(false)}
                 aria-label="닫기"
               >
-                x
+                ×
               </button>
             </div>
           </header>
@@ -145,27 +192,18 @@ export default function OrchestrateQuickAgent() {
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="도와드릴 내용을 입력해주세요"
+              placeholder="내용을 입력해주세요"
             />
             <button
               type="submit"
               className={styles.sendBtn}
               disabled={disabled}
             >
-              {loading ? '전송중...' : '전송'}
+              {loading ? '대기중' : '전송'}
             </button>
           </form>
         </section>
-      ) : null}
-
-      <button
-        type="button"
-        className={styles.fab}
-        onClick={() => setOpen((prev) => !prev)}
-        aria-label="AI Agent 열기"
-      >
-        AI
-      </button>
+      )}
     </div>
   );
 }

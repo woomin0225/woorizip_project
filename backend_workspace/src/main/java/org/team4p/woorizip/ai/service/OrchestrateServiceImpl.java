@@ -158,9 +158,7 @@ public class OrchestrateServiceImpl implements OrchestrateService {
     private Map<String, Object> buildCustomPayload(OrchestrateCommandRequest request) {
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("stream", false);
-        payload.put("messages", List.of(
-                Map.of("role", "user", "content", request.text())
-        ));
+        payload.put("messages", buildMessages(request));
         payload.put("sessionId", request.sessionId());
         payload.put("context", request.context() == null ? Map.of() : request.context());
         return payload;
@@ -169,9 +167,7 @@ public class OrchestrateServiceImpl implements OrchestrateService {
     private Map<String, Object> buildChatCompletionsPayload(OrchestrateCommandRequest request) {
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("stream", false);
-        payload.put("messages", List.of(
-                Map.of("role", "user", "content", request.text())
-        ));
+        payload.put("messages", buildMessages(request));
         if (StringUtils.hasText(properties.getModel())) {
             payload.put("model", properties.getModel().trim());
         }
@@ -180,11 +176,98 @@ public class OrchestrateServiceImpl implements OrchestrateService {
 
     private Map<String, Object> buildResponsesPayload(OrchestrateCommandRequest request) {
         Map<String, Object> payload = new LinkedHashMap<>();
-        payload.put("input", request.text());
+        payload.put("input", buildUserContent(request));
+        String systemPrompt = resolveSystemPrompt(request);
+        if (StringUtils.hasText(systemPrompt)) {
+            payload.put("instructions", systemPrompt);
+        }
         if (StringUtils.hasText(properties.getModel())) {
             payload.put("model", properties.getModel().trim());
         }
         return payload;
+    }
+
+    private List<Map<String, Object>> buildMessages(OrchestrateCommandRequest request) {
+        List<Map<String, Object>> messages = new ArrayList<>();
+        String systemPrompt = resolveSystemPrompt(request);
+        if (StringUtils.hasText(systemPrompt)) {
+            messages.add(Map.of("role", "system", "content", systemPrompt));
+        }
+        messages.add(Map.of("role", "user", "content", buildUserContent(request)));
+        return messages;
+    }
+
+    @SuppressWarnings("unchecked")
+    private String buildUserContent(OrchestrateCommandRequest request) {
+        String userText = request.text() == null ? "" : request.text().trim();
+        Map<String, Object> context = request.context();
+        if (context == null || context.isEmpty()) {
+            return userText;
+        }
+
+        Object pageSnapshotObj = context.get("pageSnapshot");
+        if (!(pageSnapshotObj instanceof Map<?, ?> pageSnapshotRaw)) {
+            return userText;
+        }
+
+        Map<String, Object> pageSnapshot = (Map<String, Object>) pageSnapshotRaw;
+        String url = asString(pageSnapshot.get("url"));
+        String title = asString(pageSnapshot.get("title"));
+        String excerpt = asString(pageSnapshot.get("contentExcerpt"));
+
+        StringBuilder builder = new StringBuilder(userText);
+        Object siteProfileObj = context.get("siteProfile");
+        if (siteProfileObj instanceof Map<?, ?> siteProfileRaw) {
+            String serviceName = asString(siteProfileRaw.get("serviceName"));
+            String channel = asString(siteProfileRaw.get("channel"));
+            String language = asString(siteProfileRaw.get("language"));
+            if (StringUtils.hasText(serviceName) || StringUtils.hasText(channel) || StringUtils.hasText(language)) {
+                builder.append("\n\n[SITE_PROFILE]");
+                if (StringUtils.hasText(serviceName)) {
+                    builder.append("\nservice_name: ").append(serviceName.trim());
+                }
+                if (StringUtils.hasText(channel)) {
+                    builder.append("\nchannel: ").append(channel.trim());
+                }
+                if (StringUtils.hasText(language)) {
+                    builder.append("\nlanguage: ").append(language.trim());
+                }
+                builder.append("\n[/SITE_PROFILE]");
+            }
+        }
+
+        if (StringUtils.hasText(url) || StringUtils.hasText(title) || StringUtils.hasText(excerpt)) {
+            builder.append("\n\n[CURRENT_PAGE_CONTEXT]");
+            if (StringUtils.hasText(url)) {
+                builder.append("\nurl: ").append(url.trim());
+            }
+            if (StringUtils.hasText(title)) {
+                builder.append("\ntitle: ").append(title.trim());
+            }
+            if (StringUtils.hasText(excerpt)) {
+                builder.append("\ncontent_excerpt: ").append(excerpt.trim());
+            }
+            builder.append("\n[/CURRENT_PAGE_CONTEXT]");
+        }
+        return builder.toString();
+    }
+
+    private String resolveSystemPrompt(OrchestrateCommandRequest request) {
+        String configured = properties.getSystemPrompt();
+        String baseInfo = properties.getBaseInfo();
+        String requestPrompt = request.systemPrompt();
+
+        List<String> parts = new ArrayList<>();
+        if (StringUtils.hasText(configured)) {
+            parts.add(configured.trim());
+        } else if (StringUtils.hasText(requestPrompt)) {
+            // 설정이 없을 때만 요청 프롬프트를 보조적으로 사용
+            parts.add(requestPrompt.trim());
+        }
+        if (StringUtils.hasText(baseInfo)) {
+            parts.add("기본 정보:\n" + baseInfo.trim());
+        }
+        return String.join("\n\n", parts);
     }
 
     private String resolveAuthHeaderName() {

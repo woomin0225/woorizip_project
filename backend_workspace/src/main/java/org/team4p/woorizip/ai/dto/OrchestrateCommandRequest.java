@@ -12,6 +12,7 @@ public record OrchestrateCommandRequest(
         @NotBlank(message = "text는 필수입니다.") String text,
         String sessionId,
         String clientRequestId,
+        String systemPrompt,
         Map<String, Object> context
 ) {
 }

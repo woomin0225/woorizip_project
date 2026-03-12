@@ -4,9 +4,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 
 import styles from '../notice/NoticeDetail.module.css';
 import FileDownloadButton from '../../components/FileDownloadButton';
-import AiSummaryPanel from '../../components/AiSummaryPanel';
 import { useInformationDetail } from '../../hooks/useInformationDetail';
-import { useBoardSummary } from '../../hooks/useBoardSummary';
 import { downloadInformationFile } from '../../api/InformationApi';
 
 // 라우트가 다르면 여기만 수정
@@ -18,16 +16,6 @@ export default function InformationDetail() {
 
   const { isAdmin, information, loading, deleting, error, handleDelete } =
     useInformationDetail({ postNo, nav });
-
-  const {
-    opened,
-    summaryData,
-    summaryLoading,
-    summaryError,
-    loadSummary,
-    toggleOpened,
-    hasLoaded,
-  } = useBoardSummary(postNo);
 
   if (loading) return <div className={styles.loading}>Loading.....</div>;
   if (error) return <div className={styles.error}>{error}</div>;
@@ -127,18 +115,6 @@ export default function InformationDetail() {
               />
             </div>
           </section>
-
-          <div className={styles.summaryWrap}>
-            <AiSummaryPanel
-              opened={opened}
-              hasLoaded={hasLoaded}
-              summaryLoading={summaryLoading}
-              summaryError={summaryError}
-              summaryData={summaryData}
-              onLoad={loadSummary}
-              onToggle={toggleOpened}
-            />
-          </div>
 
           <div className={styles.buttonGroup}>
             <Link to="/information" className={styles.button}>

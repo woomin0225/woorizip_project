@@ -16,6 +16,8 @@ public class AgentProperties {
     private String endpoint;
     private String endpointPath;
     private String model;
+    private String systemPrompt;
+    private String baseInfo;
     private int timeoutMs = 15000;
 
     // api_key | bearer | none

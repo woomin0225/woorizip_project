@@ -30,7 +30,7 @@ async function postWithPathFallback(payload, paths) {
 
 /**
  * AI Agent command
- * @param {{ schemaVersion?: string, text: string, sessionId?: string, clientRequestId?: string, context?: Record<string, unknown> }} payload
+ * @param {{ schemaVersion?: string, text: string, sessionId?: string, clientRequestId?: string, systemPrompt?: string, context?: Record<string, unknown> }} payload
  */
 export async function runOrchestrateCommand(payload) {
   const data = await postWithPathFallback(payload, ['/api/agent/command']);
