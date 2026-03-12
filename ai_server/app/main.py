@@ -7,7 +7,7 @@ from transformers import AutoTokenizer
 
 from app.clients.embedding_client import KureEmbeddingClient
 from app.clients.llm_client import QwenLlmClient
-from app import embed_router, rag_router, summary_router
+from app.routers import embed_router, rag_router, summary_router
 from app.clients.qdrant_client import QdrantDbClient
 from app.schemas import RoomSummaryRequest
 from app.services.summary_service import SummaryService
