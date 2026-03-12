@@ -2,7 +2,6 @@
 
 from fastapi import APIRouter, Request
 
-from app.clients.embedding_client import OpenaiEmbeddingClient
 from app.clients.qdrant_client import QdrantDbClient
 from app.schemas import RoomTotalRequest
 from app.services.chunking import chunking
