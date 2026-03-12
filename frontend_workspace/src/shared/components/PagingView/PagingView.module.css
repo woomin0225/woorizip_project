@@ -1,48 +1,46 @@
 /* src/components/common/PagingView.module.css */
 
-.paging {
+.pagingContainer {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   margin-top: 12px;
 }
 
-/* 버튼 공통 */
-.paging button {
-  height: 28px;
-  min-width: 28px;
-  padding: 0 8px;
-
-  border: 1px solid #999;
-  border-radius: 0;
-  background: #f5f5f5;
-
-  font-size: 12px;
-  font-weight: 600;
-  color: #111;
-
+.btn {
+  height: 36px;
+  min-width: 36px;
+  padding: 0 14px;
+  border: 1px solid #c9713f;
+  border-radius: 10px;
+  background: #c9713f;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 800;
   cursor: pointer;
 }
 
-/* hover */
-.paging button:hover {
-  background: #e9e9e9;
+.btn:hover {
+  border-color: #b86334;
+  background: #b86334;
 }
 
-/* 현재 페이지 */
-.paging .active,
-.paging .current,
-.paging button[aria-current='page'] {
-  background: #333;
+.active {
+  border-color: #8f4d2c;
+  background: #8f4d2c;
   color: #fff;
-  border-color: #333;
 }
 
-/* disabled */
-.paging button:disabled {
-  background: #f5f5f5;
-  color: #bbb;
-  border-color: #ddd;
+.btn:disabled {
+  border: 1px solid #ead7c8;
+  background: #f6ede7;
+  color: #c7a892;
   cursor: not-allowed;
+}
+
+.ellipsis {
+  padding: 0 4px;
+  color: #8a4c2d;
+  font-weight: 700;
 }

@@ -47,7 +47,17 @@ export default function EventPostEditor({
 
       {/* 배너 제목 */}
       <div style={{ marginBottom: 20 }}>
-        <label style={{ display: 'block', marginBottom: 6 }}>배너 제목</label>
+        <label
+          style={{
+            display: 'block',
+            marginBottom: 8,
+            fontWeight: 600,
+            fontSize: 15,
+            color: '#333',
+          }}
+        >
+          배너 제목
+        </label>
         <input
           type="text"
           name="postTitle"
@@ -56,9 +66,12 @@ export default function EventPostEditor({
           disabled={submitting}
           style={{
             width: '100%',
-            height: 40,
-            padding: '0 10px',
-            border: '1px solid #ccc',
+            fontSize: 16,
+            padding: '12px 10px',
+            border: '1px solid #d1d5db',
+            borderRadius: '8px',
+            outline: 'none',
+            transition: 'border 0.2s ease',
           }}
         />
       </div>
@@ -83,10 +96,21 @@ export default function EventPostEditor({
       </div>
 
       {/* 🔵 첨부파일 업로드 (multiple) */}
-      <div style={{ marginBottom: 30 }}>
-        <label style={{ display: 'block', marginBottom: 6 }}>첨부파일</label>
+      <div style={{ marginTop: 20 }}>
+        <label
+          style={{
+            display: 'block',
+            marginBottom: 8,
+            fontWeight: 600,
+            fontSize: 15,
+            color: '#333',
+          }}
+        >
+          파일추가
+        </label>
 
         <input
+          id="event-file-upload"
           type="file"
           multiple
           onChange={(e) =>
@@ -96,26 +120,66 @@ export default function EventPostEditor({
             ])
           }
           disabled={submitting}
+          style={{ display: 'none' }}
         />
 
-        {/* 새 파일 목록 */}
+        <label
+          htmlFor="event-file-upload"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            height: 36,
+            padding: '0 14px',
+            border: '1px solid #c9713f',
+            background: '#c9713f',
+            color: '#fff',
+            borderRadius: 10,
+            cursor: submitting ? 'default' : 'pointer',
+            fontWeight: 800,
+            fontSize: 14,
+            opacity: submitting ? 0.6 : 1,
+            pointerEvents: submitting ? 'none' : 'auto',
+          }}
+        >
+          파일 선택
+        </label>
+
         {newFiles.length > 0 && (
-          <ul style={{ marginTop: 10 }}>
+          <div style={{ marginTop: 10 }}>
             {newFiles.map((file, idx) => (
-              <li key={idx}>
-                {file.name}
+              <div
+                key={idx}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginBottom: 6,
+                  fontSize: 14,
+                }}
+              >
+                <span>{file.name}</span>
+
                 <button
                   type="button"
                   onClick={() =>
                     setNewFiles((prev) => prev.filter((_, i) => i !== idx))
                   }
-                  style={{ marginLeft: 10 }}
+                  disabled={submitting}
+                  style={{
+                    marginLeft: 10,
+                    border: 'none',
+                    background: 'transparent',
+                    cursor: submitting ? 'default' : 'pointer',
+                    fontSize: 14,
+                    opacity: submitting ? 0.6 : 1,
+                  }}
                 >
                   ❌
                 </button>
-              </li>
+              </div>
             ))}
-          </ul>
+          </div>
         )}
 
         {/* 수정 모드일 때 기존 파일 */}
@@ -163,8 +227,18 @@ export default function EventPostEditor({
       />
 
       {/* 배너 내용 */}
-      <div style={{ marginBottom: 30 }}>
-        <label style={{ display: 'block', marginBottom: 6 }}>배너 내용</label>
+      <div style={{ marginBottom: 20 }}>
+        <label
+          style={{
+            display: 'block',
+            marginBottom: 8,
+            fontWeight: 600,
+            fontSize: 15,
+            color: '#333',
+          }}
+        >
+          배너 내용
+        </label>
         <RichTextEditor
           value={form.postContent}
           readOnly={submitting}
@@ -177,14 +251,28 @@ export default function EventPostEditor({
       </div>
 
       {/* 버튼 */}
-      <div style={{ textAlign: 'center' }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          gap: 12,
+          marginTop: 30,
+        }}
+      >
         <button
           type="submit"
           disabled={submitting}
           style={{
-            padding: '10px 30px',
-            marginRight: 10,
-            cursor: 'pointer',
+            height: 36,
+            padding: '0 14px',
+            border: '1px solid #c9713f',
+            background: '#c9713f',
+            color: '#fff',
+            borderRadius: 10,
+            cursor: submitting ? 'default' : 'pointer',
+            fontWeight: 800,
+            fontSize: 14,
+            opacity: submitting ? 0.6 : 1,
           }}
         >
           {submitting
@@ -201,8 +289,16 @@ export default function EventPostEditor({
           onClick={onCancel}
           disabled={submitting}
           style={{
-            padding: '10px 30px',
-            cursor: 'pointer',
+            height: 36,
+            padding: '0 14px',
+            border: '1px solid #e5c4ad',
+            background: '#fff6ee',
+            color: '#8a4c2d',
+            borderRadius: 10,
+            cursor: submitting ? 'default' : 'pointer',
+            fontWeight: 800,
+            fontSize: 14,
+            opacity: submitting ? 0.6 : 1,
           }}
         >
           취소

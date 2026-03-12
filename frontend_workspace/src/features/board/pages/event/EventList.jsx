@@ -1,4 +1,5 @@
-// src/features/board/pages/event/eventList.jsx
+// src/features/board/pages/event/EventList.jsx
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useEventList } from '../../hooks/useEventList';
@@ -13,23 +14,32 @@ export default function EventList() {
   return (
     <div style={{ padding: 24 }}>
       {/* 제목 */}
-      <h2
+      <div
         style={{
-          textAlign: 'center',
-          color: '#2f9d27',
-          fontSize: 40,
-          marginBottom: 24,
+          marginBottom: 18,
         }}
       >
-        이벤트 목록
-      </h2>
+        <h1
+          style={{
+            margin: 0,
+            fontSize: 28,
+            fontWeight: 800,
+            color: '#2b2b2b',
+          }}
+        >
+          이벤트
+        </h1>
 
-      {/* 관리자 등록 버튼 */}
-      {hook.isAdmin && (
-        <div style={{ textAlign: 'center', marginBottom: 20 }}>
-          <button onClick={() => nav('/event/new')}>이벤트 등록</button>
-        </div>
-      )}
+        <p
+          style={{
+            margin: '8px 0 0',
+            fontSize: 14,
+            color: '#666',
+          }}
+        >
+          진행 중인 이벤트와 혜택 정보를 확인하세요.
+        </p>
+      </div>
 
       {/* 검색바 */}
       <PostSearchBar
@@ -72,14 +82,57 @@ export default function EventList() {
       </div>
 
       {/* 페이징 */}
-      {hook.pageResponse && (
-        <div style={{ marginTop: 30 }}>
-          <PagingView
-            pageResponse={hook.pageResponse}
-            onChangePage={hook.setPage}
-          />
-        </div>
-      )}
+      <div
+        style={{
+          position: 'relative',
+          marginTop: 30,
+          minHeight: 40,
+        }}
+      >
+        {hook.pageResponse && (
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}
+          >
+            <PagingView
+              pageResponse={hook.pageResponse}
+              onChangePage={hook.setPage}
+            />
+          </div>
+        )}
+
+        {hook.isAdmin && (
+          <div
+            style={{
+              position: 'absolute',
+              right: 0,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              display: 'flex',
+              alignItems: 'center',
+            }}
+          >
+            <button
+              onClick={() => nav('/event/new')}
+              style={{
+                height: 36,
+                padding: '0 14px',
+                border: '1px solid #c9713f',
+                background: '#c9713f',
+                color: '#fff',
+                borderRadius: 10,
+                cursor: 'pointer',
+                fontWeight: 800,
+              }}
+            >
+              이벤트 등록
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
