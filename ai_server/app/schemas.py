@@ -1,6 +1,6 @@
 # app/schemas.py
 
-from datetime import datetime
+from datetime import datetime, date
 
 from pydantic import BaseModel
 
@@ -18,7 +18,7 @@ class RoomTotalRequest(BaseModel):
     roomMethod: str
     roomArea: float
     roomFacing: str
-    roomAvailableDate: datetime
+    roomAvailableDate: date
     roomAbstract: str
     roomRoomCount: int
     roomBathCount: int
