@@ -1,4 +1,3 @@
-// src/features/aiAssistant/api/orchestrateApi.js
 import { apiJson } from '../../../app/http/request';
 import { getAiBaseUrl } from '../../../app/config/env';
 
@@ -15,6 +14,7 @@ async function postWithPathFallback(payload, paths) {
     try {
       const { data } = await apiJson().post(path, payload, {
         baseURL: getAiBaseUrl(),
+        responseType: 'arraybuffer',
       });
       return data;
     } catch (error) {
@@ -29,18 +29,9 @@ async function postWithPathFallback(payload, paths) {
 }
 
 /**
- * AI Agent command
- * @param {{ schemaVersion?: string, text: string, sessionId?: string, clientRequestId?: string, context?: Record<string, unknown> }} payload
+ * Azure TTS 호출
+ * @param {{ text: string, voiceName?: string }} payload
  */
-export async function runOrchestrateCommand(payload) {
-  const data = await postWithPathFallback(payload, ['/api/agent/command']);
-
-  if (data && typeof data.success === 'boolean') {
-    if (!data.success) {
-      throw new Error(data.message || 'Agent 요청 실패');
-    }
-    return data.data;
-  }
-
-  return data;
+export async function synthesizeTts(payload) {
+  return postWithPathFallback(payload, ['/api/voice/tts']);
 }

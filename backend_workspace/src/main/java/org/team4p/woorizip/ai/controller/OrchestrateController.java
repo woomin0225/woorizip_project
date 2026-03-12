@@ -17,7 +17,7 @@ import lombok.RequiredArgsConstructor;
 @Validated
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/orchestrate")
+@RequestMapping({"/api/agent", "/api/orchestrate"})
 public class OrchestrateController {
 
     private final OrchestrateService orchestrateService;
@@ -27,6 +27,6 @@ public class OrchestrateController {
             @Valid @RequestBody OrchestrateCommandRequest request
     ) {
         OrchestrateCommandResponse response = orchestrateService.execute(request);
-        return ResponseEntity.ok(ApiResponse.ok("Orchestrate 명령 실행 성공", response));
+        return ResponseEntity.ok(ApiResponse.ok("Agent command executed", response));
     }
 }

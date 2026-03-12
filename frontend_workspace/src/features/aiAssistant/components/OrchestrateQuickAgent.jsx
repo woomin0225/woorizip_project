@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { runOrchestrateCommand } from '../api/orchestrateApi';
+import { synthesizeTts } from '../api/ttsApi';
 import styles from './OrchestrateQuickAgent.module.css';
 
 function newSessionId() {
@@ -10,15 +11,47 @@ export default function OrchestrateQuickAgent() {
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [ttsLoading, setTtsLoading] = useState(false);
   const [messages, setMessages] = useState([
     {
       role: 'assistant',
-      text: 'watsonx Orchestrate 테스트용입니다. 명령을 입력해보세요.',
+      text: 'AI Agent 테스트용입니다. 명령을 입력해보세요.',
     },
   ]);
   const [sessionId] = useState(newSessionId);
 
   const disabled = useMemo(() => loading || !input.trim(), [loading, input]);
+  const latestAssistantMessage = useMemo(
+    () => [...messages].reverse().find((msg) => msg.role === 'assistant')?.text || '',
+    [messages]
+  );
+
+  const playLatestVoice = async () => {
+    const sourceText = (latestAssistantMessage || '').split('\n(intent:')[0].trim();
+    if (!sourceText || ttsLoading) return;
+
+    try {
+      setTtsLoading(true);
+      const audioBytes = await synthesizeTts({ text: sourceText });
+      const blob = new Blob([audioBytes], { type: 'audio/mpeg' });
+      const audioUrl = URL.createObjectURL(blob);
+      const audio = new Audio(audioUrl);
+      audio.onended = () => URL.revokeObjectURL(audioUrl);
+      audio.onerror = () => URL.revokeObjectURL(audioUrl);
+      await audio.play();
+    } catch (error) {
+      const errorBody = error?.response?.data;
+      const apiMessage =
+        errorBody?.data ||
+        errorBody?.message ||
+        errorBody?.error ||
+        error?.message ||
+        'TTS 호출 중 오류가 발생했습니다.';
+      setMessages((prev) => [...prev, { role: 'assistant', text: `오류: ${apiMessage}` }]);
+    } finally {
+      setTtsLoading(false);
+    }
+  };
 
   const submit = async (e) => {
     e.preventDefault();
@@ -43,7 +76,9 @@ export default function OrchestrateQuickAgent() {
         result?.message ||
         result?.result ||
         '응답은 받았지만 표시 가능한 메시지 필드가 없습니다.';
-      const intent = result?.intent ? `\n(intent: ${result.intent})` : '';
+      const shouldShowIntent =
+        result?.intent && String(result.intent).toLowerCase() !== 'fallback';
+      const intent = shouldShowIntent ? `\n(intent: ${result.intent})` : '';
 
       setMessages((prev) => [
         ...prev,
@@ -56,7 +91,7 @@ export default function OrchestrateQuickAgent() {
         errorBody?.message ||
         errorBody?.error ||
         error?.message ||
-        'Orchestrate 호출 중 오류가 발생했습니다.';
+        'Agent 호출 중 오류가 발생했습니다.';
 
       setMessages((prev) => [
         ...prev,
@@ -73,14 +108,24 @@ export default function OrchestrateQuickAgent() {
         <section className={styles.panel} aria-label="AI Agent Panel">
           <header className={styles.header}>
             <strong>AI Agent</strong>
-            <button
-              type="button"
-              className={styles.closeBtn}
-              onClick={() => setOpen(false)}
-              aria-label="닫기"
-            >
-              x
-            </button>
+            <div className={styles.headerActions}>
+              <button
+                type="button"
+                className={styles.voiceBtn}
+                onClick={playLatestVoice}
+                disabled={ttsLoading || !latestAssistantMessage}
+              >
+                {ttsLoading ? 'TTS...' : '음성 재생'}
+              </button>
+              <button
+                type="button"
+                className={styles.closeBtn}
+                onClick={() => setOpen(false)}
+                aria-label="닫기"
+              >
+                x
+              </button>
+            </div>
           </header>
 
           <div className={styles.body}>
