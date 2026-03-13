@@ -3,11 +3,12 @@
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.responses import JSONResponse
 from transformers import AutoTokenizer
 
 from app.clients.embedding_client import KureEmbeddingClient
 from app.clients.llm_client import QwenLlmClient
-from app.routers import embed_router, rag_router, summary_router
+from app.routers import assistant_router, embed_router, rag_router, summary_router, voice_router
 from app.clients.qdrant_client import QdrantDbClient
 from app.schemas import RoomSummaryRequest
 from app.services.summary_service import SummaryService
@@ -23,7 +24,16 @@ async def lifespan(app: FastAPI):
     yield
     # 앱 종료시
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(lifespan=lifespan, default_response_class=JSONResponse)
+
+
+@app.middleware('http')
+async def add_utf8_charset(request, call_next):
+    response = await call_next(request)
+    content_type = response.headers.get('content-type', '')
+    if content_type.startswith('application/json') and 'charset=' not in content_type.lower():
+        response.headers['content-type'] = 'application/json; charset=utf-8'
+    return response
 app.include_router(
     embed_router.router,
     tags=["embed"]
@@ -35,6 +45,12 @@ app.include_router(
 app.include_router(
     rag_router.router,
     tags=["rag"]
+)
+app.include_router(
+    assistant_router.router
+)
+app.include_router(
+    voice_router.router
 )
 
 
@@ -60,7 +76,6 @@ from app.ibm.mock_client import MockLLMClient
 from app.ibm.watsonx_client import WatsonxClient
 from app.ibm.llm_client import GeminiLLMClient, GroqLLMClient
 from app.schemas import (
-    AgentRunReq,
     ChatReq,
     DocWriteReq,
     ListingIndexReq,
@@ -75,8 +90,6 @@ from app.schemas import (
     SummaryReq,
     VisionAnalyzeReq,
     RoomVisionAnalyzeRes,
-    VoiceSpeakReq,
-    VoiceTranscribeReq,
 )
 from app.services.agent_router import AgentRouter
 from app.services.doc_service import DocService
@@ -193,12 +206,6 @@ async def recommend(req: RecommendReq):
     return await reco.recommend(req.user_id, req.candidates, req.goal)
 
 
-@app.post('/ai/agent/run', dependencies=[Depends(require_internal_api_key)])
-async def agent_run(req: AgentRunReq, ctx: dict = Depends(get_user_context)):
-    user_id = req.user_id or ctx.get('user_id') or 'anonymous'
-    return await agent.run(user_id, req.instruction, req.extra)
-
-
 @app.post('/ai/summary', dependencies=[Depends(require_internal_api_key)])
 async def summary_unified(req: SummaryReq):
     if req.target_type == 'room':
@@ -257,16 +264,6 @@ async def room_vision_analyze(
         source_prefix=source_prefix,
         save_embedding=save_embedding,
     )
-
-
-@app.post('/ai/voice/transcribe', dependencies=[Depends(require_internal_api_key)])
-async def voice_transcribe(req: VoiceTranscribeReq):
-    return await voice.transcribe(req.audio_base64, mime_type=req.mime_type, language=req.language, mock_text=req.mock_text)
-
-
-@app.post('/ai/voice/speak', dependencies=[Depends(require_internal_api_key)])
-async def voice_speak(req: VoiceSpeakReq):
-    return await voice.speak(req.text, voice=req.voice, audio_format=req.audio_format)
 
 
 @app.post('/ai/policy/check', dependencies=[Depends(require_internal_api_key)])
