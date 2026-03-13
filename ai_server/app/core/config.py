@@ -5,8 +5,6 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    class Config:
-        env_file = ".env"
     
     # ===== Providers =====
     LLM_PROVIDER: str = Field(default='mock', description='mock | watsonx | gemini | groq')

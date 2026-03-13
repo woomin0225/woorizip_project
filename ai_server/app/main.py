@@ -42,9 +42,6 @@ app.include_router(
 def welcome():
     return {"hello": "ai"}
 
-    
-from __future__ import annotations
-
 from fastapi import Depends, FastAPI, HTTPException, UploadFile, File, Form
 import base64
 
@@ -95,8 +92,6 @@ from app.services.vision_service import VisionService
 from app.services.voice_service import VoiceService
 from app.store.vector_store import build_vector_store
 
-app = FastAPI(title='WooriZip AI Agent Server (Slim v0.3)', version='0.3.0')
-
 
 @app.on_event('startup')
 async def _startup():
@@ -138,7 +133,7 @@ ocr_client = build_ocr_client()
 sentiment_client = build_sentiment_client()
 store = build_vector_store()
 
-rag = RagService(llm, embedding_client, store)
+rag = RagService(store.client, embedding_client)
 doc = DocService(llm)
 reco = RecoService(llm)
 summary = SummaryService(llm)

@@ -47,9 +47,6 @@ class SummaryService:
         ]
         result = self.client.generate_from_messages(messages, max_new_tokens=128)
         return result.strip()
-    
-    
-from __future__ import annotations
 
 from app.ibm.llm_client import LLMClient
 from app.utils.document_parser import DocumentParseError, DocumentParser
