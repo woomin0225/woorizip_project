@@ -40,9 +40,12 @@ app.include_router(
 
 
 @app.get("/")
-def welcome():
+def welcome(request: Request):
     return {
-        "qwen_llm_client": ""
+        "qwen_llm_client (Qwen/Qwen2.5-3B-Instruct)": request.app.state.qwen_llm_client,
+        "embedding_client (nlpai-lab/KURE-v1)": request.app.state.embedding_client,
+        "vector_client (QdrantDB)": request.app.state.vector_client,
+        "tokenizer (AutoTokenizer:nlpai-lab/KURE-v1)": request.app.state.tokenizer,
     }
 
     
