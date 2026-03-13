@@ -41,11 +41,31 @@ app.include_router(
 
 @app.get("/")
 def welcome(request: Request):
+    qwen_client = getattr(request.app.state, "qwen_llm_client", None)
+    embedding_client = getattr(request.app.state, "embedding_client", None)
+    vector_client = getattr(request.app.state, "vector_client", None)
+    tokenizer = getattr(request.app.state, "tokenizer", None)
+
     return {
-        "qwen_llm_client (Qwen/Qwen2.5-3B-Instruct)": request.app.state.qwen_llm_client,
-        "embedding_client (nlpai-lab/KURE-v1)": request.app.state.embedding_client,
-        "vector_client (QdrantDB)": request.app.state.vector_client,
-        "tokenizer (AutoTokenizer:nlpai-lab/KURE-v1)": request.app.state.tokenizer,
+        "message": "AI server is running",
+        "clients": {
+            "qwen_llm_client": {
+                "ready": qwen_client is not None,
+                "model_name": getattr(qwen_client, "model_name", None),
+            },
+            "embedding_client": {
+                "ready": embedding_client is not None,
+                "model_name": "nlpai-lab/KURE-v1" if embedding_client is not None else None,
+            },
+            "vector_client": {
+                "ready": vector_client is not None,
+                "type": type(vector_client).__name__ if vector_client is not None else None,
+            },
+            "tokenizer": {
+                "ready": tokenizer is not None,
+                "name": getattr(tokenizer, "name_or_path", None),
+            },
+        },
     }
 
     
