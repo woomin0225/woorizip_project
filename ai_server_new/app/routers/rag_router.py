@@ -11,7 +11,7 @@ router = APIRouter(
 )
 
 @router.post("/room", summary="방정보 rag 검색", description="입력한 텍스트를 사용해 의미기반의 방 검색을 수행합니다.")
-def room_search(
+async def room_search(
     text: str,
     rag_service: Annotated[RagService, Depends(get_rag_service)],
     tokenizer = Depends(get_tokenizer)

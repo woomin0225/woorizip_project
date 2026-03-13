@@ -11,7 +11,7 @@ router = APIRouter(
 )
 
 @router.post("/room/summary/reviews", summary="방 리뷰들 요약", description="방의 리뷰들의 내용을 요약합니다.")
-def room_reviews_summary(
+async def room_reviews_summary(
     room_reviews:RoomSummaryRequest,
     room_summary_service: Annotated[RoomSummaryService, Depends(get_room_summary_service)]
 ):
@@ -24,7 +24,7 @@ def room_reviews_summary(
     }
 
 @router.post("/room/summary/images", summary="방 이미지 캡션들 요약", description="이미지에 추가된 캡션들의 내용을 요약합니다.")
-def room_images_summary(
+async def room_images_summary(
     room_image_captions:RoomSummaryRequest,
     room_summary_service: Annotated[RoomSummaryService, Depends(get_room_summary_service)]
 ):
@@ -37,7 +37,7 @@ def room_images_summary(
     }
 
 @router.post("/room/summary/total", summary="방 정보 요약", description="방의 정보(기본정보+사진캡션요약+리뷰요약)를 종합 요약합니다.")
-def room_total_summary(
+async def room_total_summary(
     room:RoomTotalRequest,
     room_summary_service: Annotated[RoomSummaryService, Depends(get_room_summary_service)]
 ):

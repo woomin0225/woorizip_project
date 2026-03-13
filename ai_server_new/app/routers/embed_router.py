@@ -19,7 +19,7 @@ router = APIRouter(
 
 
 @router.post("/room", summary="방 정보 임베딩+벡터저장", description="방의 정보(기본정보+사진캡션요약+리뷰요약)를 임베딩하여 qdrant db에 저장합니다.")
-def RoomInfoEmbeddingAndStore(
+async def RoomInfoEmbeddingAndStore(
     target:RoomTotalRequest,
     embedding_service: Annotated[EmbeddingService, Depends(get_embedding_service)],
     vector_store: Annotated[VectorStore, Depends(get_vector_store)],
