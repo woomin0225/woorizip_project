@@ -3,21 +3,32 @@
 from __future__ import annotations
 
 import base64
+from contextlib import asynccontextmanager
 from io import BytesIO
 from typing import Any, Annotated
 
-from fastapi import Depends, FastAPI, File, Form, HTTPException, UploadFile
+from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import JSONResponse
 from PIL import Image
 from pydantic import BaseModel
+from transformers import AutoTokenizer
 
+from app.clients.embedding_client import KureEmbeddingClient
 from app.clients.groundingdino_client import GroundingDINOClient
 from app.clients.paddleocr_client import PaddleOCRClient
+from app.clients.qdrant_client import QdrantDbClient
 from app.clients.qwen_caption_client import QwenCaptionClient
+from app.clients.qwen_llm_client import QwenLlmClient
 from app.core.config import settings
 from app.core.security import require_internal_api_key
 from app.ibm.groq_llm_client import GroqLLMClient
-from app.routers import assistant_router, voice_router
+from app.routers import (
+    assistant_router,
+    embed_router,
+    rag_router,
+    summary_router,
+    voice_router,
+)
 from app.schemas import (
     EmbeddingReq,
     EmbeddingRes,
@@ -28,18 +39,6 @@ from app.schemas import (
 from app.services.embedding_service import EmbeddingService
 from app.services.summary_service import SummaryService
 from app.services.vision_service import VisionService
-
-
-from contextlib import asynccontextmanager
-
-from fastapi import FastAPI
-from transformers import AutoTokenizer
-
-from app.clients.embedding_client import KureEmbeddingClient
-from app.clients.qwen_llm_client import QwenLlmClient
-from app.routers import embed_router, rag_router, summary_router
-from app.clients.qdrant_client import QdrantDbClient
-from fastapi import Request
 
 
 @asynccontextmanager
