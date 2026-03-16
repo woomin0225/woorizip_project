@@ -20,14 +20,11 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class RoomImageEmbeddingServiceImpl implements RoomImageEmbeddingService {
 
-	@Value("${openai.api-key}")
-	private String openaiApiKey;
-	
-	@Value("${openai.embedding-url}")
-	private String embeddingUrl;
-	
-	@Value("${openai.embedding-model:text-embedding-3-small")
-	private String embeddingModel;
+	@Value("${ai.server.base-url:http://localhost:8000}")
+    private String aiServerBaseUrl;
+
+    @Value("${ai.server.internal-api-key:}")
+    private String internalApiKey;
 	
 	private final RestTemplate restTemplate = new RestTemplate();
 	
@@ -40,41 +37,29 @@ public class RoomImageEmbeddingServiceImpl implements RoomImageEmbeddingService 
 		
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_JSON);
-		headers.setBearerAuth(openaiApiKey);
+		headers.set("X-API-KEY", internalApiKey);
 		
 		Map<String, Object> body = Map.of(
-				"model", embeddingModel,
-				"input", text
+				"text", text
 		);
 		
 		HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(body, headers);
 		
 		ResponseEntity<Map> response = restTemplate.exchange(
-				embeddingUrl, 
+				aiServerBaseUrl + "/ai/embedding", 
 				HttpMethod.POST,
 				requestEntity,
 				Map.class
 		);
 		
 		if(!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
-			throw new IllegalStateException("OpenAI embedding 호출에 실패했습니다.");
+			throw new IllegalStateException("FastAPI embedding 호출에 실패했습니다.");
 		}
 		
 		Map<String, Object> root = response.getBody();
-		Object dataObj = root.get("data");
-		if(!(dataObj instanceof List<?> dataList) || dataList.isEmpty()) {
-			throw new IllegalStateException("OpenAI embedding 응답에 data가 없습니다.");
-		}
-		
-		Object firstObj = dataList.get(0);
-		if(!(firstObj instanceof Map<?, ?> firstMapRaw)) {
-			throw new IllegalStateException("OpenAI embedding 응답 형식이 올바르지 않습니다.");
-		}
-		
-		Map<String, Object> firstMap = (Map<String, Object>) firstMapRaw;
-		Object embeddingObj = firstMap.get("embedding");
+		Object embeddingObj = root.get("embedding");
 		if(!(embeddingObj instanceof List<?> rawEmbedding)) {
-			throw new IllegalStateException("OpenAI embedding 응답에 embedding이 없습니다.");
+			throw new IllegalStateException("FastAPI embedding 응답에 embedding이 없습니다.");
 		}
 		
 		return rawEmbedding.stream()
@@ -83,15 +68,3 @@ public class RoomImageEmbeddingServiceImpl implements RoomImageEmbeddingService 
 		
 	}
 }
-
-
-
-
-
-
-
-
-
-
-
-

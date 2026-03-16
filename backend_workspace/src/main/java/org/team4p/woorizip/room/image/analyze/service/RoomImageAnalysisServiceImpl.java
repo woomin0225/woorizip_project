@@ -44,6 +44,7 @@ public class RoomImageAnalysisServiceImpl implements RoomImageAnalysisService {
 	
 	private final RestTemplate restTemplate = new RestTemplate();
 	private final RoomImageEmbeddingService roomImageEmbeddingService;
+	private final RoomImageVectorStoreService roomImageVectorStoreService;
 	
 	@Override
 	@Transactional
@@ -119,16 +120,21 @@ public class RoomImageAnalysisServiceImpl implements RoomImageAnalysisService {
 					.rawJson(rawJson)
 					.build();
 			
-			roomImageAnalysisRepository.save(entity);
+			RoomImageAnalysisEntity savedEntity = roomImageAnalysisRepository.save(entity);
 			
-			String embeddingText = buildEmbeddingText(entity);
-			log.info("embedding text built. roomImageNo={}, text={}", entity.getRoomImageNo(), embeddingText);
+			String embeddingText = buildEmbeddingText(savedEntity);
+			log.info("embedding text built. roomImageNo={}, text={}", savedEntity.getRoomImageNo(), embeddingText);
 
 			List<Float> embedding = roomImageEmbeddingService.createEmbedding(embeddingText);
-			log.info("embedding created. roomImageNo={}, dimension={}", entity.getRoomImageNo(), embedding.size());
+			log.info("embedding created. roomImageNo={}, dimension={}", savedEntity.getRoomImageNo(), embedding.size());
+			
+			roomImageVectorStoreService.saveEmbedding(savedEntity, embeddingText, embedding);
 			
 		} catch (Exception e) {
-			e.printStackTrace();
+			log.error("room image analysis pipeline failed. roomImageNo={}, roomNo={}",
+					roomImageEntity.getRoomImageNo(),
+					roomImageEntity.getRoomNo(),
+					e);
 		}
 	}
 
