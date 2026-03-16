@@ -56,6 +56,7 @@ const uniqActionIds = (ids) => {
 
 const normalizeText = (value) => String(value ?? '').toLowerCase().replace(/\s+/g, '');
 const getActionTokens = (action) => [action.label, action.prompt, ...(action.aliases || [])].map(normalizeText).filter(Boolean);
+const getDirectTriggerTokens = (action) => [action.label, ...(action.aliases || [])].map(normalizeText).filter(Boolean);
 
 const matchActionIds = (value, options = {}) => {
   const text = normalizeText(value);
@@ -74,7 +75,16 @@ const matchActionIds = (value, options = {}) => {
     .map((item) => item.id);
 };
 
-const detectQuickAction = (value) => matchActionIds(value, { directOnly: true })[0] || null;
+const detectQuickAction = (value) => {
+  const text = normalizeText(value);
+  if (!text) return null;
+
+  return (
+    ACTIONS.find((action) =>
+      getDirectTriggerTokens(action).some((token) => token === text)
+    )?.id || null
+  );
+};
 const suggestActionsFromText = (value) => matchActionIds(value);
 
 const expandRelatedActionIds = (ids, limit = 3) => {
@@ -336,7 +346,8 @@ export default function OrchestrateQuickAgent() {
   const onQuickActionClick = (actionId) => {
     const action = ACTION_MAP[actionId];
     if (!action || loading) return;
-    sendMessage(action.prompt || action.label, { displayText: action.label });
+    setMessages((prev) => [...prev, { role: 'user', text: action.label }]);
+    runQuickAction(actionId);
   };
 
   const playLatestVoice = async () => {

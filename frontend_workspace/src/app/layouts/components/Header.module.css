@@ -52,7 +52,7 @@
 }
 
 .authSlot {
-  width: 240px;
+  width: 260px;
   min-height: 56px;
   margin-left: 1.5rem;
   display: flex;
@@ -82,12 +82,28 @@
   width: 100%;
   display: flex;
   justify-content: flex-end;
-  gap: 8px;
+  gap: 5px;
+  align-items: center;
+  flex-wrap: nowrap;
 }
 
 :global(#navbar-main) .loggedInButton {
-  padding: 2px 5px !important;
-  font-size: 0.7rem !important;
+  min-height: 30px !important;
+  min-width: 84px !important;
+  padding: 0 10px !important;
+  font-size: 0.74rem !important;
+  white-space: nowrap !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+:global(#navbar-main) .loggedInButton .nav-link-inner--text {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100%;
+  line-height: 1 !important;
 }
 
 .accessibilityItem {

@@ -9,6 +9,18 @@ MAX_TEXT_LENGTH = 4000
 MAX_CONTEXT_LENGTH = 2200
 MAX_SECTION_LENGTH = 1200
 
+PAGE_CONTEXT_KEYWORDS = (
+    '현재페이지', '현재 페이지', '이페이지', '이 페이지', '해당페이지', '해당 페이지',
+    '지금페이지', '지금 페이지', '페이지', '화면', '여기', '여기서', '이곳',
+    '버튼', '메뉴', '위치', '경로', '항목', '목록', '내용', '본문', '보이는',
+    '요약', '정리', '설명', '무슨페이지', '무슨 페이지'
+)
+GENERAL_CHAT_KEYWORDS = (
+    '안녕', '안녕하세요', '반가워', '반갑다', '도움이필요해', '도움이 필요해',
+    '뭐할수있어', '뭐 할 수 있어', '무엇을할수있어', '무엇을 할 수 있어', '자기소개',
+    '소개해줘', '고마워', '감사', '잘가', '이야기하자'
+)
+
 
 def compact_text(value: Any, max_length: int | None = None) -> str:
     text = re.sub(r'\s+', ' ', str(value or '')).strip()
@@ -53,6 +65,18 @@ def normalize_context(context: dict[str, Any] | None) -> dict[str, Any]:
     return normalized
 
 
+def should_include_page_context(text: str) -> bool:
+    compact = compact_text(text, MAX_TEXT_LENGTH).lower().replace(' ', '')
+    if not compact:
+        return False
+
+    if any(keyword.replace(' ', '') in compact for keyword in GENERAL_CHAT_KEYWORDS):
+        if not any(keyword.replace(' ', '') in compact for keyword in PAGE_CONTEXT_KEYWORDS):
+            return False
+
+    return any(keyword.replace(' ', '') in compact for keyword in PAGE_CONTEXT_KEYWORDS)
+
+
 def build_instruction(text: str, context: dict[str, Any]) -> str:
     user_text = compact_text(text, MAX_TEXT_LENGTH)
     if not context:
@@ -72,7 +96,7 @@ def build_instruction(text: str, context: dict[str, Any]) -> str:
         parts.append('\n'.join(lines))
 
     page_snapshot = context.get('pageSnapshot') or {}
-    if page_snapshot:
+    if page_snapshot and should_include_page_context(user_text):
         lines = ['[CURRENT_PAGE_CONTEXT]']
         if page_snapshot.get('url'):
             lines.append(f"url: {page_snapshot['url']}")
