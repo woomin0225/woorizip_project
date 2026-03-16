@@ -164,6 +164,27 @@ class VoiceSpeakReq(BaseModel):
     audio_format: str | None = None
 
 
+class VoiceTranscribeRes(BaseModel):
+    text: str
+    language: str
+    mimeType: str
+    provider: str | None = None
+    audioBytes: int
+    warnings: list[str] = Field(default_factory=list)
+    raw: dict[str, Any] = Field(default_factory=dict)
+
+
+class VoiceSpeakRes(BaseModel):
+    text: str
+    voice: str
+    audioFormat: str
+    mimeType: str
+    audioBase64: str
+    provider: str | None = None
+    warnings: list[str] = Field(default_factory=list)
+    raw: dict[str, Any] = Field(default_factory=dict)
+
+
 class PolicyCheckReq(BaseModel):
     text: str
 
@@ -181,6 +202,30 @@ class AgentRunReq(BaseModel):
     user_id: str | None = None
     instruction: str
     extra: dict[str, Any] = Field(default_factory=dict)
+
+
+class AssistantRunReq(BaseModel):
+    schemaVersion: str = 'v1'
+    text: str
+    sessionId: str | None = None
+    clientRequestId: str | None = None
+    systemPrompt: str | None = None
+    context: dict[str, Any] = Field(default_factory=dict)
+    userId: str | None = None
+
+
+class AssistantRunRes(BaseModel):
+    schemaVersion: str
+    reply: str
+    intent: str
+    slots: dict[str, Any] = Field(default_factory=dict)
+    action: dict[str, Any] = Field(default_factory=dict)
+    result: dict[str, Any] = Field(default_factory=dict)
+    errorCode: str | None = None
+    requiresConfirm: bool = False
+    sessionId: str | None = None
+    clientRequestId: str | None = None
+    raw: dict[str, Any] = Field(default_factory=dict)
 
 
 class ListingIndexReq(BaseModel):

@@ -1,5 +1,6 @@
 package org.team4p.woorizip.ai.controller;
 
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -22,7 +23,7 @@ public class OrchestrateController {
 
     private final OrchestrateService orchestrateService;
 
-    @PostMapping("/command")
+    @PostMapping(value = "/command", produces = MediaType.APPLICATION_JSON_VALUE + ";charset=UTF-8")
     public ResponseEntity<ApiResponse<OrchestrateCommandResponse>> command(
             @Valid @RequestBody OrchestrateCommandRequest request
     ) {
