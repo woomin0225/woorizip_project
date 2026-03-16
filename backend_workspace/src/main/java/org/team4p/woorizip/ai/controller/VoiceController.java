@@ -7,8 +7,13 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.team4p.woorizip.ai.dto.SttTranscribeRequest;
+import org.team4p.woorizip.ai.dto.SttTranscribeResponse;
 import org.team4p.woorizip.ai.dto.TtsSynthesizeRequest;
+import org.team4p.woorizip.ai.dto.TtsSynthesizeResult;
 import org.team4p.woorizip.ai.service.AzureTtsService;
+import org.team4p.woorizip.ai.service.SpeechToTextService;
+import org.team4p.woorizip.common.api.ApiResponse;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -20,13 +25,19 @@ import lombok.RequiredArgsConstructor;
 public class VoiceController {
 
     private final AzureTtsService azureTtsService;
+    private final SpeechToTextService speechToTextService;
 
-    @PostMapping(value = "/tts", produces = "audio/mpeg")
+    @PostMapping("/tts")
     public ResponseEntity<byte[]> tts(@Valid @RequestBody TtsSynthesizeRequest request) {
-        byte[] audioBytes = azureTtsService.synthesize(request);
+        TtsSynthesizeResult result = azureTtsService.synthesize(request);
         return ResponseEntity.ok()
-                .contentType(MediaType.valueOf("audio/mpeg"))
-                .body(audioBytes);
+                .contentType(MediaType.valueOf(result.mimeType()))
+                .body(result.audioBytes());
+    }
+
+    @PostMapping(value = "/stt", produces = MediaType.APPLICATION_JSON_VALUE + ";charset=UTF-8")
+    public ResponseEntity<ApiResponse<SttTranscribeResponse>> stt(@Valid @RequestBody SttTranscribeRequest request) {
+        SttTranscribeResponse response = speechToTextService.transcribe(request);
+        return ResponseEntity.ok(ApiResponse.ok("STT transcribed", response));
     }
 }
-

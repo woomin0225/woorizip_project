@@ -59,6 +59,22 @@ class Settings(BaseSettings):
     # ===== Audio =====
     DEFAULT_TTS_VOICE: str = 'ko-KR-SunHiNeural'
     DEFAULT_AUDIO_FORMAT: str = 'wav'
+    AZURE_TTS_ENDPOINT: str | None = None
+    AZURE_TTS_REGION: str | None = None
+    AZURE_TTS_API_KEY: str | None = None
+    AZURE_TTS_OUTPUT_FORMAT: str = 'audio-24khz-48kbitrate-mono-mp3'
+
+    # ===== Assistant =====
+    AI_AGENT_ENDPOINT: str | None = None
+    AI_AGENT_ENDPOINT_PATH: str | None = None
+    AI_AGENT_MODEL: str = 'gpt-4o-mini'
+    AI_AGENT_SYSTEM_PROMPT: str | None = None
+    AI_AGENT_BASE_INFO: str | None = None
+    AI_AGENT_AUTH_MODE: str = 'api_key'
+    AI_AGENT_API_KEY: str | None = None
+    AI_AGENT_BEARER_TOKEN: str | None = None
+    AI_AGENT_API_VERSION: str | None = None
+    AI_AGENT_TIMEOUT_MS: int = 15000
 
     # ===== Misc =====
     DEFAULT_TIMEZONE: str = 'Asia/Seoul'

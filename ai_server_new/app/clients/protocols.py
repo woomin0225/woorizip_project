@@ -19,3 +19,24 @@ class ObjectDetectionClient(Protocol):
 
 class OCRClient(Protocol):
     async def extract_text(self, image_base64: str, mime_type: str = 'image/jpeg', meta: dict[str, Any] | None = None) -> dict[str, Any]: ...
+from __future__ import annotations
+
+class SpeechToTextClient(Protocol):
+    async def transcribe(
+        self,
+        audio_base64: str,
+        *,
+        mime_type: str | None = None,
+        language: str | None = None,
+        mock_text: str | None = None,
+    ) -> dict: ...
+
+
+class TextToSpeechClient(Protocol):
+    async def speak(
+        self,
+        text: str,
+        *,
+        voice: str | None = None,
+        audio_format: str | None = None,
+    ) -> dict: ...

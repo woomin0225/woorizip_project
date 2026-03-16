@@ -1,5 +1,3 @@
-# app/main.py
-
 from __future__ import annotations
 
 import base64
@@ -7,6 +5,7 @@ from io import BytesIO
 from typing import Any, Annotated
 
 from fastapi import Depends, FastAPI, File, Form, HTTPException, UploadFile
+from fastapi.responses import JSONResponse
 from PIL import Image
 from pydantic import BaseModel
 
@@ -16,12 +15,35 @@ from app.clients.qwen_caption_client import QwenCaptionClient
 from app.core.config import settings
 from app.core.security import require_internal_api_key
 from app.ibm.groq_llm_client import GroqLLMClient
-from app.schemas import RoomVisionAnalyzeRes, SummaryReq, VisionAnalyzeReq, EmbeddingReq, EmbeddingRes
+from app.routers import assistant_router, voice_router
+from app.schemas import (
+    EmbeddingReq,
+    EmbeddingRes,
+    RoomVisionAnalyzeRes,
+    SummaryReq,
+    VisionAnalyzeReq,
+)
+from app.services.embedding_service import EmbeddingService
 from app.services.summary_service import SummaryService
 from app.services.vision_service import VisionService
-from app.services.embedding_service import EmbeddingService
 
-app = FastAPI(title="AI Summary + Vision Server")
+app = FastAPI(
+    title="AI Summary + Vision Server",
+    default_response_class=JSONResponse,
+)
+
+
+@app.middleware("http")
+async def add_utf8_charset(request, call_next):
+    response = await call_next(request)
+    content_type = response.headers.get("content-type", "")
+    if content_type.startswith("application/json") and "charset=" not in content_type.lower():
+        response.headers["content-type"] = "application/json; charset=utf-8"
+    return response
+
+
+app.include_router(assistant_router.router)
+app.include_router(voice_router.router)
 
 
 class DetectRequest(BaseModel):
@@ -80,6 +102,11 @@ vision = VisionService(
 )
 
 
+@app.get("/")
+def welcome() -> dict[str, Any]:
+    return {"hello": "ai_server_new"}
+
+
 @app.get("/health")
 def health() -> dict[str, Any]:
     return {
@@ -88,6 +115,9 @@ def health() -> dict[str, Any]:
         "caption_provider": settings.CAPTION_PROVIDER,
         "object_detection_provider": settings.OBJECT_DETECTION_PROVIDER,
         "ocr_provider": settings.OCR_PROVIDER,
+        "stt_provider": settings.STT_PROVIDER,
+        "tts_provider": settings.TTS_PROVIDER,
+        "features": ["assistant", "stt", "tts", "summary", "vision", "embedding"],
     }
 
 
@@ -181,8 +211,13 @@ async def room_vision_analyze(
         source_prefix=source_prefix,
         save_embedding=save_embedding,
     )
-    
-@app.post("/ai/embedding", dependencies=[Depends(require_internal_api_key)], response_model=EmbeddingRes)
+
+
+@app.post(
+    "/ai/embedding",
+    dependencies=[Depends(require_internal_api_key)],
+    response_model=EmbeddingRes,
+)
 async def create_embedding(req: EmbeddingReq) -> dict[str, Any]:
     result = embedding_service.embed_text(req.text)
     return {
