@@ -1,10 +1,17 @@
 # app/schemas.py
 
-from datetime import datetime, date
+from __future__ import annotations
 
-from pydantic import BaseModel
+from datetime import date, datetime
+from typing import Any, Literal
 
-# 방 정보 종합 요약시 사용 (리뷰, 이미지설명 포함)
+from pydantic import BaseModel, Field
+
+
+SummaryTarget = Literal["page", "post", "room", "generic"]
+MonitorKind = Literal["view_abuse", "facility_usage", "generic"]
+
+
 class RoomTotalRequest(BaseModel):
     roomNo: str
     roomName: str
@@ -27,15 +34,11 @@ class RoomTotalRequest(BaseModel):
     roomOptions: str
     imageSummary: str
     reviewSummary: str
-    
-    
-# 리뷰나 이미지 캡션들 요약시 사용
+
+
 class RoomSummaryRequest(BaseModel):
     roomNo: str
     texts: list
-
-from pydantic import BaseModel, Field
-from typing import Any, Literal
 
 
 class Envelope(BaseModel):
@@ -63,19 +66,17 @@ class RagQueryReq(BaseModel):
 
 
 class DocWriteReq(BaseModel):
-    doc_type: str = '보고서'
+    doc_type: str = "보고서"
     requirements: str
-    tone: str = '업무용'
-    length: str = '1~2 페이지'
+    tone: str = "업무용"
+    length: str = "1~2 페이지"
 
 
 class RecommendReq(BaseModel):
     user_id: str
     candidates: list[dict]
-    goal: str = '주거/매물 탐색'
+    goal: str = "주거/매물 탐색"
 
-
-SummaryTarget = Literal['page', 'post', 'room', 'generic']
 
 class SummaryAttachment(BaseModel):
     filename: str
@@ -85,9 +86,8 @@ class SummaryAttachment(BaseModel):
     meta: dict[str, Any] = Field(default_factory=dict)
 
 
-
 class SummaryReq(BaseModel):
-    target_type: SummaryTarget = 'generic'
+    target_type: SummaryTarget = "generic"
     title: str | None = None
     text: str | None = None
     attachments: list[SummaryAttachment] = Field(default_factory=list)
@@ -104,29 +104,29 @@ class SummaryReq(BaseModel):
 class ImageItem(BaseModel):
     image_id: str | None = None
     image_base64: str
-    mime_type: str = 'image/jpeg'
+    mime_type: str = "image/jpeg"
     meta: dict[str, Any] = Field(default_factory=dict)
 
 
 class VisionAnalyzeReq(BaseModel):
-    purpose: str = 'generic'
+    purpose: str = "generic"
     images: list[ImageItem]
     caption: bool = True
     detect: bool = True
     ocr: bool = False
     ingest: bool = False
-    source_prefix: str = 'image'
-    
-    
+    source_prefix: str = "image"
+
+
 class RoomOptionCandidate(BaseModel):
     name: str
     confidence: float = 0.0
-    source: Literal['caption', 'ocr', 'detection', 'rule'] = 'rule'
+    source: Literal["caption", "ocr", "detection", "rule"] = "rule"
 
 
 class RoomVisionResult(BaseModel):
-    summary: str = ''
-    caption: str = ''
+    summary: str = ""
+    caption: str = ""
     ocr_texts: list[str] = Field(default_factory=list)
     detected_objects: list[str] = Field(default_factory=list)
     option_candidates: list[RoomOptionCandidate] = Field(default_factory=list)
@@ -142,7 +142,7 @@ class RoomVisionAnalyzeReq(BaseModel):
     detect: bool = True
     caption: bool = True
     save_embedding: bool = False
-    source_prefix: str = 'room-image'
+    source_prefix: str = "room-image"
     meta: dict[str, Any] = Field(default_factory=dict)
 
 
@@ -151,10 +151,21 @@ class RoomVisionAnalyzeRes(BaseModel):
     data: RoomVisionResult
 
 
+class EmbeddingReq(BaseModel):
+    text: str
+    model: str = "intfloat/multilingual-e5-small"
+
+
+class EmbeddingRes(BaseModel):
+    model: str
+    dimension: int
+    embedding: list[float]
+
+
 class VoiceTranscribeReq(BaseModel):
     audio_base64: str
-    mime_type: str = 'audio/webm'
-    language: str = 'ko'
+    mime_type: str = "audio/webm"
+    language: str = "ko"
     mock_text: str | None = None
 
 
@@ -189,13 +200,10 @@ class PolicyCheckReq(BaseModel):
     text: str
 
 
-MonitorKind = Literal['view_abuse', 'facility_usage', 'generic']
-
-
 class MonitorAnalyzeReq(BaseModel):
-    kind: MonitorKind = 'generic'
+    kind: MonitorKind = "generic"
     payload: dict[str, Any] = Field(default_factory=dict)
-    tone: str = '업무용'
+    tone: str = "업무용"
 
 
 class AgentRunReq(BaseModel):
@@ -205,7 +213,7 @@ class AgentRunReq(BaseModel):
 
 
 class AssistantRunReq(BaseModel):
-    schemaVersion: str = 'v1'
+    schemaVersion: str = "v1"
     text: str
     sessionId: str | None = None
     clientRequestId: str | None = None
