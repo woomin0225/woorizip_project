@@ -1,20 +1,44 @@
 from __future__ import annotations
 
-from fastapi import FastAPI
+import base64
+from io import BytesIO
+from typing import Any, Annotated
+
+from fastapi import Depends, FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.responses import JSONResponse
+from PIL import Image
+from pydantic import BaseModel
 
+from app.clients.groundingdino_client import GroundingDINOClient
+from app.clients.paddleocr_client import PaddleOCRClient
+from app.clients.qwen_caption_client import QwenCaptionClient
 from app.core.config import settings
+from app.core.security import require_internal_api_key
+from app.ibm.groq_llm_client import GroqLLMClient
 from app.routers import assistant_router, tour_router, voice_router
+from app.schemas import (
+    EmbeddingReq,
+    EmbeddingRes,
+    RoomVisionAnalyzeRes,
+    SummaryReq,
+    VisionAnalyzeReq,
+)
+from app.services.embedding_service import EmbeddingService
+from app.services.summary_service import SummaryService
+from app.services.vision_service import VisionService
 
-app = FastAPI(default_response_class=JSONResponse)
+app = FastAPI(
+    title="AI Summary + Vision Server",
+    default_response_class=JSONResponse,
+)
 
 
-@app.middleware('http')
+@app.middleware("http")
 async def add_utf8_charset(request, call_next):
     response = await call_next(request)
-    content_type = response.headers.get('content-type', '')
-    if content_type.startswith('application/json') and 'charset=' not in content_type.lower():
-        response.headers['content-type'] = 'application/json; charset=utf-8'
+    content_type = response.headers.get("content-type", "")
+    if content_type.startswith("application/json") and "charset=" not in content_type.lower():
+        response.headers["content-type"] = "application/json; charset=utf-8"
     return response
 
 
@@ -23,17 +47,182 @@ app.include_router(tour_router.router)
 app.include_router(voice_router.router)
 
 
-@app.get('/')
-def welcome():
-    return {'hello': 'ai_server_new'}
+class DetectRequest(BaseModel):
+    image_base64: str
+    mime_type: str = "image/jpeg"
+    text_prompt: str
+    box_threshold: float = 0.30
+    text_threshold: float = 0.25
+    purpose: str = "generic"
+    meta: dict[str, Any] | None = None
 
 
-@app.get('/health')
-def health():
+def decode_base64_image(image_base64: str) -> Image.Image:
+    try:
+        raw = base64.b64decode(image_base64)
+        return Image.open(BytesIO(raw)).convert("RGB")
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"이미지 디코딩 실패: {str(e)}") from e
+
+
+def parse_grounding_labels(text_prompt: str) -> list[str]:
+    labels: list[str] = []
+    for token in text_prompt.split("."):
+        value = token.strip()
+        if value:
+            labels.append(value)
+    return labels
+
+
+def build_llm() -> GroqLLMClient:
+    if settings.LLM_PROVIDER.lower() != "groq":
+        raise RuntimeError("현재 서버는 LLM_PROVIDER=groq 만 지원합니다.")
+
+    return GroqLLMClient(
+        api_key=settings.GROQ_API_KEY,
+        model=settings.GROQ_MODEL,
+    )
+
+
+@app.on_event("startup")
+async def _startup() -> None:
+    settings.validate()
+
+
+llm = build_llm()
+summary = SummaryService(llm)
+caption_client = QwenCaptionClient()
+detection_client = GroundingDINOClient()
+ocr_client = PaddleOCRClient()
+embedding_service = EmbeddingService()
+vision = VisionService(
+    caption_client=caption_client,
+    detection_client=detection_client,
+    ocr_client=ocr_client,
+    rag=None,
+)
+
+
+@app.get("/")
+def welcome() -> dict[str, Any]:
+    return {"hello": "ai_server_new"}
+
+
+@app.get("/health")
+def health() -> dict[str, Any]:
     return {
-        'ok': True,
-        'llm_provider': 'mock' if not (settings.AI_AGENT_ENDPOINT or '').strip() else 'external',
-        'stt_provider': settings.STT_PROVIDER,
-        'tts_provider': settings.TTS_PROVIDER,
-        'features': ['assistant', 'tour', 'stt', 'tts'],
+        "ok": True,
+        "llm_provider": settings.LLM_PROVIDER,
+        "caption_provider": settings.CAPTION_PROVIDER,
+        "object_detection_provider": settings.OBJECT_DETECTION_PROVIDER,
+        "ocr_provider": settings.OCR_PROVIDER,
+        "stt_provider": settings.STT_PROVIDER,
+        "tts_provider": settings.TTS_PROVIDER,
+        "features": ["assistant", "tour", "stt", "tts", "summary", "vision", "embedding"],
+    }
+
+
+@app.post("/detect")
+async def groundingdino_detect(req: DetectRequest) -> dict[str, Any]:
+    result = await detection_client.detect(
+        image_base64=req.image_base64,
+        mime_type=req.mime_type,
+        purpose=req.purpose,
+        meta={
+            **(req.meta or {}),
+            "labels": parse_grounding_labels(req.text_prompt),
+        },
+    )
+
+    return {
+        "items": result.get("items", []),
+        "provider": result.get("provider", "groundingdino"),
+        "text_prompt": result.get("text_prompt", req.text_prompt),
+        "warning": result.get("warning"),
+    }
+
+
+@app.post("/ai/summary", dependencies=[Depends(require_internal_api_key)])
+async def summary_unified(req: SummaryReq) -> dict[str, Any]:
+    if req.target_type == "room":
+        return await summary.summarize_room(
+            room_id=req.room_id,
+            room=req.room or {},
+            reviews=req.reviews or [],
+            photos_caption=req.photos_caption,
+            bullets=req.bullets,
+        )
+
+    if req.target_type == "post" or req.attachments:
+        return await summary.summarize_post(
+            title=req.title,
+            text=req.text or "",
+            attachments=[item.model_dump() for item in req.attachments],
+            bullets=req.bullets,
+        )
+
+    return await summary.summarize_text(
+        title=req.title,
+        text=req.text or "",
+        bullets=req.bullets,
+    )
+
+
+@app.post("/ai/vision/analyze", dependencies=[Depends(require_internal_api_key)])
+async def vision_analyze(req: VisionAnalyzeReq) -> dict[str, Any]:
+    return await vision.analyze(
+        images=[it.model_dump() for it in req.images],
+        purpose=req.purpose,
+        caption=req.caption,
+        detect=req.detect,
+        ocr=req.ocr,
+        ingest=False,
+        source_prefix=req.source_prefix,
+    )
+
+
+@app.post(
+    "/ai/vision/room/analyze",
+    dependencies=[Depends(require_internal_api_key)],
+    response_model=RoomVisionAnalyzeRes,
+)
+async def room_vision_analyze(
+    images: Annotated[list[UploadFile], File(...)],
+    source_prefix: Annotated[str, Form()] = "room-image",
+    save_embedding: Annotated[bool, Form()] = False,
+) -> dict[str, Any]:
+    converted_images: list[dict[str, Any]] = []
+
+    for image in images:
+        content = await image.read()
+        mime_type = image.content_type or "application/octet-stream"
+        b64_data = base64.b64encode(content).decode("utf-8")
+
+        converted_images.append(
+            {
+                "image_id": image.filename or "room-image",
+                "mime_type": mime_type,
+                "image_base64": b64_data,
+                "meta": {},
+            }
+        )
+
+    return await vision.analyze_room_images(
+        images=converted_images,
+        source_prefix=source_prefix,
+        save_embedding=save_embedding,
+    )
+
+
+@app.post(
+    "/ai/embedding",
+    dependencies=[Depends(require_internal_api_key)],
+    response_model=EmbeddingRes,
+)
+async def create_embedding(req: EmbeddingReq) -> dict[str, Any]:
+    result = embedding_service.embed_text(req.text)
+    return {
+        "model": result["model"],
+        "dimension": result["dimension"],
+        "embedding": result["embedding"],
     }

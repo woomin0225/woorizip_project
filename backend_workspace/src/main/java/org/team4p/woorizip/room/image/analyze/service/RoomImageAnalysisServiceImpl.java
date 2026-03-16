@@ -2,6 +2,7 @@ package org.team4p.woorizip.room.image.analyze.service;
 
 import java.io.File;
 import java.nio.file.Files;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -25,8 +26,10 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class RoomImageAnalysisServiceImpl implements RoomImageAnalysisService {
 	private final RoomImageAnalysisRepository roomImageAnalysisRepository;
@@ -40,6 +43,8 @@ public class RoomImageAnalysisServiceImpl implements RoomImageAnalysisService {
 	private String internalApiKey;
 	
 	private final RestTemplate restTemplate = new RestTemplate();
+	private final RoomImageEmbeddingService roomImageEmbeddingService;
+	private final RoomImageVectorStoreService roomImageVectorStoreService;
 	
 	@Override
 	@Transactional
@@ -115,10 +120,21 @@ public class RoomImageAnalysisServiceImpl implements RoomImageAnalysisService {
 					.rawJson(rawJson)
 					.build();
 			
-			roomImageAnalysisRepository.save(entity);
+			RoomImageAnalysisEntity savedEntity = roomImageAnalysisRepository.save(entity);
+			
+			String embeddingText = buildEmbeddingText(savedEntity);
+			log.info("embedding text built. roomImageNo={}, text={}", savedEntity.getRoomImageNo(), embeddingText);
+
+			List<Float> embedding = roomImageEmbeddingService.createEmbedding(embeddingText);
+			log.info("embedding created. roomImageNo={}, dimension={}", savedEntity.getRoomImageNo(), embedding.size());
+			
+			roomImageVectorStoreService.saveEmbedding(savedEntity, embeddingText, embedding);
 			
 		} catch (Exception e) {
-			e.printStackTrace();
+			log.error("room image analysis pipeline failed. roomImageNo={}, roomNo={}",
+					roomImageEntity.getRoomImageNo(),
+					roomImageEntity.getRoomNo(),
+					e);
 		}
 	}
 
@@ -136,5 +152,43 @@ public class RoomImageAnalysisServiceImpl implements RoomImageAnalysisService {
 
 	private String valueAsString(Object value) {
 		return value == null ? null : String.valueOf(value);
+	}
+	
+	@Override
+	public String buildEmbeddingText(RoomImageAnalysisEntity entity) {
+		if(entity == null) return "";
+		
+		StringBuilder sb = new StringBuilder();
+		sb.append("방 이미지 분석 결과\n");
+		
+		if(hasText(entity.getRoomNo())) {
+			sb.append("방 번호: ").append(entity.getRoomNo()).append("\n");
+		}
+		
+		if (entity.getRoomImageNo() != null) {
+	        sb.append("방 이미지 번호: ").append(entity.getRoomImageNo()).append("\n");
+	    }
+
+	    if (hasText(entity.getSummary())) {
+	        sb.append("요약: ").append(entity.getSummary()).append("\n");
+	    }
+
+	    if (hasText(entity.getCaption())) {
+	        sb.append("캡션: ").append(entity.getCaption()).append("\n");
+	    }
+
+	    if (hasText(entity.getNormalizedOptions())) {
+	        sb.append("옵션: ").append(entity.getNormalizedOptions()).append("\n");
+	    }
+
+	    if (hasText(entity.getOcrText())) {
+	        sb.append("OCR: ").append(entity.getOcrText()).append("\n");
+	    }
+	    
+	    return sb.toString().trim();
+	}
+
+	private boolean hasText(String value) {
+		return value != null && !value.isBlank();
 	}
 }
