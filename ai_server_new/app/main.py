@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 
 from app.core.config import settings
-from app.routers import assistant_router, voice_router
+from app.routers import assistant_router, tour_router, voice_router
 
 app = FastAPI(default_response_class=JSONResponse)
 
@@ -19,6 +19,7 @@ async def add_utf8_charset(request, call_next):
 
 
 app.include_router(assistant_router.router)
+app.include_router(tour_router.router)
 app.include_router(voice_router.router)
 
 
@@ -34,5 +35,5 @@ def health():
         'llm_provider': 'mock' if not (settings.AI_AGENT_ENDPOINT or '').strip() else 'external',
         'stt_provider': settings.STT_PROVIDER,
         'tts_provider': settings.TTS_PROVIDER,
-        'features': ['assistant', 'stt', 'tts'],
+        'features': ['assistant', 'tour', 'stt', 'tts'],
     }
