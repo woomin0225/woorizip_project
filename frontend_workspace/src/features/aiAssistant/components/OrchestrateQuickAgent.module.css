@@ -28,8 +28,8 @@
   position: fixed;
   right: 24px;
   bottom: 98px;
-  width: min(360px, calc(100vw - 32px));
-  height: min(560px, calc(100vh - 140px));
+  width: min(380px, calc(100vw - 32px));
+  height: min(620px, calc(100vh - 140px));
   background: #fff;
   border-radius: 26px;
   border: 1px solid rgba(229, 231, 235, 0.9);
@@ -43,11 +43,12 @@
 
 .header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   padding: 16px 16px 12px;
   border-bottom: 1px solid #e5e7eb;
   background: #fff;
+  gap: 12px;
 }
 
 .headerIdentity {
@@ -55,6 +56,27 @@
   align-items: center;
   gap: 10px;
   color: #1f2937;
+  min-width: 0;
+}
+
+.headerTitleWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.voiceModeBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  min-height: 22px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: #fff7ed;
+  color: #9a3412;
+  font-size: 11px;
+  font-weight: 700;
 }
 
 .headerIcon {
@@ -68,21 +90,39 @@
 .headerActions {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 8px;
+  flex-wrap: wrap;
 }
 
-.voiceBtn {
+.modeBtn,
+.voiceBtn,
+.micBtn {
   border: none;
   border-radius: 10px;
-  background: #c9713f;
   color: #fff;
   height: 30px;
   padding: 0 10px;
   cursor: pointer;
   font-size: 12px;
+  font-weight: 600;
 }
 
-.voiceBtn:disabled {
+.modeBtn {
+  background: #475569;
+}
+
+.voiceBtn {
+  background: #c9713f;
+}
+
+.micBtn {
+  background: #0f766e;
+}
+
+.modeBtn:disabled,
+.voiceBtn:disabled,
+.micBtn:disabled {
   opacity: 0.6;
   cursor: default;
 }
@@ -96,6 +136,15 @@
   color: #374151;
   font-size: 18px;
   cursor: pointer;
+}
+
+.voiceGuide {
+  padding: 10px 16px;
+  background: #fff7ed;
+  color: #9a3412;
+  font-size: 12px;
+  line-height: 1.5;
+  border-bottom: 1px solid #fed7aa;
 }
 
 .body {
@@ -135,9 +184,10 @@
 
 .bubbleActions {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   margin-top: 10px;
-  overflow-x: auto;
+  overflow-x: hidden;
 }
 
 .bubbleActionBtn {
@@ -146,7 +196,9 @@
   color: #9a3412;
   border-radius: 999px;
   padding: 5px 10px;
-  white-space: nowrap;
+  max-width: 100%;
+  white-space: normal;
+  word-break: keep-all;
   font-size: 12px;
   cursor: pointer;
 }

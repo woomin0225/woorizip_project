@@ -5,41 +5,30 @@
   right: 0;
   width: 100%;
   z-index: 1000;
-
-  /* 배경은 header가 담당 */
   background: rgba(255, 255, 255, 0.94);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid rgba(0, 0, 0, 0.06);
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
-
-  /* 여기 padding은 제거! (키 커지는 주범) */
   padding: 0 !important;
 }
 
-/* Navbar는 투명 + 높이를 고정 + 가운데 정렬 */
 .navbar {
   background: #ffffff !important;
   width: 100%;
-
-  /* 헤더 키를 여기서 결정 */
   min-height: 64px;
   padding: 0 !important;
   display: flex;
   align-items: center;
 }
 
-/* 내부 컨텐츠 폭 제한 */
 .inner {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 16px;
-
-  /* 한 줄 정렬 안정화 */
   display: flex;
   align-items: center;
 }
 
-/* 브랜드(로고) 기본 패딩 제거 */
 :global(#navbar-main .navbar-brand) {
   padding: 0 !important;
   margin: 0 !important;
@@ -47,26 +36,23 @@
   align-items: center;
 }
 
-/* 메뉴/버튼도 같은 기준선에 오게 */
 :global(#navbar-main .navbar-nav) {
   align-items: center !important;
 }
 
-/* nav-link 위아래 과한 padding 제거 */
 :global(#navbar-main .nav-link) {
   padding-top: 0 !important;
   padding-bottom: 0 !important;
-  line-height: 64px; /* ✅ 헤더 높이랑 맞춰서 한 줄로 */
+  line-height: 64px;
 }
 
-/* 버튼 크기 살짝 컴팩트 */
 :global(#navbar-main .btn) {
   padding: 6px 12px !important;
   font-size: 0.9rem !important;
 }
 
 .authSlot {
-  width: 240px;
+  width: 260px;
   min-height: 56px;
   margin-left: 1.5rem;
   display: flex;
@@ -96,19 +82,35 @@
   width: 100%;
   display: flex;
   justify-content: flex-end;
-  gap: 8px;
+  gap: 5px;
+  align-items: center;
+  flex-wrap: nowrap;
 }
 
 :global(#navbar-main) .loggedInButton {
-  padding: 2px 5px !important;
-  font-size: 0.7rem !important;
+  min-height: 30px !important;
+  min-width: 84px !important;
+  padding: 0 10px !important;
+  font-size: 0.74rem !important;
+  white-space: nowrap !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
 
-.zoomItem {
+:global(#navbar-main) .loggedInButton .nav-link-inner--text {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100%;
+  line-height: 1 !important;
+}
+
+.accessibilityItem {
   margin-right: 0.75rem;
 }
 
-:global(#navbar-main) .zoomButton {
+:global(#navbar-main) .accessibilityButton {
   border-radius: 999px !important;
   font-weight: 700 !important;
   padding: 6px 14px !important;
@@ -117,11 +119,8 @@
   color: #8d4f2f !important;
 }
 
-:global(#navbar-main) .zoomButtonActive {
-  border-color: #c9713f !important;
-  background: #c9713f !important;
-  color: #fff !important;
-  box-shadow: 0 0 0 2px rgba(201, 113, 63, 0.3) !important;
+:global(#navbar-main) .accessibilityButton:hover {
+  background: #faece0 !important;
 }
 
 :global(#navbar-main) .authBtnNeutral {
@@ -147,7 +146,7 @@
 }
 
 @media (max-width: 991px) {
-  .zoomItem {
+  .accessibilityItem {
     margin: 0.5rem 0;
   }
 }

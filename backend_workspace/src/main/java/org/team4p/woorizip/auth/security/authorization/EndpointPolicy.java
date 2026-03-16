@@ -30,6 +30,7 @@ public final class EndpointPolicy {
             "/api/agent/command",
             "/api/orchestrate/command",
             "/api/voice/tts",
+            "/api/voice/stt",
             "/auth/login"
     };
 
