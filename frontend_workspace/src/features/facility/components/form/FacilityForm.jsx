@@ -129,15 +129,29 @@ export default function FacilityForm() {
         ? '23:59:00'
         : values.facilityCloseTime;
 
-    const finalValues = {
+    let finalValues = {
       ...values,
       facilityOptionInfo: updatedOptionInfo,
       facilityCloseTime: correctedCloseTime,
     };
 
+    if (!updateMode) {
+      const { facilityStatus, ...rest } = finalValues;
+      finalValues = rest;
+    }
+
     console.log('최종 보낼 데이터:', finalValues);
+
     await onSubmit(e, navigate, finalValues);
   };
+
+  const floorOptions = [
+    { label: '지하 1층', value: -1 },
+    ...Array.from({ length: 10 }, (_, i) => ({
+      label: `${i + 1}층`,
+      value: i + 1,
+    })),
+  ];
 
   const operationTimeOptions = [];
   for (let h = 0; h < 24; h++) {
@@ -161,6 +175,22 @@ export default function FacilityForm() {
   };
 
   const closeTimeOptions = getCloseTimeOptions();
+
+  const handleBlockedDateTimeChange = (name, type, newValue) => {
+    const currentFull =
+      values[name] || `${new Date().toISOString().split('T')[0]}T00:00:00`;
+    const [currentDate, currentTime] = currentFull.split('T');
+
+    let updatedValue = '';
+    if (type === 'date') {
+      updatedValue = `${newValue}T${currentTime || '00:00:00'}`;
+    } else {
+      updatedValue = `${currentDate}T${newValue}`;
+    }
+    handleChange({
+      target: { name, value: updatedValue },
+    });
+  };
 
   if (loading)
     return <div className={styles.facilityEmpty}>시설 정보 로딩 중...</div>;
@@ -280,6 +310,41 @@ export default function FacilityForm() {
                       />
                     </div>
                   </div>
+                  <div className={styles.fieldRow}>
+                    <div className={styles.fieldLabel}>위치(층수)</div>
+                    <div className={styles.fieldControl}>
+                      <select
+                        name="facilityLocation"
+                        className={styles.input}
+                        value={values.facilityLocation || ''}
+                        onChange={handleChange}
+                        required
+                      >
+                        <option value="">선택</option>
+                        {floorOptions.map((opt) => (
+                          <option key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                  <div className={styles.fieldRow}>
+                    <div className={styles.fieldLabel}>수용 인원(명)</div>
+                    <div className={styles.fieldControl}>
+                      <div className={styles.inputWithUnit}>
+                        <input
+                          type="number"
+                          name="facilityCapacity"
+                          className={styles.input}
+                          value={values.facilityCapacity || ''}
+                          onChange={handleChange}
+                          min="1"
+                          required
+                        />
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -389,14 +454,42 @@ export default function FacilityForm() {
                             </div>
                             <div className={styles.fieldControl}>
                               <input
-                                type="datetime-local"
-                                name="blockedStartTime"
+                                type="date"
                                 className={styles.input}
-                                value={values.blockedStartTime || ''}
-                                onChange={handleChange}
-                                step="3600"
+                                value={
+                                  (values.blockedStartTime || '').split('T')[0]
+                                }
+                                onChange={(e) =>
+                                  handleBlockedDateTimeChange(
+                                    'blockedStartTime',
+                                    'date',
+                                    e.target.value
+                                  )
+                                }
                                 required
                               />
+                              <select
+                                className={styles.input}
+                                value={
+                                  (values.blockedStartTime || '')
+                                    .split('T')[1]
+                                    ?.substring(0, 8) || '00:00:00'
+                                }
+                                onChange={(e) =>
+                                  handleBlockedDateTimeChange(
+                                    'blockedStartTime',
+                                    'time',
+                                    e.target.value
+                                  )
+                                }
+                                required
+                              >
+                                {operationTimeOptions.map((time) => (
+                                  <option key={time} value={`${time}:00`}>
+                                    {time}
+                                  </option>
+                                ))}
+                              </select>
                             </div>
                           </div>
                           <div className={styles.fieldRow}>
@@ -405,14 +498,43 @@ export default function FacilityForm() {
                             </div>
                             <div className={styles.fieldControl}>
                               <input
-                                type="datetime-local"
-                                name="blockedEndTime"
+                                type="date"
                                 className={styles.input}
-                                value={values.blockedEndTime || ''}
-                                onChange={handleChange}
-                                step="3600"
+                                value={
+                                  (values.blockedEndTime || '').split('T')[0]
+                                }
+                                onChange={(e) =>
+                                  handleBlockedDateTimeChange(
+                                    'blockedEndTime',
+                                    'date',
+                                    e.target.value
+                                  )
+                                }
                                 required
                               />
+                              <select
+                                className={styles.input}
+                                value={
+                                  (values.blockedEndTime || '')
+                                    .split('T')[1]
+                                    ?.substring(0, 8) || '00:00:00'
+                                }
+                                onChange={(e) =>
+                                  handleBlockedDateTimeChange(
+                                    'blockedEndTime',
+                                    'time',
+                                    e.target.value
+                                  )
+                                }
+                                required
+                              >
+                                {operationTimeOptions.map((time) => (
+                                  <option key={time} value={`${time}:00`}>
+                                    {time}
+                                  </option>
+                                ))}
+                                <option value="23:59:00">24:00</option>
+                              </select>
                             </div>
                           </div>
                         </div>
@@ -439,14 +561,19 @@ export default function FacilityForm() {
                       <div className={styles.fieldRow}>
                         <div className={styles.fieldLabel}>일일 횟수</div>
                         <div className={styles.fieldControl}>
-                          <input
-                            type="number"
+                          <select
                             name="maxRsvnPerDay"
                             className={styles.input}
                             value={values.maxRsvnPerDay || ''}
                             onChange={handleChange}
-                            min="0"
-                          />
+                          >
+                            <option value="">선택</option>
+                            {[1, 2, 3, 4, 5].map((num) => (
+                              <option key={num} value={num}>
+                                {num}회
+                              </option>
+                            ))}
+                          </select>
                         </div>
                       </div>
                       <div className={styles.grid2}>

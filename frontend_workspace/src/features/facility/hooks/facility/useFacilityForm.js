@@ -147,33 +147,26 @@ export function useFacilityForm(houseNo, facilityNo = null) {
     }));
   }, []);
 
-  const onSubmit = async (e, navigate, manualValues = null) => {
+const onSubmit = async (e, navigate, manualValues = null) => {
     if (e) e.preventDefault();
     setSubmitting(true);
 
     const currentValues = manualValues || values;
     const formData = new FormData();
+
     const truncateToHour = (dateTimeStr) => {
       if (!dateTimeStr) return null;
-      return dateTimeStr.split(':')[0] + ':00:00';
+      const [date, time] = dateTimeStr.split('T');
+      if (!time) return dateTimeStr;
+      const hour = time.split(':')[0];
+      return `${date}T${hour}:00:00`;
     };
 
     const dtoData = {
-      ...(updateMode ? { deleteImageNos } : { houseNo: values.houseNo }),
       facilityCode: Number(currentValues.facilityCode),
       facilityName: currentValues.facilityName,
       facilityOptionInfo: currentValues.facilityOptionInfo,
       facilityLocation: String(currentValues.facilityLocation) || '0',
-      facilityStatus:
-        currentValues.facilityStatus || (updateMode ? undefined : 'AVAILABLE'),
-      blockedStartTime:
-        currentValues.facilityStatus === 'UNAVAILABLE'
-          ? truncateToHour(currentValues.blockedStartTime)
-          : null,
-      blockedEndTime:
-        currentValues.facilityStatus === 'UNAVAILABLE'
-          ? truncateToHour(currentValues.blockedEndTime)
-          : null,
       facilityCapacity: Number(currentValues.facilityCapacity) || 0,
       facilityOpenTime: currentValues.facilityOpenTime,
       facilityCloseTime: currentValues.facilityCloseTime,
@@ -188,6 +181,23 @@ export function useFacilityForm(houseNo, facilityNo = null) {
         ? Number(currentValues.facilityMaxDurationMinutes)
         : null,
     };
+
+    if (updateMode) {
+      dtoData.facilityStatus = currentValues.facilityStatus;
+      dtoData.deleteImageNos = deleteImageNos;
+      dtoData.blockedStartTime =
+        currentValues.facilityStatus === 'UNAVAILABLE'
+          ? truncateToHour(currentValues.blockedStartTime)
+          : null;
+      dtoData.blockedEndTime =
+        currentValues.facilityStatus === 'UNAVAILABLE'
+          ? truncateToHour(currentValues.blockedEndTime)
+          : null;
+    } else {
+      dtoData.houseNo = values.houseNo;
+    }
+
+    console.log('최종 전송 데이터:', dtoData);
 
     formData.append(
       'dto',
@@ -211,7 +221,7 @@ export function useFacilityForm(houseNo, facilityNo = null) {
     } catch (err) {
       setError(err);
       console.error('제출 에러:', err.message);
-      alert('저장 실패', err.message);
+      alert(`저장 실패: ${err.message}`);
     } finally {
       setSubmitting(false);
     }
