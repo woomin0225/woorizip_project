@@ -15,7 +15,7 @@
 # os 환경 변수 GEMINI API KEY 입력
 import os
 
-os.environ["GEMINI_API_KEY"] = "AIzaSyAQF5oY84clUikYBjcI2AjSF5xaHrEfVMw"
+os.environ["GEMINI_API_KEY"] = "..."
 
 
 # 모델 객체 생성
@@ -167,7 +167,7 @@ response["messages"][-1].content[-1]["text"]
 # ======== openai
 
 !pip install -qU langchain-openai
-os.environ["OPENAI_API_KEY"] = "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"
+os.environ["OPENAI_API_KEY"] = "..."
 
 from langchain.chat_models import init_chat_model
 
