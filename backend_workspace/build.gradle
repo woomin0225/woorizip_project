@@ -36,6 +36,8 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	//스프링 부트 웹 관련 기본 설정과 의존성 기능 제공, Restful 관련 어노테이션 제공
 	implementation 'org.springframework.boot:spring-boot-starter-web'
+	//WebClient 사용을 위한 의존성 추가
+	implementation 'org.springframework.boot:spring-boot-starter-webflux'
 	
 	// Devtools (개발시 유용한 도구를 제공하는 라이브러리임 (자동 스타터)
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'

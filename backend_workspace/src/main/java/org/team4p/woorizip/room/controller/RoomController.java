@@ -260,7 +260,7 @@ public class RoomController {
 		return ResponseEntity.status(200).body(ApiResponse.ok("위시갯수기준 랭킹 조회 완료("+limit+"개)", list));
 	}
 	
-	@PostMapping(value = "/ai/analyze", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	@PostMapping(value = "/ai/analyze/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	public ResponseEntity<ApiResponse<RoomAiAnalyzeResponse>> analyzeRoomImages(
 			@RequestPart("images") List<MultipartFile> images
 			) {

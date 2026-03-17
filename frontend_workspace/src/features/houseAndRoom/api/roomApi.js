@@ -169,6 +169,6 @@ export async function analyzeRoomImages(images = []) {
     if (file) fd.append('images', file);
   });
 
-  const { data } = await apiForm().post('/api/rooms/ai/analyze', fd);
+  const { data } = await apiForm().post('/api/rooms/ai/analyze/image', fd);
   return unwrap(data);
 }
