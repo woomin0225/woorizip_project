@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from app.agent import RoomRegistrationAgent
 from app.clients.openai_agent_client import OpenAIAgentClient
 from app.core.config import settings
 from app.schemas import AssistantRunReq
@@ -13,9 +14,13 @@ from app.utils.assistant_normalizer import (
 class AssistantService:
     def __init__(self, client: OpenAIAgentClient):
         self.client = client
+        self.room_registration_agent = RoomRegistrationAgent()
 
     async def run(self, request: AssistantRunReq) -> dict:
         payload = normalize_assistant_payload(request.model_dump())
+        if self.room_registration_agent.should_handle(payload):
+            return await self.room_registration_agent.run(payload)
+
         if not (settings.AI_AGENT_ENDPOINT or '').strip():
             return self._build_mock_response(payload)
 
