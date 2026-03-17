@@ -1,23 +1,32 @@
 # app/schemas.py
 
+
 from __future__ import annotations
 
 from datetime import date, datetime
 from typing import Any, Literal
-
 from pydantic import BaseModel, Field
-
 
 SummaryTarget = Literal["page", "post", "room", "generic"]
 MonitorKind = Literal["view_abuse", "facility_usage", "generic"]
 
-
+# 방 정보 종합 요약시 사용 (리뷰, 이미지설명 포함)
 class RoomTotalRequest(BaseModel):
     roomNo: str
     roomName: str
     houseNo: str
+    
     houseName: str
     houseAddress: str
+    houseCompletionYear: int
+    houseFloors: int
+    houseHouseHolds: int
+    houseElevatorYn: bool
+    housePetYn: bool
+    houseFemaleLimit: bool
+    houseParkingMax: int
+    houseAbstract: str
+    
     roomCreatedAt: datetime
     roomUpdatedAt: datetime
     roomDeposit: int
@@ -34,13 +43,12 @@ class RoomTotalRequest(BaseModel):
     roomOptions: str
     imageSummary: str
     reviewSummary: str
-
-
+    
+    
+# 리뷰나 이미지 캡션들 요약시 사용
 class RoomSummaryRequest(BaseModel):
     roomNo: str
     texts: list
-
-
 class Envelope(BaseModel):
     ok: bool = True
     intent: str | None = None
@@ -234,6 +242,24 @@ class AssistantRunRes(BaseModel):
     sessionId: str | None = None
     clientRequestId: str | None = None
     raw: dict[str, Any] = Field(default_factory=dict)
+
+
+class TourApplyReq(BaseModel):
+    roomNo: str
+    visitDate: str
+    visitTime: str
+    userName: str
+    userPhone: str
+    inquiry: str | None = None
+
+
+class TourApplyRes(BaseModel):
+    ok: bool = True
+    roomNo: str
+    visitDate: str
+    visitTime: str
+    message: str
+    springResponse: dict[str, Any] = Field(default_factory=dict)
 
 
 class ListingIndexReq(BaseModel):

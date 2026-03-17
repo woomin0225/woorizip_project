@@ -1,0 +1,53 @@
+# Before installing this file:
+#   .\.venv\Scripts\python.exe -m pip install --upgrade pip setuptools wheel
+#
+# Install from the ai_server_new directory:
+#   .\.venv\Scripts\python.exe -m pip install -r requirement_complete.txt
+# If transformers 5.x was already installed in this venv, recreate the venv or run:
+#   .\.venv\Scripts\python.exe -m pip install --upgrade --force-reinstall -r requirement_complete.txt
+# Then install GroundingDINO separately:
+#   .\.venv\Scripts\python.exe -m pip install -e .\GroundingDINO --no-build-isolation
+# GroundingDINO editable install is kept out of this file because its setup.py
+# fails under pip's isolated build environment.
+
+fastapi==0.135.1
+uvicorn[standard]==0.41.0
+pydantic==2.12.5
+pydantic-settings==2.13.1
+httpx==0.28.1
+python-dotenv==1.2.2
+python-multipart==0.0.22
+wheel
+
+groq==1.1.1
+qdrant-client==1.17.0
+
+numpy==2.4.3
+pillow==12.1.1
+torch==2.10.0
+torchvision==0.25.0
+# GroundingDINO's vendored BERT wrapper is compatible with transformers 4.x, not 5.x.
+transformers==4.57.1
+tokenizers==0.22.2
+sentence-transformers==5.2.3
+
+paddlepaddle==3.3.0
+paddleocr==3.4.0
+PyYAML==6.0.2
+requests==2.32.5
+chardet<6
+
+PyMuPDF==1.25.3
+python-docx==1.1.2
+lxml==6.0.2
+
+emoji==2.15.0
+kiwipiepy==0.22.2
+langchain-text-splitters==0.2.4
+
+addict==2.4.0
+opencv-python==4.10.0.84
+pycocotools==2.0.11
+supervision==0.27.0.post2
+timm==1.0.25
+yapf==0.43.0
