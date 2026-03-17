@@ -27,6 +27,10 @@ public final class EndpointPolicy {
             "/api/user/password/send-code",
             "/api/user/password/verify-code",
             "/api/user/find-password",
+            "/api/agent/command",
+            "/api/orchestrate/command",
+            "/api/voice/tts",
+            "/api/voice/stt",
             "/auth/login"
     };
 

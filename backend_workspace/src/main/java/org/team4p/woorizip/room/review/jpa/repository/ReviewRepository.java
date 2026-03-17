@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.team4p.woorizip.room.dto.response.ReviewRankingResponse;
+import org.team4p.woorizip.room.review.dto.ai.SimpleReviewContent;
 import org.team4p.woorizip.room.review.jpa.entity.ReviewEntity;
 
 public interface ReviewRepository extends JpaRepository<ReviewEntity, Integer>, ReviewRepositoryCustom {
@@ -31,4 +32,6 @@ public interface ReviewRepository extends JpaRepository<ReviewEntity, Integer>, 
 			ORDER BY avgRating DESC, j.sumViews DESC
 			""", nativeQuery=true)
 	List<ReviewRankingResponse> findPopularSince(@Param("cutoff") LocalDateTime cutoff, Pageable pageable);
+	
+	List<SimpleReviewContent> findAllByRoomNoOrderByReviewCreatedAtDesc(String roomNo);	// AI 서버로 요약 요청 보내기 위해 해당 방의 리뷰 전체 조회
 }

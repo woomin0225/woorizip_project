@@ -104,14 +104,25 @@ public class ContractController {
     public ResponseEntity<ApiResponse<Void>> requestAmendment(
             @PathVariable("originalContractNo") String originalNo,
             @RequestBody ContractDto amendmentDto) {
-        int result = contractService.requestAmendment(originalNo, amendmentDto);
-        if (result == -1) {
-            return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body(ApiResponse.fail("이미 진행 중인 수정 요청이 존재합니다.", null));
+        try {
+            int result = contractService.requestAmendment(originalNo, amendmentDto);
+            if (result == -1) {
+                return ResponseEntity.status(HttpStatus.CONFLICT)
+                        .body(ApiResponse.fail("이미 진행 중인 수정 요청이 존재합니다.", null));
+            }
+            if (result == 0) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(ApiResponse.fail("원본 계약 정보를 찾을 수 없습니다.", null));
+            }
+            return ResponseEntity.ok(ApiResponse.ok("수정 요청이 완료되었습니다.", null));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.fail(e.getMessage(), null));
+        } catch (Exception e) {
+            log.error("계약 수정 요청 처리 실패: originalNo={}", originalNo, e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.fail("수정 요청 처리 중 오류가 발생했습니다.", null));
         }
-        return result > 0
-                ? ResponseEntity.ok(ApiResponse.ok("수정 요청이 완료되었습니다.", null))
-                : ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
     }
 
     /**

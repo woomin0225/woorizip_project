@@ -5,7 +5,7 @@ export default function FileDownloadButton({
   postNo,
   file,
   downloadFn,
-  className, // (postNo, fileNo) => axios response(blob)
+  className = '',
 }) {
   const [downloading, setDownloading] = useState(false);
 
@@ -27,7 +27,7 @@ export default function FileDownloadButton({
       link.remove();
       window.URL.revokeObjectURL(url);
     } catch (e) {
-      console.error('파일 다운로드 실패:');
+      console.error('파일 다운로드 실패:', e);
     } finally {
       setDownloading(false);
     }

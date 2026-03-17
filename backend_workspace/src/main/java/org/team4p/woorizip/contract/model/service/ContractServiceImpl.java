@@ -136,13 +136,35 @@ public class ContractServiceImpl implements ContractService {
             return -1;
         }
 
-        ContractEntity entity = amendmentDto.toEntity();
+        ContractEntity original = contractRepository.findById(originalNo).orElse(null);
+        if (original == null) {
+            return 0;
+        }
+
+        ContractEntity entity = amendmentDto != null ? amendmentDto.toEntity() : new ContractEntity();
+        // 수정요청 파생 건은 원본 계약의 사용자/방 정보를 그대로 사용
+        entity.setUserNo(original.getUserNo());
+        entity.setRoomNo(original.getRoomNo());
+        entity.setMoveInDate(entity.getMoveInDate() != null ? entity.getMoveInDate() : original.getMoveInDate());
+        entity.setTermMonths(entity.getTermMonths() > 0 ? entity.getTermMonths() : original.getTermMonths());
+        entity.setContractUrl(entity.getContractUrl() != null ? entity.getContractUrl() : original.getContractUrl());
         entity.setParentContractNo(originalNo);
         entity.setStatus("AMENDMENT_REQUESTED");
         entity.setContractNo(null);
 
-        contractRepository.save(entity);
-        return 1;
+        try {
+            contractRepository.save(entity);
+            return 1;
+        } catch (DataIntegrityViolationException e) {
+            String msg = e.getMostSpecificCause() != null
+                    ? e.getMostSpecificCause().getMessage()
+                    : e.getMessage();
+            if (msg != null && msg.contains("Data truncated for column 'status'")) {
+                throw new IllegalStateException(
+                        "DB 스키마 불일치: tb_contracts.status ENUM에 AMENDMENT_REQUESTED 값이 필요합니다.");
+            }
+            throw e;
+        }
     }
 
     @Override

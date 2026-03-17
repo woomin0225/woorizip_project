@@ -7,8 +7,49 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+:root {
+  --app-font-scale: 1;
+  --app-button-scale: 1;
+}
+
+html {
+  font-size: calc(16px * var(--app-font-scale));
+}
+
+button,
+.btn,
+input,
+select,
+textarea {
+  font-size: inherit;
+}
+
+button,
+.btn {
+  transform-origin: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  vertical-align: middle;
+  line-height: 1.2;
+}
+
+.btn,
+button:not(.navbar-toggler) {
+  min-height: calc(2.4rem * var(--app-button-scale));
+}
+
+.btn span,
+.btn .nav-link-inner--text,
+button span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.2;
+}
+
 body.large-view {
-  font-size: 18px;
   line-height: 1.72;
   letter-spacing: 0.01em;
   text-rendering: optimizeLegibility;
@@ -24,33 +65,7 @@ body.large-view select,
 body.large-view textarea,
 body.large-view label,
 body.large-view span {
-  font-size: 1.06em;
   color: #111 !important;
-}
-
-body.large-view h1 {
-  font-size: 3rem;
-}
-
-body.large-view h2 {
-  font-size: 2.5rem;
-}
-
-body.large-view h3 {
-  font-size: 2rem;
-}
-
-body.large-view h4 {
-  font-size: 1.6rem;
-}
-
-body.large-view h5 {
-  font-size: 1.35rem;
-}
-
-body.large-view .btn {
-  font-size: 1.02rem !important;
-  font-weight: 700 !important;
 }
 
 body.large-view .btn,
@@ -97,6 +112,5 @@ body.large-view a {
 }
 
 code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
 }

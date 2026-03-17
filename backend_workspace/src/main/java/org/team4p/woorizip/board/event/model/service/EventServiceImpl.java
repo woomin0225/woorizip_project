@@ -115,28 +115,32 @@ public class EventServiceImpl implements EventService {
 
 	@Override
 	public PostDto selectEvent(int postNo) {
-		return postRepository.findById(postNo)
-				.filter(entity -> BOARD_TYPE_NO.equals(entity.getBoardTypeNo()))
-				.map(entity -> {
-					PostDto dto = PostDto.fromEntity(entity);
-					UserEntity user = userRepository.findById(entity.getUserNo()).orElse(null);
-			        
-			        if(user == null || "Y".equals(user.getDeletedYn())) {
-			        		dto.setUserNo("알 수 없는 사용자");
-			        }
-			        
-					dto.setFiles(getFiles(entity.getPostNo()));
-					
-					bannerImageRepository.findByPostNo(postNo)
-						.ifPresent(banner ->
-								dto.setBannerImage(
-										BannerImageDto.fromEntity(banner)
-											));
-					
-					return dto;
-				})
-				.orElseThrow(() -> 
-						new NotFoundException("해당 이벤트 게시글이 없습니다."));
+		
+		PostEntity entity = postRepository.findById(postNo)
+				.filter(e -> BOARD_TYPE_NO.equals(e.getBoardTypeNo()))
+				.orElseThrow(() ->
+						new NotFoundException("해당 이벤트 게시글이 없습니다.")
+						);
+		
+		PostDto dto = PostDto.fromEntity(entity);
+		UserEntity user = userRepository.findById(entity.getUserNo()).orElse(null);
+		
+		if(user == null || "Y".equals(user.getDeletedYn())) {
+			dto.setUserName("알 수 없는 사용자");
+		} else {
+			dto.setUserName(user.getName());
+		}
+		
+		dto.setFiles(getFiles(entity.getPostNo()));
+		
+		bannerImageRepository.findByPostNo(postNo)
+		.ifPresent(banner ->
+				dto.setBannerImage(
+						BannerImageDto.fromEntity(banner)
+							));
+		
+		return dto;
+		
 	}
 
 	@Override

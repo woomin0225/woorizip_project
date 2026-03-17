@@ -2187,9 +2187,9 @@ VALUES
 (1, 2, 'lessor1', '안녕하세요, 마이페이지의 계약 상세에서 연장 신청 버튼을 눌러주시면 됩니다.');
 
 -- 13. 첨부파일 (tb_files)
-INSERT INTO `tb_files` (`file_no`, `post_no`, `original_file_name`, `updated_file_name`) 
-VALUES 
-(1, 1, '공사안내문.pdf', 'uuid-file-1.pdf');
+-- INSERT INTO `tb_files` (`file_no`, `post_no`, `original_file_name`, `updated_file_name`) 
+-- VALUES 
+-- (1, 1, '공사안내문.pdf', 'uuid-file-1.pdf');
 
 -- 14. 배너 이미지 (tb_banner_images)
 INSERT INTO `tb_banner_images` (`banner_image_no`, `post_no`, `original_file_name`, `updated_file_name`) 
