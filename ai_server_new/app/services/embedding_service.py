@@ -70,7 +70,7 @@ class EmbeddingService:
 
 
 
-class EmbeddingService:
+class RoomEmbeddingService:
     def __init__(self, client:KureEmbeddingClient):
         self.client=client
     

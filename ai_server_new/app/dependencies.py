@@ -3,7 +3,7 @@
 from fastapi import Depends, Request
 from transformers import AutoTokenizer
 
-from app.services.embedding_service import EmbeddingService
+from app.services.embedding_service import RoomEmbeddingService
 from app.services.rag_service import RagService
 from app.services.summary_service import RoomSummaryService
 from app.store.vector_store import VectorStore
@@ -12,7 +12,7 @@ def get_embedding_client(request: Request):
     return request.app.state.embedding_client
 
 def get_embedding_service(embedding_client=Depends(get_embedding_client)):
-    return EmbeddingService(client=embedding_client)
+    return RoomEmbeddingService(client=embedding_client)
 
 def get_qwen_llm_client(request: Request):
     return request.app.state.qwen_llm_client
