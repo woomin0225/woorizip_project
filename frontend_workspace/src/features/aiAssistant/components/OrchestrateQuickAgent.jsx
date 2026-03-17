@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { runOrchestrateCommand } from '../api/orchestrateApi';
+import { fetchBoardSummary } from '../../board/api/BoardSummaryApi';
 import { synthesizeTts } from '../api/ttsApi';
 import botIcon from '../../../assets/images/ai_bot.png';
 import { useAuth } from '../../../app/providers/AuthProvider';
@@ -13,30 +14,198 @@ function newSessionId() {
 }
 
 const ACTIONS = [
-  { id: 'reserve', label: '예약', prompt: '공용시설 예약', aliases: ['시설예약', '공용시설예약', '예약하기'], related: ['facilityHours', 'reservationStatus', 'facilityCancel'], mode: 'direct' },
-  { id: 'summary', label: '요약', prompt: '현재 페이지 요약', aliases: ['페이지요약', '내용요약', '설명요약'], related: ['roomRecommend', 'facilityInfo', 'reviews'], mode: 'direct' },
-  { id: 'roomRecommend', label: '방 추천', prompt: '방 추천', aliases: ['방추천', '추천방', '인기방', '인기있는방보기'], related: ['availableRooms', 'deposit', 'monthlyRent'], mode: 'direct' },
-  { id: 'facilityHours', label: '이용시간', prompt: '공용시설 이용시간', aliases: ['운영시간', '몇시까지', '시설시간'], related: ['reserve', 'facilityInfo', 'facilityCancel'], mode: 'direct' },
-  { id: 'facilityCancel', label: '예약취소', prompt: '공용시설 예약 취소', aliases: ['취소', '예약취소', '시설취소'], related: ['reservationStatus', 'reserve', 'facilityHours'], mode: 'direct' },
-  { id: 'facilityInfo', label: '시설안내', prompt: '공용시설 안내', aliases: ['시설정보', '시설안내', '공용시설'], related: ['reserve', 'facilityHours', 'gym'], mode: 'agent' },
-  { id: 'gym', label: '헬스장', prompt: '헬스장 이용 안내', aliases: ['운동', '피트니스'], related: ['facilityInfo', 'reserve', 'facilityHours'], mode: 'agent' },
-  { id: 'laundry', label: '세탁실', prompt: '세탁실 이용 안내', aliases: ['빨래', '세탁'], related: ['facilityInfo', 'facilityHours', 'reserve'], mode: 'agent' },
-  { id: 'lounge', label: '라운지', prompt: '라운지 이용 안내', aliases: ['공용라운지', '휴게실'], related: ['facilityInfo', 'facilityHours', 'reserve'], mode: 'agent' },
-  { id: 'studyRoom', label: '스터디룸', prompt: '스터디룸 이용 안내', aliases: ['공부방', '스터디'], related: ['reserve', 'facilityHours', 'facilityInfo'], mode: 'agent' },
-  { id: 'reservationStatus', label: '예약내역', prompt: '예약 내역 확인', aliases: ['예약현황', '내예약', '예약목록'], related: ['facilityCancel', 'reserve', 'facilityHours'], mode: 'direct' },
-  { id: 'availableRooms', label: '빈방', prompt: '현재 빈방 안내', aliases: ['공실', '입주가능방', '남은방'], related: ['roomRecommend', 'deposit', 'monthlyRent'], mode: 'agent' },
-  { id: 'moveIn', label: '입주', prompt: '입주 절차 안내', aliases: ['입주절차', '체크인'], related: ['contract', 'deposit', 'tour'], mode: 'agent' },
-  { id: 'moveOut', label: '퇴실', prompt: '퇴실 절차 안내', aliases: ['퇴거', '체크아웃'], related: ['contract', 'rules', 'contact'], mode: 'agent' },
-  { id: 'deposit', label: '보증금', prompt: '보증금 안내', aliases: ['디파짓', '계약금'], related: ['monthlyRent', 'contract', 'roomRecommend'], mode: 'agent' },
-  { id: 'monthlyRent', label: '월세', prompt: '월세 안내', aliases: ['임대료', '관리비'], related: ['deposit', 'roomRecommend', 'availableRooms'], mode: 'agent' },
-  { id: 'wishlist', label: '찜', prompt: '찜한 방 확인', aliases: ['위시리스트', '좋아요'], related: ['roomRecommend', 'availableRooms', 'reviews'], mode: 'agent' },
-  { id: 'contract', label: '계약', prompt: '계약 관련 안내', aliases: ['전자계약', '계약서'], related: ['deposit', 'moveIn', 'moveOut'], mode: 'agent' },
-  { id: 'tour', label: '투어', prompt: '투어 신청 안내', aliases: ['방보러가기', '방투어'], related: ['roomRecommend', 'availableRooms', 'moveIn'], mode: 'agent' },
-  { id: 'reviews', label: '후기', prompt: '후기 요약 안내', aliases: ['리뷰', '평가'], related: ['roomRecommend', 'summary', 'facilityInfo'], mode: 'agent' },
-  { id: 'roomOptions', label: '옵션', prompt: '방 옵션 안내', aliases: ['옵션정보', '가구', '가전'], related: ['roomRecommend', 'availableRooms', 'deposit'], mode: 'agent' },
-  { id: 'location', label: '위치', prompt: '위치 안내', aliases: ['주소', '교통', '주변'], related: ['roomRecommend', 'tour', 'facilityInfo'], mode: 'agent' },
-  { id: 'contact', label: '문의', prompt: '문의 방법 안내', aliases: ['연락', '문의하기', '상담'], related: ['contract', 'moveIn', 'moveOut'], mode: 'agent' },
-  { id: 'rules', label: '규정', prompt: '이용 규정 안내', aliases: ['정책', '규칙', '유의사항'], related: ['facilityInfo', 'moveOut', 'contract'], mode: 'agent' },
+  {
+    id: 'reserve',
+    label: '예약',
+    prompt: '공용시설 예약',
+    aliases: ['시설예약', '공용시설예약', '예약하기'],
+    related: ['facilityHours', 'reservationStatus', 'facilityCancel'],
+    mode: 'direct',
+  },
+  {
+    id: 'summary',
+    label: '요약',
+    prompt: '현재 페이지 요약',
+    aliases: ['페이지요약', '내용요약', '설명요약'],
+    related: ['roomRecommend', 'facilityInfo', 'reviews'],
+    mode: 'direct',
+  },
+  {
+    id: 'roomRecommend',
+    label: '방 추천',
+    prompt: '방 추천',
+    aliases: ['방추천', '추천방', '인기방', '인기있는방보기'],
+    related: ['availableRooms', 'deposit', 'monthlyRent'],
+    mode: 'direct',
+  },
+  {
+    id: 'facilityHours',
+    label: '이용시간',
+    prompt: '공용시설 이용시간',
+    aliases: ['운영시간', '몇시까지', '시설시간'],
+    related: ['reserve', 'facilityInfo', 'facilityCancel'],
+    mode: 'direct',
+  },
+  {
+    id: 'facilityCancel',
+    label: '예약취소',
+    prompt: '공용시설 예약 취소',
+    aliases: ['취소', '예약취소', '시설취소'],
+    related: ['reservationStatus', 'reserve', 'facilityHours'],
+    mode: 'direct',
+  },
+  {
+    id: 'facilityInfo',
+    label: '시설안내',
+    prompt: '공용시설 안내',
+    aliases: ['시설정보', '시설안내', '공용시설'],
+    related: ['reserve', 'facilityHours', 'gym'],
+    mode: 'agent',
+  },
+  {
+    id: 'gym',
+    label: '헬스장',
+    prompt: '헬스장 이용 안내',
+    aliases: ['운동', '피트니스'],
+    related: ['facilityInfo', 'reserve', 'facilityHours'],
+    mode: 'agent',
+  },
+  {
+    id: 'laundry',
+    label: '세탁실',
+    prompt: '세탁실 이용 안내',
+    aliases: ['빨래', '세탁'],
+    related: ['facilityInfo', 'facilityHours', 'reserve'],
+    mode: 'agent',
+  },
+  {
+    id: 'lounge',
+    label: '라운지',
+    prompt: '라운지 이용 안내',
+    aliases: ['공용라운지', '휴게실'],
+    related: ['facilityInfo', 'facilityHours', 'reserve'],
+    mode: 'agent',
+  },
+  {
+    id: 'studyRoom',
+    label: '스터디룸',
+    prompt: '스터디룸 이용 안내',
+    aliases: ['공부방', '스터디'],
+    related: ['reserve', 'facilityHours', 'facilityInfo'],
+    mode: 'agent',
+  },
+  {
+    id: 'reservationStatus',
+    label: '예약내역',
+    prompt: '예약 내역 확인',
+    aliases: ['예약현황', '내예약', '예약목록'],
+    related: ['facilityCancel', 'reserve', 'facilityHours'],
+    mode: 'direct',
+  },
+  {
+    id: 'availableRooms',
+    label: '빈방',
+    prompt: '현재 빈방 안내',
+    aliases: ['공실', '입주가능방', '남은방'],
+    related: ['roomRecommend', 'deposit', 'monthlyRent'],
+    mode: 'agent',
+  },
+  {
+    id: 'moveIn',
+    label: '입주',
+    prompt: '입주 절차 안내',
+    aliases: ['입주절차', '체크인'],
+    related: ['contract', 'deposit', 'tour'],
+    mode: 'agent',
+  },
+  {
+    id: 'moveOut',
+    label: '퇴실',
+    prompt: '퇴실 절차 안내',
+    aliases: ['퇴거', '체크아웃'],
+    related: ['contract', 'rules', 'contact'],
+    mode: 'agent',
+  },
+  {
+    id: 'deposit',
+    label: '보증금',
+    prompt: '보증금 안내',
+    aliases: ['디파짓', '계약금'],
+    related: ['monthlyRent', 'contract', 'roomRecommend'],
+    mode: 'agent',
+  },
+  {
+    id: 'monthlyRent',
+    label: '월세',
+    prompt: '월세 안내',
+    aliases: ['임대료', '관리비'],
+    related: ['deposit', 'roomRecommend', 'availableRooms'],
+    mode: 'agent',
+  },
+  {
+    id: 'wishlist',
+    label: '찜',
+    prompt: '찜한 방 확인',
+    aliases: ['위시리스트', '좋아요'],
+    related: ['roomRecommend', 'availableRooms', 'reviews'],
+    mode: 'agent',
+  },
+  {
+    id: 'contract',
+    label: '계약',
+    prompt: '계약 관련 안내',
+    aliases: ['전자계약', '계약서'],
+    related: ['deposit', 'moveIn', 'moveOut'],
+    mode: 'agent',
+  },
+  {
+    id: 'tour',
+    label: '투어',
+    prompt: '투어 신청 안내',
+    aliases: ['방보러가기', '방투어'],
+    related: ['roomRecommend', 'availableRooms', 'moveIn'],
+    mode: 'agent',
+  },
+  {
+    id: 'reviews',
+    label: '후기',
+    prompt: '후기 요약 안내',
+    aliases: ['리뷰', '평가'],
+    related: ['roomRecommend', 'summary', 'facilityInfo'],
+    mode: 'agent',
+  },
+  {
+    id: 'roomOptions',
+    label: '옵션',
+    prompt: '방 옵션 안내',
+    aliases: ['옵션정보', '가구', '가전'],
+    related: ['roomRecommend', 'availableRooms', 'deposit'],
+    mode: 'agent',
+  },
+  {
+    id: 'location',
+    label: '위치',
+    prompt: '위치 안내',
+    aliases: ['주소', '교통', '주변'],
+    related: ['roomRecommend', 'tour', 'facilityInfo'],
+    mode: 'agent',
+  },
+  {
+    id: 'contact',
+    label: '문의',
+    prompt: '문의 방법 안내',
+    aliases: ['연락', '문의하기', '상담'],
+    related: ['contract', 'moveIn', 'moveOut'],
+    mode: 'agent',
+  },
+  {
+    id: 'rules',
+    label: '규정',
+    prompt: '이용 규정 안내',
+    aliases: ['정책', '규칙', '유의사항'],
+    related: ['facilityInfo', 'moveOut', 'contract'],
+    mode: 'agent',
+  },
 ];
 
 const STARTER_ACTION_IDS = ['reserve', 'summary', 'roomRecommend'];
@@ -54,16 +223,24 @@ const uniqActionIds = (ids) => {
   return ids.filter((id) => ACTION_MAP[id] && !seen.has(id) && seen.add(id));
 };
 
-const normalizeText = (value) => String(value ?? '').toLowerCase().replace(/\s+/g, '');
-const getActionTokens = (action) => [action.label, action.prompt, ...(action.aliases || [])].map(normalizeText).filter(Boolean);
-const getDirectTriggerTokens = (action) => [action.label, ...(action.aliases || [])].map(normalizeText).filter(Boolean);
+const normalizeText = (value) =>
+  String(value ?? '')
+    .toLowerCase()
+    .replace(/\s+/g, '');
+const getActionTokens = (action) =>
+  [action.label, action.prompt, ...(action.aliases || [])]
+    .map(normalizeText)
+    .filter(Boolean);
+const getDirectTriggerTokens = (action) =>
+  [action.label, ...(action.aliases || [])].map(normalizeText).filter(Boolean);
 
 const matchActionIds = (value, options = {}) => {
   const text = normalizeText(value);
   if (!text) return [];
 
   return ACTIONS.map((action) => {
-    if (options.directOnly && action.mode !== 'direct') return { id: action.id, score: 0 };
+    if (options.directOnly && action.mode !== 'direct')
+      return { id: action.id, score: 0 };
     const score = getActionTokens(action).reduce((max, token) => {
       if (!token || !text.includes(token)) return max;
       return Math.max(max, token.length);
@@ -94,7 +271,11 @@ const expandRelatedActionIds = (ids, limit = 3) => {
   for (let i = 0; i < selected.length && result.length < limit; i += 1) {
     const current = ACTION_MAP[selected[i]];
     (current?.related || []).forEach((relatedId) => {
-      if (result.length < limit && ACTION_MAP[relatedId] && !result.includes(relatedId)) {
+      if (
+        result.length < limit &&
+        ACTION_MAP[relatedId] &&
+        !result.includes(relatedId)
+      ) {
         result.push(relatedId);
       }
     });
@@ -103,8 +284,14 @@ const expandRelatedActionIds = (ids, limit = 3) => {
   return result.slice(0, limit);
 };
 
-const isYes = (value) => YES_TOKENS.some((token) => normalizeText(value).includes(normalizeText(token)));
-const isNo = (value) => NO_TOKENS.some((token) => normalizeText(value).includes(normalizeText(token)));
+const isYes = (value) =>
+  YES_TOKENS.some((token) =>
+    normalizeText(value).includes(normalizeText(token))
+  );
+const isNo = (value) =>
+  NO_TOKENS.some((token) =>
+    normalizeText(value).includes(normalizeText(token))
+  );
 
 export default function OrchestrateQuickAgent() {
   const navigate = useNavigate();
@@ -126,14 +313,19 @@ export default function OrchestrateQuickAgent() {
   const lastSpokenMessageRef = useRef('');
   const userDisplayName = useMemo(() => {
     const payload = parseJwt(accessToken);
-    const rawName = payload?.name || payload?.userName || payload?.nickname || payload?.preferred_username;
+    const rawName =
+      payload?.name ||
+      payload?.userName ||
+      payload?.nickname ||
+      payload?.preferred_username;
     if (rawName) return String(rawName).trim();
     if (userId) return String(userId).split('@')[0].trim();
     return '고객';
   }, [accessToken, userId]);
 
   const greetingText = useMemo(
-    () => `안녕하세요! 저는 ${userDisplayName} 님만을 위한 비서 우리봇이에요! 도움이 필요하거나 궁금한 것이 있다면 아래 대화창에 입력해주세요!`,
+    () =>
+      `안녕하세요! 저는 ${userDisplayName} 님만을 위한 비서 우리봇이에요! 도움이 필요하거나 궁금한 것이 있다면 아래 대화창에 입력해주세요!`,
     [userDisplayName]
   );
 
@@ -149,7 +341,8 @@ export default function OrchestrateQuickAgent() {
 
   const disabled = useMemo(() => loading || !input.trim(), [loading, input]);
   const latestAssistant = useMemo(
-    () => [...messages].reverse().find((msg) => msg.role === 'assistant') || null,
+    () =>
+      [...messages].reverse().find((msg) => msg.role === 'assistant') || null,
     [messages]
   );
   const latestAssistantMessage = latestAssistant?.text || '';
@@ -166,15 +359,33 @@ export default function OrchestrateQuickAgent() {
   }, [voiceModeEnabled]);
 
   useEffect(() => {
-    if (!voiceModeEnabled || !settings.autoReadBotReplies || !isSpeechSynthesisSupported || !latestAssistant) return;
-    const suggestionText = Array.isArray(latestAssistant.actionIds) && latestAssistant.actionIds.length > 0
-      ? ` 추천 명령은 ${latestAssistant.actionIds.map((id) => ACTION_MAP[id]?.label).filter(Boolean).join(', ')} 입니다.`
-      : '';
-    const speechText = `${latestAssistant.text.replace(/\n/g, ' ')}${suggestionText}`.trim();
+    if (
+      !voiceModeEnabled ||
+      !settings.autoReadBotReplies ||
+      !isSpeechSynthesisSupported ||
+      !latestAssistant
+    )
+      return;
+    const suggestionText =
+      Array.isArray(latestAssistant.actionIds) &&
+      latestAssistant.actionIds.length > 0
+        ? ` 추천 명령은 ${latestAssistant.actionIds
+            .map((id) => ACTION_MAP[id]?.label)
+            .filter(Boolean)
+            .join(', ')} 입니다.`
+        : '';
+    const speechText =
+      `${latestAssistant.text.replace(/\n/g, ' ')}${suggestionText}`.trim();
     if (!speechText || speechText === lastSpokenMessageRef.current) return;
     lastSpokenMessageRef.current = speechText;
     speak(speechText);
-  }, [voiceModeEnabled, settings.autoReadBotReplies, isSpeechSynthesisSupported, latestAssistant, speak]);
+  }, [
+    voiceModeEnabled,
+    settings.autoReadBotReplies,
+    isSpeechSynthesisSupported,
+    latestAssistant,
+    speak,
+  ]);
 
   const getPageContext = () => {
     const sourceNode = document.querySelector('main') || document.body;
@@ -189,54 +400,179 @@ export default function OrchestrateQuickAgent() {
     };
   };
 
-  const appendAssistantMessage = (text, actionIds = []) => {
-    setMessages((prev) => [...prev, { role: 'assistant', text, actionIds: uniqActionIds(actionIds) }]);
+  const extractPostNoFromPath = () => {
+    const path = window.location.pathname;
+
+    const patterns = [
+      /\/notices\/(\d+)/,
+      /\/events\/(\d+)/,
+      /\/information\/(\d+)/,
+      /\/boards\/(\d+)/,
+    ];
+
+    for (const pattern of patterns) {
+      const match = path.match(pattern);
+      if (match?.[1]) {
+        return Number(match[1]);
+      }
+    }
+
+    return null;
   };
 
-  const runQuickAction = (actionId, options = {}) => {
+  const appendAssistantMessage = (text, actionIds = []) => {
+    setMessages((prev) => [
+      ...prev,
+      { role: 'assistant', text, actionIds: uniqActionIds(actionIds) },
+    ]);
+  };
+
+  const runQuickAction = async (actionId, options = {}) => {
     const action = ACTION_MAP[actionId];
     if (!action) return;
 
-    if (voiceModeEnabled && !options.skipConfirm && VOICE_CONFIRM_ACTIONS.has(actionId)) {
+    if (
+      voiceModeEnabled &&
+      !options.skipConfirm &&
+      VOICE_CONFIRM_ACTIONS.has(actionId)
+    ) {
       setPendingConfirmation({ actionId, label: action.label });
-      appendAssistantMessage(`${action.label}을 진행할까요? 예 또는 아니오로 말씀해 주세요.`, expandRelatedActionIds(action.related || [], 3));
+      appendAssistantMessage(
+        `${action.label}을 진행할까요? 예 또는 아니오로 말씀해 주세요.`,
+        expandRelatedActionIds(action.related || [], 3)
+      );
       return;
     }
 
     if (actionId === 'reserve') {
       navigate('/reservation/view');
-      appendAssistantMessage('예약 페이지로 이동했습니다. 원하시는 시설과 시간을 선택해주세요.', ['facilityHours', 'reservationStatus', 'facilityCancel']);
+      appendAssistantMessage(
+        '예약 페이지로 이동했습니다. 원하시는 시설과 시간을 선택해주세요.',
+        ['facilityHours', 'reservationStatus', 'facilityCancel']
+      );
       return;
     }
 
     if (actionId === 'roomRecommend') {
       navigate('/rooms');
-      appendAssistantMessage('방 추천을 확인할 수 있도록 방 목록 페이지로 이동했습니다.', ['availableRooms', 'deposit', 'monthlyRent']);
+      appendAssistantMessage(
+        '방 추천을 확인할 수 있도록 방 목록 페이지로 이동했습니다.',
+        ['availableRooms', 'deposit', 'monthlyRent']
+      );
       return;
     }
 
     if (actionId === 'summary') {
-      const page = getPageContext();
-      const excerpt = (page.contentExcerpt || '').slice(0, 220);
-      appendAssistantMessage(`현재 페이지 요약입니다.\n제목: ${page.title || '-'}\n요약: ${excerpt || '요약할 본문을 찾지 못했습니다.'}`, ['roomRecommend', 'reviews', 'facilityInfo']);
+      const postNo = extractPostNoFromPath();
+
+      if (!postNo) {
+        const page = getPageContext();
+        const excerpt = (page.contentExcerpt || '').slice(0, 220);
+        appendAssistantMessage(
+          `현재 페이지는 게시글 상세페이지가 아니어서 본문 기준 간단 요약만 제공합니다.\n제목: ${page.title || '-'}\n요약: ${excerpt || '요약할 본문을 찾지 못했습니다.'}`,
+          ['roomRecommend', 'reviews', 'facilityInfo']
+        );
+        return;
+      }
+
+      try {
+        setLoading(true);
+
+        const response = await fetchBoardSummary(postNo);
+        const result = response?.data?.data ?? response?.data;
+
+        const summary = String(
+          result?.summary || '요약 결과가 없습니다.'
+        ).trim();
+        const keyPoints = Array.isArray(result?.keyPoints)
+          ? result.keyPoints
+              .map((item) =>
+                String(item || '')
+                  .replace(/^[-•\s]+/, '')
+                  .trim()
+              )
+              .filter(Boolean)
+          : [];
+        const conclusion = String(result?.conclusion || '').trim();
+        const warnings = Array.isArray(result?.warnings)
+          ? result.warnings
+              .map((item) =>
+                String(item || '')
+                  .replace(/^[-•\s]+/, '')
+                  .trim()
+              )
+              .filter(Boolean)
+          : [];
+
+        const sections = [];
+        sections.push('게시글 AI 요약입니다.');
+
+        if (summary) {
+          sections.push(`요약\n${summary}`);
+        }
+
+        if (keyPoints.length > 0) {
+          sections.push(`핵심\n• ${keyPoints.join('\n• ')}`);
+        }
+
+        if (conclusion) {
+          sections.push(`결론\n${conclusion}`);
+        }
+
+        if (warnings.length > 0) {
+          sections.push(`참고\n• ${warnings.join('\n• ')}`);
+        }
+
+        appendAssistantMessage(sections.join('\n\n'), [
+          'roomRecommend',
+          'reviews',
+          'facilityInfo',
+        ]);
+      } catch (error) {
+        const errorBody = error?.response?.data;
+        const apiMessage =
+          errorBody?.data ||
+          errorBody?.message ||
+          errorBody?.error ||
+          error?.message ||
+          '게시글 요약 중 오류가 발생했습니다.';
+
+        appendAssistantMessage(`오류: ${apiMessage}`, [
+          'roomRecommend',
+          'reviews',
+          'facilityInfo',
+        ]);
+      } finally {
+        setLoading(false);
+      }
+
       return;
     }
 
     if (actionId === 'facilityHours') {
       navigate('/facility/view');
-      appendAssistantMessage('이용시간 확인을 위해 시설 페이지로 이동했습니다. 시설을 선택하면 운영시간을 확인할 수 있습니다.', ['reserve', 'facilityInfo', 'facilityCancel']);
+      appendAssistantMessage(
+        '이용시간 확인을 위해 시설 페이지로 이동했습니다. 시설을 선택하면 운영시간을 확인할 수 있습니다.',
+        ['reserve', 'facilityInfo', 'facilityCancel']
+      );
       return;
     }
 
     if (actionId === 'facilityCancel') {
       navigate('/reservation/view');
-      appendAssistantMessage('예약 내역 페이지로 이동했습니다. 취소할 예약을 선택해 진행해주세요.', ['reservationStatus', 'reserve', 'facilityHours']);
+      appendAssistantMessage(
+        '예약 내역 페이지로 이동했습니다. 취소할 예약을 선택해 진행해주세요.',
+        ['reservationStatus', 'reserve', 'facilityHours']
+      );
       return;
     }
 
     if (actionId === 'reservationStatus') {
       navigate('/reservation/view');
-      appendAssistantMessage('예약 내역 페이지로 이동했습니다. 현재 예약 상태를 확인해보세요.', ['facilityCancel', 'reserve', 'facilityHours']);
+      appendAssistantMessage(
+        '예약 내역 페이지로 이동했습니다. 현재 예약 상태를 확인해보세요.',
+        ['facilityCancel', 'reserve', 'facilityHours']
+      );
     }
   };
 
@@ -251,7 +587,9 @@ export default function OrchestrateQuickAgent() {
 
     const fromResponse = result?.suggestedActions;
     if (Array.isArray(fromResponse)) {
-      fromResponse.forEach((item) => addMatches(item?.id || item?.label || item));
+      fromResponse.forEach((item) =>
+        addMatches(item?.id || item?.label || item)
+      );
     }
 
     addMatches(result?.intent || '');
@@ -271,7 +609,10 @@ export default function OrchestrateQuickAgent() {
     if (isYes(text)) {
       const actionId = pendingConfirmation.actionId;
       setPendingConfirmation(null);
-      appendAssistantMessage(`${ACTION_MAP[actionId]?.label || '요청'}을 계속 진행합니다.`, expandRelatedActionIds([actionId], 3));
+      appendAssistantMessage(
+        `${ACTION_MAP[actionId]?.label || '요청'}을 계속 진행합니다.`,
+        expandRelatedActionIds([actionId], 3)
+      );
       runQuickAction(actionId, { skipConfirm: true });
       return true;
     }
@@ -279,11 +620,17 @@ export default function OrchestrateQuickAgent() {
     if (isNo(text)) {
       const actionId = pendingConfirmation.actionId;
       setPendingConfirmation(null);
-      appendAssistantMessage(`${ACTION_MAP[actionId]?.label || '요청'}을 취소했습니다. 다른 명령을 말씀해 주세요.`, ['summary', 'roomRecommend', 'reserve']);
+      appendAssistantMessage(
+        `${ACTION_MAP[actionId]?.label || '요청'}을 취소했습니다. 다른 명령을 말씀해 주세요.`,
+        ['summary', 'roomRecommend', 'reserve']
+      );
       return true;
     }
 
-    appendAssistantMessage('재확인이 필요합니다. 예 또는 아니오로 말씀해 주세요.', ['reserve', 'facilityCancel', 'summary']);
+    appendAssistantMessage(
+      '재확인이 필요합니다. 예 또는 아니오로 말씀해 주세요.',
+      ['reserve', 'facilityCancel', 'summary']
+    );
     return true;
   };
 
@@ -299,7 +646,9 @@ export default function OrchestrateQuickAgent() {
       return;
     }
 
-    const quickAction = options.skipQuickAction ? null : detectQuickAction(text);
+    const quickAction = options.skipQuickAction
+      ? null
+      : detectQuickAction(text);
     if (quickAction) {
       runQuickAction(quickAction);
       return;
@@ -323,27 +672,50 @@ export default function OrchestrateQuickAgent() {
         },
       });
 
-      const reply = result?.reply || result?.outputText || result?.message || result?.result || '응답은 받았지만 표시 가능한 메시지 필드가 없습니다.';
-      const shouldShowIntent = result?.intent && String(result.intent).toLowerCase() !== 'fallback';
+      const reply =
+        result?.reply ||
+        result?.outputText ||
+        result?.message ||
+        result?.result ||
+        '응답은 받았지만 표시 가능한 메시지 필드가 없습니다.';
+      const shouldShowIntent =
+        result?.intent && String(result.intent).toLowerCase() !== 'fallback';
       const intent = shouldShowIntent ? `\n(intent: ${result.intent})` : '';
       const actionIds = extractSuggestedActions(result, String(reply));
+      const normalizedIntent = String(result?.intent || '').toUpperCase();
+
+      if (normalizedIntent === 'SUMMARY') {
+        await runQuickAction('summary');
+        return;
+      }
 
       appendAssistantMessage(`${String(reply)}${intent}`, actionIds);
 
       if (voiceModeEnabled && result?.requiresConfirm && actionIds.length > 0) {
-        setPendingConfirmation({ actionId: actionIds[0], label: ACTION_MAP[actionIds[0]]?.label });
-        appendAssistantMessage(`${ACTION_MAP[actionIds[0]]?.label || '다음 작업'}을 이어서 진행할까요? 예 또는 아니오로 말씀해 주세요.`, actionIds);
+        setPendingConfirmation({
+          actionId: actionIds[0],
+          label: ACTION_MAP[actionIds[0]]?.label,
+        });
+        appendAssistantMessage(
+          `${ACTION_MAP[actionIds[0]]?.label || '다음 작업'}을 이어서 진행할까요? 예 또는 아니오로 말씀해 주세요.`,
+          actionIds
+        );
       }
     } catch (error) {
       const errorBody = error?.response?.data;
-      const apiMessage = errorBody?.data || errorBody?.message || errorBody?.error || error?.message || 'Agent 호출 중 오류가 발생했습니다.';
+      const apiMessage =
+        errorBody?.data ||
+        errorBody?.message ||
+        errorBody?.error ||
+        error?.message ||
+        'Agent 호출 중 오류가 발생했습니다.';
       appendAssistantMessage(`오류: ${apiMessage}`);
     } finally {
       setLoading(false);
     }
   };
 
-  const onQuickActionClick = (actionId) => {
+  const onQuickActionClick = async (actionId) => {
     const action = ACTION_MAP[actionId];
     if (!action || loading) return;
     setMessages((prev) => [...prev, { role: 'user', text: action.label }]);
@@ -351,7 +723,9 @@ export default function OrchestrateQuickAgent() {
   };
 
   const playLatestVoice = async () => {
-    const sourceText = (latestAssistantMessage || '').split('\n(intent:')[0].trim();
+    const sourceText = (latestAssistantMessage || '')
+      .split('\n(intent:')[0]
+      .trim();
     if (!sourceText || ttsLoading) return;
 
     try {
@@ -365,7 +739,12 @@ export default function OrchestrateQuickAgent() {
       await audio.play();
     } catch (error) {
       const errorBody = error?.response?.data;
-      const apiMessage = errorBody?.data || errorBody?.message || errorBody?.error || error?.message || 'TTS 호출 중 오류가 발생했습니다.';
+      const apiMessage =
+        errorBody?.data ||
+        errorBody?.message ||
+        errorBody?.error ||
+        error?.message ||
+        'TTS 호출 중 오류가 발생했습니다.';
       appendAssistantMessage(`오류: ${apiMessage}`);
     } finally {
       setTtsLoading(false);
@@ -384,7 +763,9 @@ export default function OrchestrateQuickAgent() {
     }
 
     if (!isSpeechRecognitionSupported) {
-      appendAssistantMessage('이 브라우저에서는 음성 인식을 지원하지 않습니다. 텍스트 입력을 사용해 주세요.');
+      appendAssistantMessage(
+        '이 브라우저에서는 음성 인식을 지원하지 않습니다. 텍스트 입력을 사용해 주세요.'
+      );
       return;
     }
 
@@ -392,13 +773,19 @@ export default function OrchestrateQuickAgent() {
     startListening({
       onResult: (transcript) => {
         if (!transcript) {
-          appendAssistantMessage('음성 입력을 인식하지 못했습니다. 다시 말씀해 주세요.', ['summary', 'roomRecommend', 'reserve']);
+          appendAssistantMessage(
+            '음성 입력을 인식하지 못했습니다. 다시 말씀해 주세요.',
+            ['summary', 'roomRecommend', 'reserve']
+          );
           return;
         }
         sendMessage(transcript, { displayText: `음성: ${transcript}` });
       },
       onError: () => {
-        appendAssistantMessage('음성 입력 중 문제가 발생했습니다. 다시 시도해 주세요.', ['summary', 'roomRecommend', 'reserve']);
+        appendAssistantMessage(
+          '음성 입력 중 문제가 발생했습니다. 다시 시도해 주세요.',
+          ['summary', 'roomRecommend', 'reserve']
+        );
       },
     });
   };
@@ -410,7 +797,12 @@ export default function OrchestrateQuickAgent() {
 
   return (
     <div className={styles.root}>
-      <button type="button" className={styles.launcher} onClick={() => setOpen((prev) => !prev)} aria-label="AI Agent 열기">
+      <button
+        type="button"
+        className={styles.launcher}
+        onClick={() => setOpen((prev) => !prev)}
+        aria-label="AI Agent 열기"
+      >
         <img src={botIcon} alt="AI 챗봇" className={styles.launcherIcon} />
       </button>
 
@@ -421,22 +813,44 @@ export default function OrchestrateQuickAgent() {
               <img src={botIcon} alt="AI 챗봇" className={styles.headerIcon} />
               <div className={styles.headerTitleWrap}>
                 <strong>우리봇</strong>
-                {voiceModeEnabled && <span className={styles.voiceModeBadge}>음성 모드</span>}
+                {voiceModeEnabled && (
+                  <span className={styles.voiceModeBadge}>음성 모드</span>
+                )}
               </div>
             </div>
             <div className={styles.headerActions}>
-              <button type="button" className={styles.modeBtn} onClick={voiceModeEnabled ? disableVoiceMode : () => enableVoiceMode()}>
+              <button
+                type="button"
+                className={styles.modeBtn}
+                onClick={
+                  voiceModeEnabled ? disableVoiceMode : () => enableVoiceMode()
+                }
+              >
                 {voiceModeEnabled ? '음성 끄기' : '음성 켜기'}
               </button>
-              <button type="button" className={styles.voiceBtn} onClick={playLatestVoice} disabled={ttsLoading || !latestAssistantMessage}>
+              <button
+                type="button"
+                className={styles.voiceBtn}
+                onClick={playLatestVoice}
+                disabled={ttsLoading || !latestAssistantMessage}
+              >
                 {ttsLoading ? 'TTS...' : '다시 읽기'}
               </button>
               {voiceModeEnabled && (
-                <button type="button" className={styles.micBtn} onClick={listening ? stopListening : startVoiceCommand}>
+                <button
+                  type="button"
+                  className={styles.micBtn}
+                  onClick={listening ? stopListening : startVoiceCommand}
+                >
                   {listening ? '듣는 중' : '말하기'}
                 </button>
               )}
-              <button type="button" className={styles.closeBtn} onClick={() => setOpen(false)} aria-label="닫기">
+              <button
+                type="button"
+                className={styles.closeBtn}
+                onClick={() => setOpen(false)}
+                aria-label="닫기"
+              >
                 ×
               </button>
             </div>
@@ -452,30 +866,59 @@ export default function OrchestrateQuickAgent() {
 
           <div className={styles.body}>
             {messages.map((msg, idx) => (
-              <div key={`${msg.role}-${idx}`} className={msg.role === 'user' ? styles.userMsg : styles.botMsg}>
+              <div
+                key={`${msg.role}-${idx}`}
+                className={msg.role === 'user' ? styles.userMsg : styles.botMsg}
+              >
                 <div>{msg.text}</div>
-                {msg.role === 'assistant' && Array.isArray(msg.actionIds) && msg.actionIds.length > 0 && (
-                  <div className={styles.bubbleActions}>
-                    {msg.actionIds.map((id) => (
-                      <button key={`bubble-action-${idx}-${id}`} type="button" className={styles.bubbleActionBtn} onClick={() => onQuickActionClick(id)} disabled={loading}>
-                        {ACTION_MAP[id].label}
-                      </button>
-                    ))}
-                  </div>
-                )}
+                {msg.role === 'assistant' &&
+                  Array.isArray(msg.actionIds) &&
+                  msg.actionIds.length > 0 && (
+                    <div className={styles.bubbleActions}>
+                      {msg.actionIds.map((id) => (
+                        <button
+                          key={`bubble-action-${idx}-${id}`}
+                          type="button"
+                          className={styles.bubbleActionBtn}
+                          onClick={() => onQuickActionClick(id)}
+                          disabled={loading}
+                        >
+                          {ACTION_MAP[id].label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
               </div>
             ))}
             <div ref={bottomRef} />
           </div>
 
           <form className={styles.form} onSubmit={submit}>
-            <input className={styles.input} type="text" value={input} onChange={(e) => setInput(e.target.value)} placeholder={voiceModeEnabled ? '말하거나 입력해주세요' : '내용을 입력해주세요'} />
+            <input
+              className={styles.input}
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder={
+                voiceModeEnabled
+                  ? '말하거나 입력해주세요'
+                  : '내용을 입력해주세요'
+              }
+            />
             {voiceModeEnabled && (
-              <button type="button" className={styles.micBtn} onClick={listening ? stopListening : startVoiceCommand}>
+              <button
+                type="button"
+                className={styles.micBtn}
+                onClick={listening ? stopListening : startVoiceCommand}
+              >
                 {listening ? '중지' : '음성'}
               </button>
             )}
-            <button type="submit" className={styles.sendBtn} disabled={disabled}>
+            <button
+              type="submit"
+              className={styles.sendBtn}
+              disabled={disabled}
+            >
               {loading ? '대기중' : '전송'}
             </button>
           </form>
