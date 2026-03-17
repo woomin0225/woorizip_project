@@ -1,17 +1,16 @@
 # app/schemas.py
 
+
 from __future__ import annotations
 
 from datetime import date, datetime
 from typing import Any, Literal
-
 from pydantic import BaseModel, Field
-
 
 SummaryTarget = Literal["page", "post", "room", "generic"]
 MonitorKind = Literal["view_abuse", "facility_usage", "generic"]
 
-
+# 방 정보 종합 요약시 사용 (리뷰, 이미지설명 포함)
 class RoomTotalRequest(BaseModel):
     roomNo: str
     roomName: str
@@ -34,13 +33,12 @@ class RoomTotalRequest(BaseModel):
     roomOptions: str
     imageSummary: str
     reviewSummary: str
-
-
+    
+    
+# 리뷰나 이미지 캡션들 요약시 사용
 class RoomSummaryRequest(BaseModel):
     roomNo: str
     texts: list
-
-
 class Envelope(BaseModel):
     ok: bool = True
     intent: str | None = None
