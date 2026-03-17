@@ -40,15 +40,22 @@ from app.services.embedding_service import EmbeddingService
 from app.services.summary_service import SummaryService
 from app.services.vision_service import VisionService
 
+import logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s | %(levelname)s | %(name)s | %(message)s"
+)
+logger = logging.getLogger(__name__)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # 앱시작시 구동될 클라이언트 작성
-    app.state.qwen_llm_client=QwenLlmClient("Qwen/Qwen2.5-3B-Instruct")   # Qwen/Qwen3-4B-Instruct-2507 : 추후 상위모델로 교체
+    app.state.qwen_llm_client=None  # Dependencies.py에서 lazy load
     # app.state.embeddingClient=OpenaiEmbeddingClient()
     app.state.embedding_client=KureEmbeddingClient()
     app.state.vector_client=QdrantDbClient()
-    app.state.tokenizer = AutoTokenizer.from_pretrained("nlpai-lab/KURE-v1")
+    app.state.tokenizer = None    # Dependencies.py에서 lazy load
     yield
     # 앱 종료시
 

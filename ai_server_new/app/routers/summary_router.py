@@ -7,6 +7,9 @@ from app.dependencies import get_room_summary_service
 from app.schemas import RoomSummaryRequest, RoomTotalRequest
 from app.services.summary_service import RoomSummaryService
 
+import logging
+logger=logging.getLogger(__name__)
+
 router = APIRouter(
     prefix='/ai/summary'
 )
@@ -16,6 +19,8 @@ async def room_reviews_summary(
     room_reviews:RoomSummaryRequest,
     room_summary_service: Annotated[RoomSummaryService, Depends(get_room_summary_service)]
 ):
+    logger.info("router entered roomNo=%s texts=%s", room_reviews.roomNo, len(room_reviews.texts or []))
+    
     try:
         summary = room_summary_service.summary_room_reviews(room_reviews.texts)
         return {

@@ -3,14 +3,17 @@
 from transformers import AutoModelForCausalLM, AutoTokenizer
 import torch
 
+import logging
+logger=logging.getLogger(__name__)
+
 class QwenLlmClient:
     def __init__(self, model_name: str = "Qwen/Qwen2.5-3B-Instruct"):
         self.model_name = model_name
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
         self.model = AutoModelForCausalLM.from_pretrained(
             model_name,
-            torch_dtype="auto",   # gpu 있으면 주석 풀기
-            device_map="auto"
+            # torch_dtype="auto",   # gpu 있으면 주석 풀기
+            # device_map="auto"
         )
     
     def generate_from_messages(self, messages, max_new_tokens: int = 512, do_sample: bool = False, temperature: float = 0.2, top_p: float = 0.9):
@@ -30,10 +33,17 @@ class QwenLlmClient:
             generate_kwargs["temperature"] = temperature    # 출력의 랜덤성 강도: 높을수록 창의적, 다양한 답변. do_sample=False이면 안써도됨
             generate_kwargs["top_p"] = top_p    # 다음 토큰 후보를 보는 정도: 높을수록 다양한 후보 허용. do_sample=False이면 안써도됨
         
-        generated_ids = self.model.generate(
-            **model_inputs,
-            **generate_kwargs
-        )
+        try:
+            logger.info("qwen generate start")
+            generated_ids = self.model.generate(
+                **model_inputs,
+                **generate_kwargs
+            )
+            logger.info("qwen generate done")
+        except Exception:
+            logger.exception("qwen generate failed")
+            raise
+        
         generated_ids = [
             output_ids[len(input_ids):] for input_ids, output_ids in zip(model_inputs.input_ids, generated_ids)
         ]
