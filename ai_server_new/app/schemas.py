@@ -15,8 +15,18 @@ class RoomTotalRequest(BaseModel):
     roomNo: str
     roomName: str
     houseNo: str
+    
     houseName: str
     houseAddress: str
+    houseCompletionYear: int
+    houseFloors: int
+    houseHouseHolds: int
+    houseElevatorYn: bool
+    housePetYn: bool
+    houseFemaleLimit: bool
+    houseParkingMax: int
+    houseAbstract: str
+    
     roomCreatedAt: datetime
     roomUpdatedAt: datetime
     roomDeposit: int

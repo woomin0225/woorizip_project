@@ -1,7 +1,7 @@
 # app/main.py
 
 from __future__ import annotations
-
+from app.core.config import settings
 import base64
 import logging
 from contextlib import asynccontextmanager
@@ -20,7 +20,7 @@ from app.clients.paddleocr_client import PaddleOCRClient
 from app.clients.qdrant_client import QdrantDbClient
 from app.clients.qwen_caption_client import QwenCaptionClient
 from app.clients.qwen_llm_client import QwenLlmClient
-from app.core.config import settings
+
 from app.core.security import require_internal_api_key
 from app.ibm.groq_llm_client import GroqLLMClient
 from app.routers import (

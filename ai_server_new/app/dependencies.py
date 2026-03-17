@@ -1,7 +1,6 @@
 # app/dependencies.py
 
 from fastapi import Depends, HTTPException, Request
-from transformers import AutoTokenizer
 
 from app.services.embedding_service import RoomEmbeddingService
 from app.services.rag_service import RagService
@@ -17,7 +16,7 @@ def get_embedding_client(request: Request):
         )
     return client
 
-def get_embedding_service(embedding_client=Depends(get_embedding_client)):
+async def get_embedding_service(embedding_client=Depends(get_embedding_client)):
     return RoomEmbeddingService(client=embedding_client)
 
 def get_qwen_llm_client(request: Request):
@@ -29,13 +28,13 @@ def get_qwen_llm_client(request: Request):
         )
     return client
 
-def get_room_summary_service(llm_client=Depends(get_qwen_llm_client)):
+async def get_room_summary_service(llm_client=Depends(get_qwen_llm_client)):
     return RoomSummaryService(client=llm_client)
 
-def get_vector_client(request: Request):
+async def get_vector_client(request: Request):
     return request.app.state.vector_client
 
-def get_vector_store(vector_client=Depends(get_vector_client)):
+async def get_vector_store(vector_client=Depends(get_vector_client)):
     return VectorStore(client=vector_client)
 
 def get_tokenizer(request: Request):
