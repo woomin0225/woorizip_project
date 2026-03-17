@@ -8,7 +8,22 @@ import WishRankingFrame from '../../features/houseAndRoom/components/ranking/Wis
 import { fetchNoticeTop5 } from '../../features/board/api/NoticeApi';
 import { fetchInformationTop5 } from '../../features/board/api/InformationApi';
 import { fetchEventTop5 } from '../../features/board/api/EventApi';
-const BANNER_SLIDES = [1, 2, 3, 4, 5, 6];
+
+import banner1 from '../../assets/images/banner/banner1.png';
+import banner2 from '../../assets/images/banner/banner2.png';
+import banner3 from '../../assets/images/banner/banner3.png';
+import banner4 from '../../assets/images/banner/banner4.png';
+import banner5 from '../../assets/images/banner/banner5.png';
+import banner6 from '../../assets/images/banner/banner6.png';
+
+const BANNER_SLIDES = [
+  { id: 1, image: banner1, alt: '배너 1' },
+  { id: 2, image: banner2, alt: '배너 2' },
+  { id: 3, image: banner3, alt: '배너 3' },
+  { id: 4, image: banner4, alt: '배너 4' },
+  { id: 5, image: banner5, alt: '배너 5' },
+  { id: 6, image: banner6, alt: '배너 6' },
+];
 
 export default function Home() {
   const [topNotices, setTopNotices] = useState([]);
@@ -57,9 +72,11 @@ export default function Home() {
 
   useEffect(() => {
     if (BANNER_SLIDES.length <= 1) return undefined;
+
     const timer = setInterval(() => {
       setBannerIndex((prev) => (prev + 1) % BANNER_SLIDES.length);
     }, 4000);
+
     return () => clearInterval(timer);
   }, []);
 
@@ -70,6 +87,8 @@ export default function Home() {
     setBannerIndex(
       (prev) => (prev - 1 + BANNER_SLIDES.length) % BANNER_SLIDES.length
     );
+
+  const currentBanner = BANNER_SLIDES[bannerIndex];
 
   return (
     <>
@@ -89,11 +108,15 @@ export default function Home() {
             <span />
             <span />
           </div>
+
           <Container className="d-flex align-items-center h-100 py-lg">
             <div className={`w-100 ${styles.bannerFrame}`}>
-              <div className={styles.numberSlide}>
-                {BANNER_SLIDES[bannerIndex]}
-              </div>
+              <img
+                src={currentBanner.image}
+                alt={currentBanner.alt}
+                className={styles.bannerImage}
+              />
+
               {BANNER_SLIDES.length > 1 && (
                 <>
                   <button
@@ -104,6 +127,7 @@ export default function Home() {
                   >
                     ‹
                   </button>
+
                   <button
                     type="button"
                     className={`${styles.bannerNav} ${styles.next}`}
@@ -112,10 +136,11 @@ export default function Home() {
                   >
                     ›
                   </button>
+
                   <div className={styles.bannerDots}>
-                    {BANNER_SLIDES.map((_, idx) => (
+                    {BANNER_SLIDES.map((slide, idx) => (
                       <button
-                        key={idx}
+                        key={slide.id}
                         type="button"
                         className={`${styles.dot} ${
                           idx === bannerIndex ? styles.activeDot : ''
