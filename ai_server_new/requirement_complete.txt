@@ -10,6 +10,13 @@
 # GroundingDINO editable install is kept out of this file because its setup.py
 # fails under pip's isolated build environment.
 
+# GroundingDINO: Download pre-trained model weights.
+# cd ./GroundingDINO
+# mkdir weights
+# cd weights
+# Invoke-WebRequest "https://github.com/IDEA-Research/GroundingDINO/releases/download/v0.1.0-alpha/groundingdino_swint_ogc.pth" -OutFile "groundingdino_swint_ogc.pth"
+# cd ..
+
 fastapi==0.135.1
 uvicorn[standard]==0.41.0
 pydantic==2.12.5
