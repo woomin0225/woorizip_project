@@ -26,6 +26,7 @@ from app.routers import (
     assistant_router,
     embed_router,
     rag_router,
+    tour_router,
     summary_router,
     voice_router,
 )
@@ -87,6 +88,7 @@ async def add_utf8_charset(request, call_next):
 
 
 app.include_router(assistant_router.router)
+app.include_router(tour_router.router)
 app.include_router(voice_router.router)
 
 
@@ -187,7 +189,7 @@ def health() -> dict[str, Any]:
         "ocr_provider": settings.OCR_PROVIDER,
         "stt_provider": settings.STT_PROVIDER,
         "tts_provider": settings.TTS_PROVIDER,
-        "features": ["assistant", "stt", "tts", "summary", "vision", "embedding"],
+        "features": ["assistant", "tour", "stt", "tts", "summary", "vision", "embedding"],
     }
 
 

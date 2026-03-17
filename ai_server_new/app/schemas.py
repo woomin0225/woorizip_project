@@ -244,6 +244,24 @@ class AssistantRunRes(BaseModel):
     raw: dict[str, Any] = Field(default_factory=dict)
 
 
+class TourApplyReq(BaseModel):
+    roomNo: str
+    visitDate: str
+    visitTime: str
+    userName: str
+    userPhone: str
+    inquiry: str | None = None
+
+
+class TourApplyRes(BaseModel):
+    ok: bool = True
+    roomNo: str
+    visitDate: str
+    visitTime: str
+    message: str
+    springResponse: dict[str, Any] = Field(default_factory=dict)
+
+
 class ListingIndexReq(BaseModel):
     room_id: str
     room: dict[str, Any]
