@@ -1,21 +1,35 @@
+# app/main.py
+
 from __future__ import annotations
 
 import base64
+from contextlib import asynccontextmanager
 from io import BytesIO
 from typing import Any, Annotated
 
-from fastapi import Depends, FastAPI, File, Form, HTTPException, UploadFile
+from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import JSONResponse
 from PIL import Image
 from pydantic import BaseModel
+from transformers import AutoTokenizer
 
+from app.clients.embedding_client import KureEmbeddingClient
 from app.clients.groundingdino_client import GroundingDINOClient
 from app.clients.paddleocr_client import PaddleOCRClient
+from app.clients.qdrant_client import QdrantDbClient
 from app.clients.qwen_caption_client import QwenCaptionClient
+from app.clients.qwen_llm_client import QwenLlmClient
 from app.core.config import settings
 from app.core.security import require_internal_api_key
 from app.ibm.groq_llm_client import GroqLLMClient
-from app.routers import assistant_router, tour_router, voice_router
+from app.routers import (
+    assistant_router,
+    embed_router,
+    rag_router,
+    tour_router,
+    summary_router,
+    voice_router,
+)
 from app.schemas import (
     EmbeddingReq,
     EmbeddingRes,
@@ -27,11 +41,35 @@ from app.services.embedding_service import EmbeddingService
 from app.services.summary_service import SummaryService
 from app.services.vision_service import VisionService
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # 앱시작시 구동될 클라이언트 작성
+    app.state.qwen_llm_client=QwenLlmClient("Qwen/Qwen2.5-3B-Instruct")   # Qwen/Qwen3-4B-Instruct-2507 : 추후 상위모델로 교체
+    # app.state.embeddingClient=OpenaiEmbeddingClient()
+    app.state.embedding_client=KureEmbeddingClient()
+    app.state.vector_client=QdrantDbClient()
+    app.state.tokenizer = AutoTokenizer.from_pretrained("nlpai-lab/KURE-v1")
+    yield
+    # 앱 종료시
+
 app = FastAPI(
     title="AI Summary + Vision Server",
     default_response_class=JSONResponse,
+    lifespan=lifespan
 )
-
+app.include_router(
+    embed_router.router,
+    tags=["embed"]
+)
+app.include_router(
+    summary_router.router,
+    tags=["summary"]
+)
+app.include_router(
+    rag_router.router,
+    tags=["rag"]
+)
 
 @app.middleware("http")
 async def add_utf8_charset(request, call_next):
@@ -104,8 +142,34 @@ vision = VisionService(
 
 
 @app.get("/")
-def welcome() -> dict[str, Any]:
-    return {"hello": "ai_server_new"}
+def welcome(request: Request):
+    qwen_client = getattr(request.app.state, "qwen_llm_client", None)
+    embedding_client = getattr(request.app.state, "embedding_client", None)
+    vector_client = getattr(request.app.state, "vector_client", None)
+    tokenizer = getattr(request.app.state, "tokenizer", None)
+
+    return {
+        "message": "AI server is running",
+        "clients": {
+            "qwen_llm_client": {
+                "ready": qwen_client is not None,
+                "model_name": getattr(qwen_client, "model_name", None),
+            },
+            "embedding_client": {
+                "ready": embedding_client is not None,
+                "model_name": "nlpai-lab/KURE-v1" if embedding_client is not None else None,
+            },
+            "vector_client": {
+                "ready": vector_client is not None,
+                "type": type(vector_client).__name__ if vector_client is not None else None,
+            },
+            "tokenizer": {
+                "ready": tokenizer is not None,
+                "name": getattr(tokenizer, "name_or_path", None),
+            },
+        },
+    }
+
 
 
 @app.get("/health")
