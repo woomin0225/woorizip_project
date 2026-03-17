@@ -8,16 +8,19 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.reactive.function.client.WebClient;
 import org.team4p.woorizip.common.exception.ForbiddenException;
 import org.team4p.woorizip.common.exception.NotFoundException;
 import org.team4p.woorizip.house.jpa.entity.HouseEntity;
 import org.team4p.woorizip.house.jpa.repository.HouseRepository;
 import org.team4p.woorizip.room.dto.RoomDto;
+import org.team4p.woorizip.room.dto.ai.RoomRagResponse;
 import org.team4p.woorizip.room.dto.request.RoomSearchCondition;
 import org.team4p.woorizip.room.dto.response.ReviewRankingResponse;
 import org.team4p.woorizip.room.dto.response.RoomSearchResponse;
@@ -29,6 +32,7 @@ import org.team4p.woorizip.room.image.jpa.repository.RoomImageRepository;
 import org.team4p.woorizip.room.image.service.RoomImageService;
 import org.team4p.woorizip.room.jpa.entity.RoomEntity;
 import org.team4p.woorizip.room.jpa.repository.RoomRepository;
+import org.team4p.woorizip.room.review.dto.ai.ReviewSummaryResponse;
 import org.team4p.woorizip.room.review.jpa.repository.ReviewRepository;
 import org.team4p.woorizip.room.view.jpa.repository.RoomViewRepository;
 import org.team4p.woorizip.room.view.service.RoomViewService;
@@ -36,6 +40,7 @@ import org.team4p.woorizip.user.jpa.repository.UserRepository;
 import org.team4p.woorizip.wishlist.jpa.repository.WishlistRepository;
 
 import lombok.RequiredArgsConstructor;
+import reactor.core.publisher.Mono;
 
 @Service
 @RequiredArgsConstructor
@@ -49,6 +54,10 @@ public class RoomServiceImpl implements RoomService {
 	private final RoomImageRepository riRepository;
 	private final ReviewRepository reviewRepository;
 	private final WishlistRepository wishlistRepository;
+	
+	private final WebClient.Builder webClientBuilder;
+	@Value("${ai.server.base-url}")
+	private String aiServerUri;
 	
 	@Override
 	public Slice<RoomSearchResponse> selectRoomSearch(RoomSearchCondition cond, Pageable pageable) {
@@ -352,5 +361,25 @@ public class RoomServiceImpl implements RoomService {
 		}
 		
 		return list;
+	}
+
+	@Override
+	public List<RoomDto> selectRoomRag(String text) {
+		WebClient webClient = webClientBuilder.build();
+		
+		Mono<RoomRagResponse> monoResponse = webClient.post()
+				.uri(aiServerUri.concat("/ai/rag/room"))
+				.bodyValue(text)
+				.retrieve()
+				.bodyToMono(RoomRagResponse.class)
+				;
+		RoomRagResponse response = monoResponse.block();
+		List<String> roomNoList = response.getRoom_list();
+		
+		List<RoomEntity> entityList = roomRepository.findAllById(roomNoList);
+		List<RoomDto> dtoList = new ArrayList<>();
+		entityList.forEach(entity->dtoList.add(entity.toDto()));
+		
+		return dtoList;
 	}
 }

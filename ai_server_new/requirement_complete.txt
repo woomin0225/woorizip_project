@@ -3,6 +3,8 @@
 #
 # Install from the ai_server_new directory:
 #   .\.venv\Scripts\python.exe -m pip install -r requirement_complete.txt
+# If transformers 5.x was already installed in this venv, recreate the venv or run:
+#   .\.venv\Scripts\python.exe -m pip install --upgrade --force-reinstall -r requirement_complete.txt
 # Then install GroundingDINO separately:
 #   .\.venv\Scripts\python.exe -m pip install -e .\GroundingDINO --no-build-isolation
 # GroundingDINO editable install is kept out of this file because its setup.py
@@ -24,7 +26,8 @@ numpy==2.4.3
 pillow==12.1.1
 torch==2.10.0
 torchvision==0.25.0
-transformers==5.3.0
+# GroundingDINO's vendored BERT wrapper is compatible with transformers 4.x, not 5.x.
+transformers==4.57.1
 tokenizers==0.22.2
 sentence-transformers==5.2.3
 

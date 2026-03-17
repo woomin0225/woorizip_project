@@ -9,4 +9,6 @@ public interface ReviewSummaryService {
 	List<ReviewSummaryEntity> findSummaryPendingRooms();
 	// review AI summary 수행
 	void summaryPendingRooms(ReviewSummaryEntity reviewSummaryEntity);
+	// roomNo로 리뷰 요약 조회
+	ReviewSummaryEntity selectSummarizedReview(String roomNo);
 }

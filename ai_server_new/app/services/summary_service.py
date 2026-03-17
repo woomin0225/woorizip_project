@@ -460,7 +460,7 @@ class RoomSummaryService:
             {"role": "user", "content": prompt},
             {"role": "assistant", "content": "summarized result is "}
         ]
-        result = self.client.generate_from_messages(messages, max_new_tokens=128)
+        result = self.client.generate_from_messages(messages, max_new_tokens=256)
         return result.strip()
     
     def summary_room_image_captions(self, room_image_captions: list):
@@ -473,7 +473,7 @@ class RoomSummaryService:
             {"role": "user", "content": prompt},
             {"role": "assistant", "content": "summarized result is "}
         ]
-        result = self.client.generate_from_messages(messages, max_new_tokens=128)
+        result = self.client.generate_from_messages(messages, max_new_tokens=256)
         return result.strip()
     
     def summary_room_total(self, room: RoomSummaryRequest):
@@ -488,5 +488,5 @@ class RoomSummaryService:
             {"role": "user", "content": prompt},
             {"role": "assistant", "content": "summarized result is "}
         ]
-        result = self.client.generate_from_messages(messages, max_new_tokens=128)
+        result = self.client.generate_from_messages(messages, max_new_tokens=256)
         return result.strip()

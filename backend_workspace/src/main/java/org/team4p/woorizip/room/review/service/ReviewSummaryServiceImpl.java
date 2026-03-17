@@ -14,8 +14,10 @@ import org.team4p.woorizip.room.review.jpa.repository.ReviewSummaryRepository;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ReviewSummaryServiceImpl implements ReviewSummaryService{
@@ -92,7 +94,14 @@ public class ReviewSummaryServiceImpl implements ReviewSummaryService{
 			entity.setSummaryStatus("DONE");
 			entity.setUpdatedAt(LocalDateTime.now());
 			reviewSummaryRepository.save(entity);
+			log.info("방 번호("+response.getRoomNo()+") - 리뷰 요약: "+response.getSummary()+", "+response.getMessage());
+			
+	}
+
+	@Override
+	public ReviewSummaryEntity selectSummarizedReview(String roomNo) {
 		
+		return reviewSummaryRepository.findById(roomNo).get();
 	}
 
 }

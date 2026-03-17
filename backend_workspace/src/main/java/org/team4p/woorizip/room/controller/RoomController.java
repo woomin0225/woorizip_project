@@ -34,7 +34,9 @@ import org.team4p.woorizip.room.dto.response.WishRankingResponse;
 import org.team4p.woorizip.room.image.dto.RoomImageDto;
 import org.team4p.woorizip.room.image.service.RoomImageService;
 import org.team4p.woorizip.room.review.dto.ReviewDto;
+import org.team4p.woorizip.room.review.jpa.entity.ReviewSummaryEntity;
 import org.team4p.woorizip.room.review.service.ReviewService;
+import org.team4p.woorizip.room.review.service.ReviewSummaryService;
 import org.team4p.woorizip.room.service.RoomAiService;
 import org.team4p.woorizip.room.service.RoomService;
 import org.team4p.woorizip.room.view.service.RoomViewService;
@@ -55,6 +57,7 @@ public class RoomController {
 	private final ReviewService reviewService;
 	private final RoomViewService rvService;
 	private final RoomAiService roomAiService;
+	private final ReviewSummaryService reviewSummaryService;
 	
 	@GetMapping("/search")
 	public ResponseEntity<ApiResponse<Slice<RoomSearchResponse>>> searchRooms(@Valid @ModelAttribute RoomSearchCondition cond, Pageable pageable) {
@@ -267,5 +270,18 @@ public class RoomController {
 		RoomAiAnalyzeResponse result = roomAiService.analyzeRoomImages(images);
 		return ResponseEntity.status(200).body(ApiResponse.ok("방 이미지 AI 분석 성공", result));
 	}
+
+	@PostMapping("/rag/room")
+	public ResponseEntity<ApiResponse<List<RoomDto>>> ragSearchRooms(@RequestBody String text){		
+		List<RoomDto> list = roomService.selectRoomRag(text);
+		
+		return ResponseEntity.status(200).body(ApiResponse.ok("방 rag 검색 성공", list));
+	}
 	
+	@GetMapping("/{roomNo}/summarized_review/")
+	public ResponseEntity<ApiResponse<ReviewSummaryEntity>> callSummarizedReviews(@PathVariable("roomNo") String roomNo){
+		var result = reviewSummaryService.selectSummarizedReview(roomNo);
+		
+		return ResponseEntity.status(200).body(ApiResponse.ok("방 리뷰 요약 결과 불러오기 성공", result)); 
+	}
 }
