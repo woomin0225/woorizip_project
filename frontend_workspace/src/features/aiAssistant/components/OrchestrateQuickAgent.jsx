@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { runOrchestrateCommand } from '../api/orchestrateApi';
-import { synthesizeTts } from '../api/ttsApi';
 import botIcon from '../../../assets/images/ai_bot.png';
 import { useAuth } from '../../../app/providers/AuthProvider';
 import { parseJwt } from '../../../app/providers/utils/jwt';
@@ -106,24 +105,45 @@ const expandRelatedActionIds = (ids, limit = 3) => {
 const isYes = (value) => YES_TOKENS.some((token) => normalizeText(value).includes(normalizeText(token)));
 const isNo = (value) => NO_TOKENS.some((token) => normalizeText(value).includes(normalizeText(token)));
 
+const formatAssistantReply = (value) => {
+  const source = String(value ?? '').replace(/\r\n/g, '\n').trim();
+  if (!source) return '';
+
+  let formatted = source.replace(/\s*(\d+\.)\s*/g, '\n$1 ');
+  formatted = formatted.replace(/\n{2,}/g, '\n').trim();
+
+  if (!formatted.includes('\n')) {
+    formatted = formatted.replace(/([.!?]|\uB2C8\uB2E4\.|\uC138\uC694\.|\uD574\uC8FC\uC138\uC694\.|\uB429\uB2C8\uB2E4\.)\s+(?=[^\n])/g, '$1\n');
+    formatted = formatted.replace(/\n{2,}/g, '\n').trim();
+  }
+
+  return formatted;
+};
+
+const SETTINGS_GUIDE = '접근성 설정에서는 음성 모드, 페이지 진입 시 자동 요약 읽기, 현재 포커스 요소 읽기, 우리봇 답변 자동 읽기, 음성 명령 사용, 글자 크기, 페이지 배율, 버튼 크기를 조정할 수 있습니다.';
+
 export default function OrchestrateQuickAgent() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { accessToken, userId } = useAuth();
   const {
     voiceModeEnabled,
     listening,
+    speaking,
     settings,
     isSpeechRecognitionSupported,
-    isSpeechSynthesisSupported,
     enableVoiceMode,
     disableVoiceMode,
     speak,
     startListening,
     stopListening,
+    updateSetting,
   } = useVoiceMode();
 
   const bottomRef = useRef(null);
   const lastSpokenMessageRef = useRef('');
+  const voiceGuideShownRef = useRef(false);
+  const voiceLoopStateRef = useRef({ voiceModeEnabled, settings, loading: false, speaking: false });
   const userDisplayName = useMemo(() => {
     const payload = parseJwt(accessToken);
     const rawName = payload?.name || payload?.userName || payload?.nickname || payload?.preferred_username;
@@ -140,12 +160,20 @@ export default function OrchestrateQuickAgent() {
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [ttsLoading, setTtsLoading] = useState(false);
   const [pendingConfirmation, setPendingConfirmation] = useState(null);
   const [messages, setMessages] = useState([
     { role: 'assistant', text: greetingText, actionIds: STARTER_ACTION_IDS },
   ]);
   const [sessionId] = useState(newSessionId);
+
+  useEffect(() => {
+    voiceLoopStateRef.current = {
+      voiceModeEnabled,
+      settings,
+      loading,
+      speaking,
+    };
+  }, [voiceModeEnabled, settings, loading, speaking]);
 
   const disabled = useMemo(() => loading || !input.trim(), [loading, input]);
   const latestAssistant = useMemo(
@@ -153,6 +181,13 @@ export default function OrchestrateQuickAgent() {
     [messages]
   );
   const latestAssistantMessage = latestAssistant?.text || '';
+  const voiceStatusText = listening
+    ? '듣는 중입니다. 약 2초 정도 멈추면 자동으로 처리합니다.'
+    : speaking
+      ? '답변을 읽는 중입니다.'
+      : loading
+        ? '요청을 처리하고 있습니다.'
+        : '대기 중입니다. 음성 모드에서는 자동으로 다시 듣기를 시작합니다.';
 
   useEffect(() => {
     if (!open) return;
@@ -162,11 +197,25 @@ export default function OrchestrateQuickAgent() {
   useEffect(() => {
     if (voiceModeEnabled) {
       setOpen(true);
+      if (!voiceGuideShownRef.current) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: 'assistant',
+            text: '?? ??? ?????. ?? ????? ???? ???? ?? ?????. ???? ?? ????? ? ? ? ??? ?? ?? ????.',
+            actionIds: ['summary', 'roomRecommend', 'reserve'],
+          },
+        ]);
+        voiceGuideShownRef.current = true;
+      }
+      return;
     }
+
+    voiceGuideShownRef.current = false;
   }, [voiceModeEnabled]);
 
   useEffect(() => {
-    if (!voiceModeEnabled || !settings.autoReadBotReplies || !isSpeechSynthesisSupported || !latestAssistant) return;
+    if (!voiceModeEnabled || !settings.autoReadBotReplies || !latestAssistant) return;
     const suggestionText = Array.isArray(latestAssistant.actionIds) && latestAssistant.actionIds.length > 0
       ? ` 추천 명령은 ${latestAssistant.actionIds.map((id) => ACTION_MAP[id]?.label).filter(Boolean).join(', ')} 입니다.`
       : '';
@@ -174,7 +223,37 @@ export default function OrchestrateQuickAgent() {
     if (!speechText || speechText === lastSpokenMessageRef.current) return;
     lastSpokenMessageRef.current = speechText;
     speak(speechText);
-  }, [voiceModeEnabled, settings.autoReadBotReplies, isSpeechSynthesisSupported, latestAssistant, speak]);
+  }, [voiceModeEnabled, settings.autoReadBotReplies, latestAssistant, speak]);
+
+  const getRoomContext = () => {
+    const pathname = location.pathname || '';
+    const isRoomDetailPage = /^\/rooms\/[^/]+$/.test(pathname);
+    if (!isRoomDetailPage) return {};
+
+    const tourLink = document.querySelector('a[href^="/rooms/"][href$="/tour"]');
+    const href = tourLink?.getAttribute('href') || '';
+    const hrefMatch = href.match(/^\/rooms\/([^/]+)\/tour$/);
+    const pathMatch = pathname.match(/^\/rooms\/([^/]+)$/);
+    const roomNo = hrefMatch?.[1] || pathMatch?.[1] || '';
+
+    const titleCandidates = Array.from(document.querySelectorAll('main h3, main h2'))
+      .map((node) => String(node.textContent || '').replace(/^[^\p{L}\p{N}]+/gu, '').trim())
+      .filter(Boolean);
+    const roomName =
+      titleCandidates.find(
+        (text) =>
+          !text.includes('위치') &&
+          !text.includes('공용시설') &&
+          !text.includes('방 옵션')
+      ) || '';
+
+    if (!roomNo) return {};
+
+    return {
+      roomNo,
+      roomName,
+    };
+  };
 
   const getPageContext = () => {
     const sourceNode = document.querySelector('main') || document.body;
@@ -193,6 +272,15 @@ export default function OrchestrateQuickAgent() {
     setMessages((prev) => [...prev, { role: 'assistant', text, actionIds: uniqActionIds(actionIds) }]);
   };
 
+  const openAccessibilitySettings = () => {
+    window.dispatchEvent(new Event('woorizip:open-accessibility-settings'));
+  };
+
+  const goToPage = (path, message, actionIds = []) => {
+    navigate(path);
+    appendAssistantMessage(message, actionIds);
+  };
+
   const runQuickAction = (actionId, options = {}) => {
     const action = ACTION_MAP[actionId];
     if (!action) return;
@@ -204,14 +292,12 @@ export default function OrchestrateQuickAgent() {
     }
 
     if (actionId === 'reserve') {
-      navigate('/reservation/view');
-      appendAssistantMessage('예약 페이지로 이동했습니다. 원하시는 시설과 시간을 선택해주세요.', ['facilityHours', 'reservationStatus', 'facilityCancel']);
+      goToPage('/reservation/view', '예약 페이지로 이동했습니다. 원하시는 시설과 시간을 선택해주세요.', ['facilityHours', 'reservationStatus', 'facilityCancel']);
       return;
     }
 
     if (actionId === 'roomRecommend') {
-      navigate('/rooms');
-      appendAssistantMessage('방 추천을 확인할 수 있도록 방 목록 페이지로 이동했습니다.', ['availableRooms', 'deposit', 'monthlyRent']);
+      goToPage('/rooms', '방 추천을 확인할 수 있도록 방 목록 페이지로 이동했습니다.', ['availableRooms', 'deposit', 'monthlyRent']);
       return;
     }
 
@@ -223,24 +309,76 @@ export default function OrchestrateQuickAgent() {
     }
 
     if (actionId === 'facilityHours') {
-      navigate('/facility/view');
-      appendAssistantMessage('이용시간 확인을 위해 시설 페이지로 이동했습니다. 시설을 선택하면 운영시간을 확인할 수 있습니다.', ['reserve', 'facilityInfo', 'facilityCancel']);
+      goToPage('/facility/view', '이용시간 확인을 위해 시설 페이지로 이동했습니다. 시설을 선택하면 운영시간을 확인할 수 있습니다.', ['reserve', 'facilityInfo', 'facilityCancel']);
       return;
     }
 
     if (actionId === 'facilityCancel') {
-      navigate('/reservation/view');
-      appendAssistantMessage('예약 내역 페이지로 이동했습니다. 취소할 예약을 선택해 진행해주세요.', ['reservationStatus', 'reserve', 'facilityHours']);
+      goToPage('/reservation/view', '예약 내역 페이지로 이동했습니다. 취소할 예약을 선택해 진행해주세요.', ['reservationStatus', 'reserve', 'facilityHours']);
       return;
     }
 
     if (actionId === 'reservationStatus') {
-      navigate('/reservation/view');
-      appendAssistantMessage('예약 내역 페이지로 이동했습니다. 현재 예약 상태를 확인해보세요.', ['facilityCancel', 'reserve', 'facilityHours']);
+      goToPage('/reservation/view', '예약 내역 페이지로 이동했습니다. 현재 예약 상태를 확인해보세요.', ['facilityCancel', 'reserve', 'facilityHours']);
     }
   };
 
-  const extractSuggestedActions = (result, replyText) => {
+  const handleLocalSystemCommand = (text) => {
+    const normalized = normalizeText(text);
+    if (!normalized) return false;
+
+    if (normalized.includes('접근성설정') || normalized.includes('설정바꾸고싶') || normalized.includes('설정열어') || normalized.includes('설정설명')) {
+      openAccessibilitySettings();
+      appendAssistantMessage(`접근성 설정을 열었습니다.\n${SETTINGS_GUIDE}`);
+      return true;
+    }
+
+    if ((normalized.includes('페이지요약') || normalized.includes('자동요약')) && (normalized.includes('켜') || normalized.includes('on') || normalized.includes('활성화'))) {
+      updateSetting('autoReadPageSummary', true);
+      appendAssistantMessage('페이지 진입 시 자동 요약 읽기를 켰습니다. 이제 페이지를 이동할 때마다 핵심 내용을 먼저 읽어드립니다.');
+      return true;
+    }
+
+    if ((normalized.includes('페이지요약') || normalized.includes('자동요약')) && (normalized.includes('꺼') || normalized.includes('off') || normalized.includes('비활성화'))) {
+      updateSetting('autoReadPageSummary', false);
+      appendAssistantMessage('페이지 진입 시 자동 요약 읽기를 껐습니다. 필요할 때만 요약을 요청해 주세요.');
+      return true;
+    }
+
+    if (normalized.includes('공지사항') || normalized === '공지' || normalized.includes('공지페이지')) {
+      goToPage('/notices', '공지사항 페이지로 이동했습니다. 최신 공지와 운영 안내를 확인할 수 있습니다.', ['summary']);
+      return true;
+    }
+
+    if (normalized.includes('방찾기') || normalized.includes('방보여줘') || normalized.includes('방목록')) {
+      goToPage('/rooms', '방 목록 페이지로 이동했습니다. 원하는 방을 고른 뒤 투어나 상세 정보를 확인하실 수 있습니다.', ['roomRecommend', 'summary']);
+      return true;
+    }
+
+    if (normalized.includes('공용시설') || normalized.includes('시설페이지') || normalized === '시설안내') {
+      goToPage('/facility/view', '공용시설 페이지로 이동했습니다. 시설 안내와 예약 정보를 확인하실 수 있습니다.', ['facilityHours', 'reserve']);
+      return true;
+    }
+
+    if (normalized.includes('예약내역') || normalized.includes('예약페이지') || normalized.includes('예약확인')) {
+      goToPage('/reservation/view', '예약 페이지로 이동했습니다. 현재 예약 상태를 확인하거나 예약을 진행할 수 있습니다.', ['reserve', 'facilityCancel']);
+      return true;
+    }
+
+    if (normalized === '홈' || normalized.includes('홈으로가')) {
+      goToPage('/', '홈으로 이동했습니다. 주요 메뉴와 서비스 안내를 확인할 수 있습니다.', ['summary']);
+      return true;
+    }
+
+    if (normalized.includes('현재페이지요약') || normalized === '요약해줘' || normalized === '요약') {
+      runQuickAction('summary', { skipConfirm: true });
+      return true;
+    }
+
+    return false;
+  };
+
+  const extractSuggestedActions = (result) => {
     const picked = [];
     const add = (id) => {
       if (ACTION_MAP[id] && !picked.includes(id)) picked.push(id);
@@ -256,11 +394,6 @@ export default function OrchestrateQuickAgent() {
 
     addMatches(result?.intent || '');
     addMatches(result?.action?.name || '');
-    addMatches(replyText);
-
-    if (picked.length === 0) {
-      return ['summary', 'roomRecommend', 'reserve'];
-    }
 
     return expandRelatedActionIds(picked, 3);
   };
@@ -299,6 +432,10 @@ export default function OrchestrateQuickAgent() {
       return;
     }
 
+    if (handleLocalSystemCommand(text)) {
+      return;
+    }
+
     const quickAction = options.skipQuickAction ? null : detectQuickAction(text);
     if (quickAction) {
       runQuickAction(quickAction);
@@ -308,11 +445,13 @@ export default function OrchestrateQuickAgent() {
     setLoading(true);
 
     try {
+      const roomContext = getRoomContext();
       const result = await runOrchestrateCommand({
         text,
         sessionId,
         context: {
           path: window.location.pathname,
+          ...roomContext,
           pageSnapshot: getPageContext(),
           siteProfile: {
             serviceName: '우리집',
@@ -324,11 +463,12 @@ export default function OrchestrateQuickAgent() {
       });
 
       const reply = result?.reply || result?.outputText || result?.message || result?.result || '응답은 받았지만 표시 가능한 메시지 필드가 없습니다.';
-      const shouldShowIntent = result?.intent && String(result.intent).toLowerCase() !== 'fallback';
+      const shouldShowIntent = result?.intent && String(result.intent).toLowerCase() !== 'fallback' && !voiceModeEnabled;
       const intent = shouldShowIntent ? `\n(intent: ${result.intent})` : '';
-      const actionIds = extractSuggestedActions(result, String(reply));
+      const actionIds = extractSuggestedActions(result);
+      const formattedReply = formatAssistantReply(String(reply));
 
-      appendAssistantMessage(`${String(reply)}${intent}`, actionIds);
+      appendAssistantMessage(`${formattedReply}${intent}`, actionIds);
 
       if (voiceModeEnabled && result?.requiresConfirm && actionIds.length > 0) {
         setPendingConfirmation({ actionId: actionIds[0], label: ACTION_MAP[actionIds[0]]?.label });
@@ -352,34 +492,20 @@ export default function OrchestrateQuickAgent() {
 
   const playLatestVoice = async () => {
     const sourceText = (latestAssistantMessage || '').split('\n(intent:')[0].trim();
-    if (!sourceText || ttsLoading) return;
-
-    try {
-      setTtsLoading(true);
-      const audioBytes = await synthesizeTts({ text: sourceText });
-      const blob = new Blob([audioBytes], { type: 'audio/wav' });
-      const audioUrl = URL.createObjectURL(blob);
-      const audio = new Audio(audioUrl);
-      audio.onended = () => URL.revokeObjectURL(audioUrl);
-      audio.onerror = () => URL.revokeObjectURL(audioUrl);
-      await audio.play();
-    } catch (error) {
-      const errorBody = error?.response?.data;
-      const apiMessage = errorBody?.data || errorBody?.message || errorBody?.error || error?.message || 'TTS 호출 중 오류가 발생했습니다.';
-      appendAssistantMessage(`오류: ${apiMessage}`);
-    } finally {
-      setTtsLoading(false);
-    }
+    if (!sourceText) return;
+    await speak(sourceText);
   };
 
-  const startVoiceCommand = () => {
+  const startVoiceCommand = (options = {}) => {
+    const { quiet = false, retryOnEmpty = false } = options;
+
     if (!voiceModeEnabled) {
       enableVoiceMode();
       return;
     }
 
     if (!settings.voiceCommandEnabled) {
-      appendAssistantMessage('??? ???? ?? ?? ??? ?? ????. ??? ??? ???.');
+      appendAssistantMessage('음성 명령이 꺼져 있습니다. 접근성 설정에서 음성 명령 사용을 켜 주세요.');
       return;
     }
 
@@ -388,20 +514,53 @@ export default function OrchestrateQuickAgent() {
       return;
     }
 
-    speak('말씀해 주세요.');
+    if (!quiet) {
+      speak('말씀해 주세요. 약 2초 정도 멈추면 자동으로 처리합니다.');
+    }
+
+    let hasResult = false;
+
     startListening({
       onResult: (transcript) => {
+        hasResult = true;
         if (!transcript) {
-          appendAssistantMessage('음성 입력을 인식하지 못했습니다. 다시 말씀해 주세요.', ['summary', 'roomRecommend', 'reserve']);
+          if (!retryOnEmpty) {
+            appendAssistantMessage('음성 입력을 인식하지 못했습니다. 다시 말씀해 주세요.', ['summary', 'roomRecommend', 'reserve']);
+          }
           return;
         }
         sendMessage(transcript, { displayText: `음성: ${transcript}` });
       },
-      onError: () => {
+      onError: (event) => {
+        const errorType = event?.error || event?.message || '';
+        if (errorType === 'no-speech' || errorType === 'aborted') {
+          return;
+        }
         appendAssistantMessage('음성 입력 중 문제가 발생했습니다. 다시 시도해 주세요.', ['summary', 'roomRecommend', 'reserve']);
+      },
+      onEnd: () => {
+        const current = voiceLoopStateRef.current;
+        if (!retryOnEmpty || hasResult || !current.voiceModeEnabled || !current.settings.voiceCommandEnabled || current.loading || current.speaking) {
+          return;
+        }
+        window.setTimeout(() => {
+          const latest = voiceLoopStateRef.current;
+          if (latest.voiceModeEnabled && latest.settings.voiceCommandEnabled && !latest.loading && !latest.speaking) {
+            startVoiceCommand({ quiet: true, retryOnEmpty: true });
+          }
+        }, 700);
       },
     });
   };
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (!voiceModeEnabled || !settings.voiceCommandEnabled || listening || loading || speaking) return undefined;
+    const timer = window.setTimeout(() => {
+      startVoiceCommand({ quiet: true, retryOnEmpty: true });
+    }, 900);
+    return () => window.clearTimeout(timer);
+  }, [voiceModeEnabled, settings.voiceCommandEnabled, listening, loading, speaking]);
 
   const submit = async (e) => {
     e.preventDefault();
@@ -428,11 +587,14 @@ export default function OrchestrateQuickAgent() {
               <button type="button" className={styles.modeBtn} onClick={voiceModeEnabled ? disableVoiceMode : () => enableVoiceMode()}>
                 {voiceModeEnabled ? '음성 끄기' : '음성 켜기'}
               </button>
-              <button type="button" className={styles.voiceBtn} onClick={playLatestVoice} disabled={ttsLoading || !latestAssistantMessage}>
-                {ttsLoading ? 'TTS...' : '다시 읽기'}
+              <button type="button" className={styles.settingBtn} onClick={openAccessibilitySettings}>
+                설정
+              </button>
+              <button type="button" className={styles.voiceBtn} onClick={playLatestVoice} disabled={!latestAssistantMessage}>
+                다시 읽기
               </button>
               {voiceModeEnabled && (
-                <button type="button" className={styles.micBtn} onClick={listening ? stopListening : startVoiceCommand}>
+                <button type="button" className={styles.micBtn} onClick={listening ? stopListening : () => startVoiceCommand({ quiet: false, retryOnEmpty: true })}>
                   {listening ? '듣는 중' : '말하기'}
                 </button>
               )}
@@ -442,43 +604,69 @@ export default function OrchestrateQuickAgent() {
             </div>
           </header>
 
-          {voiceModeEnabled && (
-            <div className={styles.voiceGuide}>
-              {pendingConfirmation
-                ? `${pendingConfirmation.label} 진행 전 재확인 대기 중입니다. 예 또는 아니오로 말씀해 주세요.`
-                : '음성 모드에서는 말하기 버튼으로 명령을 입력하고, 우리봇이 답변과 추천 행동을 읽어드립니다.'}
-            </div>
-          )}
-
-          <div className={styles.body}>
-            {messages.map((msg, idx) => (
-              <div key={`${msg.role}-${idx}`} className={msg.role === 'user' ? styles.userMsg : styles.botMsg}>
-                <div>{msg.text}</div>
-                {msg.role === 'assistant' && Array.isArray(msg.actionIds) && msg.actionIds.length > 0 && (
-                  <div className={styles.bubbleActions}>
-                    {msg.actionIds.map((id) => (
-                      <button key={`bubble-action-${idx}-${id}`} type="button" className={styles.bubbleActionBtn} onClick={() => onQuickActionClick(id)} disabled={loading}>
-                        {ACTION_MAP[id].label}
-                      </button>
-                    ))}
-                  </div>
-                )}
+          {voiceModeEnabled ? (
+            <div className={styles.voiceConsole}>
+              <div className={styles.voiceStatusCard}>
+                <h3 className={styles.voiceStatusTitle}>음성 전용 안내</h3>
+                <p className={styles.voiceStatusText}>{voiceStatusText}</p>
+                <ul className={styles.voiceHintList}>
+                  <li>말씀하신 뒤 잠시 멈추면 우리봇이 자동으로 처리합니다.</li>
+                  <li>페이지 이동, 예약, 접근성 설정 설명, 자동 요약 켜기 같은 명령을 바로 말할 수 있습니다.</li>
+                  <li>페이지 자동 요약이 켜져 있으면 이동할 때마다 핵심 내용을 먼저 읽어드립니다.</li>
+                </ul>
               </div>
-            ))}
-            <div ref={bottomRef} />
-          </div>
 
-          <form className={styles.form} onSubmit={submit}>
-            <input className={styles.input} type="text" value={input} onChange={(e) => setInput(e.target.value)} placeholder={voiceModeEnabled ? '말하거나 입력해주세요' : '내용을 입력해주세요'} />
-            {voiceModeEnabled && (
-              <button type="button" className={styles.micBtn} onClick={listening ? stopListening : startVoiceCommand}>
-                {listening ? '중지' : '음성'}
-              </button>
-            )}
-            <button type="submit" className={styles.sendBtn} disabled={disabled}>
-              {loading ? '대기중' : '전송'}
-            </button>
-          </form>
+              <div className={styles.voiceActionGrid}>
+                <div className={styles.voiceActionCard}>
+                  <strong>예시 명령</strong>
+                  <span>공지사항으로 이동해줘</span>
+                  <span>현재 페이지 요약해줘</span>
+                </div>
+                <div className={styles.voiceActionCard}>
+                  <strong>접근성 제어</strong>
+                  <span>접근성 설정 열어줘</span>
+                  <span>페이지 요약 자동 읽기 켜줘</span>
+                </div>
+                <div className={styles.voiceActionCard}>
+                  <strong>시설/예약</strong>
+                  <span>예약 페이지로 이동해줘</span>
+                  <span>공용시설 안내해줘</span>
+                </div>
+                <div className={styles.voiceActionCard}>
+                  <strong>방 찾기</strong>
+                  <span>방 목록 보여줘</span>
+                  <span>이 방 투어 신청 도와줘</span>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <>
+              <div className={styles.body}>
+                {messages.map((msg, idx) => (
+                  <div key={`${msg.role}-${idx}`} className={msg.role === 'user' ? styles.userMsg : styles.botMsg}>
+                    <div>{msg.text}</div>
+                    {msg.role === 'assistant' && Array.isArray(msg.actionIds) && msg.actionIds.length > 0 && (
+                      <div className={styles.bubbleActions}>
+                        {msg.actionIds.map((id) => (
+                          <button key={`bubble-action-${idx}-${id}`} type="button" className={styles.bubbleActionBtn} onClick={() => onQuickActionClick(id)} disabled={loading}>
+                            {ACTION_MAP[id].label}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+                <div ref={bottomRef} />
+              </div>
+
+              <form className={styles.form} onSubmit={submit}>
+                <input className={styles.input} type="text" value={input} onChange={(e) => setInput(e.target.value)} placeholder="내용을 입력해주세요" />
+                <button type="submit" className={styles.sendBtn} disabled={disabled}>
+                  {loading ? '대기중' : '전송'}
+                </button>
+              </form>
+            </>
+          )}
         </section>
       )}
     </div>

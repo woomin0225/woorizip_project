@@ -20,6 +20,12 @@ GENERAL_CHAT_KEYWORDS = (
     '뭐할수있어', '뭐 할 수 있어', '무엇을할수있어', '무엇을 할 수 있어', '자기소개',
     '소개해줘', '고마워', '감사', '잘가', '이야기하자'
 )
+TOUR_APPLY_KEYWORDS = (
+    '투어신청', '투어 신청', '방보러', '방 보러', '방보고싶', '방 보고 싶',
+    '방보러가', '방 보러 가', '내방문', '내 방문', '방문예약', '방문 예약',
+    '투어예약', '투어 예약', '집보러', '집 보러', '룸투어', 'room tour',
+    'tour apply', 'tour booking', 'viewing'
+)
 
 
 def compact_text(value: Any, max_length: int | None = None) -> str:
@@ -80,9 +86,26 @@ def should_include_page_context(text: str) -> bool:
 def build_instruction(text: str, context: dict[str, Any]) -> str:
     user_text = compact_text(text, MAX_TEXT_LENGTH)
     if not context:
-        return user_text
+        context = {}
 
     parts = [user_text]
+    compact = user_text.lower().replace(' ', '')
+
+    if any(keyword.replace(' ', '') in compact for keyword in TOUR_APPLY_KEYWORDS):
+        parts.append(
+            '\n'.join(
+                [
+                    '[WORKFLOW_HINT]',
+                    'intent: TOUR_APPLY',
+                    'route: azure_workflow',
+                    'description: 사용자가 현재 보고 있는 방의 투어 신청 또는 방 방문 의도를 보였습니다.',
+                    'required_slots: roomNo, preferredVisitAt',
+                    'instruction: roomNo가 있으면 현재 방 기준으로 바로 투어 신청 워크플로로 진입하세요. roomNo가 없으면 방 상세 페이지로 이동한 뒤 다시 신청해 달라고 짧게 안내하세요. 이름과 연락처는 다시 묻지 말고 서버의 현재 사용자 정보를 사용한다고 가정하세요. 날짜와 시간은 한 번에 함께 요청하세요.',
+                    '[/WORKFLOW_HINT]',
+                ]
+            )
+        )
+
     site_profile = context.get('siteProfile') or {}
     if site_profile:
         lines = ['[SITE_PROFILE]']
@@ -141,6 +164,9 @@ def normalize_assistant_payload(payload: dict[str, Any]) -> dict[str, Any]:
         'text': text,
         'context': context,
         'instruction': build_instruction(text, context),
+        'workflowHint': 'TOUR_APPLY'
+        if any(keyword.replace(' ', '') in text.lower().replace(' ', '') for keyword in TOUR_APPLY_KEYWORDS)
+        else None,
         'systemPrompt': compact_text(payload.get('systemPrompt'), MAX_TEXT_LENGTH)
         or None,
     }

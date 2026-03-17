@@ -3,14 +3,15 @@
 1. 가상환경 활성화
    .\.venv\Scripts\activate
 
-2. requirements.txt 설치
-   pip install -r requirements-js.txt
+2. 공통 의존성 설치
+   python -m pip install --upgrade pip setuptools wheel
+   python -m pip install -r requirements-merged.txt
 
 3. GroundingDINO 폴더로 이동
    cd GroundingDINO
 
 4. 설치
-   pip install -e .
+   python -m pip install -e . --no-build-isolation
 
    오류 해결방법 (이 방법으로 설치해주세요!!)
    cd ../
@@ -19,7 +20,7 @@
    python -m ensurepip --upgrade
    python -m pip install --upgrade pip setuptools wheel
    python -m pip install torch torchvision
-   python -m pip install -r requirements-js.txt
+   python -m pip install -r requirements-merged.txt
    cd GroundingDINO
    python -m pip install -e . --no-build-isolation
 
@@ -27,6 +28,8 @@
 - GroundingDINO는 환경에 따라 기본 `pip install -e .`만으로 설치 시 빌드/의존성 충돌이 발생할 수 있음
 - 새 가상환경에서 `torch`, `torchvision`, `setuptools`, `wheel`을 먼저 설치한 뒤
   `python -m pip install -e . --no-build-isolation`로 설치하면 해결될 수 있음
+- Qwen2, KURE-v1, GroundingDINO를 같은 환경에서 쓰려면 `requirements-js.txt` 대신
+  공통 버전이 정리된 `requirements-merged.txt` 기준으로 먼저 설치하는 것을 권장
 
 5. 설치 확인
    python -c "import groundingdino; print(groundingdino.**file**)"

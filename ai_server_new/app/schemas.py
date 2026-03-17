@@ -252,6 +252,20 @@ class TourApplyRes(BaseModel):
     springResponse: dict[str, Any] = Field(default_factory=dict)
 
 
+class TourWorkflowApplyReq(BaseModel):
+    schemaVersion: str = "v1"
+    sessionId: str | None = None
+    clientRequestId: str | None = None
+    roomNo: str
+    roomName: str | None = None
+    visitDate: str | None = None
+    visitTime: str | None = None
+    preferredVisitAt: str | None = None
+    userName: str | None = None
+    userPhone: str | None = None
+    inquiry: str | None = None
+
+
 class ListingIndexReq(BaseModel):
     room_id: str
     room: dict[str, Any]
