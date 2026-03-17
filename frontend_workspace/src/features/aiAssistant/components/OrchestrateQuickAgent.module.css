@@ -1,4 +1,4 @@
-.root {
+﻿.root {
   position: fixed;
   right: 24px;
   bottom: 24px;
@@ -65,6 +65,12 @@
   gap: 4px;
 }
 
+.headerTitleWrap strong {
+  display: block;
+  white-space: nowrap;
+  word-break: keep-all;
+}
+
 .voiceModeBadge {
   display: inline-flex;
   align-items: center;
@@ -97,7 +103,8 @@
 
 .modeBtn,
 .voiceBtn,
-.micBtn {
+.micBtn,
+.settingBtn {
   border: none;
   border-radius: 10px;
   color: #fff;
@@ -120,9 +127,14 @@
   background: #0f766e;
 }
 
+.settingBtn {
+  background: #7c3aed;
+}
+
 .modeBtn:disabled,
 .voiceBtn:disabled,
-.micBtn:disabled {
+.micBtn:disabled,
+.settingBtn:disabled {
   opacity: 0.6;
   cursor: default;
 }
@@ -243,4 +255,71 @@
 .sendBtn:disabled {
   background: #cbd5e1;
   cursor: default;
+}
+
+.voiceConsole {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px 16px 16px;
+  background: linear-gradient(180deg, #fff9f4 0%, #ffffff 100%);
+}
+
+.voiceStatusCard {
+  border: 1px solid #fed7aa;
+  background: #fff7ed;
+  border-radius: 18px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.voiceStatusTitle {
+  margin: 0;
+  font-size: 1rem;
+  color: #9a3412;
+}
+
+.voiceStatusText {
+  margin: 0;
+  color: #7c2d12;
+  line-height: 1.6;
+  font-size: 0.93rem;
+}
+
+.voiceHintList {
+  margin: 0;
+  padding-left: 18px;
+  color: #7c2d12;
+  line-height: 1.7;
+  font-size: 0.9rem;
+}
+
+.voiceActionGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.voiceActionCard {
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  background: #fff;
+  padding: 14px 12px;
+  text-align: left;
+}
+
+.voiceActionCard strong {
+  display: block;
+  color: #111827;
+  margin-bottom: 6px;
+}
+
+.voiceActionCard span {
+  display: block;
+  color: #6b7280;
+  font-size: 0.86rem;
+  line-height: 1.55;
 }

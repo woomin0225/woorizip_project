@@ -12,11 +12,14 @@ async function postWithPathFallback(payload, paths) {
   for (let i = 0; i < paths.length; i += 1) {
     const path = paths[i];
     try {
-      const { data } = await apiJson().post(path, payload, {
+      const response = await apiJson().post(path, payload, {
         baseURL: getAiBaseUrl(),
         responseType: 'arraybuffer',
       });
-      return data;
+      return {
+        audioBytes: response.data,
+        mimeType: response.headers?.['content-type'] || 'audio/wav',
+      };
     } catch (error) {
       lastError = error;
       if (!isMissingEndpointError(error) || i === paths.length - 1) {

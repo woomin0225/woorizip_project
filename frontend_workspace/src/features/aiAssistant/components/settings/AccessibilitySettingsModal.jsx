@@ -1,4 +1,4 @@
-﻿import React, { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useVoiceMode } from '../../context/VoiceModeContext';
 import styles from './AccessibilitySettingsModal.module.css';
 
@@ -20,6 +20,8 @@ const BUTTON_OPTIONS = [
   { value: 1.24, label: '크게' },
 ];
 
+const SETTINGS_SUMMARY = '접근성 설정에서는 음성 모드, 페이지 진입 시 자동 요약 읽기, 현재 포커스 요소 읽기, 우리봇 답변 자동 읽기, 음성 명령 사용, 글자 크기, 페이지 배율, 버튼 크기를 조정할 수 있습니다.';
+
 export default function AccessibilitySettingsModal({ open, onClose }) {
   const {
     voiceModeEnabled,
@@ -27,6 +29,7 @@ export default function AccessibilitySettingsModal({ open, onClose }) {
     enableVoiceMode,
     disableVoiceMode,
     updateSetting,
+    speak,
   } = useVoiceMode();
 
   useEffect(() => {
@@ -40,6 +43,11 @@ export default function AccessibilitySettingsModal({ open, onClose }) {
       body.style.overflow = previousOverflow;
     };
   }, [open]);
+
+  useEffect(() => {
+    if (!open || !voiceModeEnabled) return;
+    speak(SETTINGS_SUMMARY);
+  }, [open, voiceModeEnabled, speak]);
 
   if (!open) return null;
 
