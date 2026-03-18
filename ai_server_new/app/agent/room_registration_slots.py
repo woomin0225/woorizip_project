@@ -1,14 +1,6 @@
 from __future__ import annotations
 
-"""방 등록 에이전트가 공통으로 참조하는 슬롯 정의 모음.
-
-이 파일은 "방 등록을 완료하려면 어떤 정보가 필요한가?"를 한곳에 모아 둔 설정 파일에 가깝다.
-핵심 아이디어는 다음과 같다.
-
-1. 슬롯(slot)은 사용자가 채워야 하는 입력 항목이다.
-2. 질문 순서를 고정하고 싶기 때문에 `OrderedDict`를 사용한다.
-3. 질문 문구, 라벨, 필수 여부를 코드 여러 곳에 흩뿌리지 않고 한곳에서 관리한다.
-"""
+"""방 등록 에이전트가 공통으로 참조하는 슬롯 정의와 헬퍼 모음."""
 
 from collections import OrderedDict
 from typing import Any
@@ -22,8 +14,8 @@ SLOT_DEFINITIONS: "OrderedDict[str, dict[str, Any]]" = OrderedDict(
         (
             "houseNo",
             {
-                "label": "매물 소속 houseNo",
-                "question": "어느 houseNo에 방을 등록할지 알려주세요.",
+                "label": "소속 건물",
+                "question": "어느 건물에 방을 등록할까요? 건물명을 알려주세요.",
                 "required": True,
             },
         ),
@@ -70,7 +62,7 @@ SLOT_DEFINITIONS: "OrderedDict[str, dict[str, Any]]" = OrderedDict(
         (
             "roomFacing",
             {
-                "label": "방 향",
+                "label": "방향",
                 "question": "방의 방향을 알려주세요. 예: 남향, 동향",
                 "required": True,
             },
@@ -120,9 +112,9 @@ SLOT_DEFINITIONS: "OrderedDict[str, dict[str, Any]]" = OrderedDict(
 
 
 CONFIRM_TOKENS = {
-    "응",
     "네",
     "예",
+    "응",
     "맞아",
     "맞습니다",
     "확인",
@@ -131,7 +123,7 @@ CONFIRM_TOKENS = {
     "진행",
     "진행해줘",
 }
-DENY_TOKENS = {"아니", "아니오", "취소", "중지", "그만", "수정"}
+DENY_TOKENS = {"아니", "아니요", "취소", "중지", "그만", "수정"}
 ROOM_CREATE_KEYWORDS = (
     "방등록",
     "방 등록",
@@ -139,13 +131,13 @@ ROOM_CREATE_KEYWORDS = (
     "매물 등록",
     "룸등록",
     "룸 등록",
-    "새 방",
+    "방 추가",
     "등록할 방",
 )
 
 
 def normalize_user_text(value: str | None) -> str:
-    """비어 있는 입력을 안전하게 문자열로 정규화한다."""
+    """비어 있는 입력도 안전하게 문자열로 정리한다."""
 
     return str(value or "").strip()
 
@@ -154,6 +146,129 @@ def compact_text(value: str | None) -> str:
     """간단한 키워드 비교를 위해 공백과 대소문자 차이를 줄인다."""
 
     return normalize_user_text(value).lower().replace(" ", "")
+
+
+def normalize_house_name(value: str | None) -> str:
+    """건물명 비교용 정규화 문자열을 만든다."""
+
+    return compact_text(value).replace("건물", "")
+
+
+def normalize_house_item(item: Any) -> dict[str, str]:
+    """컨텍스트에서 넘어온 건물 정보를 표준 형태로 정리한다."""
+
+    if not isinstance(item, dict):
+        return {}
+
+    house_no = normalize_user_text(item.get("houseNo"))
+    house_name = normalize_user_text(item.get("houseName"))
+    normalized: dict[str, str] = {}
+
+    if house_no:
+        normalized["houseNo"] = house_no
+    if house_name:
+        normalized["houseName"] = house_name
+    return normalized
+
+
+def get_room_create_context(request_meta: dict[str, Any] | None) -> dict[str, Any]:
+    """프론트 컨텍스트에서 방 등록 관련 건물 정보를 꺼낸다."""
+
+    request_meta = request_meta or {}
+    context = request_meta.get("context")
+    if not isinstance(context, dict):
+        return {"current_house": {}, "available_houses": []}
+
+    current_house = normalize_house_item(context.get("currentHouse"))
+    # `availableHouses`는 "건물명으로 답했을 때 어떤 houseNo로 볼지" 판단하는 재료다.
+    available_houses = [
+        item
+        for item in (
+            normalize_house_item(raw)
+            for raw in (context.get("availableHouses") or [])
+        )
+        if item
+    ]
+
+    if current_house:
+        current_house_no = current_house.get("houseNo")
+        if current_house_no and not any(
+            house.get("houseNo") == current_house_no for house in available_houses
+        ):
+            available_houses.insert(0, current_house)
+
+    return {
+        "current_house": current_house,
+        "available_houses": available_houses,
+    }
+
+
+def find_house_match(text: str, available_houses: list[dict[str, str]]) -> dict[str, str] | None:
+    """사용자 입력을 건물명/건물번호와 대조해 가장 그럴듯한 건물을 찾는다."""
+
+    if not available_houses:
+        return None
+
+    normalized_input = normalize_house_name(text)
+    normalized_raw = compact_text(text)
+    if not normalized_input and not normalized_raw:
+        return None
+
+    best_match: dict[str, str] | None = None
+    best_score = 0
+
+    for house in available_houses:
+        house_name = normalize_house_name(house.get("houseName"))
+        house_no = compact_text(house.get("houseNo"))
+        score = 0
+
+        # 완전 일치 > 포함 일치 > houseNo 일치 순으로 점수를 준다.
+        # 이렇게 두면 "성수하우스"처럼 건물명만 답한 경우를 가장 자연스럽게 처리할 수 있다.
+        if house_name and normalized_input == house_name:
+            score = 5
+        elif house_name and house_name in normalized_input:
+            score = 4
+        elif house_name and normalized_input in house_name and len(normalized_input) >= 2:
+            score = 3
+        elif house_no and normalized_raw == house_no:
+            score = 2
+        elif house_no and house_no in normalized_raw:
+            score = 1
+
+        if score > best_score:
+            best_match = house
+            best_score = score
+
+    return best_match if best_score > 0 else None
+
+
+def get_house_display_name(slots: dict[str, Any]) -> str:
+    """사용자에게 보여줄 건물명을 우선순위에 따라 고른다."""
+
+    house_name = normalize_user_text(slots.get("houseName"))
+    if house_name:
+        return house_name
+    return normalize_user_text(slots.get("houseNo"))
+
+
+def build_house_question(available_houses: list[dict[str, str]] | None = None) -> str:
+    """건물 선택 질문을 사용자 친화적인 문구로 만든다."""
+
+    available_houses = available_houses or []
+    if not available_houses:
+        # 후보 건물 목록이 없으면 일반 질문으로만 묻는다.
+        return get_slot_question("houseNo")
+
+    house_names = [
+        house.get("houseName") or house.get("houseNo")
+        for house in available_houses
+        if house.get("houseName") or house.get("houseNo")
+    ]
+    # 너무 길게 나열되면 대화가 지저분해지므로 미리보기는 앞쪽 몇 개만 보여 준다.
+    preview = ", ".join(house_names[:5])
+    if len(house_names) > 5:
+        preview += " 외"
+    return f"어느 건물에 방을 등록할까요? 건물명을 알려주세요.\n선택 가능한 건물: {preview}"
 
 
 def should_handle_room_create(text: str, session_state: dict[str, Any] | None = None) -> bool:

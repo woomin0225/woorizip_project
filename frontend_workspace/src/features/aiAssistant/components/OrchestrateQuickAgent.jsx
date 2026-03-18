@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { runOrchestrateCommand } from '../api/orchestrateApi';
 import { fetchBoardSummary } from '../../board/api/BoardSummaryApi';
+import { getMyHouses } from '../../houseAndRoom/api/houseApi';
 import botIcon from '../../../assets/images/ai_bot.png';
 import { useAuth } from '../../../app/providers/AuthProvider';
 import { parseJwt } from '../../../app/providers/utils/jwt';
@@ -307,6 +308,13 @@ const formatAssistantReply = (value) => {
   return formatted;
 };
 
+const normalizeHouseContextItem = (house) => {
+  const houseNo = String(house?.houseNo || '').trim();
+  const houseName = String(house?.houseName || '').trim();
+  if (!houseNo && !houseName) return null;
+  return { houseNo, houseName };
+};
+
 const SETTINGS_GUIDE = '접근성 설정에서는 음성 모드, 페이지 진입 시 자동 요약 읽기, 현재 포커스 요소 읽기, 우리봇 답변 자동 읽기, 음성 명령 사용, 글자 크기, 페이지 배율, 버튼 크기를 조정할 수 있습니다.';
 
 export default function OrchestrateQuickAgent() {
@@ -352,6 +360,8 @@ export default function OrchestrateQuickAgent() {
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [managedHouses, setManagedHouses] = useState([]);
+  const [managedHousesLoaded, setManagedHousesLoaded] = useState(false);
   const [pendingConfirmation, setPendingConfirmation] = useState(null);
   const [messages, setMessages] = useState([
     { role: 'assistant', text: greetingText, actionIds: STARTER_ACTION_IDS },
@@ -386,6 +396,38 @@ export default function OrchestrateQuickAgent() {
     if (!open) return;
     bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
   }, [messages, open]);
+
+  useEffect(() => {
+    if (!open || managedHousesLoaded) return undefined;
+
+    let cancelled = false;
+
+    (async () => {
+      try {
+        // 방 등록처럼 "내가 가진 건물 중 어디에 넣을지"를 묻는 흐름을 위해
+        // 챗봇이 열렸을 때 소유 건물 목록을 한 번 받아 두고 컨텍스트로 재사용한다.
+        const houses = await getMyHouses();
+        if (cancelled) return;
+        setManagedHouses(
+          Array.isArray(houses)
+            ? houses.map(normalizeHouseContextItem).filter(Boolean)
+            : []
+        );
+      } catch {
+        if (!cancelled) {
+          setManagedHouses([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setManagedHousesLoaded(true);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [managedHousesLoaded, open]);
 
   useEffect(() => {
     if (voiceModeEnabled) {
@@ -451,6 +493,37 @@ export default function OrchestrateQuickAgent() {
     if (!roomNo) return {};
 
     return { roomNo, roomName };
+  };
+
+  const getRoomCreateContext = () => {
+    const pathname = location.pathname || '';
+    const roomCreateMatch = pathname.match(/^\/estate\/houses\/([^/]+)\/rooms\/new$/);
+    const currentHouseNo = roomCreateMatch?.[1] || '';
+    const currentHouseName =
+      String(location?.state?.houseName || '').trim() ||
+      managedHouses.find((house) => house.houseNo === currentHouseNo)?.houseName ||
+      '';
+    const availableHouses = managedHouses.filter(
+      (house) => house.houseNo || house.houseName
+    );
+
+    if (!currentHouseNo && availableHouses.length === 0) {
+      return {};
+    }
+
+    // 백엔드에서는 houseNo로 등록하지만, 사용자 경험은 houseName 기준이 더 자연스럽다.
+    // 그래서 현재 선택 건물과 전체 후보 건물 목록을 구조화해서 함께 보낸다.
+    const context = {};
+    if (currentHouseNo || currentHouseName) {
+      context.currentHouse = {
+        houseNo: currentHouseNo,
+        houseName: currentHouseName,
+      };
+    }
+    if (availableHouses.length > 0) {
+      context.availableHouses = availableHouses;
+    }
+    return context;
   };
 
   const getPageContext = () => {
@@ -793,12 +866,14 @@ export default function OrchestrateQuickAgent() {
 
     try {
       const roomContext = getRoomContext();
+      const roomCreateContext = getRoomCreateContext();
       const result = await runOrchestrateCommand({
         text: messageText,
         sessionId,
         context: {
           path: window.location.pathname,
           ...roomContext,
+          ...roomCreateContext,
           pageSnapshot: getPageContext(),
           siteProfile: {
             serviceName: '\uC6B0\uB9AC\uC9D1',
@@ -822,12 +897,9 @@ export default function OrchestrateQuickAgent() {
         return;
       }
 
-      const shouldShowIntent =
-        result?.intent && String(result.intent).toLowerCase() !== 'fallback' && !voiceModeEnabled;
-      const intent = shouldShowIntent ? `\n(intent: ${result.intent})` : '';
       const actionIds = extractSuggestedActions(result);
       const formattedReply = formatAssistantReply(String(reply));
-      appendAssistantMessage(`${formattedReply}${intent}`, actionIds);
+      appendAssistantMessage(formattedReply, actionIds);
 
       if (voiceModeEnabled && result?.requiresConfirm && actionIds.length > 0) {
         setPendingConfirmation({

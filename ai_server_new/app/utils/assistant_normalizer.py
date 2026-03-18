@@ -35,6 +35,17 @@ def compact_text(value: Any, max_length: int | None = None) -> str:
     return text[: max_length - 1].rstrip() + '…'
 
 
+def normalize_house_context_item(item: Any) -> dict[str, str]:
+    if not isinstance(item, dict):
+        return {}
+
+    normalized = {
+        'houseNo': compact_text(item.get('houseNo'), 80),
+        'houseName': compact_text(item.get('houseName'), 120),
+    }
+    return {key: value for key, value in normalized.items() if value}
+
+
 def normalize_context(context: dict[str, Any] | None) -> dict[str, Any]:
     context = context or {}
     normalized: dict[str, Any] = {}
@@ -67,6 +78,23 @@ def normalize_context(context: dict[str, Any] | None) -> dict[str, Any]:
         normalized['siteProfile'] = {
             key: value for key, value in normalized_site.items() if value
         }
+
+    current_house = normalize_house_context_item(context.get('currentHouse'))
+    if current_house:
+        normalized['currentHouse'] = current_house
+
+    available_houses = context.get('availableHouses')
+    if isinstance(available_houses, list):
+        normalized_houses = [
+            item
+            for item in (
+                normalize_house_context_item(raw)
+                for raw in available_houses[:20]
+            )
+            if item
+        ]
+        if normalized_houses:
+            normalized['availableHouses'] = normalized_houses
 
     return normalized
 
