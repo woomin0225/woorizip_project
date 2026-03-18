@@ -14,11 +14,18 @@ from app.utils.assistant_normalizer import (
 class AssistantService:
     def __init__(self, client: OpenAIAgentClient):
         self.client = client
+        # 방 등록 에이전트는 여러 턴에 걸쳐 슬롯을 모으기 때문에,
+        # 요청마다 새로 만들기보다 서비스 인스턴스가 살아 있는 동안 함께 유지하는 편이 이해하기 쉽다.
+        # 이렇게 해 두면 에이전트 내부의 세션 저장소도 같은 객체를 계속 사용하게 된다.
         self.room_registration_agent = RoomRegistrationAgent()
 
     async def run(self, request: AssistantRunReq) -> dict:
         payload = normalize_assistant_payload(request.model_dump())
+        # 모든 요청을 바로 범용 LLM으로 보내지 않고, 먼저 "전용 에이전트가 처리해야 하는가?"를 확인한다.
+        # 이유는 방 등록처럼 구조화된 업무는 규칙 기반 에이전트가 더 빠르고, 예측 가능하고, 상태 관리도 쉽기 때문이다.
         if self.room_registration_agent.should_handle(payload):
+            # 전용 에이전트가 맡는다고 판단되면 이 시점에서 바로 라우팅을 종료한다.
+            # 즉, 아래의 일반 AI endpoint 호출로 내려가지 않고 방 등록 전용 흐름이 우선권을 가진다.
             return await self.room_registration_agent.run(payload)
 
         if not (settings.AI_AGENT_ENDPOINT or '').strip():

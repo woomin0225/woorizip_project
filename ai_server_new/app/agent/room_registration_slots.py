@@ -1,5 +1,15 @@
 from __future__ import annotations
 
+"""방 등록 에이전트가 공통으로 참조하는 슬롯 정의 모음.
+
+이 파일은 "방 등록을 완료하려면 어떤 정보가 필요한가?"를 한곳에 모아 둔 설정 파일에 가깝다.
+핵심 아이디어는 다음과 같다.
+
+1. 슬롯(slot)은 사용자가 채워야 하는 입력 항목이다.
+2. 질문 순서를 고정하고 싶기 때문에 `OrderedDict`를 사용한다.
+3. 질문 문구, 라벨, 필수 여부를 코드 여러 곳에 흩뿌리지 않고 한곳에서 관리한다.
+"""
+
 from collections import OrderedDict
 from typing import Any
 
@@ -9,36 +19,146 @@ ROOM_CREATE_INTENT = "ROOM_CREATE"
 
 SLOT_DEFINITIONS: "OrderedDict[str, dict[str, Any]]" = OrderedDict(
     [
-        ("houseNo", {"label": "\ub9e4\ubb3c \uc18c\uc18d houseNo", "question": "\uc5b4\ub290 houseNo\uc5d0 \ubc29\uc744 \ub4f1\ub85d\ud560\uc9c0 \uc54c\ub824\uc8fc\uc138\uc694.", "required": True}),
-        ("roomName", {"label": "\ubc29 \uc774\ub984", "question": "\ub4f1\ub85d\ud560 \ubc29 \uc774\ub984\uc744 \uc54c\ub824\uc8fc\uc138\uc694.", "required": True}),
-        ("roomDeposit", {"label": "\ubcf4\uc99d\uae08", "question": "\ubcf4\uc99d\uae08\uc744 \uc22b\uc790\ub85c \uc54c\ub824\uc8fc\uc138\uc694.", "required": True}),
-        ("roomMonthly", {"label": "\uc6d4\uc138", "question": "\uc6d4\uc138\ub97c \uc22b\uc790\ub85c \uc54c\ub824\uc8fc\uc138\uc694.", "required": True}),
-        ("roomMethod", {"label": "\uac70\ub798 \ubc29\uc2dd", "question": "\uac70\ub798 \ubc29\uc2dd\uc740 \uc6d4\uc138\uba74 M, \uc804\uc138\uba74 L\ub85c \uc785\ub825\ud560 \uc218 \uc788\uc2b5\ub2c8\ub2e4. \uc5b4\ub5a4 \ubc29\uc2dd\uc778\uac00\uc694?", "required": True}),
-        ("roomArea", {"label": "\uba74\uc801", "question": "\ubc29 \uba74\uc801\uc744 \uc22b\uc790\ub85c \uc54c\ub824\uc8fc\uc138\uc694. \uc608: 18.5", "required": True}),
-        ("roomFacing", {"label": "\ubc29 \ud5a5", "question": "\ubc29\uc758 \ubc29\ud5a5\uc744 \uc54c\ub824\uc8fc\uc138\uc694. \uc608: \ub0a8\ud5a5, \ub3d9\ud5a5", "required": True}),
-        ("roomAvailableDate", {"label": "\uc785\uc8fc \uac00\ub2a5\uc77c", "question": "\uc785\uc8fc \uac00\ub2a5\uc77c\uc744 YYYY-MM-DD \ud615\uc2dd\uc73c\ub85c \uc54c\ub824\uc8fc\uc138\uc694.", "required": True}),
-        ("roomRoomCount", {"label": "\ubc29 \uac1c\uc218", "question": "\uce68\uc2e4 \uac1c\uc218\ub97c \uc22b\uc790\ub85c \uc54c\ub824\uc8fc\uc138\uc694.", "required": True}),
-        ("roomBathCount", {"label": "\uc695\uc2e4 \uac1c\uc218", "question": "\uc695\uc2e4 \uac1c\uc218\ub97c \uc22b\uc790\ub85c \uc54c\ub824\uc8fc\uc138\uc694.", "required": True}),
-        ("roomAbstract", {"label": "\ubc29 \uc18c\uac1c", "question": "\ubc29 \uc18c\uac1c \ubb38\uad6c\uac00 \uc788\uc73c\uba74 \uc54c\ub824\uc8fc\uc138\uc694. \uc5c6\uc73c\uba74 \uc0dd\ub7b5 \uac00\ub2a5\ud569\ub2c8\ub2e4.", "required": False}),
-        ("roomOptions", {"label": "\ubc29 \uc635\uc158", "question": "\uc635\uc158\uc774 \uc788\uc73c\uba74 \uc27c\ud45c\ub85c \uc54c\ub824\uc8fc\uc138\uc694. \uc608: \uc5d0\uc5b4\ucee8,\uc138\ud0c1\uae30,\uce68\ub300", "required": False}),
+        (
+            "houseNo",
+            {
+                "label": "매물 소속 houseNo",
+                "question": "어느 houseNo에 방을 등록할지 알려주세요.",
+                "required": True,
+            },
+        ),
+        (
+            "roomName",
+            {
+                "label": "방 이름",
+                "question": "등록할 방 이름을 알려주세요.",
+                "required": True,
+            },
+        ),
+        (
+            "roomDeposit",
+            {
+                "label": "보증금",
+                "question": "보증금을 숫자로 알려주세요.",
+                "required": True,
+            },
+        ),
+        (
+            "roomMonthly",
+            {
+                "label": "월세",
+                "question": "월세를 숫자로 알려주세요.",
+                "required": True,
+            },
+        ),
+        (
+            "roomMethod",
+            {
+                "label": "거래 방식",
+                "question": "거래 방식은 월세면 M, 전세면 L로 입력할 수 있습니다. 어떤 방식인가요?",
+                "required": True,
+            },
+        ),
+        (
+            "roomArea",
+            {
+                "label": "면적",
+                "question": "방 면적을 숫자로 알려주세요. 예: 18.5",
+                "required": True,
+            },
+        ),
+        (
+            "roomFacing",
+            {
+                "label": "방 향",
+                "question": "방의 방향을 알려주세요. 예: 남향, 동향",
+                "required": True,
+            },
+        ),
+        (
+            "roomAvailableDate",
+            {
+                "label": "입주 가능일",
+                "question": "입주 가능일을 YYYY-MM-DD 형식으로 알려주세요.",
+                "required": True,
+            },
+        ),
+        (
+            "roomRoomCount",
+            {
+                "label": "방 개수",
+                "question": "침실 개수를 숫자로 알려주세요.",
+                "required": True,
+            },
+        ),
+        (
+            "roomBathCount",
+            {
+                "label": "욕실 개수",
+                "question": "욕실 개수를 숫자로 알려주세요.",
+                "required": True,
+            },
+        ),
+        (
+            "roomAbstract",
+            {
+                "label": "방 소개",
+                "question": "방 소개 문구가 있으면 알려주세요. 없으면 생략 가능합니다.",
+                "required": False,
+            },
+        ),
+        (
+            "roomOptions",
+            {
+                "label": "방 옵션",
+                "question": "옵션이 있으면 쉼표로 알려주세요. 예: 에어컨,세탁기,침대",
+                "required": False,
+            },
+        ),
     ]
 )
 
 
-CONFIRM_TOKENS = {"\uc751", "\ub124", "\uc608", "\ub9de\uc544", "\ub9de\uc2b5\ub2c8\ub2e4", "\ud655\uc778", "\ub4f1\ub85d\ud574\uc918", "\ub4f1\ub85d\ud560\uac8c", "\uc9c4\ud589", "\uc9c4\ud589\ud574\uc918"}
-DENY_TOKENS = {"\uc544\ub2c8", "\uc544\ub2c8\uc624", "\ucde8\uc18c", "\uc911\uc9c0", "\uadf8\ub9cc", "\uc218\uc815"}
-ROOM_CREATE_KEYWORDS = ("\ubc29\ub4f1\ub85d", "\ubc29 \ub4f1\ub85d", "\ub9e4\ubb3c\ub4f1\ub85d", "\ub9e4\ubb3c \ub4f1\ub85d", "\ub8f8\ub4f1\ub85d", "\ub8f8 \ub4f1\ub85d", "\uc0c8 \ubc29", "\ub4f1\ub85d\ud560 \ubc29")
+CONFIRM_TOKENS = {
+    "응",
+    "네",
+    "예",
+    "맞아",
+    "맞습니다",
+    "확인",
+    "등록해줘",
+    "등록할게",
+    "진행",
+    "진행해줘",
+}
+DENY_TOKENS = {"아니", "아니오", "취소", "중지", "그만", "수정"}
+ROOM_CREATE_KEYWORDS = (
+    "방등록",
+    "방 등록",
+    "매물등록",
+    "매물 등록",
+    "룸등록",
+    "룸 등록",
+    "새 방",
+    "등록할 방",
+)
 
 
 def normalize_user_text(value: str | None) -> str:
+    """비어 있는 입력을 안전하게 문자열로 정규화한다."""
+
     return str(value or "").strip()
 
 
 def compact_text(value: str | None) -> str:
+    """간단한 키워드 비교를 위해 공백과 대소문자 차이를 줄인다."""
+
     return normalize_user_text(value).lower().replace(" ", "")
 
 
 def should_handle_room_create(text: str, session_state: dict[str, Any] | None = None) -> bool:
+    """현재 요청을 방 등록 에이전트가 맡아야 하는지 판단한다."""
+
     compact = compact_text(text)
     if any(keyword.replace(" ", "") in compact for keyword in ROOM_CREATE_KEYWORDS):
         return True
@@ -48,6 +168,8 @@ def should_handle_room_create(text: str, session_state: dict[str, Any] | None = 
 
 
 def get_missing_slots(slots: dict[str, Any]) -> list[str]:
+    """필수 슬롯 중 아직 비어 있는 항목 목록을 순서대로 돌려준다."""
+
     missing: list[str] = []
     for key, meta in SLOT_DEFINITIONS.items():
         if meta.get("required") and slots.get(key) in (None, "", []):
@@ -56,26 +178,36 @@ def get_missing_slots(slots: dict[str, Any]) -> list[str]:
 
 
 def get_next_missing_slot(slots: dict[str, Any]) -> str | None:
+    """다음에 물어봐야 할 슬롯 하나만 고른다."""
+
     missing = get_missing_slots(slots)
     return missing[0] if missing else None
 
 
 def get_slot_question(slot_name: str) -> str:
+    """슬롯에 대응하는 사용자 질문 문구를 가져온다."""
+
     meta = SLOT_DEFINITIONS.get(slot_name, {})
-    return str(meta.get("question") or f"{slot_name} \uac12\uc744 \uc54c\ub824\uc8fc\uc138\uc694.")
+    return str(meta.get("question") or f"{slot_name} 값을 알려주세요.")
 
 
 def is_confirm_message(text: str) -> bool:
+    """사용자 메시지가 확인/진행 의사인지 간단한 규칙으로 판별한다."""
+
     compact = compact_text(text)
     return any(token in compact for token in [item.replace(" ", "") for item in CONFIRM_TOKENS])
 
 
 def is_deny_message(text: str) -> bool:
+    """사용자 메시지가 취소/수정 의사인지 간단한 규칙으로 판별한다."""
+
     compact = compact_text(text)
     return any(token in compact for token in [item.replace(" ", "") for item in DENY_TOKENS])
 
 
 def build_draft_payload(slots: dict[str, Any]) -> dict[str, Any]:
+    """현재까지 모은 슬롯을 BFF가 바로 사용할 수 있는 draft payload로 바꾼다."""
+
     return {
         "houseNo": slots.get("houseNo"),
         "roomDto": {
