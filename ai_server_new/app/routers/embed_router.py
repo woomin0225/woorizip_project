@@ -26,15 +26,30 @@ async def RoomInfoEmbeddingAndStore(
     tokenizer= Depends(get_tokenizer)
 ):
     # embeddingService
-    vector = embedding_service.room_embed(target, tokenizer)
+    vector = await embedding_service.room_embed(target, tokenizer)
     
     # vectorStore
     collection_name = "room_collection" # 저장할 컬렉션 이름
-    vector_store.room_vector_store(collection_name, target, vector)
+    await vector_store.room_vector_store(collection_name, target, vector)
     
     return {
         "status": True,
         "roomNo": target.roomNo,
         "collection": collection_name,
         "message": "방정보 임베딩 및 벡터 저장에 성공"
+    }
+
+@router.delete("/room/{room_no}")
+async def RemoveRoomVector(
+    vector_store: Annotated[VectorStore, Depends(get_vector_store)],
+    room_no: str
+):
+    collection_name = "room_collection"
+    await vector_store.remove_room_vector(collection_name, room_no)
+    
+    return {
+        "status": True,
+        "roomNo": room_no,
+        "collection": collection_name,
+        "message": "방 벡터 삭제 성공"
     }

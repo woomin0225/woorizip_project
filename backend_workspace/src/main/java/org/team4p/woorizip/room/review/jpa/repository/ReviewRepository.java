@@ -38,5 +38,5 @@ public interface ReviewRepository extends JpaRepository<ReviewEntity, Integer>, 
 			WHERE rr.room_no = :roomNo
 			ORDER BY rr.review_created_at DESC
 			""", nativeQuery=true)
-	List<String> findAllByRoomNoOrderByReviewCreatedAtDesc(@Param("roomNo") String roomNo);	// AI 서버로 요약 요청 보내기 위해 해당 방의 리뷰 전체 조회
+	List<String> findAllReviewContentsByRoomNoOrderByReviewCreatedAtDesc(@Param("roomNo") String roomNo);	// AI 서버로 요약 요청 보내기 위해 해당 방의 리뷰 전체 조회
 }

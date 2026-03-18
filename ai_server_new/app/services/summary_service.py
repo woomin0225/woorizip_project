@@ -6,7 +6,7 @@ import json
 import re
 
 from app.clients.qwen_llm_client import QwenLlmClient
-from app.schemas import RoomSummaryRequest
+from app.schemas import RoomTotalRequest
 
 import logging
 logger=logging.getLogger(__name__)
@@ -453,7 +453,7 @@ class RoomSummaryService:
     def __init__(self, client: QwenLlmClient):
         self.client=client
         
-    def summary_room_reviews(self, room_reviews: list):
+    async def summary_room_reviews(self, room_reviews: list):
         logger.info("service entered review_count=%s", len(room_reviews or []))
          
         if not room_reviews:
@@ -468,7 +468,7 @@ class RoomSummaryService:
         result = self.client.generate_from_messages(messages, max_new_tokens=256)
         return result.strip()
     
-    def summary_room_image_captions(self, room_image_captions: list):
+    async def summary_room_image_captions(self, room_image_captions: list):
         if not room_image_captions:
             raise ValueError("요약할 리뷰 텍스트가 비어있습니다.")
         caption_values = [c for c in room_image_captions if c]
@@ -481,7 +481,7 @@ class RoomSummaryService:
         result = self.client.generate_from_messages(messages, max_new_tokens=256)
         return result.strip()
     
-    def summary_room_total(self, room: RoomSummaryRequest):
+    async def summary_room_total(self, room: RoomTotalRequest):
         if not room:
             raise ValueError("요약할 방 정보 텍스트가 비어있습니다.")
         prompt = f"""Give me a summary about following room's basic information, image summary and review summary in korean. '{room}'"""
@@ -490,8 +490,9 @@ class RoomSummaryService:
         """
         messages = [
             {"role": "system", "content": f"You are real estate agent. You have to summarize about room information and return the summary. You can use following category keywords on summarize work. category: {category}"},
+            {"role": "system", "content": f"refer to next definition. definition: {RoomTotalRequest}"},
             {"role": "user", "content": prompt},
             {"role": "assistant", "content": "summarized result is "}
         ]
-        result = self.client.generate_from_messages(messages, max_new_tokens=256)
+        result = self.client.generate_from_messages(messages, max_new_tokens=360)
         return result.strip()
