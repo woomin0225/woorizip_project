@@ -24,9 +24,10 @@ def build_collecting_response(state: dict) -> dict:
 
     if next_slot:
         if next_slot == "houseNo":
-            # houseNo가 내부 식별자라고 해도, 사용자에게는 건물명 기준으로 묻는 편이 훨씬 자연스럽다.
+            # 내부 식별자는 houseNo지만, 사용자에게는 건물명 기준 질문이 더 자연스럽다.
             reply = build_house_question(state.get("available_houses"))
         else:
+            # 다음으로 비어 있는 슬롯 하나만 물어보면 대화가 짧고 명확하게 유지된다.
             reply = get_slot_question(next_slot)
         state["pending_slot"] = next_slot
         status = "collecting"
@@ -57,14 +58,25 @@ def build_collecting_response(state: dict) -> dict:
 def build_confirmation_message(slots: dict) -> str:
     """모든 슬롯이 모였을 때 읽기 쉬운 확인 문구를 만든다."""
 
-    # 최종 확인 단계에서는 내부 필드명보다 사람이 읽는 요약문이 중요하다.
-    # 그래서 payload 형태를 그대로 노출하지 않고 자연어 목록으로 다시 조립한다.
+    room_method = slots.get("roomMethod")
+    if room_method == "L":
+        # 전세는 월세가 없으므로 확인 문구에서도 월세 줄을 빼 준다.
+        price_line = f"보증금: {slots.get('roomDeposit')}"
+        method_label = "전세"
+    elif room_method == "M":
+        # 월세는 보증금과 월세를 함께 보여 줘야 사용자가 조건을 한 번에 확인하기 쉽다.
+        price_line = f"보증금 / 월세: {slots.get('roomDeposit')} / {slots.get('roomMonthly')}"
+        method_label = "월세"
+    else:
+        price_line = f"보증금 / 월세: {slots.get('roomDeposit')} / {slots.get('roomMonthly')}"
+        method_label = str(room_method or "-")
+
     lines = [
         "다음 내용으로 방 등록 초안을 만들었습니다.",
         f"건물: {get_house_display_name(slots)}",
         f"방 이름: {slots.get('roomName')}",
-        f"보증금 / 월세: {slots.get('roomDeposit')} / {slots.get('roomMonthly')}",
-        f"거래 방식: {slots.get('roomMethod')}",
+        price_line,
+        f"거래 방식: {method_label}",
         f"면적 / 방향: {slots.get('roomArea')} / {slots.get('roomFacing')}",
         f"입주 가능일: {slots.get('roomAvailableDate')}",
         f"침실 / 욕실: {slots.get('roomRoomCount')} / {slots.get('roomBathCount')}",

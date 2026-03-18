@@ -1,6 +1,10 @@
 from __future__ import annotations
 
-"""방 등록 에이전트가 공통으로 참조하는 슬롯 정의와 헬퍼 모음."""
+"""방 등록 에이전트가 공통으로 참조하는 슬롯 정의와 헬퍼 모음.
+
+이 파일은 "방 등록을 끝내려면 어떤 정보가 필요한가?"를 한곳에 모아 둔 설정 파일이다.
+질문 순서, 표시 라벨, 필수 여부를 여기서 관리하면 응답 생성부와 검증부가 같은 기준을 쓸 수 있다.
+"""
 
 from collections import OrderedDict
 from typing import Any
@@ -28,6 +32,16 @@ SLOT_DEFINITIONS: "OrderedDict[str, dict[str, Any]]" = OrderedDict(
             },
         ),
         (
+            "roomMethod",
+            {
+                "label": "거래 방식",
+                "question": "거래 방식은 월세면 M, 전세면 L입니다. 어떤 방식인가요?",
+                "required": True,
+            },
+        ),
+        # 거래 방식을 먼저 받아 두면 뒤 질문을 자연스럽게 분기할 수 있다.
+        # 월세(M)면 보증금 다음에 월세를 묻고, 전세(L)면 월세 질문을 건너뛴다.
+        (
             "roomDeposit",
             {
                 "label": "보증금",
@@ -40,14 +54,6 @@ SLOT_DEFINITIONS: "OrderedDict[str, dict[str, Any]]" = OrderedDict(
             {
                 "label": "월세",
                 "question": "월세를 숫자로 알려주세요.",
-                "required": True,
-            },
-        ),
-        (
-            "roomMethod",
-            {
-                "label": "거래 방식",
-                "question": "거래 방식은 월세면 M, 전세면 L로 입력할 수 있습니다. 어떤 방식인가요?",
                 "required": True,
             },
         ),
@@ -180,7 +186,6 @@ def get_room_create_context(request_meta: dict[str, Any] | None) -> dict[str, An
         return {"current_house": {}, "available_houses": []}
 
     current_house = normalize_house_item(context.get("currentHouse"))
-    # `availableHouses`는 "건물명으로 답했을 때 어떤 houseNo로 볼지" 판단하는 재료다.
     available_houses = [
         item
         for item in (
@@ -223,7 +228,6 @@ def find_house_match(text: str, available_houses: list[dict[str, str]]) -> dict[
         score = 0
 
         # 완전 일치 > 포함 일치 > houseNo 일치 순으로 점수를 준다.
-        # 이렇게 두면 "성수하우스"처럼 건물명만 답한 경우를 가장 자연스럽게 처리할 수 있다.
         if house_name and normalized_input == house_name:
             score = 5
         elif house_name and house_name in normalized_input:
@@ -256,7 +260,6 @@ def build_house_question(available_houses: list[dict[str, str]] | None = None) -
 
     available_houses = available_houses or []
     if not available_houses:
-        # 후보 건물 목록이 없으면 일반 질문으로만 묻는다.
         return get_slot_question("houseNo")
 
     house_names = [
@@ -264,7 +267,6 @@ def build_house_question(available_houses: list[dict[str, str]] | None = None) -
         for house in available_houses
         if house.get("houseName") or house.get("houseNo")
     ]
-    # 너무 길게 나열되면 대화가 지저분해지므로 미리보기는 앞쪽 몇 개만 보여 준다.
     preview = ", ".join(house_names[:5])
     if len(house_names) > 5:
         preview += " 외"
@@ -282,12 +284,32 @@ def should_handle_room_create(text: str, session_state: dict[str, Any] | None = 
     return session_state.get("intent") == ROOM_CREATE_INTENT and not session_state.get("completed", False)
 
 
+def _is_required_slot(slot_name: str, slots: dict[str, Any], meta: dict[str, Any]) -> bool:
+    """슬롯별 조건부 필수 여부를 계산한다.
+
+    거래 방식이 전세(L)라면 월세는 더 이상 물을 필요가 없으므로
+    `roomMonthly`를 필수 항목에서 제외한다.
+    """
+
+    if not meta.get("required"):
+        return False
+    # 기본적으로는 required=True인 항목을 모두 받지만,
+    # 일부 항목은 이미 받은 값에 따라 "이번에는 생략 가능"으로 바뀔 수 있다.
+    if slot_name == "roomMonthly" and not slots.get("roomMethod"):
+        # 월세는 거래 방식이 "월세(M)"인지 확인된 뒤에만 의미가 있다.
+        # 따라서 roomMethod가 비어 있는 동안에는 missing 목록에도 올리지 않는다.
+        return False
+    if slot_name == "roomMonthly" and slots.get("roomMethod") == "L":
+        return False
+    return True
+
+
 def get_missing_slots(slots: dict[str, Any]) -> list[str]:
     """필수 슬롯 중 아직 비어 있는 항목 목록을 순서대로 돌려준다."""
 
     missing: list[str] = []
     for key, meta in SLOT_DEFINITIONS.items():
-        if meta.get("required") and slots.get(key) in (None, "", []):
+        if _is_required_slot(key, slots, meta) and slots.get(key) in (None, "", []):
             missing.append(key)
     return missing
 
@@ -323,13 +345,18 @@ def is_deny_message(text: str) -> bool:
 def build_draft_payload(slots: dict[str, Any]) -> dict[str, Any]:
     """현재까지 모은 슬롯을 BFF가 바로 사용할 수 있는 draft payload로 바꾼다."""
 
+    room_method = slots.get("roomMethod")
+    # 전세는 월세가 없는 거래 방식이므로,
+    # 사용자가 값을 입력하지 않아도 백엔드에는 0으로 맞춰서 전달한다.
+    room_monthly = 0 if room_method == "L" else slots.get("roomMonthly")
+
     return {
         "houseNo": slots.get("houseNo"),
         "roomDto": {
             "roomName": slots.get("roomName"),
             "roomDeposit": slots.get("roomDeposit"),
-            "roomMonthly": slots.get("roomMonthly"),
-            "roomMethod": slots.get("roomMethod"),
+            "roomMonthly": room_monthly,
+            "roomMethod": room_method,
             "roomArea": slots.get("roomArea"),
             "roomFacing": slots.get("roomFacing"),
             "roomAvailableDate": slots.get("roomAvailableDate"),

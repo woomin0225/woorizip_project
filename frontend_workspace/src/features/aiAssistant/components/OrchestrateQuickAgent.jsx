@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { runOrchestrateCommand } from '../api/orchestrateApi';
 import { fetchBoardSummary } from '../../board/api/BoardSummaryApi';
 import { getMyHouses } from '../../houseAndRoom/api/houseApi';
+import { getIsLessorHint, getMyInfo, isLessorType } from '../../user/api/userAPI';
 import botIcon from '../../../assets/images/ai_bot.png';
 import { useAuth } from '../../../app/providers/AuthProvider';
 import { parseJwt } from '../../../app/providers/utils/jwt';
@@ -317,10 +318,13 @@ const normalizeHouseContextItem = (house) => {
 
 const SETTINGS_GUIDE = '접근성 설정에서는 음성 모드, 페이지 진입 시 자동 요약 읽기, 현재 포커스 요소 읽기, 우리봇 답변 자동 읽기, 음성 명령 사용, 글자 크기, 페이지 배율, 버튼 크기를 조정할 수 있습니다.';
 
+const isRoomCreateMessage = (value) =>
+  /방\s*등록|방등록|매물\s*등록|매물등록|룸\s*등록|룸등록/.test(String(value || ''));
+
 export default function OrchestrateQuickAgent() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { accessToken, userId } = useAuth();
+  const { accessToken, userId, isAdmin } = useAuth();
   const {
     voiceModeEnabled,
     listening,
@@ -356,17 +360,25 @@ export default function OrchestrateQuickAgent() {
       `안녕하세요! 저는 ${userDisplayName} 님만을 위한 비서 우리봇이에요! 도움이 필요하거나 궁금한 것이 있다면 아래 대화창에 입력해주세요!`,
     [userDisplayName]
   );
+  // 캐시에 남아 있는 사용자 유형 힌트이다.
+  // 첫 렌더링 속도를 위해 먼저 쓰지만, 아래에서 실제 사용자 정보로 다시 확인한다.
+  const hintedIsLessor = useMemo(() => getIsLessorHint() === true, [accessToken]);
 
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  // 실제 요청에 넣을 최종 임대인 여부이다.
+  // 캐시 힌트로 시작하고, getMyInfo() 성공 시 서버 기준 값으로 덮어쓴다.
+  const [resolvedIsLessor, setResolvedIsLessor] = useState(() => getIsLessorHint() === true);
   const [managedHouses, setManagedHouses] = useState([]);
   const [managedHousesLoaded, setManagedHousesLoaded] = useState(false);
   const [pendingConfirmation, setPendingConfirmation] = useState(null);
   const [messages, setMessages] = useState([
     { role: 'assistant', text: greetingText, actionIds: STARTER_ACTION_IDS },
   ]);
-  const [sessionId] = useState(newSessionId);
+  // 같은 패널 안에서는 기본적으로 같은 세션을 쓰되,
+  // 사용자가 다시 "방 등록"을 시작하면 새 세션으로 바꿔 오래된 상태를 끊는다.
+  const [sessionId, setSessionId] = useState(newSessionId);
 
   useEffect(() => {
     voiceLoopStateRef.current = {
@@ -398,7 +410,49 @@ export default function OrchestrateQuickAgent() {
   }, [messages, open]);
 
   useEffect(() => {
+    if (!accessToken) {
+      setResolvedIsLessor(false);
+      return undefined;
+    }
+
+    let cancelled = false;
+
+    (async () => {
+      try {
+        // 방 등록처럼 권한이 중요한 기능은 캐시만 믿지 않는다.
+        // 현재 로그인 사용자의 실제 type을 다시 조회해서 임대인 여부를 확정한다.
+        const info = await getMyInfo();
+        if (cancelled) return;
+        setResolvedIsLessor(isLessorType(info?.type));
+      } catch {
+        if (!cancelled) {
+          // 사용자 정보 조회가 실패하면 힌트값으로만 유지한다.
+          setResolvedIsLessor(hintedIsLessor);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [accessToken, hintedIsLessor]);
+
+  useEffect(() => {
+    // 로그인 사용자나 권한 판정이 바뀌면 소유 건물 목록도 다시 판단해야 한다.
+    // 다른 사용자나 다른 권한 상태의 건물 목록을 재사용하면 안 된다.
+    // 그래서 로그인 상태나 임대인/관리자 판정이 바뀌는 순간 목록을 다시 읽도록 초기화한다.
+    setManagedHouses([]);
+    setManagedHousesLoaded(false);
+  }, [accessToken, isAdmin, resolvedIsLessor]);
+
+  useEffect(() => {
     if (!open || managedHousesLoaded) return undefined;
+
+    if (!resolvedIsLessor && !isAdmin) {
+      setManagedHouses([]);
+      setManagedHousesLoaded(true);
+      return undefined;
+    }
 
     let cancelled = false;
 
@@ -427,7 +481,7 @@ export default function OrchestrateQuickAgent() {
     return () => {
       cancelled = true;
     };
-  }, [managedHousesLoaded, open]);
+  }, [isAdmin, managedHousesLoaded, open, resolvedIsLessor]);
 
   useEffect(() => {
     if (voiceModeEnabled) {
@@ -865,16 +919,54 @@ export default function OrchestrateQuickAgent() {
     setLoading(true);
 
     try {
+      let lessorForRequest = resolvedIsLessor;
+      let requestSessionId = sessionId;
+
+      if (isRoomCreateMessage(messageText)) {
+        // 사용자가 다시 "방 등록"을 보냈다면 이전 draft 수집을 이어가기보다
+        // 새 대화를 시작하는 편이 안전하다. 그래야 예전 pending_slot이 섞이지 않는다.
+        requestSessionId = newSessionId();
+        setSessionId(requestSessionId);
+
+        try {
+          // 방 등록은 권한 차이가 분명해서, 실제 사용자 정보로 한 번 더 확인한다.
+          // 메시지를 보내는 마지막 순간에도 실제 사용자 정보를 다시 확인해야
+          // 비임대인 사용자가 방 등록 흐름으로 들어가는 일을 막을 수 있다.
+          const info = await getMyInfo();
+          lessorForRequest = isLessorType(info?.type);
+          setResolvedIsLessor(lessorForRequest);
+        } catch {
+          // 권한 확인에 실패했을 때 등록 흐름을 열어 버리면
+          // 비임대인에게 건물명만 반복해서 묻게 될 수 있으므로 보수적으로 막는다.
+          // 확인 실패 시에도 흐름을 열어 두면 같은 질문만 반복할 수 있으므로,
+          // 여기서는 안전하게 "권한 없음" 쪽으로 처리한다.
+          lessorForRequest = false;
+          setResolvedIsLessor(false);
+        }
+
+        if (!isAdmin && !lessorForRequest) {
+          // 프론트에서 먼저 막아 주면 서버 응답을 기다리지 않아도 바로 안내할 수 있다.
+          appendAssistantMessage(
+            '방 등록은 임대인 또는 관리자만 진행할 수 있습니다.'
+          );
+          return;
+        }
+      }
+
       const roomContext = getRoomContext();
       const roomCreateContext = getRoomCreateContext();
       const result = await runOrchestrateCommand({
         text: messageText,
-        sessionId,
+        sessionId: requestSessionId,
         context: {
           path: window.location.pathname,
           ...roomContext,
           ...roomCreateContext,
           pageSnapshot: getPageContext(),
+          userProfile: {
+            isAdmin,
+            isLessor: lessorForRequest,
+          },
           siteProfile: {
             serviceName: '\uC6B0\uB9AC\uC9D1',
             channel: 'web',

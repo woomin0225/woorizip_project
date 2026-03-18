@@ -46,6 +46,20 @@ def normalize_house_context_item(item: Any) -> dict[str, str]:
     return {key: value for key, value in normalized.items() if value}
 
 
+def normalize_user_profile(item: Any) -> dict[str, Any]:
+    # 권한 판정에 필요한 최소 정보만 남긴다.
+    # 뒤쪽 에이전트는 이 값만 보고 "등록 가능 / 불가"를 판단한다.
+    if not isinstance(item, dict):
+        return {}
+
+    normalized: dict[str, Any] = {}
+    if isinstance(item.get('isAdmin'), bool):
+        normalized['isAdmin'] = item['isAdmin']
+    if isinstance(item.get('isLessor'), bool):
+        normalized['isLessor'] = item['isLessor']
+    return normalized
+
+
 def normalize_context(context: dict[str, Any] | None) -> dict[str, Any]:
     context = context or {}
     normalized: dict[str, Any] = {}
@@ -81,6 +95,8 @@ def normalize_context(context: dict[str, Any] | None) -> dict[str, Any]:
 
     current_house = normalize_house_context_item(context.get('currentHouse'))
     if current_house:
+        # 사용자가 이미 특정 건물의 등록 화면에 있다면
+        # 첫 질문부터 건물을 다시 묻지 않도록 현재 건물 정보를 함께 보낸다.
         normalized['currentHouse'] = current_house
 
     available_houses = context.get('availableHouses')
@@ -94,7 +110,14 @@ def normalize_context(context: dict[str, Any] | None) -> dict[str, Any]:
             if item
         ]
         if normalized_houses:
+            # 챗봇은 건물명으로 질문하지만, 실제 등록은 houseNo가 필요하다.
+            # 그래서 이름과 번호를 같이 정리해 두고 뒤에서 매핑에 사용한다.
             normalized['availableHouses'] = normalized_houses
+
+    user_profile = normalize_user_profile(context.get('userProfile'))
+    if user_profile:
+        # 방 등록처럼 권한이 필요한 작업은 이 userProfile을 기준으로 1차 차단한다.
+        normalized['userProfile'] = user_profile
 
     return normalized
 

@@ -16,6 +16,7 @@ from app.agent.room_registration_slots import (
     compact_text,
     find_house_match,
     get_missing_slots,
+    get_next_missing_slot,
     get_room_create_context,
     is_confirm_message,
     is_deny_message,
@@ -47,6 +48,7 @@ class RoomRegistrationState(TypedDict, total=False):
     slots: dict[str, Any]
     missing_slots: list[str]
     available_houses: list[dict[str, str]]
+    room_create_allowed: bool
     reply_payload: dict[str, Any]
     completed: bool
     cancel: bool
@@ -139,7 +141,30 @@ class RoomRegistrationAgent:
             "pending_slot": None,
             "completed": False,
             "available_houses": [],
+            "room_create_allowed": True,
         }
+
+    def _get_room_create_permission(self, request_meta: dict[str, Any] | None) -> bool:
+        """방 등록 권한 여부를 프론트 컨텍스트에서 읽는다.
+
+        현재 챗봇 요청 payload에는 인증 헤더가 직접 실리지 않으므로
+        프론트가 함께 보낸 `userProfile` 정보를 기준으로 1차 판별한다.
+        관리자 또는 임대인만 방 등록 흐름을 이어갈 수 있다.
+        """
+
+        context = (request_meta or {}).get("context")
+        if not isinstance(context, dict):
+            # userProfile을 아직 보내지 않는 클라이언트도 있을 수 있다.
+            # 그런 요청까지 전부 막지 않기 위해 기본값은 True로 둔다.
+            return True
+
+        user_profile = context.get("userProfile")
+        if not isinstance(user_profile, dict):
+            return True
+
+        is_admin = bool(user_profile.get("isAdmin"))
+        is_lessor = bool(user_profile.get("isLessor"))
+        return is_admin or is_lessor
 
     def _apply_house_context(
         self,
@@ -157,6 +182,8 @@ class RoomRegistrationAgent:
         slots = session_state.setdefault("slots", {})
         available_houses = context.get("available_houses") or session_state.get("available_houses") or []
         current_house = context.get("current_house") or {}
+        # 권한 결과를 세션에 저장해 두면 같은 턴의 응답 생성과 세션 정리에서 재사용할 수 있다.
+        session_state["room_create_allowed"] = self._get_room_create_permission(request_meta)
 
         # 프론트가 보낸 후보 건물 목록은 세션에 보관해 두어야
         # 다음 턴에서 사용자가 건물명만 말해도 houseNo로 다시 연결할 수 있다.
@@ -194,10 +221,26 @@ class RoomRegistrationAgent:
             deepcopy(session_state),
             state.get("request_meta"),
         )
+        session_state = self._normalize_pending_slot(session_state)
         return {
             "session_state": session_state,
             "available_houses": deepcopy(session_state.get("available_houses", [])),
+            "room_create_allowed": bool(session_state.get("room_create_allowed", True)),
         }
+
+    def _normalize_pending_slot(self, session_state: dict[str, Any]) -> dict[str, Any]:
+        """예전 세션의 다음 질문 포인터를 현재 규칙에 맞게 보정한다."""
+
+        slots = deepcopy(session_state.get("slots", {}))
+        next_missing_slot = get_next_missing_slot(slots)
+        pending_slot = session_state.get("pending_slot")
+
+        if pending_slot != next_missing_slot:
+            # 과거 순서(roomMonthly 먼저 묻기)로 저장된 세션이 남아 있어도
+            # 현재 규칙의 다음 질문을 기준으로 다시 맞춘다.
+            session_state["pending_slot"] = next_missing_slot
+
+        return session_state
 
     def _detect_intent(self, state: RoomRegistrationState) -> dict[str, Any]:
         """현재 입력이 방 등록 흐름인지 일반 채팅인지 구분한다."""
@@ -335,6 +378,28 @@ class RoomRegistrationAgent:
                 }
             }
 
+        if not bool(session_state.get("room_create_allowed", True)):
+            # 권한이 없으면 슬롯 수집을 더 진행하지 않는다.
+            # 여기서 즉시 끊어야 건물명 질문이 반복되는 문제를 막을 수 있다.
+            return {
+                "reply_payload": {
+                    "reply": "방 등록은 임대인 또는 관리자만 진행할 수 있습니다.",
+                    "intent": ROOM_CREATE_INTENT,
+                    "slots": {},
+                    "action": {
+                        "name": "ROOM_CREATE_DRAFT",
+                        "target": "bff_room_api",
+                        "operation": "create_room",
+                        "status": "forbidden",
+                    },
+                    "result": {
+                        "missingSlots": [],
+                        "draftPayload": {},
+                    },
+                    "requiresConfirm": False,
+                }
+            }
+
         if state.get("cancel"):
             # 취소 뒤에는 다음 시작이 자연스럽도록 방 정보만 초기화하되,
             # 현재 페이지 컨텍스트의 건물 정보는 다시 덧입혀 둔다.
@@ -363,7 +428,11 @@ class RoomRegistrationAgent:
         session_id = state.get("session_id") or ""
         session_state = deepcopy(state.get("session_state", {}))
 
-        if state.get("cancel") or state.get("completed"):
+        if (
+            state.get("cancel")
+            or state.get("completed")
+            or not bool(session_state.get("room_create_allowed", True))
+        ):
             self.store.delete(session_id)
         else:
             self.store.set(session_id, session_state)
