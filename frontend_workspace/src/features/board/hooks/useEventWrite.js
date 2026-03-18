@@ -1,15 +1,12 @@
 // src/features/board/hooks/useEventWrite.js
-
-import { useEffect, useState } from 'react';
-import { useAuth } from '../../../app/providers/AuthProvider';
+import { useState } from 'react';
 import { createEvent } from '../api/EventApi';
 
 export function useEventWrite({ navigate }) {
-  const { isAuthed, isAdmin } = useAuth();
-
   const [form, setForm] = useState({
     postTitle: '',
     postContent: '',
+    postVisibleYn: true,
   });
 
   const [bannerFile, setBannerFile] = useState(null);
@@ -20,10 +17,10 @@ export function useEventWrite({ navigate }) {
      입력 변경
   ========================= */
   const onChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
     setForm((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: type === 'checkbox' ? checked : value,
     }));
   };
 
@@ -59,6 +56,7 @@ export function useEventWrite({ navigate }) {
     const data = new FormData();
     data.append('postTitle', form.postTitle);
     data.append('postContent', form.postContent);
+    data.append('postVisibleYn', String(form.postVisibleYn));
     data.append('bannerFile', bannerFile);
 
     newFiles.forEach((file) => {
