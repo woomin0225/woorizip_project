@@ -22,7 +22,7 @@ public class RoomScheduler {
 	private final ReviewSummaryService reviewSummaryService;
 	private final RoomImageSummaryService roomImageSummaryService;
 	
-	@Scheduled(initialDelay = 180000, fixedDelay = 3600000)
+	@Scheduled(initialDelay = 1200000, fixedDelay = 3600000)
 	public void roomEmbeddingSchedule() {
 		log.info("방 임베딩/벡터저장 스케줄러 작동");
 		

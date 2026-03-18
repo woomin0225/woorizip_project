@@ -18,7 +18,7 @@ public class ReviewScheduler {
 	
 	private final ReviewSummaryService reviewSummaryService;
 	
-	@Scheduled(initialDelay = 120000,fixedDelay = 3600000)	// 1000 => 1초 마다 실행	
+	@Scheduled(initialDelay = 600000,fixedDelay = 3600000)	// 1000 => 1초 마다 실행	
 	public void roomReviewSummery() {
 		log.info("방 리뷰 요약 스케줄러 작동");
 		
