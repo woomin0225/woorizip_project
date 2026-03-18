@@ -26,11 +26,11 @@ async def RoomInfoEmbeddingAndStore(
     tokenizer= Depends(get_tokenizer)
 ):
     # embeddingService
-    vector = embedding_service.room_embed(target, tokenizer)
+    vector = await embedding_service.room_embed(target, tokenizer)
     
     # vectorStore
     collection_name = "room_collection" # 저장할 컬렉션 이름
-    vector_store.room_vector_store(collection_name, target, vector)
+    await vector_store.room_vector_store(collection_name, target, vector)
     
     return {
         "status": True,
