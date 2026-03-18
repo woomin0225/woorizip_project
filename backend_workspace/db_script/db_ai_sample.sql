@@ -137,7 +137,7 @@ INSERT INTO tb_room_image_summary (
     last_error_message,
     retry_count
 )
-SELECT
+SELECT DISTINCT
     room_no,
     'PENDING',
     0,
