@@ -3,7 +3,7 @@
 from uuid import uuid4, uuid5, UUID
 import uuid
 
-from qdrant_client import QdrantClient
+from qdrant_client import QdrantClient, models
 from qdrant_client.models import PointStruct
 from qdrant_client.models import VectorParams, Distance
 from app.schemas import RoomTotalRequest
@@ -61,3 +61,19 @@ class QdrantDbClient:
             print(hit.payload, "score:", hit.score)
             
         return hits
+    
+    def remove_room_vector(self, collection_name: str, room_no):
+        self.client.delete(
+            collection_name=collection_name,
+            points_selector=models.FilterSelector(
+                filter=models.Filter(
+                    must=[
+                        models.FieldCondition(
+                            key="roomNo",
+                            match=models.MatchValue(value=room_no),
+                        )
+                    ]
+                )
+            ),
+            wait=True
+        )

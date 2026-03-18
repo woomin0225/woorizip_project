@@ -8,22 +8,47 @@ import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
-import org.springframework.http.*;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.reactive.function.client.WebClient;
+import org.team4p.woorizip.house.jpa.entity.HouseEntity;
+import org.team4p.woorizip.house.jpa.repository.HouseRepository;
+import org.team4p.woorizip.room.dto.ai.EmbedResponse;
+import org.team4p.woorizip.room.dto.ai.RoomTotalRequest;
+import org.team4p.woorizip.room.dto.ai.RoomTotalResponse;
 import org.team4p.woorizip.room.dto.response.RoomAiAnalyzeResponse;
+import org.team4p.woorizip.room.image.service.RoomImageSummaryService;
+import org.team4p.woorizip.room.jpa.entity.RoomEmbeddingEntity;
+import org.team4p.woorizip.room.jpa.entity.RoomEntity;
+import org.team4p.woorizip.room.jpa.repository.RoomEmbeddingRepository;
+import org.team4p.woorizip.room.jpa.repository.RoomRepository;
+import org.team4p.woorizip.room.review.service.ReviewSummaryService;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import reactor.core.publisher.Mono;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class RoomAiServiceImpl implements RoomAiService {
+
+    private final RoomRepository roomRepository;
+    private final HouseRepository houseRepository;
+    private final ReviewSummaryService reviewSummaryService;
+    private final RoomImageSummaryService roomImageSummaryService;
+    private final RoomEmbeddingRepository roomEmbeddingRepository;
 
 	private final ObjectMapper objectMapper;
 	
@@ -34,6 +59,9 @@ public class RoomAiServiceImpl implements RoomAiService {
 	private String internalApiKey;
 	
 	private final RestTemplate restTemplate = new RestTemplate();
+	private final WebClient.Builder webClientBuilder;
+
+    
 	
 	@Override
 	public RoomAiAnalyzeResponse analyzeRoomImages(List<MultipartFile> images) {
@@ -142,4 +170,119 @@ public class RoomAiServiceImpl implements RoomAiService {
 			}
 		};
 	}
+
+	@Override
+	public String selectSummarizedRoom(String roomNo) {
+		// AI 서버에서 종합요약 엔드포인트 호출
+		WebClient webClient = webClientBuilder.build();
+		RoomTotalResponse response = null;
+		
+		RoomTotalRequest request = buildRoomTotalRequest(roomNo);
+		
+		try {
+			Mono<RoomTotalResponse> monoResponse = webClient.post()
+					.uri(aiServerBaseUrl.concat("/ai/summary/room/total"))
+					.bodyValue(request)
+					.retrieve()
+					.bodyToMono(RoomTotalResponse.class)
+					;
+			response = monoResponse.block();
+		} catch (Exception e) {
+			
+		}
+		String result = response.getSummary();
+		return result;
+	}
+
+	@Override
+	public EmbedResponse embedRoom(String roomNo) {
+		// AI 서버에서 종합요약 엔드포인트 호출
+		WebClient webClient = webClientBuilder.build();
+		EmbedResponse response = null;
+		
+		RoomTotalRequest request = buildRoomTotalRequest(roomNo);
+		
+		try {
+			EmbedResponse deleteResult = deleteEmbeededRoomVector(roomNo);
+			log.info("방번호("+roomNo+"): 기존 벡터 제거 완료");
+			Mono<EmbedResponse> monoResponse = webClient.post()
+					.uri(aiServerBaseUrl.concat("/ai/embed/room"))
+					.bodyValue(request)
+					.retrieve()
+					.bodyToMono(EmbedResponse.class)
+					;
+			response = monoResponse.block();
+			log.info("방번호("+roomNo+"): 새 백터 생성 및 저장 완료");
+		} catch (Exception e) {
+			log.info("방번호("+roomNo+"): 벡터 업데이트 과정 중 오류 발생");
+		}
+		return response;
+	}
+	
+	private RoomTotalRequest buildRoomTotalRequest(String roomNo){
+		RoomEntity room = roomRepository.findById(roomNo).get();
+		HouseEntity house = houseRepository.findByroomNo(roomNo).get();
+		String reviewSummary = reviewSummaryService.selectSummarizedReview(roomNo).getReviewSummary();
+		String roomImageSummary = roomImageSummaryService.selectSummarizedImageCaption(roomNo).getImageSummary();
+		
+		RoomTotalRequest request = RoomTotalRequest.builder()
+				.roomNo(roomNo)
+				.roomName(room.getRoomName())
+				.houseNo(house.getHouseNo())
+				.houseName(house.getHouseName())
+				.houseAddress(house.getHouseAddress())
+				.houseCompletionYear(house.getHouseCompletionYear())
+				.houseFloor(house.getHouseFloors())
+				.houseHouseHolds(house.getHouseHouseHolds())
+				.houseElevatorYn(house.getHouseElevatorYn())
+				.housePetYn(house.getHousePetYn())
+				.houseFemaleLimit(house.getHouseFemaleLimit())
+				.houseParkingMax(house.getHouseParkingMax())
+				.houseAbstract(house.getHouseAbstract())
+				.roomCreatedAt(room.getRoomCreatedAt())
+				.roomUpdatedAt(room.getRoomUpdatedAt())
+				.roomDeposit(room.getRoomDeposit())
+				.roomMonthly(room.getRoomMonthly())
+				.roomMethod(room.getRoomMethod())
+				.roomArea(room.getRoomArea())
+				.roomFacing(room.getRoomFacing())
+				.roomAvailableDate(room.getRoomAvailableDate())
+				.roomAbstract(room.getRoomAbstract())
+				.roomRoomCount(room.getRoomRoomCount())
+				.roomBathCount(room.getRoomBathCount())
+				.roomEmptyYn(room.getRoomEmptyYn())
+				.roomStatus(room.getRoomStatus())
+				.roomOptions(room.getRoomOptions())
+				.imageSummary(roomImageSummary)
+				.reviewSummary(reviewSummary)
+				.build();
+		
+		return request;
+	}
+
+	@Override
+	public List<RoomEmbeddingEntity> findEmbeddingPendingRooms() {
+
+		List<RoomEmbeddingEntity> list = roomEmbeddingRepository.findAllByEmbeddingStatus("PENDING");
+		return list;
+	}
+
+	@Override
+	public EmbedResponse deleteEmbeededRoomVector(String roomNo) {
+		WebClient webClient = webClientBuilder.build();
+		EmbedResponse response = null;
+		try {
+			Mono<EmbedResponse> monoResponse = webClient.post()
+					.uri(aiServerBaseUrl+"/ai/embed/room", roomNo)
+					.retrieve()
+					.bodyToMono(EmbedResponse.class)
+					;
+			response = monoResponse.block();
+		} catch (Exception e) {
+			
+		}
+
+		return response;
+	}
+
 }

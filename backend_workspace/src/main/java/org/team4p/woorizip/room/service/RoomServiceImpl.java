@@ -30,9 +30,10 @@ import org.team4p.woorizip.room.image.dto.RoomImageDto;
 import org.team4p.woorizip.room.image.jpa.entity.RoomImageEntity;
 import org.team4p.woorizip.room.image.jpa.repository.RoomImageRepository;
 import org.team4p.woorizip.room.image.service.RoomImageService;
+import org.team4p.woorizip.room.jpa.entity.RoomEmbeddingEntity;
 import org.team4p.woorizip.room.jpa.entity.RoomEntity;
+import org.team4p.woorizip.room.jpa.repository.RoomEmbeddingRepository;
 import org.team4p.woorizip.room.jpa.repository.RoomRepository;
-import org.team4p.woorizip.room.review.dto.ai.ReviewSummaryResponse;
 import org.team4p.woorizip.room.review.jpa.repository.ReviewRepository;
 import org.team4p.woorizip.room.view.jpa.repository.RoomViewRepository;
 import org.team4p.woorizip.room.view.service.RoomViewService;
@@ -54,6 +55,7 @@ public class RoomServiceImpl implements RoomService {
 	private final RoomImageRepository riRepository;
 	private final ReviewRepository reviewRepository;
 	private final WishlistRepository wishlistRepository;
+	private final RoomEmbeddingRepository roomEmbeddingRepository;
 	
 	private final WebClient.Builder webClientBuilder;
 	@Value("${ai.server.base-url}")
@@ -130,7 +132,18 @@ public class RoomServiceImpl implements RoomService {
 		roomDto.setDeleted(false);
 		
 		// DB에 저장
-		return roomRepository.save(roomDto.toEntity()).toDto();
+		RoomEntity entity = roomRepository.save(roomDto.toEntity());
+		
+		// 임베딩 위해 상태 추가 (PENDING)
+		roomEmbeddingRepository.save(RoomEmbeddingEntity.builder()
+												.roomNo(entity.getRoomNo())
+												.embeddingStatus("PENDING")
+												.retryCount(0)
+												.build()
+				);
+		
+		// DB에 저장
+		return entity.toDto();
 	}
 
 	@Override
@@ -225,6 +238,14 @@ public class RoomServiceImpl implements RoomService {
 		entity.setRoomEmptyYn(roomDto.getRoomEmptyYn());
 		entity.setRoomStatus(roomDto.getRoomStatus());
 		entity.setRoomOptions(roomDto.getRoomOptions());
+		
+		// 임베딩 위해 상태 추가 (PENDING)
+		roomEmbeddingRepository.save(RoomEmbeddingEntity.builder()
+												.roomNo(entity.getRoomNo())
+												.embeddingStatus("PENDING")
+												.retryCount(0)
+												.build()
+				);
 		
 		return entity.toDto();
 	}

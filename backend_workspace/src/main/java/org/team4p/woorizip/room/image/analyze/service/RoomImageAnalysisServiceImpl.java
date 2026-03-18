@@ -191,4 +191,12 @@ public class RoomImageAnalysisServiceImpl implements RoomImageAnalysisService {
 	private boolean hasText(String value) {
 		return value != null && !value.isBlank();
 	}
+
+	@Override
+	@Transactional
+	public void deleteAnalyzedOne(int roomImageNo) {
+		
+		roomImageAnalysisRepository.deleteByRoomImageNo(roomImageNo);
+		
+	}
 }

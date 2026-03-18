@@ -1,4 +1,4 @@
-package org.team4p.woorizip.room.review.service;
+package org.team4p.woorizip.room.image.service;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -6,60 +6,61 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.team4p.woorizip.room.review.dto.ai.ReviewSummaryRequest;
-import org.team4p.woorizip.room.review.dto.ai.ReviewSummaryResponse;
-import org.team4p.woorizip.room.review.jpa.entity.ReviewSummaryEntity;
-import org.team4p.woorizip.room.review.jpa.repository.ReviewRepository;
-import org.team4p.woorizip.room.review.jpa.repository.ReviewSummaryRepository;
+import org.team4p.woorizip.room.image.analyze.jpa.repository.RoomImageAnalysisRepository;
+import org.team4p.woorizip.room.image.dto.ai.RoomImageSummaryRequest;
+import org.team4p.woorizip.room.image.dto.ai.RoomImageSummaryResponse;
+import org.team4p.woorizip.room.image.jpa.entity.RoomImageSummaryEntity;
+import org.team4p.woorizip.room.image.jpa.repository.RoomImageSummaryRepository;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
 
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class ReviewSummaryServiceImpl implements ReviewSummaryService{
+public class RoomImageSummaryServiceImpl implements RoomImageSummaryService{
 
-	private final ReviewSummaryRepository reviewSummaryRepository;
-	private final ReviewRepository reviewRepository;
+	private final RoomImageSummaryRepository roomImageSummaryRepository;
+	private final RoomImageAnalysisRepository roomImageAnalysisRepository;
 	private final WebClient.Builder webClientBuilder;
 	
 	@Value("${ai.server.base-url}")
 	private String aiServerUri;
 	
 	@Override
-	public List<ReviewSummaryEntity> findSummaryPendingRooms() {
-		List<ReviewSummaryEntity> list = reviewSummaryRepository.findAllBySummaryStatus("PENDING");
+	public List<RoomImageSummaryEntity> findSummaryPendingRooms() {
+		List<RoomImageSummaryEntity> list = roomImageSummaryRepository.findAllBySummaryStatus("PENDING");
 		
 		return list;
 	}
 
 	@Override
 	@Transactional
-	public String summaryPendingRooms(ReviewSummaryEntity entity) {
+	public String summaryPendingRooms(RoomImageSummaryEntity entity) {
 		// state를 PROCESSING으로 전환
 		entity.setSummaryStatus("PROCESSING");
-		reviewSummaryRepository.save(entity);
+		roomImageSummaryRepository.save(entity);
 		
-		// 요약할 리뷰목록 조회
+		// 요약할 사진분석 목록 조회
 		String roomNo = entity.getRoomNo();
-		List<String> reviews = reviewRepository.findAllReviewContentsByRoomNoOrderByReviewCreatedAtDesc(roomNo);
-		ReviewSummaryRequest request = ReviewSummaryRequest.builder()
+		List<String> analyzedList = roomImageAnalysisRepository.findAllImageCaptionsByRoomNoOrderByAnalysisCreatedAtDesc(roomNo);
+		RoomImageSummaryRequest request = RoomImageSummaryRequest.builder()
 								.roomNo(roomNo)
-								.texts(reviews)
+								.texts(analyzedList)
 								.build();
 		
 		// AI 서버에서 요약 엔드포인트 호출
 		WebClient webClient = webClientBuilder.build();
-		ReviewSummaryResponse response = null;
+		RoomImageSummaryResponse response = null;
 		try {
-			Mono<ReviewSummaryResponse> monoResponse = webClient.post()
-					.uri(aiServerUri.concat("/ai/summary/room/reviews"))
+			Mono<RoomImageSummaryResponse> monoResponse = webClient.post()
+					.uri(aiServerUri.concat("/ai/summary/room/images"))
 					.bodyValue(request)
 					.retrieve()
-					.bodyToMono(ReviewSummaryResponse.class)
+					.bodyToMono(RoomImageSummaryResponse.class)
 					;
 			response = monoResponse.block();
 			
@@ -73,7 +74,7 @@ public class ReviewSummaryServiceImpl implements ReviewSummaryService{
 				entity.setRetryCount(entity.getRetryCount()+1);
 				entity.setSummaryStatus("PENDING");
 			}
-			reviewSummaryRepository.save(entity);
+			roomImageSummaryRepository.save(entity);
 			return "요약실패";
 		}
 		
@@ -86,24 +87,24 @@ public class ReviewSummaryServiceImpl implements ReviewSummaryService{
 				entity.setRetryCount(entity.getRetryCount()+1);
 				entity.setSummaryStatus("PENDING");
 			}
-			reviewSummaryRepository.save(entity);
+			roomImageSummaryRepository.save(entity);
 			return "요약실패";
 		}
 			// 요약문구 저장하고, state를 DONE으로 전환, 업데이트 일시를 현재일시로 최신화
-			entity.setReviewSummary(response.getSummary());
+			entity.setImageSummary(response.getSummary());
 			entity.setSummaryStatus("DONE");
-			entity.setReviewCount(entity.getReviewCount()+1);
+			entity.setImageCount(entity.getImageCount()+1);
 			entity.setUpdatedAt(LocalDateTime.now());
-			reviewSummaryRepository.save(entity);
-			log.info("방 번호("+response.getRoomNo()+") - 리뷰 요약: "+response.getSummary()+", "+response.getMessage());
+			roomImageSummaryRepository.save(entity);
+			log.info("방 번호("+response.getRoomNo()+") - 사진분석 요약: "+response.getSummary()+", "+response.getMessage());
 			
 			return response.getSummary();
 	}
 
 	@Override
-	public ReviewSummaryEntity selectSummarizedReview(String roomNo) {
+	public RoomImageSummaryEntity selectSummarizedImageCaption(String roomNo) {
 		
-		return reviewSummaryRepository.findById(roomNo).orElse(null);
+		return roomImageSummaryRepository.findById(roomNo).orElse(null);
 	}
 
 }

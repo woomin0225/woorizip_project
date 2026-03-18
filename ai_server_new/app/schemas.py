@@ -12,37 +12,37 @@ MonitorKind = Literal["view_abuse", "facility_usage", "generic"]
 
 # 방 정보 종합 요약시 사용 (리뷰, 이미지설명 포함)
 class RoomTotalRequest(BaseModel):
-    roomNo: str
-    roomName: str
-    houseNo: str
+    roomNo: str = Field(description="방 번호 (식별자, 사용자는 알 수 없음)")
+    roomName: str = Field(description="방 이름")
+    houseNo: str = Field(description="건물 번호 (식별자, 사용자는 알 수 없음)")
     
-    houseName: str
-    houseAddress: str
-    houseCompletionYear: int
-    houseFloors: int
-    houseHouseHolds: int
-    houseElevatorYn: bool
-    housePetYn: bool
-    houseFemaleLimit: bool
-    houseParkingMax: int
-    houseAbstract: str
+    houseName: str = Field(description="건물 이름")
+    houseAddress: str = Field(description="건물 주소")
+    houseCompletionYear: int = Field(description="건물 완공년도")
+    houseFloors: int = Field(description="건물 층수")
+    houseHouseHolds: int = Field(description="건물 내 총 세대수")
+    houseElevatorYn: bool = Field(description="건물 승강기 유무")
+    housePetYn: bool = Field(description="건물 내 애완동물 가능여부")
+    houseFemaleLimit: bool = Field(description="여성전용 건물 여부")
+    houseParkingMax: int = Field(description="건물 최대 주차 대수")
+    houseAbstract: str = Field(description="건물 소개글")
     
-    roomCreatedAt: datetime
-    roomUpdatedAt: datetime
-    roomDeposit: int
-    roomMonthly: int
-    roomMethod: str
-    roomArea: float
-    roomFacing: str
-    roomAvailableDate: date
-    roomAbstract: str
-    roomRoomCount: int
-    roomBathCount: int
-    roomEmptyYn: bool
-    roomStatus: str
-    roomOptions: str
-    imageSummary: str
-    reviewSummary: str
+    roomCreatedAt: datetime = Field(description="방 정보 등록일")
+    roomUpdatedAt: datetime = Field(description="방 정보 최근 수정일")
+    roomDeposit: int = Field(description="방 보증금")
+    roomMonthly: int = Field(description="방 월세금")
+    roomMethod: str = Field(description="전세인지 월세인지 나타냄. M이면 월세, L이면 월세")
+    roomArea: float = Field(description="방 전용 면적. 미터제곱 단위")
+    roomFacing: str = Field(description="방의 방향")
+    roomAvailableDate: date = Field(description="방 입주가능 일자")
+    roomAbstract: str = Field(description="방 소개글")
+    roomRoomCount: int = Field(description="방 최대 이용가능 인원수")
+    roomBathCount: int = Field(description="방 내 욕실 또는 화장실 수")
+    roomEmptyYn: bool = Field(description="방의 공실여부")
+    roomStatus: str = Field(description="방의 공개/숨김 상태")
+    roomOptions: str = Field(description="방의 가구/옵션들")
+    imageSummary: str = Field(description="방의 이미지 캡션들을 요약한 글")
+    reviewSummary: str = Field(description="방의 리뷰들을 요약한 글")
     
     
 # 리뷰나 이미지 캡션들 요약시 사용
