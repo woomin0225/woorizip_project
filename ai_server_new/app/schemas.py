@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 from datetime import date, datetime
-from typing import Any, Literal
+from typing import Any, Literal, Optional
 from pydantic import BaseModel, Field
 
 SummaryTarget = Literal["page", "post", "room", "generic"]
@@ -28,7 +28,7 @@ class RoomTotalRequest(BaseModel):
     houseAbstract: str = Field(description="건물 소개글")
     
     roomCreatedAt: datetime = Field(description="방 정보 등록일")
-    roomUpdatedAt: datetime = Field(description="방 정보 최근 수정일")
+    roomUpdatedAt: Optional[datetime] = Field(default=None, description="방 정보 최근 수정일")
     roomDeposit: int = Field(description="방 보증금")
     roomMonthly: int = Field(description="방 월세금")
     roomMethod: str = Field(description="전세인지 월세인지 나타냄. M이면 월세, L이면 월세")

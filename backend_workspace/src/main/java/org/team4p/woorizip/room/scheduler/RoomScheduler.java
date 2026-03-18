@@ -33,6 +33,7 @@ public class RoomScheduler {
 			for(RoomEmbeddingEntity entity : list) {
 				if(i>50) continue;
 				if(entity.getEmbeddingStatus().equals("PROCESSING") || entity.getEmbeddingStatus().equals("DONE")) continue;
+				if(reviewSummaryService.selectSummarizedReview(entity.getRoomNo())==null || roomImageSummaryService.selectSummarizedImageCaption(entity.getRoomNo())==null) continue;
 				if(
 						(reviewSummaryService.selectSummarizedReview(entity.getRoomNo()).getSummaryStatus()!=null && roomImageSummaryService.selectSummarizedImageCaption(entity.getRoomNo()).getSummaryStatus()!=null)
 						&&

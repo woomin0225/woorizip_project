@@ -1,7 +1,6 @@
 # app/clients/qdrant_client.py
 
-from uuid import uuid4, uuid5, UUID
-import uuid
+from uuid import NAMESPACE_URL, uuid4, uuid5
 
 from qdrant_client import QdrantClient, models
 from qdrant_client.models import PointStruct
@@ -43,7 +42,8 @@ class QdrantDbClient:
         
         points=[]
         for i in range(0, n):
-            point_id = str(uuid5(UUID(target.roomNo), f"{i}"))
+            # roomNo is a business key like "room_s0030", not a UUID.
+            point_id = str(uuid5(NAMESPACE_URL, f"room:{target.roomNo}:{i}"))
             points.append(PointStruct(id=point_id, vector=vector[i], payload=target.model_dump(mode="json")))
         
         info = self.client.upsert(
