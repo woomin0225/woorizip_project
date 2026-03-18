@@ -7,6 +7,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
+import { synthesizeTts } from '../api/ttsApi';
 
 const STORAGE_KEY_ENABLED = 'woorizip.voiceModeEnabled';
 const STORAGE_KEY_DISMISSED = 'woorizip.voicePromptDismissed';
@@ -67,9 +68,12 @@ export function VoiceModeProvider({ children }) {
   });
   const [settings, setSettings] = useState(readStoredSettings);
   const [listening, setListening] = useState(false);
+  const [speaking, setSpeaking] = useState(false);
   const [supported, setSupported] = useState({ recognition: false, synthesis: false });
   const recognitionRef = useRef(null);
   const recognitionHandlerRef = useRef({});
+  const speechUtteranceRef = useRef(null);
+  const audioRef = useRef(null);
   const lastFocusAnnouncementRef = useRef('');
 
   useEffect(() => {
@@ -104,26 +108,117 @@ export function VoiceModeProvider({ children }) {
   }, [settings]);
 
   const stopSpeaking = useCallback(() => {
-    if (typeof window === 'undefined' || !window.speechSynthesis) return;
-    window.speechSynthesis.cancel();
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+    }
+    if (speechUtteranceRef.current) {
+      speechUtteranceRef.current.onend = null;
+      speechUtteranceRef.current.onerror = null;
+      speechUtteranceRef.current = null;
+    }
+    if (audioRef.current) {
+      audioRef.current.pause();
+      if (audioRef.current.src) {
+        URL.revokeObjectURL(audioRef.current.src);
+      }
+      audioRef.current.onended = null;
+      audioRef.current.onerror = null;
+      audioRef.current = null;
+    }
+    setSpeaking(false);
   }, []);
 
-  const speak = useCallback(
-    (text, options = {}) => {
-      if (!text || typeof window === 'undefined' || !window.speechSynthesis || !window.SpeechSynthesisUtterance) {
-        return false;
-      }
+  const playBrowserSpeech = useCallback((text, options = {}) => {
+    if (typeof window === 'undefined' || !window.speechSynthesis || !window.SpeechSynthesisUtterance) {
+      return Promise.resolve(false);
+    }
 
-      stopSpeaking();
+    return new Promise((resolve) => {
       const utterance = new window.SpeechSynthesisUtterance(String(text));
+      speechUtteranceRef.current = utterance;
       utterance.lang = options.lang || 'ko-KR';
       utterance.rate = options.rate || 1;
       utterance.pitch = options.pitch || 1;
       utterance.volume = options.volume || 1;
+      utterance.onend = () => {
+        if (speechUtteranceRef.current === utterance) {
+          speechUtteranceRef.current = null;
+        }
+        setSpeaking(false);
+        resolve(true);
+      };
+      utterance.onerror = () => {
+        if (speechUtteranceRef.current === utterance) {
+          speechUtteranceRef.current = null;
+        }
+        setSpeaking(false);
+        resolve(false);
+      };
+      setSpeaking(true);
       window.speechSynthesis.speak(utterance);
-      return true;
+    });
+  }, []);
+
+  const playServerSpeech = useCallback(async (text, options = {}) => {
+    const { audioBytes, mimeType } = await synthesizeTts({
+      text: String(text),
+      voiceName: options.voiceName,
+    });
+
+    return new Promise((resolve, reject) => {
+      const blob = new Blob([audioBytes], { type: mimeType || 'audio/wav' });
+      const audioUrl = URL.createObjectURL(blob);
+      const audio = new Audio(audioUrl);
+      audioRef.current = audio;
+      setSpeaking(true);
+
+      audio.onended = () => {
+        URL.revokeObjectURL(audioUrl);
+        if (audioRef.current === audio) {
+          audioRef.current = null;
+        }
+        setSpeaking(false);
+        resolve(true);
+      };
+
+      audio.onerror = (event) => {
+        URL.revokeObjectURL(audioUrl);
+        if (audioRef.current === audio) {
+          audioRef.current = null;
+        }
+        setSpeaking(false);
+        reject(event);
+      };
+
+      audio.play().catch((error) => {
+        URL.revokeObjectURL(audioUrl);
+        if (audioRef.current === audio) {
+          audioRef.current = null;
+        }
+        setSpeaking(false);
+        reject(error);
+      });
+    });
+  }, []);
+
+  const speak = useCallback(
+    async (text, options = {}) => {
+      if (!text) return false;
+
+      stopSpeaking();
+
+      if (options.preferBrowser !== true) {
+        try {
+          await playServerSpeech(text, options);
+          return true;
+        } catch {
+          return playBrowserSpeech(text, options);
+        }
+      }
+
+      return playBrowserSpeech(text, options);
     },
-    [stopSpeaking]
+    [playBrowserSpeech, playServerSpeech, stopSpeaking]
   );
 
   const stopListening = useCallback(() => {
@@ -147,6 +242,8 @@ export function VoiceModeProvider({ children }) {
       }
 
       stopListening();
+      stopSpeaking();
+
       const recognition = new RecognitionCtor();
       recognition.lang = 'ko-KR';
       recognition.interimResults = false;
@@ -177,7 +274,7 @@ export function VoiceModeProvider({ children }) {
       recognition.start();
       return true;
     },
-    [stopListening]
+    [stopListening, stopSpeaking]
   );
 
   const enableVoiceMode = useCallback(
@@ -185,8 +282,8 @@ export function VoiceModeProvider({ children }) {
       setVoiceModeEnabled(true);
       setPromptDismissed(true);
       if (speakWelcome) {
-        setTimeout(() => {
-          speak('음성 모드가 켜졌습니다. 이제 우리봇과 음성으로 대화하고 페이지 안내를 들을 수 있습니다.');
+        window.setTimeout(() => {
+          speak('음성 모드가 켜졌습니다. 약 2초 정도 멈추면 자동으로 듣기를 마치고 안내를 이어갑니다.');
         }, 150);
       }
     },
@@ -232,6 +329,7 @@ export function VoiceModeProvider({ children }) {
       voiceModeEnabled,
       promptDismissed,
       listening,
+      speaking,
       settings,
       isSpeechRecognitionSupported: supported.recognition,
       isSpeechSynthesisSupported: supported.synthesis,
@@ -249,6 +347,7 @@ export function VoiceModeProvider({ children }) {
       voiceModeEnabled,
       promptDismissed,
       listening,
+      speaking,
       settings,
       supported,
       enableVoiceMode,

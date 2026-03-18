@@ -1,0 +1,115 @@
+kind: workflow
+id: ""
+name: tourapply
+description: >
+  방 상세 페이지에서만 투어 신청을 진행하고, 현재 방 기준으로 날짜와 시간만 수집한 뒤
+  FastAPI 브리지로 전달해 백엔드 투어 신청 프로세스를 실행한다.
+trigger:
+  kind: OnConversationStart
+  id: trigger_tourapply
+  actions:
+    - kind: SetVariable
+      id: set_schema_version
+      variable: Workflow.SchemaVersion
+      value: ="v1"
+
+    - kind: SetVariable
+      id: set_session_id
+      variable: Workflow.SessionId
+      value: =System.Conversation.Id
+
+    - kind: SetVariable
+      id: set_client_request_id
+      variable: Workflow.ClientRequestId
+      value: =System.Activity.Id
+
+    - kind: ConditionGroup
+      id: check_room_context
+      conditions:
+        - id: has_room_context
+          condition: =!IsBlank(System.Context.roomNo)
+          actions:
+            - kind: SendActivity
+              id: send_room_ready
+              activity: >-
+                =Concatenate(
+                  "현재 보고 계신 방 ",
+                  Coalesce(System.Context.roomName, System.Context.roomNo),
+                  " 기준으로 투어 신청을 도와드리겠습니다.",
+                  "\n",
+                  "방문을 원하시는 날짜와 시간을 알려주세요.",
+                  "\n",
+                  "예: 2026-03-20 15:00"
+                )
+      elseActions:
+        - kind: SendActivity
+          id: send_missing_room_context
+          activity: |-
+            현재 페이지에서는 신청할 방을 확인할 수 없습니다.
+            투어를 원하는 방의 상세 페이지로 이동한 뒤 다시 신청해 주세요.
+        - kind: EndDialog
+          id: end_missing_room_context
+
+    - kind: Question
+      id: ask_preferred_visit_at
+      variable: Workflow.PreferredVisitAt
+      prompt: |-
+        방문을 원하시는 날짜와 시간을 함께 입력해 주세요.
+        예: 2026-03-20 15:00
+      entity: StringPrebuiltEntity
+      alwaysPrompt: true
+
+    - kind: SendActivity
+      id: send_summary
+      activity: >-
+        =Concatenate(
+          "신청 내용을 확인해 주세요.",
+          "\n",
+          "신청 방: ",
+          Coalesce(System.Context.roomName, System.Context.roomNo),
+          "\n",
+          "방문 일정: ",
+          Workflow.PreferredVisitAt,
+          "\n",
+          "이대로 신청하시겠어요?"
+        )
+
+    - kind: Question
+      id: ask_confirm
+      variable: Workflow.Confirmed
+      prompt: |-
+        진행하려면 네, 취소하려면 아니오라고 입력해 주세요.
+      entity: StringPrebuiltEntity
+      alwaysPrompt: true
+
+    - kind: ConditionGroup
+      id: check_confirm
+      conditions:
+        - id: confirmed_yes
+          condition: =Or(Workflow.Confirmed = "네", Workflow.Confirmed = "예", Workflow.Confirmed = "신청", Workflow.Confirmed = "진행")
+          actions:
+            - kind: InvokeHttpRequest
+              id: submit_tour_apply
+              method: POST
+              url: =Concatenate(System.Context.fastApiBaseUrl, "/ai/tour/workflow/apply")
+              headers:
+                Content-Type: application/json
+                X-API-KEY: =System.Context.internalApiKey
+              body:
+                schemaVersion: =Workflow.SchemaVersion
+                sessionId: =Workflow.SessionId
+                clientRequestId: =Workflow.ClientRequestId
+                roomNo: =System.Context.roomNo
+                roomName: =System.Context.roomName
+                preferredVisitAt: =Workflow.PreferredVisitAt
+              responseVariable: Workflow.SubmitResult
+
+            - kind: SendActivity
+              id: send_submit_result
+              activity: =Workflow.SubmitResult.reply
+      elseActions:
+        - kind: SendActivity
+          id: send_cancelled
+          activity: |-
+            투어 신청을 취소했습니다.
+            원하시면 다시 말씀해 주세요.

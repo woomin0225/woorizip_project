@@ -14,8 +14,15 @@ def require_internal_api_key(
 
 def get_user_context(
     x_user_id: str | None = Header(default=None, alias="X-User-Id"),
+    x_user_name: str | None = Header(default=None, alias="X-User-Name"),
+    x_user_phone: str | None = Header(default=None, alias="X-User-Phone"),
     x_roles: str | None = Header(default="", alias="X-Roles"),
 ) -> dict:
     # Spring이 인증/권한을 들고 있으므로, 필요한 최소 컨텍스트를 헤더로 전달
     roles = [r.strip() for r in (x_roles or "").split(",") if r.strip()]
-    return {"user_id": x_user_id, "roles": roles}
+    return {
+        "user_id": x_user_id,
+        "user_name": x_user_name,
+        "user_phone": x_user_phone,
+        "roles": roles,
+    }

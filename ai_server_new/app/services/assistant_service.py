@@ -40,9 +40,15 @@ class AssistantService:
         result = {'mode': 'mock'}
         requires_confirm = False
 
-        if '예약' in compact:
+        if '투어신청' in compact or '투어신청' == compact or '투어' in compact and ('신청' in compact or '방보러' in compact or '방보고싶' in compact or '방문' in compact):
+            intent = 'TOUR_APPLY'
+            reply = '투어 신청 요청으로 이해했습니다. mock 모드에서는 실제 신청 대신 투어 신청 워크플로 진입만 안내합니다.'
+            action = {'name': 'TOUR_APPLY', 'path': '/tour/apply', 'target': 'azure_workflow'}
+            result = {'mode': 'mock', 'next': '투어 신청 워크플로 진입'}
+            requires_confirm = True
+        elif '예약' in compact:
             intent = 'FACILITY_BOOKING'
-            reply = '공용시설 예약 요청으로 이해했습니다. mock 모드에서는 실제 예약 대신 안내만 제공합니다.'
+            reply = '예약 요청으로 이해했습니다. mock 모드에서는 실제 예약 대신 안내만 제공합니다.'
             action = {'name': 'FACILITY_BOOKING', 'path': '/reservation/view'}
             result = {'mode': 'mock', 'next': '예약 페이지 이동'}
             requires_confirm = True

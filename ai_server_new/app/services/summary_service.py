@@ -8,6 +8,9 @@ import re
 from app.clients.qwen_llm_client import QwenLlmClient
 from app.schemas import RoomSummaryRequest
 
+import logging
+logger=logging.getLogger(__name__)
+
 class SummaryService:
     def __init__(self, llm: GroqLLMClient):
         self.llm = llm
@@ -451,6 +454,8 @@ class RoomSummaryService:
         self.client=client
         
     def summary_room_reviews(self, room_reviews: list):
+        logger.info("service entered review_count=%s", len(room_reviews or []))
+         
         if not room_reviews:
             raise ValueError("요약할 리뷰 텍스트가 비어있습니다.")
         review_values = [r for r in room_reviews if r]
@@ -460,7 +465,7 @@ class RoomSummaryService:
             {"role": "user", "content": prompt},
             {"role": "assistant", "content": "summarized result is "}
         ]
-        result = self.client.generate_from_messages(messages, max_new_tokens=128)
+        result = self.client.generate_from_messages(messages, max_new_tokens=256)
         return result.strip()
     
     def summary_room_image_captions(self, room_image_captions: list):
@@ -473,7 +478,7 @@ class RoomSummaryService:
             {"role": "user", "content": prompt},
             {"role": "assistant", "content": "summarized result is "}
         ]
-        result = self.client.generate_from_messages(messages, max_new_tokens=128)
+        result = self.client.generate_from_messages(messages, max_new_tokens=256)
         return result.strip()
     
     def summary_room_total(self, room: RoomSummaryRequest):
@@ -488,5 +493,5 @@ class RoomSummaryService:
             {"role": "user", "content": prompt},
             {"role": "assistant", "content": "summarized result is "}
         ]
-        result = self.client.generate_from_messages(messages, max_new_tokens=128)
+        result = self.client.generate_from_messages(messages, max_new_tokens=256)
         return result.strip()

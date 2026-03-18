@@ -1,11 +1,71 @@
 // src/features/board/components/RichTextEditor.jsx
 import React, { useEffect, useMemo } from 'react';
-import { useEditor, EditorContent } from '@tiptap/react';
+import { useEditor, EditorContent, useEditorState } from '@tiptap/react';
+import { Extension } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
 import Link from '@tiptap/extension-link';
 import TextAlign from '@tiptap/extension-text-align';
 import Image from '@tiptap/extension-image';
+import { TextStyle } from '@tiptap/extension-text-style';
+
+const FontSize = Extension.create({
+  name: 'fontSize',
+
+  addGlobalAttributes() {
+    return [
+      {
+        types: ['textStyle'],
+        attributes: {
+          fontSize: {
+            default: null,
+            parseHTML: (element) => element.style.fontSize || null,
+            renderHTML: (attributes) => {
+              if (!attributes.fontSize) {
+                return {};
+              }
+
+              return {
+                style: `font-size: ${attributes.fontSize}`,
+              };
+            },
+          },
+        },
+      },
+    ];
+  },
+
+  addCommands() {
+    return {
+      setFontSize:
+        (fontSize) =>
+        ({ chain }) => {
+          return chain().setMark('textStyle', { fontSize }).run();
+        },
+      unsetFontSize:
+        () =>
+        ({ chain }) => {
+          return chain().setMark('textStyle', { fontSize: null }).run();
+        },
+    };
+  },
+});
+
+const FONT_SIZE_OPTIONS = [
+  '9px',
+  '10px',
+  '11px',
+  '12px',
+  '13px',
+  '14px',
+  '16px',
+  '18px',
+  '24px',
+  '32px',
+  '48px',
+  '64px',
+  '96px',
+];
 
 const Icon = {
   Bold: () => <span style={{ fontWeight: 800 }}>B</span>,
@@ -33,18 +93,30 @@ const Icon = {
   Clean: () => <span>⟲</span>,
 };
 
-// 현재 블록 타입 표시/변경용
-function getBlockValue(editor) {
-  if (editor.isActive('heading', { level: 1 })) return 'h1';
-  if (editor.isActive('heading', { level: 2 })) return 'h2';
-  if (editor.isActive('heading', { level: 3 })) return 'h3';
-  return 'p'; // 본문(=Div 느낌)
-}
-
 function Toolbar({ editor, disabled }) {
+  const editorState = useEditorState({
+    editor,
+    selector: ({ editor }) => ({
+      fontSize: editor.getAttributes('textStyle')?.fontSize || '16px',
+    }),
+  });
+
   if (!editor) return null;
 
-  const blockValue = getBlockValue(editor);
+  const fontSizeValue = editorState.fontSize;
+
+  const onFontSizeChange = (e) => {
+    const value = e.target.value;
+
+    run(() => {
+      if (!value) {
+        editor.chain().focus().unsetFontSize().run();
+        return;
+      }
+
+      editor.chain().focus().setFontSize(value).run();
+    });
+  };
 
   const run = (fn) => {
     if (disabled) return;
@@ -76,17 +148,6 @@ function Toolbar({ editor, disabled }) {
       }}
     />
   );
-
-  const onBlockChange = (e) => {
-    const v = e.target.value;
-    run(() => {
-      editor.chain().focus();
-      if (v === 'p') editor.chain().setParagraph().run();
-      if (v === 'h1') editor.chain().toggleHeading({ level: 1 }).run();
-      if (v === 'h2') editor.chain().toggleHeading({ level: 2 }).run();
-      if (v === 'h3') editor.chain().toggleHeading({ level: 3 }).run();
-    });
-  };
 
   const onLink = () => {
     run(() => {
@@ -132,23 +193,24 @@ function Toolbar({ editor, disabled }) {
         borderBottom: '1px solid #e5e7eb',
       }}
     >
-      {/* "Div" 느낌 드롭다운 */}
       <select
-        value={blockValue}
-        onChange={onBlockChange}
+        value={fontSizeValue}
+        onChange={onFontSizeChange}
         disabled={disabled}
         style={{
           height: 34,
+          minWidth: 84,
           border: '1px solid #e5e7eb',
           borderRadius: 6,
           padding: '0 10px',
           background: '#fff',
         }}
       >
-        <option value="p">Div</option>
-        <option value="h1">H1</option>
-        <option value="h2">H2</option>
-        <option value="h3">H3</option>
+        {FONT_SIZE_OPTIONS.map((size) => (
+          <option key={size} value={size}>
+            {size.replace('px', '')}
+          </option>
+        ))}
       </select>
 
       {sep()}
@@ -282,6 +344,8 @@ export default function RichTextEditor({
     () => [
       StarterKit,
       Underline,
+      TextStyle,
+      FontSize,
       Link.configure({
         openOnClick: true,
         autolink: true,

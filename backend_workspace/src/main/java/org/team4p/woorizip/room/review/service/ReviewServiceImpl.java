@@ -1,25 +1,21 @@
 package org.team4p.woorizip.room.review.service;
 
-import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.time.temporal.ChronoUnit;
-import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.team4p.woorizip.common.exception.ForbiddenException;
 import org.team4p.woorizip.common.exception.NotFoundException;
-import org.team4p.woorizip.room.dto.response.ReviewRankingResponse;
-import org.team4p.woorizip.room.image.jpa.entity.RoomImageEntity;
 import org.team4p.woorizip.room.image.jpa.repository.RoomImageRepository;
 import org.team4p.woorizip.room.jpa.repository.RoomRepository;
 import org.team4p.woorizip.room.review.dto.ReviewDto;
 import org.team4p.woorizip.room.review.jpa.entity.ReviewEntity;
+import org.team4p.woorizip.room.review.jpa.entity.ReviewSummaryEntity;
 import org.team4p.woorizip.room.review.jpa.repository.ReviewRepository;
+import org.team4p.woorizip.room.review.jpa.repository.ReviewSummaryRepository;
 import org.team4p.woorizip.user.jpa.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -31,6 +27,7 @@ public class ReviewServiceImpl implements ReviewService {
 	private final RoomRepository roomRepository;
 	private final UserRepository userRepository;
 	private final RoomImageRepository riRepository;
+	private final ReviewSummaryRepository reviewSummaryRepository;
 
 	private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 	
@@ -51,6 +48,15 @@ public class ReviewServiceImpl implements ReviewService {
 		// userNo 조립
 		String userNo = userRepository.findUserNoByEmailId(currentUser);
 		reviewDto.setUserNo(userNo);
+		
+		// +AI: 리뷰 요약상태 PENDING으로 등록
+		reviewSummaryRepository.save(ReviewSummaryEntity.builder()
+											.roomNo(reviewDto.getRoomNo())
+											.summaryStatus("PENDING")
+											.reviewCount(0)
+											.retryCount(0)
+											.build());
+		
 		// DB에 저장
 		return reviewRepository.save(reviewDto.toEntity()).toDto();
 	}

@@ -107,6 +107,14 @@ export default function Header() {
     collapseEl.style.height = '';
   }, [location.pathname]);
 
+  useEffect(() => {
+    const openAccessibilitySettings = () => setIsSettingsOpen(true);
+    window.addEventListener('woorizip:open-accessibility-settings', openAccessibilitySettings);
+    return () => {
+      window.removeEventListener('woorizip:open-accessibility-settings', openAccessibilitySettings);
+    };
+  }, []);
+
   const handleLogout = () => {
     clearTokens();
     localStorage.removeItem('userName');

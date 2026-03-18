@@ -15,8 +15,18 @@ class RoomTotalRequest(BaseModel):
     roomNo: str
     roomName: str
     houseNo: str
+    
     houseName: str
     houseAddress: str
+    houseCompletionYear: int
+    houseFloors: int
+    houseHouseHolds: int
+    houseElevatorYn: bool
+    housePetYn: bool
+    houseFemaleLimit: bool
+    houseParkingMax: int
+    houseAbstract: str
+    
     roomCreatedAt: datetime
     roomUpdatedAt: datetime
     roomDeposit: int
@@ -250,6 +260,20 @@ class TourApplyRes(BaseModel):
     visitTime: str
     message: str
     springResponse: dict[str, Any] = Field(default_factory=dict)
+
+
+class TourWorkflowApplyReq(BaseModel):
+    schemaVersion: str = "v1"
+    sessionId: str | None = None
+    clientRequestId: str | None = None
+    roomNo: str
+    roomName: str | None = None
+    visitDate: str | None = None
+    visitTime: str | None = None
+    preferredVisitAt: str | None = None
+    userName: str | None = None
+    userPhone: str | None = None
+    inquiry: str | None = None
 
 
 class ListingIndexReq(BaseModel):

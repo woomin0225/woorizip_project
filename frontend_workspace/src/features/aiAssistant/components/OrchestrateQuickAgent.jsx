@@ -1,8 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { runOrchestrateCommand } from '../api/orchestrateApi';
 import { fetchBoardSummary } from '../../board/api/BoardSummaryApi';
-import { synthesizeTts } from '../api/ttsApi';
 import botIcon from '../../../assets/images/ai_bot.png';
 import { useAuth } from '../../../app/providers/AuthProvider';
 import { parseJwt } from '../../../app/providers/utils/jwt';
@@ -293,24 +292,45 @@ const isNo = (value) =>
     normalizeText(value).includes(normalizeText(token))
   );
 
+const formatAssistantReply = (value) => {
+  const source = String(value ?? '').replace(/\r\n/g, '\n').trim();
+  if (!source) return '';
+
+  let formatted = source.replace(/\s*(\d+\.)\s*/g, '\n$1 ');
+  formatted = formatted.replace(/\n{2,}/g, '\n').trim();
+
+  if (!formatted.includes('\n')) {
+    formatted = formatted.replace(/([.!?]|\uB2C8\uB2E4\.|\uC138\uC694\.|\uD574\uC8FC\uC138\uC694\.|\uB429\uB2C8\uB2E4\.)\s+(?=[^\n])/g, '$1\n');
+    formatted = formatted.replace(/\n{2,}/g, '\n').trim();
+  }
+
+  return formatted;
+};
+
+const SETTINGS_GUIDE = '접근성 설정에서는 음성 모드, 페이지 진입 시 자동 요약 읽기, 현재 포커스 요소 읽기, 우리봇 답변 자동 읽기, 음성 명령 사용, 글자 크기, 페이지 배율, 버튼 크기를 조정할 수 있습니다.';
+
 export default function OrchestrateQuickAgent() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { accessToken, userId } = useAuth();
   const {
     voiceModeEnabled,
     listening,
+    speaking,
     settings,
     isSpeechRecognitionSupported,
-    isSpeechSynthesisSupported,
     enableVoiceMode,
     disableVoiceMode,
     speak,
     startListening,
     stopListening,
+    updateSetting,
   } = useVoiceMode();
 
   const bottomRef = useRef(null);
   const lastSpokenMessageRef = useRef('');
+  const voiceGuideShownRef = useRef(false);
+  const voiceLoopStateRef = useRef({ voiceModeEnabled, settings, loading: false, speaking: false });
   const userDisplayName = useMemo(() => {
     const payload = parseJwt(accessToken);
     const rawName =
@@ -332,12 +352,20 @@ export default function OrchestrateQuickAgent() {
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [ttsLoading, setTtsLoading] = useState(false);
   const [pendingConfirmation, setPendingConfirmation] = useState(null);
   const [messages, setMessages] = useState([
     { role: 'assistant', text: greetingText, actionIds: STARTER_ACTION_IDS },
   ]);
   const [sessionId] = useState(newSessionId);
+
+  useEffect(() => {
+    voiceLoopStateRef.current = {
+      voiceModeEnabled,
+      settings,
+      loading,
+      speaking,
+    };
+  }, [voiceModeEnabled, settings, loading, speaking]);
 
   const disabled = useMemo(() => loading || !input.trim(), [loading, input]);
   const latestAssistant = useMemo(
@@ -346,6 +374,13 @@ export default function OrchestrateQuickAgent() {
     [messages]
   );
   const latestAssistantMessage = latestAssistant?.text || '';
+  const voiceStatusText = listening
+    ? '듣는 중입니다. 약 2초 정도 멈추면 자동으로 처리합니다.'
+    : speaking
+      ? '답변을 읽는 중입니다.'
+      : loading
+        ? '요청을 처리하고 있습니다.'
+        : '대기 중입니다. 음성 모드에서는 자동으로 다시 듣기를 시작합니다.';
 
   useEffect(() => {
     if (!open) return;
@@ -355,37 +390,68 @@ export default function OrchestrateQuickAgent() {
   useEffect(() => {
     if (voiceModeEnabled) {
       setOpen(true);
+      if (!voiceGuideShownRef.current) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: 'assistant',
+            text:
+              '\uC74C\uC131 \uBAA8\uB4DC\uAC00 \uCF1C\uC84C\uC2B5\uB2C8\uB2E4. \uACC4\uC18D \uB9D0\uC500\uD558\uC2DC\uBA74 \uC6B0\uB9AC\uBD07\uC774 \uC790\uB3D9\uC73C\uB85C \uB4E3\uACE0 \uB2F5\uBCC0\uD569\uB2C8\uB2E4. \uD544\uC694\uD558\uBA74 \uC544\uB798 \uC785\uB825\uCC3D\uC73C\uB85C \uD55C \uBC88 \uB354 \uC548\uB0B4\uB97C \uB0A8\uAE38 \uC218\uB3C4 \uC788\uC2B5\uB2C8\uB2E4.',
+            actionIds: ['summary', 'roomRecommend', 'reserve'],
+          },
+        ]);
+        voiceGuideShownRef.current = true;
+      }
+      return;
     }
+
+    voiceGuideShownRef.current = false;
   }, [voiceModeEnabled]);
 
   useEffect(() => {
-    if (
-      !voiceModeEnabled ||
-      !settings.autoReadBotReplies ||
-      !isSpeechSynthesisSupported ||
-      !latestAssistant
-    )
+    if (!voiceModeEnabled || !settings.autoReadBotReplies || !latestAssistant) {
       return;
+    }
+
     const suggestionText =
-      Array.isArray(latestAssistant.actionIds) &&
-      latestAssistant.actionIds.length > 0
-        ? ` 추천 명령은 ${latestAssistant.actionIds
+      Array.isArray(latestAssistant.actionIds) && latestAssistant.actionIds.length > 0
+        ? ` \uCD94\uCC9C \uBA85\uB839\uC740 ${latestAssistant.actionIds
             .map((id) => ACTION_MAP[id]?.label)
             .filter(Boolean)
-            .join(', ')} 입니다.`
+            .join(', ')} \uC785\uB2C8\uB2E4.`
         : '';
-    const speechText =
-      `${latestAssistant.text.replace(/\n/g, ' ')}${suggestionText}`.trim();
+    const speechText = `${latestAssistant.text.replace(/\n/g, ' ')}${suggestionText}`.trim();
     if (!speechText || speechText === lastSpokenMessageRef.current) return;
     lastSpokenMessageRef.current = speechText;
     speak(speechText);
-  }, [
-    voiceModeEnabled,
-    settings.autoReadBotReplies,
-    isSpeechSynthesisSupported,
-    latestAssistant,
-    speak,
-  ]);
+  }, [voiceModeEnabled, settings.autoReadBotReplies, latestAssistant, speak]);
+
+  const getRoomContext = () => {
+    const pathname = location.pathname || '';
+    const isRoomDetailPage = /^\/rooms\/[^/]+$/.test(pathname);
+    if (!isRoomDetailPage) return {};
+
+    const tourLink = document.querySelector('a[href^="/rooms/"][href$="/tour"]');
+    const href = tourLink?.getAttribute('href') || '';
+    const hrefMatch = href.match(/^\/rooms\/([^/]+)\/tour$/);
+    const pathMatch = pathname.match(/^\/rooms\/([^/]+)$/);
+    const roomNo = hrefMatch?.[1] || pathMatch?.[1] || '';
+
+    const titleCandidates = Array.from(document.querySelectorAll('main h3, main h2'))
+      .map((node) => String(node.textContent || '').replace(/^[^\p{L}\p{N}]+/gu, '').trim())
+      .filter(Boolean);
+    const roomName =
+      titleCandidates.find(
+        (currentText) =>
+          !currentText.includes('\uC704\uCE58') &&
+          !currentText.includes('\uACF5\uC6A9\uC2DC\uC124') &&
+          !currentText.includes('\uBC29 \uC635\uC158')
+      ) || '';
+
+    if (!roomNo) return {};
+
+    return { roomNo, roomName };
+  };
 
   const getPageContext = () => {
     const sourceNode = document.querySelector('main') || document.body;
@@ -401,8 +467,7 @@ export default function OrchestrateQuickAgent() {
   };
 
   const extractPostNoFromPath = () => {
-    const path = window.location.pathname;
-
+    const pathName = window.location.pathname;
     const patterns = [
       /\/notices\/(\d+)/,
       /\/events\/(\d+)/,
@@ -411,7 +476,7 @@ export default function OrchestrateQuickAgent() {
     ];
 
     for (const pattern of patterns) {
-      const match = path.match(pattern);
+      const match = pathName.match(pattern);
       if (match?.[1]) {
         return Number(match[1]);
       }
@@ -420,11 +485,20 @@ export default function OrchestrateQuickAgent() {
     return null;
   };
 
-  const appendAssistantMessage = (text, actionIds = []) => {
+  const appendAssistantMessage = (messageText, actionIds = []) => {
     setMessages((prev) => [
       ...prev,
-      { role: 'assistant', text, actionIds: uniqActionIds(actionIds) },
+      { role: 'assistant', text: messageText, actionIds: uniqActionIds(actionIds) },
     ]);
+  };
+
+  const openAccessibilitySettings = () => {
+    window.dispatchEvent(new Event('woorizip:open-accessibility-settings'));
+  };
+
+  const goToPage = (pathName, messageText, actionIds = []) => {
+    navigate(pathName);
+    appendAssistantMessage(messageText, actionIds);
   };
 
   const runQuickAction = async (actionId, options = {}) => {
@@ -438,25 +512,25 @@ export default function OrchestrateQuickAgent() {
     ) {
       setPendingConfirmation({ actionId, label: action.label });
       appendAssistantMessage(
-        `${action.label}을 진행할까요? 예 또는 아니오로 말씀해 주세요.`,
+        `${action.label}\uC744 \uC9C4\uD589\uD560\uAE4C\uC694? \uC608 \uB610\uB294 \uC544\uB2C8\uC624\uB85C \uB9D0\uC500\uD574 \uC8FC\uC138\uC694.`,
         expandRelatedActionIds(action.related || [], 3)
       );
       return;
     }
 
     if (actionId === 'reserve') {
-      navigate('/reservation/view');
-      appendAssistantMessage(
-        '예약 페이지로 이동했습니다. 원하시는 시설과 시간을 선택해주세요.',
+      goToPage(
+        '/reservation/view',
+        '\uC608\uC57D \uD398\uC774\uC9C0\uB85C \uC774\uB3D9\uD588\uC2B5\uB2C8\uB2E4. \uC6D0\uD558\uC2DC\uB294 \uC2DC\uC124\uACFC \uC2DC\uAC04\uC744 \uC120\uD0DD\uD574\uC8FC\uC138\uC694.',
         ['facilityHours', 'reservationStatus', 'facilityCancel']
       );
       return;
     }
 
     if (actionId === 'roomRecommend') {
-      navigate('/rooms');
-      appendAssistantMessage(
-        '방 추천을 확인할 수 있도록 방 목록 페이지로 이동했습니다.',
+      goToPage(
+        '/rooms',
+        '\uBC29 \uCD94\uCC9C\uC744 \uD655\uC778\uD560 \uC218 \uC788\uB3C4\uB85D \uBC29 \uBAA9\uB85D \uD398\uC774\uC9C0\uB85C \uC774\uB3D9\uD588\uC2B5\uB2C8\uB2E4.',
         ['availableRooms', 'deposit', 'monthlyRent']
       );
       return;
@@ -469,7 +543,7 @@ export default function OrchestrateQuickAgent() {
         const page = getPageContext();
         const excerpt = (page.contentExcerpt || '').slice(0, 220);
         appendAssistantMessage(
-          `현재 페이지는 게시글 상세페이지가 아니어서 본문 기준 간단 요약만 제공합니다.\n제목: ${page.title || '-'}\n요약: ${excerpt || '요약할 본문을 찾지 못했습니다.'}`,
+          `\uD604\uC7AC \uD398\uC774\uC9C0\uB294 \uAC8C\uC2DC\uAE00 \uC0C1\uC138\uD398\uC774\uC9C0\uAC00 \uC544\uB2C8\uC5B4\uC11C \uBCF8\uBB38 \uAE30\uC900 \uAC04\uB2E8 \uC694\uC57D\uB9CC \uC81C\uACF5\uD569\uB2C8\uB2E4.\n\uC81C\uBAA9: ${page.title || '-'}\n\uC694\uC57D: ${excerpt || '\uC694\uC57D\uD560 \uBCF8\uBB38\uC744 \uCC3E\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4.'}`,
           ['roomRecommend', 'reviews', 'facilityInfo']
         );
         return;
@@ -477,51 +551,27 @@ export default function OrchestrateQuickAgent() {
 
       try {
         setLoading(true);
-
         const response = await fetchBoardSummary(postNo);
         const result = response?.data?.data ?? response?.data;
 
-        const summary = String(
-          result?.summary || '요약 결과가 없습니다.'
-        ).trim();
+        const summaryText = String(result?.summary || '\uC694\uC57D \uACB0\uACFC\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4.').trim();
         const keyPoints = Array.isArray(result?.keyPoints)
           ? result.keyPoints
-              .map((item) =>
-                String(item || '')
-                  .replace(/^[-•\s]+/, '')
-                  .trim()
-              )
+              .map((item) => String(item || '').replace(/^[-\u2022\s]+/, '').trim())
               .filter(Boolean)
           : [];
         const conclusion = String(result?.conclusion || '').trim();
         const warnings = Array.isArray(result?.warnings)
           ? result.warnings
-              .map((item) =>
-                String(item || '')
-                  .replace(/^[-•\s]+/, '')
-                  .trim()
-              )
+              .map((item) => String(item || '').replace(/^[-\u2022\s]+/, '').trim())
               .filter(Boolean)
           : [];
 
-        const sections = [];
-        sections.push('게시글 AI 요약입니다.');
-
-        if (summary) {
-          sections.push(`요약\n${summary}`);
-        }
-
-        if (keyPoints.length > 0) {
-          sections.push(`핵심\n• ${keyPoints.join('\n• ')}`);
-        }
-
-        if (conclusion) {
-          sections.push(`결론\n${conclusion}`);
-        }
-
-        if (warnings.length > 0) {
-          sections.push(`참고\n• ${warnings.join('\n• ')}`);
-        }
+        const sections = ['\uAC8C\uC2DC\uAE00 AI \uC694\uC57D\uC785\uB2C8\uB2E4.'];
+        if (summaryText) sections.push(`\uC694\uC57D\n${summaryText}`);
+        if (keyPoints.length > 0) sections.push(`\uD575\uC2EC\n\u2022 ${keyPoints.join('\n\u2022 ')}`);
+        if (conclusion) sections.push(`\uACB0\uB860\n${conclusion}`);
+        if (warnings.length > 0) sections.push(`\uCC38\uACE0\n\u2022 ${warnings.join('\n\u2022 ')}`);
 
         appendAssistantMessage(sections.join('\n\n'), [
           'roomRecommend',
@@ -535,9 +585,9 @@ export default function OrchestrateQuickAgent() {
           errorBody?.message ||
           errorBody?.error ||
           error?.message ||
-          '게시글 요약 중 오류가 발생했습니다.';
+          '\uAC8C\uC2DC\uAE00 \uC694\uC57D \uC911 \uC624\uB958\uAC00 \uBC1C\uC0DD\uD588\uC2B5\uB2C8\uB2E4.';
 
-        appendAssistantMessage(`오류: ${apiMessage}`, [
+        appendAssistantMessage(`\uC624\uB958: ${apiMessage}`, [
           'roomRecommend',
           'reviews',
           'facilityInfo',
@@ -550,33 +600,123 @@ export default function OrchestrateQuickAgent() {
     }
 
     if (actionId === 'facilityHours') {
-      navigate('/facility/view');
-      appendAssistantMessage(
-        '이용시간 확인을 위해 시설 페이지로 이동했습니다. 시설을 선택하면 운영시간을 확인할 수 있습니다.',
+      goToPage(
+        '/facility/view',
+        '\uC774\uC6A9\uC2DC\uAC04 \uD655\uC778\uC744 \uC704\uD574 \uC2DC\uC124 \uD398\uC774\uC9C0\uB85C \uC774\uB3D9\uD588\uC2B5\uB2C8\uB2E4. \uC2DC\uC124\uC744 \uC120\uD0DD\uD558\uBA74 \uC6B4\uC601\uC2DC\uAC04\uC744 \uD655\uC778\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.',
         ['reserve', 'facilityInfo', 'facilityCancel']
       );
       return;
     }
 
     if (actionId === 'facilityCancel') {
-      navigate('/reservation/view');
-      appendAssistantMessage(
-        '예약 내역 페이지로 이동했습니다. 취소할 예약을 선택해 진행해주세요.',
+      goToPage(
+        '/reservation/view',
+        '\uC608\uC57D \uB0B4\uC5ED \uD398\uC774\uC9C0\uB85C \uC774\uB3D9\uD588\uC2B5\uB2C8\uB2E4. \uCDE8\uC18C\uD560 \uC608\uC57D\uC744 \uC120\uD0DD\uD574 \uC9C4\uD589\uD574\uC8FC\uC138\uC694.',
         ['reservationStatus', 'reserve', 'facilityHours']
       );
       return;
     }
 
     if (actionId === 'reservationStatus') {
-      navigate('/reservation/view');
-      appendAssistantMessage(
-        '예약 내역 페이지로 이동했습니다. 현재 예약 상태를 확인해보세요.',
+      goToPage(
+        '/reservation/view',
+        '\uC608\uC57D \uB0B4\uC5ED \uD398\uC774\uC9C0\uB85C \uC774\uB3D9\uD588\uC2B5\uB2C8\uB2E4. \uD604\uC7AC \uC608\uC57D \uC0C1\uD0DC\uB97C \uD655\uC778\uD574\uBCF4\uC138\uC694.',
         ['facilityCancel', 'reserve', 'facilityHours']
       );
     }
   };
 
-  const extractSuggestedActions = (result, replyText) => {
+  const handleLocalSystemCommand = (messageText) => {
+    const normalized = normalizeText(messageText);
+    if (!normalized) return false;
+
+    if (
+      normalized.includes('\uC811\uADFC\uC131\uC124\uC815') ||
+      normalized.includes('\uC124\uC815\uBC14\uAFB8\uACE0\uC2F6') ||
+      normalized.includes('\uC124\uC815\uC5F4\uC5B4') ||
+      normalized.includes('\uC124\uC815\uC124\uBA85')
+    ) {
+      openAccessibilitySettings();
+      appendAssistantMessage(`\uC811\uADFC\uC131 \uC124\uC815\uC744 \uC5F4\uC5C8\uC2B5\uB2C8\uB2E4.\n${SETTINGS_GUIDE}`);
+      return true;
+    }
+
+    if (
+      (normalized.includes('\uD398\uC774\uC9C0\uC694\uC57D') || normalized.includes('\uC790\uB3D9\uC694\uC57D')) &&
+      (normalized.includes('\uCF1C') || normalized.includes('on') || normalized.includes('\uD65C\uC131\uD654'))
+    ) {
+      updateSetting('autoReadPageSummary', true);
+      appendAssistantMessage(
+        '\uD398\uC774\uC9C0 \uC9C4\uC785 \uC2DC \uC790\uB3D9 \uC694\uC57D \uC77D\uAE30\uB97C \uCF30\uC2B5\uB2C8\uB2E4. \uC774\uC81C \uD398\uC774\uC9C0\uB97C \uC774\uB3D9\uD560 \uB54C\uB9C8\uB2E4 \uD575\uC2EC \uB0B4\uC6A9\uC744 \uBA3C\uC800 \uC77D\uC5B4\uB4DC\uB9BD\uB2C8\uB2E4.'
+      );
+      return true;
+    }
+
+    if (
+      (normalized.includes('\uD398\uC774\uC9C0\uC694\uC57D') || normalized.includes('\uC790\uB3D9\uC694\uC57D')) &&
+      (normalized.includes('\uAEBC') || normalized.includes('off') || normalized.includes('\uBE44\uD65C\uC131\uD654'))
+    ) {
+      updateSetting('autoReadPageSummary', false);
+      appendAssistantMessage(
+        '\uD398\uC774\uC9C0 \uC9C4\uC785 \uC2DC \uC790\uB3D9 \uC694\uC57D \uC77D\uAE30\uB97C \uAFB8\uC2B5\uB2C8\uB2E4. \uD544\uC694\uD560 \uB54C\uB9CC \uC694\uC57D\uC744 \uC694\uCCAD\uD574 \uC8FC\uC138\uC694.'
+      );
+      return true;
+    }
+
+    if (normalized.includes('\uACF5\uC9C0\uC0AC\uD56D') || normalized === '\uACF5\uC9C0' || normalized.includes('\uACF5\uC9C0\uD398\uC774\uC9C0')) {
+      goToPage(
+        '/notices',
+        '\uACF5\uC9C0\uC0AC\uD56D \uD398\uC774\uC9C0\uB85C \uC774\uB3D9\uD588\uC2B5\uB2C8\uB2E4. \uCD5C\uC2E0 \uACF5\uC9C0\uC640 \uC6B4\uC601 \uC548\uB0B4\uB97C \uD655\uC778\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.',
+        ['summary']
+      );
+      return true;
+    }
+
+    if (normalized.includes('\uBC29\uCC3E\uAE30') || normalized.includes('\uBC29\uBCF4\uC5EC\uC918') || normalized.includes('\uBC29\uBAA9\uB85D')) {
+      goToPage(
+        '/rooms',
+        '\uBC29 \uBAA9\uB85D \uD398\uC7740C0C',
+        ['roomRecommend', 'summary']
+      );
+      return true;
+    }
+
+    if (normalized.includes('\uACF5\uC6A9\uC2DC\uC124') || normalized.includes('\uC2DC\uC124\uD398\uC774\uC9C0') || normalized === '\uC2DC\uC124\uC548\uB0B4') {
+      goToPage(
+        '/facility/view',
+        '\uACF5\uC6A9\uC2DC\uC124 \uD398\uC774\uC9C0\uB85C \uC774\uB3D9\uD588\uC2B5\uB2C8\uB2E4. \uC2DC\uC124 \uC548\uB0B4\uC640 \uC608\uC57D \uC815\uBCF4\uB97C \uD655\uC778\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.',
+        ['facilityHours', 'reserve']
+      );
+      return true;
+    }
+
+    if (normalized.includes('\uC608\uC57D\uB0B4\uC5ED') || normalized.includes('\uC608\uC57D\uD398\uC774\uC9C0') || normalized.includes('\uC608\uC57D\uD655\uC778')) {
+      goToPage(
+        '/reservation/view',
+        '\uC608\uC57D \uD398\uC774\uC9C0\uB85C \uC774\uB3D9\uD588\uC2B5\uB2C8\uB2E4. \uD604\uC7AC \uC608\uC57D \uC0C1\uD0DC\uB97C \uD655\uC778\uD558\uAC70\uB098 \uC608\uC57D\uC744 \uC9C4\uD589\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.',
+        ['reserve', 'facilityCancel']
+      );
+      return true;
+    }
+
+    if (normalized === '\uD648' || normalized.includes('\uD648\uC73C\uB85C\uAC00')) {
+      goToPage(
+        '/',
+        '\uD648\uC73C\uB85C \uC774\uB3D9\uD588\uC2B5\uB2C8\uB2E4. \uC8FC\uC694 \uBA54\uB274\uC640 \uC11C\uBE44\uC2A4 \uC548\uB0B4\uB97C \uD655\uC778\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.',
+        ['summary']
+      );
+      return true;
+    }
+
+    if (normalized.includes('\uD604\uC7AC\uD398\uC774\uC9C0\uC694\uC57D') || normalized === '\uC694\uC57D\uD574\uC918' || normalized === '\uC694\uC57D') {
+      void runQuickAction('summary', { skipConfirm: true });
+      return true;
+    }
+
+    return false;
+  };
+
+  const extractSuggestedActions = (result) => {
     const picked = [];
     const add = (id) => {
       if (ACTION_MAP[id] && !picked.includes(id)) picked.push(id);
@@ -587,84 +727,81 @@ export default function OrchestrateQuickAgent() {
 
     const fromResponse = result?.suggestedActions;
     if (Array.isArray(fromResponse)) {
-      fromResponse.forEach((item) =>
-        addMatches(item?.id || item?.label || item)
-      );
+      fromResponse.forEach((item) => addMatches(item?.id || item?.label || item));
     }
 
     addMatches(result?.intent || '');
     addMatches(result?.action?.name || '');
-    addMatches(replyText);
-
-    if (picked.length === 0) {
-      return ['summary', 'roomRecommend', 'reserve'];
-    }
 
     return expandRelatedActionIds(picked, 3);
   };
 
-  const resolveConfirmation = async (text) => {
+  const resolveConfirmation = async (messageText) => {
     if (!pendingConfirmation) return false;
 
-    if (isYes(text)) {
+    if (isYes(messageText)) {
       const actionId = pendingConfirmation.actionId;
       setPendingConfirmation(null);
       appendAssistantMessage(
-        `${ACTION_MAP[actionId]?.label || '요청'}을 계속 진행합니다.`,
+        `${ACTION_MAP[actionId]?.label || '\uC694\uCCAD'}\uC744 \uACC4\uC18D \uC9C4\uD589\uD569\uB2C8\uB2E4.`,
         expandRelatedActionIds([actionId], 3)
       );
-      runQuickAction(actionId, { skipConfirm: true });
+      void runQuickAction(actionId, { skipConfirm: true });
       return true;
     }
 
-    if (isNo(text)) {
+    if (isNo(messageText)) {
       const actionId = pendingConfirmation.actionId;
       setPendingConfirmation(null);
       appendAssistantMessage(
-        `${ACTION_MAP[actionId]?.label || '요청'}을 취소했습니다. 다른 명령을 말씀해 주세요.`,
+        `${ACTION_MAP[actionId]?.label || '\uC694\uCCAD'}\uC744 \uCDE8\uC18C\uD588\uC2B5\uB2C8\uB2E4. \uB2E4\uB978 \uBA85\uB839\uC744 \uB9D0\uC500\uD574 \uC8FC\uC138\uC694.`,
         ['summary', 'roomRecommend', 'reserve']
       );
       return true;
     }
 
     appendAssistantMessage(
-      '재확인이 필요합니다. 예 또는 아니오로 말씀해 주세요.',
+      '\uC7AC\uD655\uC778\uC774 \uD544\uC694\uD569\uB2C8\uB2E4. \uC608 \uB610\uB294 \uC544\uB2C8\uC624\uB85C \uB9D0\uC500\uD574 \uC8FC\uC138\uC694.',
       ['reserve', 'facilityCancel', 'summary']
     );
     return true;
   };
 
   const sendMessage = async (rawText, options = {}) => {
-    const text = String(rawText || '').trim();
-    if (!text || loading) return;
+    const messageText = String(rawText || '').trim();
+    if (!messageText || loading) return;
 
-    const displayText = options.displayText || text;
+    const displayText = options.displayText || messageText;
     setInput('');
     setMessages((prev) => [...prev, { role: 'user', text: displayText }]);
 
-    if (await resolveConfirmation(text)) {
+    if (await resolveConfirmation(messageText)) {
       return;
     }
 
-    const quickAction = options.skipQuickAction
-      ? null
-      : detectQuickAction(text);
+    if (handleLocalSystemCommand(messageText)) {
+      return;
+    }
+
+    const quickAction = options.skipQuickAction ? null : detectQuickAction(messageText);
     if (quickAction) {
-      runQuickAction(quickAction);
+      void runQuickAction(quickAction);
       return;
     }
 
     setLoading(true);
 
     try {
+      const roomContext = getRoomContext();
       const result = await runOrchestrateCommand({
-        text,
+        text: messageText,
         sessionId,
         context: {
           path: window.location.pathname,
+          ...roomContext,
           pageSnapshot: getPageContext(),
           siteProfile: {
-            serviceName: '우리집',
+            serviceName: '\uC6B0\uB9AC\uC9D1',
             channel: 'web',
             language: 'ko-KR',
             voiceMode: voiceModeEnabled,
@@ -677,19 +814,20 @@ export default function OrchestrateQuickAgent() {
         result?.outputText ||
         result?.message ||
         result?.result ||
-        '응답은 받았지만 표시 가능한 메시지 필드가 없습니다.';
-      const shouldShowIntent =
-        result?.intent && String(result.intent).toLowerCase() !== 'fallback';
-      const intent = shouldShowIntent ? `\n(intent: ${result.intent})` : '';
-      const actionIds = extractSuggestedActions(result, String(reply));
+        '\uC751\uB2F5\uC740 \uBC1B\uC558\uC9C0\uB9CC \uD45C\uC2DC \uAC00\uB2A5\uD55C \uBA54\uC2DC\uC9C0 \uD544\uB4DC\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4.';
       const normalizedIntent = String(result?.intent || '').toUpperCase();
 
       if (normalizedIntent === 'SUMMARY') {
-        await runQuickAction('summary');
+        await runQuickAction('summary', { skipConfirm: true });
         return;
       }
 
-      appendAssistantMessage(`${String(reply)}${intent}`, actionIds);
+      const shouldShowIntent =
+        result?.intent && String(result.intent).toLowerCase() !== 'fallback' && !voiceModeEnabled;
+      const intent = shouldShowIntent ? `\n(intent: ${result.intent})` : '';
+      const actionIds = extractSuggestedActions(result);
+      const formattedReply = formatAssistantReply(String(reply));
+      appendAssistantMessage(`${formattedReply}${intent}`, actionIds);
 
       if (voiceModeEnabled && result?.requiresConfirm && actionIds.length > 0) {
         setPendingConfirmation({
@@ -697,7 +835,7 @@ export default function OrchestrateQuickAgent() {
           label: ACTION_MAP[actionIds[0]]?.label,
         });
         appendAssistantMessage(
-          `${ACTION_MAP[actionIds[0]]?.label || '다음 작업'}을 이어서 진행할까요? 예 또는 아니오로 말씀해 주세요.`,
+          `${ACTION_MAP[actionIds[0]]?.label || '\uB2E4\uC74C \uC791\uC5C5'}\uC744 \uC774\uC5B4\uC11C \uC9C4\uD589\uD560\uAE4C\uC694? \uC608 \uB610\uB294 \uC544\uB2C8\uC624\uB85C \uB9D0\uC500\uD574 \uC8FC\uC138\uC694.`,
           actionIds
         );
       }
@@ -708,90 +846,115 @@ export default function OrchestrateQuickAgent() {
         errorBody?.message ||
         errorBody?.error ||
         error?.message ||
-        'Agent 호출 중 오류가 발생했습니다.';
-      appendAssistantMessage(`오류: ${apiMessage}`);
+        'Agent \uD638\uCD9C \uC911 \uC624\uB958\uAC00 \uBC1C\uC0DD\uD588\uC2B5\uB2C8\uB2E4.';
+      appendAssistantMessage(`\uC624\uB958: ${apiMessage}`);
     } finally {
       setLoading(false);
     }
   };
 
-  const onQuickActionClick = async (actionId) => {
+  const onQuickActionClick = (actionId) => {
     const action = ACTION_MAP[actionId];
     if (!action || loading) return;
     setMessages((prev) => [...prev, { role: 'user', text: action.label }]);
-    runQuickAction(actionId);
+    void runQuickAction(actionId);
   };
 
-  const playLatestVoice = async () => {
-    const sourceText = (latestAssistantMessage || '')
-      .split('\n(intent:')[0]
-      .trim();
-    if (!sourceText || ttsLoading) return;
+  const startVoiceCommand = (options = {}) => {
+    const { quiet = false, retryOnEmpty = false } = options;
 
-    try {
-      setTtsLoading(true);
-      const audioBytes = await synthesizeTts({ text: sourceText });
-      const blob = new Blob([audioBytes], { type: 'audio/wav' });
-      const audioUrl = URL.createObjectURL(blob);
-      const audio = new Audio(audioUrl);
-      audio.onended = () => URL.revokeObjectURL(audioUrl);
-      audio.onerror = () => URL.revokeObjectURL(audioUrl);
-      await audio.play();
-    } catch (error) {
-      const errorBody = error?.response?.data;
-      const apiMessage =
-        errorBody?.data ||
-        errorBody?.message ||
-        errorBody?.error ||
-        error?.message ||
-        'TTS 호출 중 오류가 발생했습니다.';
-      appendAssistantMessage(`오류: ${apiMessage}`);
-    } finally {
-      setTtsLoading(false);
-    }
-  };
-
-  const startVoiceCommand = () => {
     if (!voiceModeEnabled) {
       enableVoiceMode();
       return;
     }
 
     if (!settings.voiceCommandEnabled) {
-      appendAssistantMessage('??? ???? ?? ?? ??? ?? ????. ??? ??? ???.');
+      appendAssistantMessage(
+        '\uC74C\uC131 \uBA85\uB839\uC774 \uAEBC\uC838 \uC788\uC2B5\uB2C8\uB2E4. \uC811\uADFC\uC131 \uC124\uC815\uC5D0\uC11C \uC74C\uC131 \uBA85\uB839 \uC0AC\uC6A9\uC744 \uCF1C \uC8FC\uC138\uC694.'
+      );
       return;
     }
 
     if (!isSpeechRecognitionSupported) {
       appendAssistantMessage(
-        '이 브라우저에서는 음성 인식을 지원하지 않습니다. 텍스트 입력을 사용해 주세요.'
+        '\uC774 \uBE0C\uB77C\uC6B0\uC800\uC5D0\uC11C\uB294 \uC74C\uC131 \uC778\uC2DD\uC744 \uC9C0\uC6D0\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4. \uD14D\uC2A4\uD2B8 \uC785\uB825\uC744 \uC0AC\uC6A9\uD574 \uC8FC\uC138\uC694.'
       );
       return;
     }
 
-    speak('말씀해 주세요.');
+    if (!quiet) {
+      speak('\uB9D0\uC500\uD574 \uC8FC\uC138\uC694. \uC57D 2\uCD08 \uC815\uB3C4 \uBA48\uCD94\uBA74 \uC790\uB3D9\uC73C\uB85C \uCC98\uB9AC\uD569\uB2C8\uB2E4.');
+    }
+
+    let hasResult = false;
+
     startListening({
       onResult: (transcript) => {
+        hasResult = true;
         if (!transcript) {
-          appendAssistantMessage(
-            '음성 입력을 인식하지 못했습니다. 다시 말씀해 주세요.',
-            ['summary', 'roomRecommend', 'reserve']
-          );
+          if (!retryOnEmpty) {
+            appendAssistantMessage(
+              '\uC74C\uC131 \uC785\uB825\uC744 \uC778\uC2DD\uD558\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4. \uB2E4\uC2DC \uB9D0\uC500\uD574 \uC8FC\uC138\uC694.',
+              ['summary', 'roomRecommend', 'reserve']
+            );
+          }
           return;
         }
-        sendMessage(transcript, { displayText: `음성: ${transcript}` });
+        void sendMessage(transcript, { displayText: `\uC74C\uC131: ${transcript}` });
       },
-      onError: () => {
+      onError: (event) => {
+        const errorType = event?.error || event?.message || '';
+        if (errorType === 'no-speech' || errorType === 'aborted') {
+          return;
+        }
         appendAssistantMessage(
-          '음성 입력 중 문제가 발생했습니다. 다시 시도해 주세요.',
+          '\uC74C\uC131 \uC785\uB825 \uC911 \uBB38\uC81C\uAC00 \uBC1C\uC0DD\uD588\uC2B5\uB2C8\uB2E4. \uB2E4\uC2DC \uC2DC\uB3C4\uD574 \uC8FC\uC138\uC694.',
           ['summary', 'roomRecommend', 'reserve']
         );
+      },
+      onEnd: () => {
+        const current = voiceLoopStateRef.current;
+        if (
+          !retryOnEmpty ||
+          hasResult ||
+          !current.voiceModeEnabled ||
+          !current.settings.voiceCommandEnabled ||
+          current.loading ||
+          current.speaking
+        ) {
+          return;
+        }
+
+        window.setTimeout(() => {
+          const latest = voiceLoopStateRef.current;
+          if (
+            latest.voiceModeEnabled &&
+            latest.settings.voiceCommandEnabled &&
+            !latest.loading &&
+            !latest.speaking
+          ) {
+            startVoiceCommand({ quiet: true, retryOnEmpty: true });
+          }
+        }, 700);
       },
     });
   };
 
-  const submit = async (e) => {
-    e.preventDefault();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (!voiceModeEnabled || !settings.voiceCommandEnabled || listening || loading || speaking) {
+      return undefined;
+    }
+
+    const timer = window.setTimeout(() => {
+      startVoiceCommand({ quiet: true, retryOnEmpty: true });
+    }, 900);
+
+    return () => window.clearTimeout(timer);
+  }, [voiceModeEnabled, settings.voiceCommandEnabled, listening, loading, speaking]);
+
+  const submit = async (event) => {
+    event.preventDefault();
     await sendMessage(input);
   };
 
@@ -801,20 +964,20 @@ export default function OrchestrateQuickAgent() {
         type="button"
         className={styles.launcher}
         onClick={() => setOpen((prev) => !prev)}
-        aria-label="AI Agent 열기"
+        aria-label="AI Agent \uC5F4\uAE30"
       >
-        <img src={botIcon} alt="AI 챗봇" className={styles.launcherIcon} />
+        <img src={botIcon} alt="AI \uCC57\uBD07" className={styles.launcherIcon} />
       </button>
 
       {open && (
         <section className={styles.panel} aria-label="AI Agent Panel">
           <header className={styles.header}>
             <div className={styles.headerIdentity}>
-              <img src={botIcon} alt="AI 챗봇" className={styles.headerIcon} />
+              <img src={botIcon} alt="AI \uCC57\uBD07" className={styles.headerIcon} />
               <div className={styles.headerTitleWrap}>
-                <strong>우리봇</strong>
+                <strong>\uC6B0\uB9AC\uBD07</strong>
                 {voiceModeEnabled && (
-                  <span className={styles.voiceModeBadge}>음성 모드</span>
+                  <span className={styles.voiceModeBadge}>\uC74C\uC131 \uBAA8\uB4DC</span>
                 )}
               </div>
             </div>
@@ -822,36 +985,9 @@ export default function OrchestrateQuickAgent() {
               <button
                 type="button"
                 className={styles.modeBtn}
-                onClick={
-                  voiceModeEnabled ? disableVoiceMode : () => enableVoiceMode()
-                }
+                onClick={voiceModeEnabled ? disableVoiceMode : () => enableVoiceMode()}
               >
-                {voiceModeEnabled ? '음성 끄기' : '음성 켜기'}
-              </button>
-              <button
-                type="button"
-                className={styles.voiceBtn}
-                onClick={playLatestVoice}
-                disabled={ttsLoading || !latestAssistantMessage}
-              >
-                {ttsLoading ? 'TTS...' : '다시 읽기'}
-              </button>
-              {voiceModeEnabled && (
-                <button
-                  type="button"
-                  className={styles.micBtn}
-                  onClick={listening ? stopListening : startVoiceCommand}
-                >
-                  {listening ? '듣는 중' : '말하기'}
-                </button>
-              )}
-              <button
-                type="button"
-                className={styles.closeBtn}
-                onClick={() => setOpen(false)}
-                aria-label="닫기"
-              >
-                ×
+                {voiceModeEnabled ? '\uC74C\uC131 \uB044\uAE30' : '\uC74C\uC131 \uCF1C\uAE30'}
               </button>
             </div>
           </header>
@@ -859,23 +995,23 @@ export default function OrchestrateQuickAgent() {
           {voiceModeEnabled && (
             <div className={styles.voiceGuide}>
               {pendingConfirmation
-                ? `${pendingConfirmation.label} 진행 전 재확인 대기 중입니다. 예 또는 아니오로 말씀해 주세요.`
-                : '음성 모드에서는 말하기 버튼으로 명령을 입력하고, 우리봇이 답변과 추천 행동을 읽어드립니다.'}
+                ? `${pendingConfirmation.label} \uC9C4\uD589 \uC804 \uC7AC\uD655\uC778 \uB300\uAE30 \uC911\uC785\uB2C8\uB2E4. \uC608 \uB610\uB294 \uC544\uB2C8\uC624\uB85C \uB9D0\uC500\uD574 \uC8FC\uC138\uC694.`
+                : voiceStatusText}
             </div>
           )}
 
           <div className={styles.body}>
-            {messages.map((msg, idx) => (
+            {messages.map((message, idx) => (
               <div
-                key={`${msg.role}-${idx}`}
-                className={msg.role === 'user' ? styles.userMsg : styles.botMsg}
+                key={`${message.role}-${idx}`}
+                className={message.role === 'user' ? styles.userMsg : styles.botMsg}
               >
-                <div>{msg.text}</div>
-                {msg.role === 'assistant' &&
-                  Array.isArray(msg.actionIds) &&
-                  msg.actionIds.length > 0 && (
+                <div>{message.text}</div>
+                {message.role === 'assistant' &&
+                  Array.isArray(message.actionIds) &&
+                  message.actionIds.length > 0 && (
                     <div className={styles.bubbleActions}>
-                      {msg.actionIds.map((id) => (
+                      {message.actionIds.map((id) => (
                         <button
                           key={`bubble-action-${idx}-${id}`}
                           type="button"
@@ -898,28 +1034,28 @@ export default function OrchestrateQuickAgent() {
               className={styles.input}
               type="text"
               value={input}
-              onChange={(e) => setInput(e.target.value)}
+              onChange={(event) => setInput(event.target.value)}
               placeholder={
                 voiceModeEnabled
-                  ? '말하거나 입력해주세요'
-                  : '내용을 입력해주세요'
+                  ? '\uB9D0\uD558\uAC70\uB098 \uC785\uB825\uD574\uC8FC\uC138\uC694'
+                  : '\uB0B4\uC6A9\uC744 \uC785\uB825\uD574\uC8FC\uC138\uC694'
               }
             />
             {voiceModeEnabled && (
               <button
                 type="button"
                 className={styles.micBtn}
-                onClick={listening ? stopListening : startVoiceCommand}
+                onClick={
+                  listening
+                    ? stopListening
+                    : () => startVoiceCommand({ quiet: false, retryOnEmpty: true })
+                }
               >
-                {listening ? '중지' : '음성'}
+                {listening ? '\uC911\uC9C0' : '\uC74C\uC131'}
               </button>
             )}
-            <button
-              type="submit"
-              className={styles.sendBtn}
-              disabled={disabled}
-            >
-              {loading ? '대기중' : '전송'}
+            <button type="submit" className={styles.sendBtn} disabled={disabled}>
+              {loading ? '\uB300\uAE30\uC911' : '\uC804\uC1A1'}
             </button>
           </form>
         </section>

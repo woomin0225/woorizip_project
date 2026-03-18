@@ -1,8 +1,9 @@
 # app/main.py
 
 from __future__ import annotations
-
+from app.core.config import settings
 import base64
+import logging
 from contextlib import asynccontextmanager
 from io import BytesIO
 from typing import Any, Annotated
@@ -19,7 +20,7 @@ from app.clients.paddleocr_client import PaddleOCRClient
 from app.clients.qdrant_client import QdrantDbClient
 from app.clients.qwen_caption_client import QwenCaptionClient
 from app.clients.qwen_llm_client import QwenLlmClient
-from app.core.config import settings
+
 from app.core.security import require_internal_api_key
 from app.ibm.groq_llm_client import GroqLLMClient
 from app.routers import (
@@ -41,15 +42,29 @@ from app.services.embedding_service import EmbeddingService
 from app.services.summary_service import SummaryService
 from app.services.vision_service import VisionService
 
+logger = logging.getLogger(__name__)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # 앱시작시 구동될 클라이언트 작성
-    app.state.qwen_llm_client=QwenLlmClient("Qwen/Qwen2.5-3B-Instruct")   # Qwen/Qwen3-4B-Instruct-2507 : 추후 상위모델로 교체
+    try:
+        app.state.qwen_llm_client = QwenLlmClient("Qwen/Qwen2.5-3B-Instruct")  # Qwen/Qwen3-4B-Instruct-2507 : 추후 상위모델로 교체
+    except Exception as exc:
+        logger.warning("Qwen LLM client initialization skipped: %s", exc)
+        app.state.qwen_llm_client = None
     # app.state.embeddingClient=OpenaiEmbeddingClient()
-    app.state.embedding_client=KureEmbeddingClient()
-    app.state.vector_client=QdrantDbClient()
-    app.state.tokenizer = AutoTokenizer.from_pretrained("nlpai-lab/KURE-v1")
+    try:
+        app.state.embedding_client = KureEmbeddingClient()
+    except Exception as exc:
+        logger.warning("Embedding client initialization skipped: %s", exc)
+        app.state.embedding_client = None
+    app.state.vector_client = QdrantDbClient()
+    try:
+        app.state.tokenizer = AutoTokenizer.from_pretrained("nlpai-lab/KURE-v1")
+    except Exception as exc:
+        logger.warning("Tokenizer initialization skipped: %s", exc)
+        app.state.tokenizer = None
     yield
     # 앱 종료시
 
