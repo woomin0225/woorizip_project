@@ -19,7 +19,7 @@ public class RoomImageScheduler {
 	
 	private final RoomImageSummaryService roomImageSummaryService;
 	
-	@Scheduled(initialDelay = 30000, fixedDelay = 1800000)	// 1000 => 1초 마다 실행	
+	@Scheduled(initialDelay = 60000, fixedDelay = 3600000)	// 1000 => 1초 마다 실행	
 	public void roomImageCaptionsSummery() {
 		log.info("방 사진 분석결과 요약 스케줄러 작동");
 		

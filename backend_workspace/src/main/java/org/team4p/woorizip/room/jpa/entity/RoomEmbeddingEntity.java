@@ -1,8 +1,6 @@
-package org.team4p.woorizip.room.image.jpa.entity;
+package org.team4p.woorizip.room.jpa.entity;
 
 import java.time.LocalDateTime;
-
-import org.team4p.woorizip.room.review.jpa.entity.ReviewSummaryEntity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -13,35 +11,26 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-
-@Builder
+@Entity
+@Table(name="tb_room_embedding_status")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Entity
-@Table(name="tb_room_image_summary")
-public class RoomImageSummaryEntity {
-	
+@Builder
+public class RoomEmbeddingEntity {
 	@Id
 	@Column(name="room_no")
 	private String roomNo;
 	
-	@Column(name="summary_status")
-	private String summaryStatus;
-	
-	@Column(name="image_count")
-	private Integer imageCount;
+	@Column(name="embedding_status")
+	private String embeddingStatus;
 	
 	@Column(name="updated_at")
 	private LocalDateTime updatedAt;
-	
-	@Column(name="image_summary")
-	private String imageSummary;
 	
 	@Column(name="last_error_message")
 	private String lastErrorMessage;
 	
 	@Column(name="retry_count")
 	private Integer retryCount;
-	
 }

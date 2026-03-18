@@ -32,7 +32,9 @@ import org.team4p.woorizip.room.dto.response.RoomSearchResponse;
 import org.team4p.woorizip.room.dto.response.ViewsRankingResponse;
 import org.team4p.woorizip.room.dto.response.WishRankingResponse;
 import org.team4p.woorizip.room.image.dto.RoomImageDto;
+import org.team4p.woorizip.room.image.jpa.entity.RoomImageSummaryEntity;
 import org.team4p.woorizip.room.image.service.RoomImageService;
+import org.team4p.woorizip.room.image.service.RoomImageSummaryService;
 import org.team4p.woorizip.room.review.dto.ReviewDto;
 import org.team4p.woorizip.room.review.jpa.entity.ReviewSummaryEntity;
 import org.team4p.woorizip.room.review.service.ReviewService;
@@ -58,6 +60,7 @@ public class RoomController {
 	private final RoomViewService rvService;
 	private final RoomAiService roomAiService;
 	private final ReviewSummaryService reviewSummaryService;
+	private final RoomImageSummaryService roomImageSummaryService;
 	
 	@GetMapping("/search")
 	public ResponseEntity<ApiResponse<Slice<RoomSearchResponse>>> searchRooms(@Valid @ModelAttribute RoomSearchCondition cond, Pageable pageable) {
@@ -278,10 +281,24 @@ public class RoomController {
 		return ResponseEntity.status(200).body(ApiResponse.ok("방 rag 검색 성공", list));
 	}
 	
-	@GetMapping("/{roomNo}/summarized_review/")
+	@GetMapping("/{roomNo}/summarized_review")
 	public ResponseEntity<ApiResponse<ReviewSummaryEntity>> callSummarizedReviews(@PathVariable("roomNo") String roomNo){
 		var result = reviewSummaryService.selectSummarizedReview(roomNo);
 		
 		return ResponseEntity.status(200).body(ApiResponse.ok("방 리뷰 요약 결과 불러오기 성공", result)); 
+	}
+	
+	@GetMapping("/{roomNo}/summarized_image")
+	public ResponseEntity<ApiResponse<RoomImageSummaryEntity>> callSummarizedImageCaptions(@PathVariable("roomNo") String roomNo){
+		var result = roomImageSummaryService.selectSummarizedImageCaption(roomNo);
+		
+		return ResponseEntity.status(200).body(ApiResponse.ok("방 사진분석 요약 결과 불러오기 성공", result));
+	}
+	
+	@GetMapping("/{roomNo}/summarized_room")
+	public ResponseEntity<ApiResponse<String>> callSummarizedRoom(@PathVariable("roomNo") String roomNo){
+		String result = roomAiService.selectSummarizedRoom(roomNo);
+		
+		return ResponseEntity.status(200).body(ApiResponse.ok("방 종합 요약 결과 불러오기 성공", result));
 	}
 }

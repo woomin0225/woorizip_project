@@ -10,6 +10,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.team4p.woorizip.common.exception.ForbiddenException;
 import org.team4p.woorizip.common.exception.NotFoundException;
 import org.team4p.woorizip.room.image.jpa.repository.RoomImageRepository;
+import org.team4p.woorizip.room.jpa.entity.RoomEmbeddingEntity;
+import org.team4p.woorizip.room.jpa.entity.RoomEntity;
+import org.team4p.woorizip.room.jpa.repository.RoomEmbeddingRepository;
 import org.team4p.woorizip.room.jpa.repository.RoomRepository;
 import org.team4p.woorizip.room.review.dto.ReviewDto;
 import org.team4p.woorizip.room.review.jpa.entity.ReviewEntity;
@@ -28,6 +31,7 @@ public class ReviewServiceImpl implements ReviewService {
 	private final UserRepository userRepository;
 	private final RoomImageRepository riRepository;
 	private final ReviewSummaryRepository reviewSummaryRepository;
+	private final RoomEmbeddingRepository roomEmbeddingRepository;
 
 	private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 	
@@ -57,6 +61,15 @@ public class ReviewServiceImpl implements ReviewService {
 											.retryCount(0)
 											.build());
 		
+		// 임베딩 위해 상태 갱신 (PENDING)
+		RoomEntity room = roomRepository.findById(reviewDto.getRoomNo()).get();
+		roomEmbeddingRepository.save(RoomEmbeddingEntity.builder()
+												.roomNo(room.getRoomNo())
+												.embeddingStatus("PENDING")
+												.retryCount(0)
+												.build()
+				);
+		
 		// DB에 저장
 		return reviewRepository.save(reviewDto.toEntity()).toDto();
 	}
@@ -81,6 +94,14 @@ public class ReviewServiceImpl implements ReviewService {
 											.reviewCount(0)
 											.retryCount(0)
 											.build());
+		
+		// 임베딩 위해 상태 갱신 (PENDING)
+		roomEmbeddingRepository.save(RoomEmbeddingEntity.builder()
+												.roomNo(roomNo)
+												.embeddingStatus("PENDING")
+												.retryCount(0)
+												.build()
+				);
 	}
 
 	@Override
@@ -107,6 +128,15 @@ public class ReviewServiceImpl implements ReviewService {
 											.reviewCount(0)
 											.retryCount(0)
 											.build());
+		
+		// 임베딩 위해 상태 갱신 (PENDING)
+		RoomEntity room = roomRepository.findById(reviewDto.getRoomNo()).get();
+		roomEmbeddingRepository.save(RoomEmbeddingEntity.builder()
+												.roomNo(room.getRoomNo())
+												.embeddingStatus("PENDING")
+												.retryCount(0)
+												.build()
+				);
 		
 		return entity.toDto();
 	}

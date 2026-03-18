@@ -38,3 +38,18 @@ async def RoomInfoEmbeddingAndStore(
         "collection": collection_name,
         "message": "방정보 임베딩 및 벡터 저장에 성공"
     }
+
+@router.delete("/room/{room_no}")
+async def RemoveRoomVector(
+    vector_store: Annotated[VectorStore, Depends(get_vector_store)],
+    room_no: str
+):
+    collection_name = "room_collection"
+    await vector_store.remove_room_vector(collection_name, room_no)
+    
+    return {
+        "status": True,
+        "roomNo": room_no,
+        "collection": collection_name,
+        "message": "방 벡터 삭제 성공"
+    }

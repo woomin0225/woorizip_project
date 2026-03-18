@@ -18,6 +18,9 @@ import org.team4p.woorizip.room.image.jpa.entity.RoomImageEntity;
 import org.team4p.woorizip.room.image.jpa.entity.RoomImageSummaryEntity;
 import org.team4p.woorizip.room.image.jpa.repository.RoomImageRepository;
 import org.team4p.woorizip.room.image.jpa.repository.RoomImageSummaryRepository;
+import org.team4p.woorizip.room.jpa.entity.RoomEmbeddingEntity;
+import org.team4p.woorizip.room.jpa.entity.RoomEntity;
+import org.team4p.woorizip.room.jpa.repository.RoomEmbeddingRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -28,6 +31,7 @@ public class RoomImageServiceImpl implements RoomImageService {
 	private final UploadProperties uploadProperties;
 	private final RoomImageAnalysisService roomImageAnalysisService;
 	private final RoomImageSummaryRepository roomImageSummaryRepository;
+	private final RoomEmbeddingRepository roomEmbeddingRepository;
 	
 	@Override
 	public List<RoomImageDto> selectRoomImages(String roomNo) {
@@ -92,6 +96,7 @@ public class RoomImageServiceImpl implements RoomImageService {
 				e.printStackTrace();
 			}
 		}
+		// +AI: 사진분석 요약상태 PENDING으로 등록
 		roomImageSummaryRepository.save(
 				RoomImageSummaryEntity.builder()
 										.roomNo(roomNo)
@@ -99,6 +104,14 @@ public class RoomImageServiceImpl implements RoomImageService {
 										.imageCount(0)
 										.retryCount(0)
 										.build()
+				);
+		
+		// 임베딩 위해 상태 갱신 (PENDING)
+		roomEmbeddingRepository.save(RoomEmbeddingEntity.builder()
+												.roomNo(roomNo)
+												.embeddingStatus("PENDING")
+												.retryCount(0)
+												.build()
 				);
 		
 		int imageCount = roomImageRepository.countByRoomNo(roomNo);
@@ -138,6 +151,14 @@ public class RoomImageServiceImpl implements RoomImageService {
 										.imageCount(0)
 										.retryCount(0)
 										.build()
+				);
+		
+		// 임베딩 위해 상태 갱신 (PENDING)
+		roomEmbeddingRepository.save(RoomEmbeddingEntity.builder()
+												.roomNo(currentRoomNo)
+												.embeddingStatus("PENDING")
+												.retryCount(0)
+												.build()
 				);
 		
 		int imageCount = roomImageRepository.countByRoomNo(currentRoomNo);

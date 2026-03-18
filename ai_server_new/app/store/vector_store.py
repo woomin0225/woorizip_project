@@ -17,3 +17,6 @@ class VectorStore:
     async def room_vector_store(self, collection_name, target:RoomTotalRequest, vector):
         self.client.ensure_collection(collection_name)
         self.client.room_upsert(collection_name, target, vector)
+        
+    async def remove_room_vector(self, collection_name, room_no: str):
+        self.client.remove_room_vector(collection_name, room_no)

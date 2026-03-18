@@ -82,3 +82,5 @@ class RoomEmbeddingService:
         text="|".join(f"{k}:{v}" for k, v in data.items() if v is not None)
         chunked = chunking(text, tokenizer)
         return self.client.embed(chunked)
+      
+      

@@ -91,7 +91,7 @@ public class RoomImageSummaryServiceImpl implements RoomImageSummaryService{
 			return "요약실패";
 		}
 			// 요약문구 저장하고, state를 DONE으로 전환, 업데이트 일시를 현재일시로 최신화
-			entity.setReviewSummary(response.getSummary());
+			entity.setImageSummary(response.getSummary());
 			entity.setSummaryStatus("DONE");
 			entity.setImageCount(entity.getImageCount()+1);
 			entity.setUpdatedAt(LocalDateTime.now());
@@ -104,7 +104,7 @@ public class RoomImageSummaryServiceImpl implements RoomImageSummaryService{
 	@Override
 	public RoomImageSummaryEntity selectSummarizedImageCaption(String roomNo) {
 		
-		return roomImageSummaryRepository.findById(roomNo).get();
+		return roomImageSummaryRepository.findById(roomNo).orElse(null);
 	}
 
 }

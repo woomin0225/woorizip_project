@@ -103,7 +103,7 @@ public class ReviewSummaryServiceImpl implements ReviewSummaryService{
 	@Override
 	public ReviewSummaryEntity selectSummarizedReview(String roomNo) {
 		
-		return reviewSummaryRepository.findById(roomNo).get();
+		return reviewSummaryRepository.findById(roomNo).orElse(null);
 	}
 
 }
