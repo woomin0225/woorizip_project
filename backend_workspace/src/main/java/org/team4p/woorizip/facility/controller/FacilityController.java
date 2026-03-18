@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
@@ -27,6 +28,7 @@ import org.team4p.woorizip.facility.dto.FacilityImageDTO;
 import org.team4p.woorizip.facility.dto.FacilityListResponseDTO;
 import org.team4p.woorizip.facility.dto.FacilityModifyRequestDTO;
 import org.team4p.woorizip.facility.service.FacilityService;
+import org.team4p.woorizip.user.jpa.repository.UserRepository;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -39,6 +41,7 @@ import lombok.extern.slf4j.Slf4j;
 public class FacilityController {
 
 	private final FacilityService facilityService;
+	private final UserRepository userRepository;
 	
 	// 시설 목록 조회
 	@GetMapping({"", "/{houseNo}"})
@@ -48,6 +51,15 @@ public class FacilityController {
 		String currentUserNo = (principal != null) ? principal.getUserNo() : null;
 		List<FacilityListResponseDTO> body = facilityService.getFacilityList(houseNo, currentUserNo);
 		return ResponseEntity.ok(ApiResponse.ok("시설 목록 조회 성공", body));
+	}
+	
+	// 시설 목록 조회 for ai_server
+	@GetMapping("/ailist")
+	public ResponseEntity<ApiResponse<List<FacilityListResponseDTO>>> getFacilityListForAi(
+	        @RequestParam(value = "userId") String userId) { 
+	    String userNo = userRepository.findUserNoByEmailId(userId);
+	    List<FacilityListResponseDTO> body = facilityService.getFacilityList(null, userNo);
+	    return ResponseEntity.ok(ApiResponse.ok("AI용 시설 목록 조회 성공", body));
 	}
 	
 	// 시설 신규 등록

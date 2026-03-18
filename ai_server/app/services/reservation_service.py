@@ -46,13 +46,11 @@ class ReservationService:
         """EmbeddingService를 사용하여 Qdrant에서 시설 검색"""
         try:
             query_vector = self.embedder.embed(user_text)
-
             search_result = self.qdrant_db.search(
                 collection_name=settings.QDRANT_COLLECTION,
                 query_vector=query_vector,
                 limit=1,
             )
-
             if search_result:
                 return search_result[0].payload.get("facilityNo")
         except Exception as e:
@@ -61,15 +59,17 @@ class ReservationService:
 
     async def analyze_reservation(
         self, user_text: str, ctx: dict[str, Any]
-    ) -> ReservationAnalyzeReq:
-        """자연어 분석 -> 예약 객체 생성"""
+    ) -> dict[str, Any]:
+        """자연어 분석 -> 예약 현황 확인 -> 결과 반환"""
 
         email_id = ctx.get("user_id")
         user_data = await self.get_user_details(email_id)
 
-        # 시설 찾기
-        db_data = await self.tools.get_facilities()
+        # 시설 찾기 (텍스트 매칭)
+        db_data = await self.tools.get_facilities(user_id=email_id)
         facility_no = None
+        facility_name_found = "알 수 없음"
+
         for item in db_data:
             f_no = item.get("facilityNo")
             f_name = item.get("facilityName", "")
@@ -79,53 +79,90 @@ class ReservationService:
                 core_title and core_title in user_text
             ):
                 facility_no = f_no
+                facility_name_found = f_name
                 break
 
-        # 텍스트 매칭 실패 시
+        # 텍스트 매칭 실패 시 Qdrant 검색
         if not facility_no:
             facility_no = await self._search_facility_with_qdrant(user_text)
 
-        # 날짜, 시간 추출 (LLM)
-        prompt = f"""
+        # 날짜 및 시간 추출 (LLM)
+        now = datetime.now()
+        time_extract_prompt = f"""
         사용자 요청: "{user_text}"
-        현재 시각: {datetime.now().strftime('%Y-%m-%d %H:%M')}
-        
-        위 문장에서 다음 정보를 추출해서 JSON으로 응답하라:
-        1. date: YYYY-MM-DD 형식
-        2. start_time: HH:MM 형식
-        3. end_time: HH:MM 형식 (모르면 null)
-        4. duration_minutes: 숫자 (모르면 60)
+        현재 시각: {now.strftime('%Y-%m-%d %H:%M')}
+        상대적인 날짜(오늘, 내일 등)를 계산해서 YYYY-MM-DD 형식의 date만 JSON으로 응답하라.
         """
 
         try:
-            llm_res = await self.llm.ask(prompt)
-            extracted = pre.parse_llm_json(llm_res)
+            time_res = await self.llm.ask(time_extract_prompt)
+            date_data = pre.parse_llm_json(time_res)
+            target_date = date_data.get("date", now.strftime("%Y-%m-%d"))
+        except:
+            target_date = now.strftime("%Y-%m-%d")
 
-            res_date = datetime.strptime(extracted["date"], "%Y-%m-%d").date()
-            start_t = datetime.strptime(extracted["start_time"], "%H:%M").time()
+        # 실시간 예약 현황 조회
+        availability_data = []
+        if facility_no:
+            try:
+                availability_data = await self.tools.check_availability(
+                    facility_no, target_date
+                )
+            except Exception as e:
+                print(f"예약 현황 조회 에러: {e}")
 
-            if extracted.get("end_time"):
-                end_t = datetime.strptime(extracted["end_time"], "%H:%M").time()
-            else:
-                duration = int(extracted.get("duration_minutes", 60))
-                end_t = (
-                    datetime.combine(res_date, start_t) + timedelta(minutes=duration)
-                ).time()
+        # 종합 분석 프롬프트 (중복 확인 및 추천)
+        final_prompt = f"""
+        사용자 요청: "{user_text}"
+        대상 시설: {facility_name_found} (ID: {facility_no})
+        조회 날짜: {target_date}
+        현재 시각: {now.strftime('%Y-%m-%d %H:%M')}
+        
+        해당 날짜의 기존 예약 현황 (JSON):
+        {json.dumps(availability_data, ensure_ascii=False)}
+
+        미션:
+        1. 사용자가 요청한 시간이 기존 예약과 겹치는지 확인하라.
+        2. 겹친다면, 기존 예약들 사이의 '빈 시간' 중 가장 적절한 시간을 찾아 제안하라.
+        3. 모든 시간 계산은 24시간 형식(HH:MM)으로 처리하라.
+
+        응답 형식(JSON만 출력):
+        {{
+            "is_available": true/false,
+            "date": "YYYY-MM-DD",
+            "start_time": "HH:MM",
+            "end_time": "HH:MM",
+            "suggestion_message": "예약 가능 여부에 따른 친절한 안내 메시지"
+        }}
+        """
+
+        try:
+            final_res = await self.llm.ask(final_prompt)
+            extracted = pre.parse_llm_json(final_res)
+
+            # 결과 생성 및 반환
+            return {
+                "analyze_result": ReservationAnalyzeReq(
+                    reservationName=user_data.get("name"),
+                    reservationPhone=user_data.get("phone"),
+                    reservationDate=datetime.strptime(
+                        extracted["date"], "%Y-%m-%d"
+                    ).date(),
+                    reservationStartTime=datetime.strptime(
+                        extracted["start_time"], "%H:%M"
+                    ).time(),
+                    reservationEndTime=datetime.strptime(
+                        extracted["end_time"], "%H:%M"
+                    ).time(),
+                    facilityNo=str(facility_no) if facility_no else None,
+                ),
+                "is_available": extracted.get("is_available", True),
+                "message": extracted.get(
+                    "suggestion_message", "예약 초안을 확인해 주세요."
+                ),
+            }
 
         except Exception as e:
-            print(f"LLM 분석 실패({e}), 백업 로직 가동")
-            parsed_dt = pre.parse_time(user_text)
-            res_date = parsed_dt.date()
-            start_t = parsed_dt.time()
-            duration = pre.extract_duration_regex(user_text)
-            end_t = (parsed_dt + timedelta(minutes=duration)).time()
-
-        # 결과 반환
-        return ReservationAnalyzeReq(
-            reservationName=user_data.get("name"),
-            reservationPhone=user_data.get("phone"),
-            reservationDate=res_date,
-            reservationStartTime=start_t,
-            reservationEndTime=end_t,
-            facilityNo=str(facility_no) if facility_no else None,
-        )
+            print(f"최종 분석 실패: {e}")
+            # 예외 발생 시 최소한의 데이터라도 반환
+            return {"message": "예약 분석 중 오류가 발생했어요."}

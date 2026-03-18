@@ -24,6 +24,7 @@ import org.team4p.woorizip.reservation.dto.ReservationDetailResponseDTO;
 import org.team4p.woorizip.reservation.dto.ReservationListResponseDTO;
 import org.team4p.woorizip.reservation.dto.ReservationModifyRequestDTO;
 import org.team4p.woorizip.reservation.service.ReservationService;
+import org.team4p.woorizip.user.jpa.repository.UserRepository;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -35,6 +36,7 @@ import lombok.extern.slf4j.Slf4j;
 public class ReservationController {
 
 	private final ReservationService reservationService;
+	private final UserRepository userRepository;
 
 	// 예약 신규 등록
 	@PostMapping("/api/facilities/{facilityNo}/reservations")
@@ -48,6 +50,18 @@ public class ReservationController {
 
 	}
 	
+	// 예약 신규 등록 for ai_server
+	@PostMapping("/api/facilities/aibook")
+	public ResponseEntity<ApiResponse<String>> createAiReservation(
+	        @RequestParam("userId") String userId,
+	        @RequestBody ReservationCreateRequestDTO dto,
+	        @RequestParam("facilityNo") String facilityNo) {
+	    String userNo = userRepository.findUserNoByEmailId(userId);
+	    reservationService.createReservation(dto, userNo, facilityNo);
+	    return ResponseEntity.ok(ApiResponse.ok("AI 예약 등록 성공", "success"));
+	}
+
+	// 일자별 예약 목록 조회
 	@GetMapping("/api/facilities/{facilityNo}/reservations/check")
 	public ResponseEntity<ApiResponse<List<ReservationListResponseDTO>>> getAvailability(
 	        @PathVariable("facilityNo") String facilityNo,

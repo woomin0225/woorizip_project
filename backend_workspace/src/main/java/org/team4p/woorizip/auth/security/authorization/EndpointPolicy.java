@@ -31,7 +31,8 @@ public final class EndpointPolicy {
             "/api/orchestrate/command",
             "/api/voice/tts",
             "/api/voice/stt",
-            "/auth/login"
+            "/auth/login",
+            "/api/facilities/ai**"
     };
 
     // 공지사항, 정책・정보, 이벤트 : ADMIN만 (POST/PUT/DELETE)
