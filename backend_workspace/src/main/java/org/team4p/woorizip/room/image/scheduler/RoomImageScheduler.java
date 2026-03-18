@@ -29,7 +29,6 @@ public class RoomImageScheduler {
 			if(entity.getSummaryStatus().equals("PROCESSING") || entity.getSummaryStatus().equals("DONE")) continue;
 			try {
 				String summary = roomImageSummaryService.summaryPendingRooms(entity);
-				log.info(entity.getRoomNo()+"-ImageCaption: "+summary);
 			} catch (Exception e) {
 				log.info("방 번호" + entity.getRoomNo() + "의 사진분석결과 요약에서 에러 발생: " + e.getMessage());
 				continue;

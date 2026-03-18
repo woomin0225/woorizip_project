@@ -28,7 +28,6 @@ public class ReviewScheduler {
 			if(entity.getSummaryStatus().equals("PROCESSING") || entity.getSummaryStatus().equals("DONE")) continue;
 			try {
 				String summary = reviewSummaryService.summaryPendingRooms(entity);
-				log.info(entity.getRoomNo()+"-review: "+summary);
 			} catch (Exception e) {
 				log.info("방 번호" + entity.getRoomNo() + "의 리뷰요약에서 에러 발생: " + e.getMessage());
 				continue;
