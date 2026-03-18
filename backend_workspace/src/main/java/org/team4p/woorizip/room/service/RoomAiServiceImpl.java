@@ -272,7 +272,7 @@ public class RoomAiServiceImpl implements RoomAiService {
 		WebClient webClient = webClientBuilder.build();
 		EmbedResponse response = null;
 		try {
-			Mono<EmbedResponse> monoResponse = webClient.post()
+			Mono<EmbedResponse> monoResponse = webClient.delete()
 					.uri(aiServerBaseUrl+"/ai/embed/room", roomNo)
 					.retrieve()
 					.bodyToMono(EmbedResponse.class)

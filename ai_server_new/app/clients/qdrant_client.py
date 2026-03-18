@@ -8,6 +8,9 @@ from qdrant_client.models import PointStruct
 from qdrant_client.models import VectorParams, Distance
 from app.schemas import RoomTotalRequest
 from numpy import shape
+import logging
+
+logger = logging.getLogger(__name__)
 
 # qdrant client 생성
 class QdrantDbClient:
@@ -63,17 +66,24 @@ class QdrantDbClient:
         return hits
     
     def remove_room_vector(self, collection_name: str, room_no):
-        self.client.delete(
-            collection_name=collection_name,
-            points_selector=models.FilterSelector(
-                filter=models.Filter(
-                    must=[
-                        models.FieldCondition(
-                            key="roomNo",
-                            match=models.MatchValue(value=room_no),
-                        )
-                    ]
-                )
-            ),
-            wait=True
-        )
+        logger.info("Qdrant에 방 벡터 삭제요청. room_no=%s, collection_name=%s", room_no, collection_name)
+        try:
+            result = self.client.delete(
+                collection_name=collection_name,
+                points_selector=models.FilterSelector(
+                    filter=models.Filter(
+                        must=[
+                            models.FieldCondition(
+                                key="roomNo",
+                                match=models.MatchValue(value=room_no),
+                            )
+                        ]
+                    )
+                ),
+                wait=True
+            )
+            logger.info("Qdrant 방 벡터 삭제 성공. room_no=%s, collection_name=%s, result=%s", room_no, collection_name, result)
+            return result
+        except Exception:
+            logger.exception("Qdrant 방 벡터 삭제 에러발생. room_no=%s, collection_name=%s", room_no, collection_name)
+            raise

@@ -93,7 +93,7 @@ public class RoomImageSummaryServiceImpl implements RoomImageSummaryService{
 			// 요약문구 저장하고, state를 DONE으로 전환, 업데이트 일시를 현재일시로 최신화
 			entity.setImageSummary(response.getSummary());
 			entity.setSummaryStatus("DONE");
-			entity.setImageCount(entity.getImageCount()+1);
+			entity.setImageCount(analyzedList.size());
 			entity.setUpdatedAt(LocalDateTime.now());
 			roomImageSummaryRepository.save(entity);
 			log.info("방 번호("+response.getRoomNo()+") - 사진분석 요약: "+response.getSummary()+", "+response.getMessage());

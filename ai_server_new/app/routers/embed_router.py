@@ -2,7 +2,7 @@
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Request, HTTPException
 from tokenizers import Tokenizer
 
 # from app.clients.embedding_client import OpenaiEmbeddingClient
@@ -12,6 +12,9 @@ from app.schemas import RoomTotalRequest
 from app.services.chunking import chunking
 from app.services.embedding_service import EmbeddingService
 from app.store.vector_store import VectorStore
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(
     prefix="/ai/embed",
@@ -45,7 +48,13 @@ async def RemoveRoomVector(
     room_no: str
 ):
     collection_name = "room_collection"
-    await vector_store.remove_room_vector(collection_name, room_no)
+    logger.info("방 벡터 삭제 시작. room_no=%s, collection_name=%s", room_no, collection_name)
+    try:
+        await vector_store.remove_room_vector(collection_name, room_no)
+        logger.info("방 벡터 삭제 마침. room_no=%s, collection_name=%s", room_no, collection_name)
+    except Exception:
+        logger.exception("방 벡터 삭제 실패. room_no=%s, collection_name=%s", room_no, collection_name)
+        raise HTTPException(status_code=500, detail="Qdrant delete failed")
     
     return {
         "status": True,
