@@ -72,6 +72,15 @@ public class ReviewServiceImpl implements ReviewService {
 		if(!reviewRepository.findUserNoByReviewNo(reviewNo).equals(userRepository.findUserNoByEmailId(currentUser))) throw new ForbiddenException("해당 리뷰의 삭제 권한이 없습니다.");
 		
 		reviewRepository.deleteById(reviewNo);
+		
+		// +AI: 리뷰 요약상태 PENDING으로 등록
+		String roomNo = reviewRepository.findById(reviewNo).get().getRoomNo();
+		reviewSummaryRepository.save(ReviewSummaryEntity.builder()
+											.roomNo(roomNo)
+											.summaryStatus("PENDING")
+											.reviewCount(0)
+											.retryCount(0)
+											.build());
 	}
 
 	@Override
@@ -90,6 +99,14 @@ public class ReviewServiceImpl implements ReviewService {
 		
 		entity.setRating(reviewDto.getRating());
 		entity.setReviewContent(reviewDto.getReviewContent());
+		
+		// +AI: 리뷰 요약상태 PENDING으로 등록
+		reviewSummaryRepository.save(ReviewSummaryEntity.builder()
+											.roomNo(reviewDto.getRoomNo())
+											.summaryStatus("PENDING")
+											.reviewCount(0)
+											.retryCount(0)
+											.build());
 		
 		return entity.toDto();
 	}
