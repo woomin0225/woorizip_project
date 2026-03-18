@@ -18,7 +18,7 @@ from app.routers import (
 from app.clients.qdrant_client import QdrantDbClient
 from app.schemas import RoomSummaryRequest
 from app.services.summary_service import SummaryService
-from fastapi import Requestg
+from fastapi import Request
 
 
 @asynccontextmanager
@@ -93,7 +93,7 @@ from app.schemas import (
     SummaryReq,
     VisionAnalyzeReq,
     RoomVisionAnalyzeRes,
-    ReservationReq,
+    ReservationAnalyzeReq,
 )
 from app.services.agent_router import AgentRouter
 from app.services.doc_service import DocService
@@ -340,7 +340,7 @@ async def review_summary(req: ReviewSummaryReq):
 
 
 @app.post("ai/facility/reservation", dependencies=[Depends(require_internal_api_key)])
-async def reservation_analyze(req: ReservationReq):
+async def reservation_analyze(req: ReservationAnalyzeReq):
     return await reservation.analyze_reservation(
         req.reservationName,
         req.reservationPhone,
