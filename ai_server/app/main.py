@@ -93,6 +93,7 @@ from app.schemas import (
     SummaryReq,
     VisionAnalyzeReq,
     RoomVisionAnalyzeRes,
+    ReservationAssistReq,
     ReservationAnalyzeReq,
 )
 from app.services.agent_router import AgentRouter
@@ -339,13 +340,21 @@ async def review_summary(req: ReviewSummaryReq):
     )
 
 
-@app.post("ai/facility/reservation", dependencies=[Depends(require_internal_api_key)])
-async def reservation_analyze(req: ReservationAnalyzeReq):
+@app.post("/ai/facility/assist", dependencies=[Depends(require_internal_api_key)])
+async def reservation_assist(
+    req: ReservationAssistReq, ctx: dict = Depends(get_user_context)
+):
+    """
+    사용자의 자연어(req.message)를 분석해서 예약 객체(JSON)로 변환
+    """
     return await reservation.analyze_reservation(
-        req.reservationName,
-        req.reservationPhone,
-        req.reservationDate,
-        req.reservationStartTime,
-        req.reservationEndTime,
-        req.facilityNo,
+        user_text=req.message, ctx={"user_id": req.userId}
     )
+
+
+@app.post("/ai/facility/reservation", dependencies=[Depends(require_internal_api_key)])
+async def reservation_confirm(req: ReservationAnalyzeReq):
+    """
+    AI가 분석한 결과를 프론트에서 최종 확인 후 호출하는 저장 단계
+    """
+    return {"status": "success", "data": req}

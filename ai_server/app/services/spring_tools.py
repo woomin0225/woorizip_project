@@ -42,15 +42,42 @@ class SpringTools:
 
     async def call(self, tool: str, args: dict[str, Any]) -> dict:
         if self.mode == "execute":
-            return {"mode": "execute", "tool": tool, "result": await self._post(tool, args)}
+            return {
+                "mode": "execute",
+                "tool": tool,
+                "result": await self._post(tool, args),
+            }
         return self.plan(tool, args)
 
     # ===== Tool definitions (기획서 기반) =====
-    async def listing_register_draft(self, utterance: str, partial: dict[str, Any] | None = None) -> dict:
-        return await self.call("listing_register_draft", {"utterance": utterance, "partial": partial or {}})
+    async def listing_register_draft(
+        self, utterance: str, partial: dict[str, Any] | None = None
+    ) -> dict:
+        return await self.call(
+            "listing_register_draft", {"utterance": utterance, "partial": partial or {}}
+        )
 
-    async def facility_booking_draft(self, utterance: str, facilities: list[dict] | None = None) -> dict:
-        return await self.call("facility_booking_draft", {"utterance": utterance, "facilities": facilities or []})
+    async def get_facilities(self, house_no: str = None) -> list[dict]:
+        path = f"/api/facilities/{house_no}" if house_no else "/api/facilities"
+        url = f"{self.base_url.rstrip('/')}{path}"
 
-    async def navigate_to_post(self, utterance: str, candidates: list[dict] | None = None) -> dict:
-        return await self.call("navigate_to_post", {"utterance": utterance, "candidates": candidates or []})
+        headers = {"Content-Type": "application/json"}
+        async with httpx.AsyncClient(timeout=10) as client:
+            resp = await client.get(url, headers=headers)
+            resp.raise_for_status()
+            return resp.json()
+
+    async def facility_booking_draft(
+        self, utterance: str, facilities: list[dict] | None = None
+    ) -> dict:
+        return await self.call(
+            "facility_booking_draft",
+            {"utterance": utterance, "facilities": facilities or []},
+        )
+
+    async def navigate_to_post(
+        self, utterance: str, candidates: list[dict] | None = None
+    ) -> dict:
+        return await self.call(
+            "navigate_to_post", {"utterance": utterance, "candidates": candidates or []}
+        )
