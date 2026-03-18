@@ -221,7 +221,7 @@ public class RoomAiServiceImpl implements RoomAiService {
 	
 	private RoomTotalRequest buildRoomTotalRequest(String roomNo){
 		RoomEntity room = roomRepository.findById(roomNo).get();
-		HouseEntity house = houseRepository.findByroomNo(roomNo).get();
+		HouseEntity house = houseRepository.findByRoomNo(roomNo).get();
 		String reviewSummary = reviewSummaryService.selectSummarizedReview(roomNo).getReviewSummary();
 		String roomImageSummary = roomImageSummaryService.selectSummarizedImageCaption(roomNo).getImageSummary();
 		

@@ -16,5 +16,12 @@ public interface HouseRepository extends JpaRepository<HouseEntity, String>, Hou
 	List<HouseEntity> findAllByUserNoAndDeletedFalseOrderByHouseName(String userNo);
 	Optional<HouseEntity> findByUserNo(String userNo);
 	
-	Optional<HouseEntity> findByroomNo(String roomNo);
+	@Query(value="""
+			select *
+			from tb_houses as h
+			where h.house_no = (	select r.house_no
+									from tb_rooms as r
+									where r.room_no = :roomNo)
+			""", nativeQuery=true)
+	Optional<HouseEntity> findByRoomNo(@Param("roomNo") String roomNo);
 }
