@@ -43,17 +43,8 @@ function getCurrentUserNo() {
   if (storedUserNo) return storedUserNo;
 
   // userNo가 따로 없으면 accessToken을 읽어서 JWT 안의 payload에서 userNo를 꺼냅니다.
-  const raw = localStorage.getItem('accessToken');
-  if (!raw) return null;
-
-  let token = String(raw).trim();
-  if (token.startsWith('"') && token.endsWith('"')) {
-    token = token.slice(1, -1).trim();
-  }
-  if (token.startsWith('Bearer ')) {
-    token = token.slice('Bearer '.length).trim();
-  }
-  if (!token || token === 'null' || token === 'undefined') return null;
+  const token = tokenStore.getAccess();
+  if (!token) return null;
 
   const payload = parseJwt(token);
   if (!payload) return null;
