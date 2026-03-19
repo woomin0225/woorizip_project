@@ -7,9 +7,19 @@ export async function fetchEventTop5() {
   return data;
 }
 
+export async function fetchAdminEventList(params) {
+  return apiJson().get('/api/admin/event', { params });
+}
+
 // 목록 ===================================
 export async function fetchEventList(params) {
   return apiJson().get('/api/event', { params });
+}
+
+export async function searchAdminEvent(req) {
+  return apiJson().get('/api/admin/event/search', {
+    params: req,
+  });
 }
 
 // 검색 ===================================
@@ -17,6 +27,10 @@ export async function searchEvent(req) {
   return apiJson().get('/api/event/search', {
     params: req,
   });
+}
+
+export function fetchAdminEventDetail(postNo) {
+  return apiJson().get(`/api/admin/event/${postNo}`);
 }
 
 // 상세 ===================================
@@ -34,6 +48,10 @@ export async function downloadEventFile(postNo, fileNo) {
 // 조회수 증가
 export function increaseEventView(postNo) {
   return apiJson().patch(`/api/event/${postNo}/view`);
+}
+
+export function toggleEventVisibility(postNo) {
+  return apiJson().patch(`/api/event/${postNo}/visibility`);
 }
 
 // ADMIN ===================================

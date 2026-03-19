@@ -1,9 +1,10 @@
 import { getApiBaseUrl } from '../../../app/config/env';
+import { tokenStore } from '../../../app/http/tokenStore';
 
 const API_BASE_URL = getApiBaseUrl();
 
 function getAuthHeaders() {
-  const accessToken = localStorage.getItem('accessToken');
+  const accessToken = tokenStore.getAccess();
 
   return {
     'Content-Type': 'application/json',

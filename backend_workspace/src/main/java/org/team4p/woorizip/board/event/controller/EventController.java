@@ -69,8 +69,8 @@ public class EventController {
 		
 		Pageable pageable = req.toPageable();
 		
-		int total = eventService.selectListCount();
-		ArrayList<PostDto> content = eventService.selectList(pageable);
+		int total = eventService.selectVisibleListCount();
+		ArrayList<PostDto> content = eventService.selectVisibleList(pageable);
 		
 		int totalPages = (int) Math.ceil((double) total / req.size());
 		
@@ -83,7 +83,7 @@ public class EventController {
 	public ResponseEntity<ApiResponse<PostDto>> detail(
 			@PathVariable("postNo") int postNo) {
 		
-		PostDto dto = eventService.selectEvent(postNo);
+		PostDto dto = eventService.selectVisibleEvent(postNo);
 		
 		return ResponseEntity.ok(ApiResponse.ok("상세 조회 성공", dto));
 	}
@@ -410,12 +410,12 @@ public class EventController {
 		
 		switch (req.type()) {
 			case "title" -> {
-				total = eventService.selectSearchTitleCount(req.keyword());
-				list = eventService.selectSearchTitle(req.keyword(), pageable);
+				total = eventService.selectVisibleSearchTitleCount(req.keyword());
+				list = eventService.selectVisibleSearchTitle(req.keyword(), pageable);
 			}
 			case "content" -> {
-				total = eventService.selectSearchContentCount(req.keyword());
-				list = eventService.selectSearchContent(req.keyword(), pageable);
+				total = eventService.selectVisibleSearchContentCount(req.keyword());
+				list = eventService.selectVisibleSearchContent(req.keyword(), pageable);
 			}
 			case "date" -> {
 				LocalDate b = req.beginDateOrNull();
@@ -425,8 +425,8 @@ public class EventController {
 					return ResponseEntity.badRequest()
 							.body(ApiResponse.fail("날짜 범위가 필요합니다.", null));
 				}
-				total = eventService.selectSearchDateCount(b, e);
-				list = eventService.selectSearchDate(b, e, pageable);
+				total = eventService.selectVisibleSearchDateCount(b, e);
+				list = eventService.selectVisibleSearchDate(b, e, pageable);
 			}
 			default -> {
 				return ResponseEntity.badRequest()
@@ -448,6 +448,12 @@ public class EventController {
 		eventService.updateAddReadCount(postNo);
 
 		return ResponseEntity.ok(ApiResponse.ok("조회수 증가 성공", null));
+	}
+
+	@PatchMapping("/{postNo}/visibility")
+	public ResponseEntity<ApiResponse<Boolean>> toggleVisibility(@PathVariable("postNo") int postNo) {
+		boolean visible = eventService.toggleVisibility(postNo);
+		return ResponseEntity.ok(ApiResponse.ok("노출 상태 변경 성공", visible));
 	}
 	
 	@InitBinder

@@ -6,6 +6,7 @@ import ResultItem from './../components/Search/ResultItem';
 
 import { searchRooms, searchRoomsByNaturalText } from '../api/roomApi';
 import { getHouseMarkers, getRoomsInHouseMarker } from '../api/houseApi';
+import { tokenStore } from '../../../app/http/tokenStore';
 import { parseJwt } from '../../../app/providers/utils/jwt';
 import {
   addWishlist,

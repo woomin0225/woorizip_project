@@ -109,6 +109,8 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, EndpointPolicy.FACILITY_LOGIN).hasAnyRole("USER", "ADMIN")
                 .requestMatchers(HttpMethod.PATCH, EndpointPolicy.FACILITY_LOGIN).hasAnyRole("USER", "ADMIN")
                 .requestMatchers(HttpMethod.GET, EndpointPolicy.FACILITY_LOGIN_GET).hasAnyRole("USER", "ADMIN")
+
+                .requestMatchers(HttpMethod.GET, EndpointPolicy.ADMIN_EVENT_GET).hasRole("ADMIN")
                 
                 // PUBLIC GET
                 .requestMatchers(HttpMethod.GET, EndpointPolicy.PUBLIC_GET).permitAll()

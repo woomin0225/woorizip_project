@@ -2,8 +2,10 @@ package org.team4p.woorizip.ai.service;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.HashMap;
 
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.team4p.woorizip.ai.dto.OrchestrateCommandRequest;
 import org.team4p.woorizip.ai.dto.OrchestrateCommandResponse;
 
@@ -16,7 +18,7 @@ public class OrchestrateServiceImpl implements OrchestrateService {
     private final AiServerClient aiServerClient;
 
     @Override
-    public OrchestrateCommandResponse execute(OrchestrateCommandRequest request) {
+    public OrchestrateCommandResponse execute(OrchestrateCommandRequest request, String authorization) {
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("schemaVersion", request.schemaVersion() == null ? "v1" : request.schemaVersion());
         payload.put("text", request.text());
@@ -31,7 +33,12 @@ public class OrchestrateServiceImpl implements OrchestrateService {
             payload.put("systemPrompt", request.systemPrompt());
         }
 
-        Map<String, Object> raw = aiServerClient.post("/ai/assistant/run", payload);
+        Map<String, String> extraHeaders = new HashMap<>();
+        if (StringUtils.hasText(authorization)) {
+            extraHeaders.put("Authorization", authorization);
+        }
+
+        Map<String, Object> raw = aiServerClient.post("/ai/assistant/run", payload, extraHeaders);
 
         return new OrchestrateCommandResponse(
                 asString(raw.get("schemaVersion")),

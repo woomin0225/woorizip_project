@@ -19,9 +19,14 @@ public interface PostRepository extends JpaRepository<PostEntity, Integer> {
 	
 	//게시글 최신 조회수 기준 정렬
 	List<PostEntity> findTop5ByBoardTypeNoOrderByPostViewCountDesc(String boardTypeNo);
+	List<PostEntity> findTop5ByBoardTypeNoAndPostVisibleYnTrueOrderByPostViewCountDesc(String boardTypeNo);
 
 	// 게시판 유형별 목록 조회
 	Page<PostEntity> findByBoardTypeNoOrderByPostNoDesc(
+		    String boardTypeNo,
+		    Pageable pageable
+		);
+	Page<PostEntity> findByBoardTypeNoAndPostVisibleYnTrueOrderByPostNoDesc(
 		    String boardTypeNo,
 		    Pageable pageable
 		);
@@ -44,19 +49,42 @@ public interface PostRepository extends JpaRepository<PostEntity, Integer> {
 
 	// 검색 - 제목
 	int countByBoardTypeNoAndPostTitleContainingIgnoreCase(String boardTypeNo, String keyword);
+	int countByBoardTypeNoAndPostTitleContainingIgnoreCaseAndPostVisibleYnTrue(String boardTypeNo, String keyword);
 
 	Page<PostEntity> findByBoardTypeNoAndPostTitleContainingIgnoreCaseOrderByPostNoDesc(String boardTypeNo,
 			String keyword, Pageable pageable);
+	Page<PostEntity> findByBoardTypeNoAndPostTitleContainingIgnoreCaseAndPostVisibleYnTrueOrderByPostNoDesc(
+			String boardTypeNo,
+			String keyword,
+			Pageable pageable
+	);
 
 	// 검색 - 내용
 	int countByBoardTypeNoAndPostContentContainingIgnoreCase(String boardTypeNo, String keyword);
+	int countByBoardTypeNoAndPostContentContainingIgnoreCaseAndPostVisibleYnTrue(String boardTypeNo, String keyword);
 
 	Page<PostEntity> findByBoardTypeNoAndPostContentContainingIgnoreCaseOrderByPostNoDesc(String boardTypeNo,
 			String keyword, Pageable pageable);
+	Page<PostEntity> findByBoardTypeNoAndPostContentContainingIgnoreCaseAndPostVisibleYnTrueOrderByPostNoDesc(
+			String boardTypeNo,
+			String keyword,
+			Pageable pageable
+	);
 
 	// 검색 - 날짜
 	int countByBoardTypeNoAndPostCreatedAtBetween(String boardTypeNo, LocalDateTime begin, LocalDateTime end);
+	int countByBoardTypeNoAndPostVisibleYnTrueAndPostCreatedAtBetween(
+			String boardTypeNo,
+			LocalDateTime begin,
+			LocalDateTime end
+	);
 
 	Page<PostEntity> findByBoardTypeNoAndPostCreatedAtBetweenOrderByPostNoDesc(String boardTypeNo, LocalDateTime begin,
 			LocalDateTime end, Pageable pageable);
+	Page<PostEntity> findByBoardTypeNoAndPostVisibleYnTrueAndPostCreatedAtBetweenOrderByPostNoDesc(
+			String boardTypeNo,
+			LocalDateTime begin,
+			LocalDateTime end,
+			Pageable pageable
+	);
 }

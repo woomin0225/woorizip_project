@@ -42,6 +42,8 @@ public final class EndpointPolicy {
     		"/api/information/**",
     		"/api/event/**"};
 
+    public static final String[] ADMIN_EVENT_GET = { "/api/admin/event/**" };
+
     // 게시글: USER/ADMIN (POST/PUT/DELETE)
     public static final String[] QNA_WRITE = { "/api/qna/**" };
 

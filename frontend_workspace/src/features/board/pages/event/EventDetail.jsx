@@ -28,6 +28,7 @@ export default function EventDetail() {
   const contentHtml = event.postContent || '';
   const files = event.files || [];
   const banner = event.bannerImage || null;
+  const isVisible = event.postVisibleYn !== false;
 
   const bannerUrl = banner?.updatedFileName
     ? `http://localhost:8080/upload/event/banner/${banner.updatedFileName}`
@@ -84,6 +85,25 @@ export default function EventDetail() {
 
         <div className={styles.card}>
           <h1 className={styles.postTitle}>{title}</h1>
+
+          {isAdmin && !isVisible && (
+            <div
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                height: 32,
+                padding: '0 12px',
+                borderRadius: 999,
+                background: '#fff1f0',
+                color: '#b42318',
+                fontSize: 13,
+                fontWeight: 700,
+                marginBottom: 16,
+              }}
+            >
+              현재 사용자에게는 숨김 처리된 이벤트입니다.
+            </div>
+          )}
 
           <div className={styles.metaRow}>
             <span className={styles.metaItem}>작성자 {writer}</span>

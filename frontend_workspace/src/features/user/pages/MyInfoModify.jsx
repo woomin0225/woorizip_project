@@ -111,6 +111,7 @@ export default function MyInfoModify() {
       });
 
       await updateMyInfo(payload);
+      sessionStorage.setItem('userName', form.name?.trim() || '');
       localStorage.setItem('userName', form.name?.trim() || '');
       window.dispatchEvent(new Event('profile-updated'));
       setMessage('내정보가 수정되었습니다.');

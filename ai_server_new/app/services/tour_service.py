@@ -8,6 +8,15 @@ from app.schemas import TourApplyReq, TourWorkflowApplyReq
 
 
 class TourService:
+    ALLOWED_TOUR_TIMES = {
+        '14:00:00',
+        '15:00:00',
+        '16:00:00',
+        '17:00:00',
+        '18:00:00',
+        '19:00:00',
+    }
+
     def __init__(self, client: SpringTourClient):
         self.client = client
 
@@ -75,11 +84,11 @@ class TourService:
                 access_token=access_token,
             )
             room_name = (request.roomName or '').strip()
-            room_label = room_name or apply_result['roomNo']
+            room_label = room_name or '현재 보고 계신 방'
             reply = (
                 f"{room_label} 투어 신청이 완료되었습니다. "
                 f"방문 일정은 {apply_result['visitDate']} {apply_result['visitTime']}입니다. "
-                "담당자가 확인 후 안내드릴 예정입니다."
+                "추후 문자로 추가 안내 드리겠습니다."
             )
             return {
                 'schemaVersion': request.schemaVersion,
@@ -107,9 +116,37 @@ class TourService:
                 'raw': apply_result,
             }
         except Exception as exc:
+            error_message = str(exc)
+            if 'TOUR_UNAVAILABLE_TIME' in error_message:
+                return {
+                    'schemaVersion': request.schemaVersion,
+                    'reply': (
+                        "해당 시간은 투어 가능한 시간이 아닙니다.\n"
+                        "투어 가능 시간은 14시 ~ 19시 사이 정각입니다.\n"
+                    ),
+                    'intent': 'TOUR_APPLY',
+                    'slots': {
+                        'roomNo': (request.roomNo or '').strip(),
+                        'roomName': (request.roomName or '').strip(),
+                    },
+                    'action': {
+                        'name': 'TOUR_APPLY',
+                        'path': '/ai/tour/workflow/apply',
+                        'target': 'spring_tour_api',
+                        'status': 'rejected',
+                    },
+                    'result': {
+                        'availableTimes': sorted(self.ALLOWED_TOUR_TIMES),
+                    },
+                    'errorCode': 'TOUR_APPLY_UNAVAILABLE_TIME',
+                    'requiresConfirm': False,
+                    'sessionId': request.sessionId,
+                    'clientRequestId': request.clientRequestId,
+                    'raw': {'error': error_message},
+                }
             return {
                 'schemaVersion': request.schemaVersion,
-                'reply': f"투어 신청 처리 중 문제가 발생했습니다. {str(exc)}",
+                'reply': f"투어 신청 처리 중 문제가 발생했습니다. {error_message}",
                 'intent': 'TOUR_APPLY',
                 'slots': {
                     'roomNo': (request.roomNo or '').strip(),
@@ -150,40 +187,128 @@ class TourService:
             for fmt in ('%Y-%m-%d %H:%M', '%Y-%m-%d %H:%M:%S', '%Y.%m.%d %H:%M', '%Y/%m/%d %H:%M'):
                 try:
                     parsed = datetime.strptime(compact, fmt)
-                    return parsed.strftime('%Y-%m-%d'), parsed.strftime('%H:%M:%S')
+                    return parsed.strftime('%Y-%m-%d'), self._validate_allowed_visit_time(
+                        parsed.strftime('%H:%M:%S')
+                    )
                 except ValueError:
                     continue
+            parsed = self._parse_natural_korean_schedule(compact)
+            if parsed is not None:
+                return parsed.strftime('%Y-%m-%d'), self._validate_allowed_visit_time(
+                    parsed.strftime('%H:%M:%S')
+                )
             raise ValueError('날짜와 시간 형식이 올바르지 않습니다. 예: 2026-03-20 15:00')
 
-        return self._normalize_visit_date(visit_date or ''), self._normalize_visit_time(visit_time or '')
+        return (
+            self._normalize_visit_date(visit_date or ''),
+            self._validate_allowed_visit_time(
+                self._normalize_visit_time(visit_time or '')
+            ),
+        )
+
+    def looks_like_schedule_input(self, value: str | None) -> bool:
+        text = (value or '').strip()
+        if not text:
+            return False
+        if self._parse_natural_korean_schedule(text) is not None:
+            return True
+        return bool(
+            re.search(r'\d{4}[-./]\d{1,2}[-./]\d{1,2}\s+\d{1,2}:\d{2}', text)
+        )
+
+    def looks_like_phone_input(self, value: str | None) -> bool:
+        compact = re.sub(r'[^0-9]', '', value or '')
+        return len(compact) in (10, 11)
+
+    def normalize_phone_input(self, value: str) -> str:
+        return self._normalize_user_phone(value)
+
+    def looks_like_name_input(self, value: str | None) -> bool:
+        compact = (value or '').strip()
+        return len(compact) >= 2
+
+    def _parse_natural_korean_schedule(self, value: str) -> datetime | None:
+        compact = (value or '').strip()
+        if not compact:
+            return None
+
+        match = re.search(
+            r'(?:(?P<year>\d{4})\s*년\s*)?'
+            r'(?P<month>\d{1,2})\s*(?:월|/|\.)\s*'
+            r'(?P<day>\d{1,2})\s*(?:일)?\s*'
+            r'(?:(?P<ampm>오전|오후|am|pm)\s*)?'
+            r'(?P<hour>\d{1,2})\s*(?:시|:)\s*'
+            r'(?:(?P<minute>\d{1,2})\s*분?)?',
+            compact,
+            re.IGNORECASE,
+        )
+        if not match:
+            return None
+
+        now = datetime.now()
+        year = int(match.group('year') or now.year)
+        month = int(match.group('month'))
+        day = int(match.group('day'))
+        hour = int(match.group('hour'))
+        minute = int(match.group('minute') or 0)
+        ampm = (match.group('ampm') or '').lower()
+
+        if ampm in ('오후', 'pm') and hour < 12:
+            hour += 12
+        elif ampm in ('오전', 'am') and hour == 12:
+            hour = 0
+        elif not ampm and 1 <= hour <= 7:
+            # 투어는 오후 슬롯으로 운영되므로 "5시" 같은 표현은 기본적으로 17시로 본다.
+            hour += 12
+
+        try:
+            parsed = datetime(year, month, day, hour, minute)
+        except ValueError:
+            return None
+
+        if not match.group('year') and parsed.date() < now.date():
+            try:
+                parsed = datetime(year + 1, month, day, hour, minute)
+            except ValueError:
+                return None
+
+        return parsed
 
     def _normalize_visit_time(self, value: str) -> str:
         compact = (value or '').strip()
         if not compact:
-            raise ValueError('visitTime 값이 필요합니다.')
+            raise ValueError('방문시간 값이 필요합니다.')
         if re.fullmatch(r'\d{1,2}', compact):
             compact = compact.zfill(2) + ':00'
         if len(compact) == 5:
             compact = compact + ':00'
         if not re.fullmatch(r'\d{2}:\d{2}(:\d{2})?', compact):
-            raise ValueError('visitTime 형식이 올바르지 않습니다. 예: 14:00')
+            raise ValueError('방문시간 형식이 올바르지 않습니다. 예: 14:00')
         return compact
+
+    def _validate_allowed_visit_time(self, visit_time: str) -> str:
+        normalized = self._normalize_visit_time(visit_time)
+        if normalized not in self.ALLOWED_TOUR_TIMES:
+            raise ValueError(
+                f'TOUR_UNAVAILABLE_TIME: {normalized} 은(는) 투어 가능한 시간이 아닙니다.'
+            )
+        return normalized
 
     def _normalize_visit_date(self, value: str) -> str:
         compact = (value or '').strip()
         if not compact:
-            raise ValueError('visitDate 값이 필요합니다.')
+            raise ValueError('방문일자 값이 필요합니다.')
         for fmt in ('%Y-%m-%d', '%Y.%m.%d', '%Y/%m/%d'):
             try:
                 return datetime.strptime(compact, fmt).strftime('%Y-%m-%d')
             except ValueError:
                 continue
-        raise ValueError('visitDate 형식이 올바르지 않습니다. 예: 2026-03-20')
+        raise ValueError('방문일자 형식이 올바르지 않습니다. 예: 2026-03-20')
 
     def _normalize_user_name(self, value: str) -> str:
         compact = (value or '').strip()
         if not compact:
-            raise ValueError('userName 값이 필요합니다.')
+            raise ValueError('사용자 이름 값이 필요합니다.')
         return compact
 
     def _resolve_optional_user_name(self, value: str | None) -> str:
@@ -192,7 +317,7 @@ class TourService:
     def _normalize_user_phone(self, value: str) -> str:
         compact = re.sub(r'[^0-9]', '', value or '')
         if len(compact) not in (10, 11):
-            raise ValueError('userPhone 값이 올바르지 않습니다. 숫자 10~11자리를 입력해 주세요.')
+            raise ValueError('전화번호 값이 올바르지 않습니다. 전화 번호를 입력해 주세요.')
         if len(compact) == 10:
             return f'{compact[:3]}-{compact[3:6]}-{compact[6:]}'
         return f'{compact[:3]}-{compact[3:7]}-{compact[7:]}'

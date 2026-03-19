@@ -1,6 +1,6 @@
 # app/services/summary_service.py
 
-from app.ibm.groq_llm_client import GroqLLMClient
+from app.clients.groq_llm_client import GroqLLMClient
 from app.utils.document_parser import DocumentParseError, DocumentParser
 import json
 import re
