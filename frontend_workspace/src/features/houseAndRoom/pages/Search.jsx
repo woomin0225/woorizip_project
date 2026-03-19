@@ -5,6 +5,7 @@ import ResultList from './../components/Search/ResultList';
 
 import { searchRooms } from '../api/roomApi';
 import { getHouseMarkers, getRoomsInHouseMarker } from '../api/houseApi';
+import { tokenStore } from '../../../app/http/tokenStore';
 import { parseJwt } from '../../../app/providers/utils/jwt';
 import {
   addWishlist,
@@ -17,16 +18,12 @@ import styles from './Search.module.css';
 const PAGE_SIZE = 10;
 
 function getCurrentUserNo() {
-  const storedUserNo = localStorage.getItem('userNo');
+  const storedUserNo =
+    sessionStorage.getItem('userNo') || localStorage.getItem('userNo');
   if (storedUserNo) return storedUserNo;
 
-  const raw = localStorage.getItem('accessToken');
-  if (!raw) return null;
-  let token = String(raw).trim();
-  if (token.startsWith('"') && token.endsWith('"'))
-    token = token.slice(1, -1).trim();
-  if (token.startsWith('Bearer ')) token = token.slice('Bearer '.length).trim();
-  if (!token || token === 'null' || token === 'undefined') return null;
+  const token = tokenStore.getAccess();
+  if (!token) return null;
 
   const payload = parseJwt(token);
   if (!payload) return null;
