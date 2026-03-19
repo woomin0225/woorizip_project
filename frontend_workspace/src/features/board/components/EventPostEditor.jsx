@@ -76,6 +76,28 @@ export default function EventPostEditor({
         />
       </div>
 
+      <div style={{ marginBottom: 20 }}>
+        <label
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10,
+            fontWeight: 600,
+            fontSize: 15,
+            color: '#333',
+          }}
+        >
+          <input
+            type="checkbox"
+            name="postVisibleYn"
+            checked={form.postVisibleYn !== false}
+            onChange={onChange}
+            disabled={submitting}
+          />
+          사용자에게 이벤트를 노출합니다
+        </label>
+      </div>
+
       {/* 배너 이미지 업로드 영역 */}
       <div
         onDragOver={(e) => e.preventDefault()}

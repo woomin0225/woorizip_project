@@ -80,7 +80,7 @@ public class EventServiceImpl implements EventService {
 	@Override
 	public ArrayList<PostDto> selectTop5() {
 		List<PostEntity> entities = 
-				postRepository.findTop5ByBoardTypeNoOrderByPostViewCountDesc(BOARD_TYPE_NO);
+				postRepository.findTop5ByBoardTypeNoAndPostVisibleYnTrueOrderByPostViewCountDesc(BOARD_TYPE_NO);
 
 		ArrayList<PostDto> list = new ArrayList<>();
 		
@@ -105,11 +105,24 @@ public class EventServiceImpl implements EventService {
 				.countByBoardTypeNoAndPostTitleContainingIgnoreCase(BOARD_TYPE_NO, "");
 	}
 
+	@Override
+	public int selectVisibleListCount() {
+		return (int) postRepository
+				.countByBoardTypeNoAndPostTitleContainingIgnoreCaseAndPostVisibleYnTrue(BOARD_TYPE_NO, "");
+	}
+
 	//목록 조회 ====================
 	@Override
 	public ArrayList<PostDto> selectList(Pageable pageable) {
 	    return toList(
 	        postRepository.findByBoardTypeNoOrderByPostNoDesc(BOARD_TYPE_NO, pageable)
+	    );
+	}
+
+	@Override
+	public ArrayList<PostDto> selectVisibleList(Pageable pageable) {
+	    return toList(
+	        postRepository.findByBoardTypeNoAndPostVisibleYnTrueOrderByPostNoDesc(BOARD_TYPE_NO, pageable)
 	    );
 	}
 
@@ -144,6 +157,35 @@ public class EventServiceImpl implements EventService {
 	}
 
 	@Override
+	public PostDto selectVisibleEvent(int postNo) {
+		PostEntity entity = postRepository.findById(postNo)
+				.filter(e ->
+						BOARD_TYPE_NO.equals(e.getBoardTypeNo()) &&
+						Boolean.TRUE.equals(e.getPostVisibleYn()))
+				.orElseThrow(() ->
+						new NotFoundException("해당 이벤트 게시글이 없습니다."));
+
+		PostDto dto = PostDto.fromEntity(entity);
+		UserEntity user = userRepository.findById(entity.getUserNo()).orElse(null);
+
+		if(user == null || "Y".equals(user.getDeletedYn())) {
+			dto.setUserName("알 수 없는 사용자");
+		} else {
+			dto.setUserName(user.getName());
+		}
+
+		dto.setFiles(getFiles(entity.getPostNo()));
+
+		bannerImageRepository.findByPostNo(postNo)
+				.ifPresent(banner ->
+						dto.setBannerImage(
+								BannerImageDto.fromEntity(banner)
+						));
+
+		return dto;
+	}
+
+	@Override
 	public PostDto selectLast() {
 		PostEntity entity = postRepository.findTopByBoardTypeNoOrderByPostNoDesc(BOARD_TYPE_NO);
 
@@ -167,6 +209,18 @@ public class EventServiceImpl implements EventService {
 	@Transactional
 	public void updateAddReadCount(int postNo) {
 		postRepository.incrementViewCount(postNo);
+	}
+
+	@Override
+	@Transactional
+	public boolean toggleVisibility(int postNo) {
+		PostEntity entity = postRepository.findById(postNo)
+				.filter(e -> BOARD_TYPE_NO.equals(e.getBoardTypeNo()))
+				.orElseThrow(() -> new NotFoundException("해당 이벤트 게시글이 없습니다."));
+
+		boolean nextVisible = !Boolean.TRUE.equals(entity.getPostVisibleYn());
+		entity.setPostVisibleYn(nextVisible);
+		return nextVisible;
 	}
 
 	//DML
@@ -220,6 +274,9 @@ public class EventServiceImpl implements EventService {
 		entity.setPostTitle(postDto.getPostTitle());
 	    entity.setPostContent(postDto.getPostContent());
 	    entity.setUserNo(postDto.getUserNo());
+	    entity.setPostVisibleYn(
+	    		postDto.getPostVisibleYn() == null ? true : postDto.getPostVisibleYn()
+	    );
 
 		// 기존 파일 삭제
 		if (deleteFileNo != null && !deleteFileNo.isEmpty()) {
@@ -287,9 +344,21 @@ public class EventServiceImpl implements EventService {
 	}
 
 	@Override
+	public int selectVisibleSearchTitleCount(String keyword) {
+		return postRepository
+				.countByBoardTypeNoAndPostTitleContainingIgnoreCaseAndPostVisibleYnTrue(BOARD_TYPE_NO, keyword);
+	}
+
+	@Override
 	public int selectSearchContentCount(String keyword) {
 		return postRepository
 				.countByBoardTypeNoAndPostContentContainingIgnoreCase(BOARD_TYPE_NO, keyword);
+	}
+
+	@Override
+	public int selectVisibleSearchContentCount(String keyword) {
+		return postRepository
+				.countByBoardTypeNoAndPostContentContainingIgnoreCaseAndPostVisibleYnTrue(BOARD_TYPE_NO, keyword);
 	}
 
 	@Override
@@ -303,10 +372,28 @@ public class EventServiceImpl implements EventService {
 	}
 
 	@Override
+	public int selectVisibleSearchDateCount(LocalDate begin, LocalDate end) {
+
+		LocalDateTime start = begin.atStartOfDay();
+		LocalDateTime finish = end.atTime(LocalTime.MAX);
+
+		return postRepository
+				.countByBoardTypeNoAndPostVisibleYnTrueAndPostCreatedAtBetween(BOARD_TYPE_NO, start, finish);
+	}
+
+	@Override
 	public ArrayList<PostDto> selectSearchTitle(String keyword, Pageable pageable) {
 		return toList(
 				postRepository
 					.findByBoardTypeNoAndPostTitleContainingIgnoreCaseOrderByPostNoDesc(
+							BOARD_TYPE_NO, keyword, pageable));
+	}
+
+	@Override
+	public ArrayList<PostDto> selectVisibleSearchTitle(String keyword, Pageable pageable) {
+		return toList(
+				postRepository
+					.findByBoardTypeNoAndPostTitleContainingIgnoreCaseAndPostVisibleYnTrueOrderByPostNoDesc(
 							BOARD_TYPE_NO, keyword, pageable));
 	}
 
@@ -319,6 +406,14 @@ public class EventServiceImpl implements EventService {
 	}
 
 	@Override
+	public ArrayList<PostDto> selectVisibleSearchContent(String keyword, Pageable pageable) {
+		return toList(
+				postRepository
+					.findByBoardTypeNoAndPostContentContainingIgnoreCaseAndPostVisibleYnTrueOrderByPostNoDesc(
+							BOARD_TYPE_NO, keyword, pageable));
+	}
+
+	@Override
 	public ArrayList<PostDto> selectSearchDate(LocalDate begin, LocalDate end, Pageable pageable) {
 
 		LocalDateTime start = begin.atStartOfDay();
@@ -327,6 +422,18 @@ public class EventServiceImpl implements EventService {
 		return toList(
 				postRepository
 					.findByBoardTypeNoAndPostCreatedAtBetweenOrderByPostNoDesc(
+							BOARD_TYPE_NO, start, finish, pageable));
+	}
+
+	@Override
+	public ArrayList<PostDto> selectVisibleSearchDate(LocalDate begin, LocalDate end, Pageable pageable) {
+
+		LocalDateTime start = begin.atStartOfDay();
+		LocalDateTime finish = end.atTime(LocalTime.MAX);
+
+		return toList(
+				postRepository
+					.findByBoardTypeNoAndPostVisibleYnTrueAndPostCreatedAtBetweenOrderByPostNoDesc(
 							BOARD_TYPE_NO, start, finish, pageable));
 	}
 

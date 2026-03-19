@@ -31,20 +31,22 @@
 .bannerFrame {
   position: relative;
   width: min(1100px, 92vw);
-  height: 340px;
+  aspect-ratio: 1100 / 340;
+  height: auto;
   margin: 0 auto;
   border-radius: 16px;
   overflow: hidden;
   box-shadow: 0 20px 40px rgba(15, 23, 42, 0.28);
-  background: #f8f5f1;
+  background: transparent;
 }
 
 .bannerImage {
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: cover;
+  object-position: center;
   display: block;
-  background: #f8f5f1;
+  background: transparent;
 }
 
 .bannerNav {
@@ -123,7 +125,6 @@
   }
 
   .bannerFrame {
-    height: 240px;
     width: 94vw;
     border-radius: 12px;
   }
