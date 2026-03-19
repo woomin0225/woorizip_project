@@ -31,6 +31,8 @@ public final class EndpointPolicy {
             "/api/orchestrate/command",
             "/api/voice/tts",
             "/api/voice/stt",
+            "/api/rooms/rag/room",
+            "/api/rooms/*/summarized_room/request",
             "/auth/login"
     };
 

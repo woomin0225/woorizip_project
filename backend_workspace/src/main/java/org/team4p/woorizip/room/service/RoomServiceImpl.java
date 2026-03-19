@@ -5,7 +5,9 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -70,21 +72,7 @@ public class RoomServiceImpl implements RoomService {
 		
 		// 방 검색 결과 조회 -> 응답객체에 저장
 		Slice<RoomSearchResponse> slice = roomRepository.searchRooms(cond, pageable)
-				.map((entity)->RoomSearchResponse.builder()
-								.roomNo(entity.getRoomNo())
-								.roomName(entity.getRoomName())
-								.houseNo(entity.getHouseNo())
-								.roomUpdatedAt(entity.getRoomUpdatedAt())
-								.roomDeposit(entity.getRoomDeposit())
-								.roomMonthly(entity.getRoomMonthly())
-								.roomMethod(entity.getRoomMethod())
-								.roomArea(entity.getRoomArea())
-								.roomFacing(entity.getRoomFacing())
-								.roomRoomCount(entity.getRoomRoomCount())
-								.roomEmptyYn(entity.getRoomEmptyYn())
-								.roomImageCount(entity.getRoomImageCount())
-								.build()
-		);
+				.map(this::toRoomSearchResponse);
 		
 		// 주소 추가
 		for (RoomSearchResponse item : slice.getContent()) {
@@ -110,6 +98,23 @@ public class RoomServiceImpl implements RoomService {
 		return slice;
 	}
 
+	private RoomSearchResponse toRoomSearchResponse(RoomEntity entity) {
+		return RoomSearchResponse.builder()
+				.roomNo(entity.getRoomNo())
+				.roomName(entity.getRoomName())
+				.houseNo(entity.getHouseNo())
+				.roomUpdatedAt(entity.getRoomUpdatedAt())
+				.roomDeposit(entity.getRoomDeposit())
+				.roomMonthly(entity.getRoomMonthly())
+				.roomMethod(entity.getRoomMethod())
+				.roomArea(entity.getRoomArea())
+				.roomFacing(entity.getRoomFacing())
+				.roomRoomCount(entity.getRoomRoomCount())
+				.roomEmptyYn(entity.getRoomEmptyYn())
+				.roomImageCount(entity.getRoomImageCount())
+				.build();
+	}
+
 	@Override
 	@Transactional
 	public RoomDto insertRoom(RoomDto roomDto, String currentUser) {
@@ -130,10 +135,9 @@ public class RoomServiceImpl implements RoomService {
 		
 		// delete 기본값 설정
 		roomDto.setDeleted(false);
-		
-		// DB에 저장
+		roomDto.setRoomMonthly(normalizeRoomMonthly(roomDto.getRoomMethod(), roomDto.getRoomMonthly()));
 		RoomEntity entity = roomRepository.save(roomDto.toEntity());
-		
+
 		// 임베딩 위해 상태 추가 (PENDING)
 		roomEmbeddingRepository.save(RoomEmbeddingEntity.builder()
 												.roomNo(entity.getRoomNo())
@@ -227,7 +231,7 @@ public class RoomServiceImpl implements RoomService {
 		// userNo 조립
 		entity.setRoomName(roomDto.getRoomName());
 		entity.setRoomDeposit(roomDto.getRoomDeposit());
-		entity.setRoomMonthly(roomDto.getRoomMonthly());
+		entity.setRoomMonthly(normalizeRoomMonthly(roomDto.getRoomMethod(), roomDto.getRoomMonthly()));
 		entity.setRoomMethod(roomDto.getRoomMethod());
 		entity.setRoomArea(roomDto.getRoomArea());
 		entity.setRoomFacing(roomDto.getRoomFacing());
@@ -385,7 +389,17 @@ public class RoomServiceImpl implements RoomService {
 	}
 
 	@Override
-	public List<RoomDto> selectRoomRag(String text) {
+	public List<RoomSearchResponse> selectRoomRag(String text) {
+		// 이 메서드는 "자연어 문장 -> RAG 추천 방 목록" 흐름의 Spring 측 연결 지점입니다.
+		//
+		// 역할을 나누면:
+		// 1. FastAPI RAG 서버에 자연어 문장을 전달한다.
+		// 2. RAG 서버가 돌려준 roomNo 순위를 받는다.
+		// 3. DB에서 실제 RoomEntity를 조회해 프론트가 쓸 RoomDto로 바꾼다.
+		//
+		// 여기서 중요한 점:
+		// roomRepository.findAllById(...)는 "입력한 순서"를 보장하지 않을 수 있습니다.
+		// 그래서 아래에서 Map을 한 번 만든 뒤, roomNoList 순서대로 다시 dtoList를 조립합니다.
 		WebClient webClient = webClientBuilder.build();
 		
 		Mono<RoomRagResponse> monoResponse = webClient.post()
@@ -395,12 +409,73 @@ public class RoomServiceImpl implements RoomService {
 				.bodyToMono(RoomRagResponse.class)
 				;
 		RoomRagResponse response = monoResponse.block();
-		List<String> roomNoList = response.getRoom_list();
-		
+
+		// RAG 서버가 비어 있는 결과를 주면 바로 빈 리스트를 반환합니다.
+		// 프론트는 "추천 결과 없음"으로 자연스럽게 처리할 수 있습니다.
+		List<String> roomNoList = response != null ? response.getRoom_list() : null;
+		if (roomNoList == null || roomNoList.isEmpty()) {
+			return List.of();
+		}
+
+		// DB 조회는 roomNo 기준으로 한 번에 처리해 성능을 아낍니다.
 		List<RoomEntity> entityList = roomRepository.findAllById(roomNoList);
-		List<RoomDto> dtoList = new ArrayList<>();
-		entityList.forEach(entity->dtoList.add(entity.toDto()));
+
+		// entityMap:
+		// roomNo -> RoomEntity 형태로 바꿔 두면
+		// 이후 roomNoList의 "RAG 추천 순서"를 그대로 복원하기 쉽습니다.
+		Map<String, RoomEntity> entityMap = new HashMap<>();
+		for (RoomEntity entity : entityList) {
+			entityMap.put(entity.getRoomNo(), entity);
+		}
+
+		// dtoList:
+		// 최종적으로 프론트에 내려줄 결과입니다.
+		// roomNoList 순서대로 다시 꺼내기 때문에 RAG 점수 순위가 유지됩니다.
+		List<RoomSearchResponse> dtoList = new ArrayList<>();
+		for (String roomNo : roomNoList) {
+			RoomEntity entity = entityMap.get(roomNo);
+			if (entity != null) {
+				RoomSearchResponse item = RoomSearchResponse.builder()
+						.roomNo(entity.getRoomNo())
+						.roomName(entity.getRoomName())
+						.houseNo(entity.getHouseNo())
+						.roomUpdatedAt(entity.getRoomUpdatedAt())
+						.roomDeposit(entity.getRoomDeposit())
+						.roomMonthly(entity.getRoomMonthly())
+						.roomMethod(entity.getRoomMethod())
+						.roomArea(entity.getRoomArea())
+						.roomFacing(entity.getRoomFacing())
+						.roomRoomCount(entity.getRoomRoomCount())
+						.roomEmptyYn(entity.getRoomEmptyYn())
+						.roomImageCount(entity.getRoomImageCount())
+						.build();
+
+				HouseEntity house = houseRepository.findById(entity.getHouseNo()).orElse(null);
+				if (house != null) {
+					item.setHouseName(house.getHouseName());
+					item.setHouseAddress(house.getHouseAddress());
+				}
+
+				List<RoomImageDto> images = roomImageService.selectRoomImages(entity.getRoomNo());
+				if (!images.isEmpty()) {
+					List<String> imageNames = new ArrayList<>();
+					for (RoomImageDto image : images) {
+						imageNames.add(image.getRoomStoredImageName());
+					}
+					item.setImageNames(imageNames);
+				}
+
+				dtoList.add(item);
+			}
+		}
 		
 		return dtoList;
+	}
+
+	private Long normalizeRoomMonthly(String roomMethod, Long roomMonthly) {
+		if ("L".equals(roomMethod) && roomMonthly == null) {
+			return 0L;
+		}
+		return roomMonthly;
 	}
 }

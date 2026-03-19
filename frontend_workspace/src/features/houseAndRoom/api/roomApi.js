@@ -2,15 +2,28 @@
 import { apiJson, apiForm } from '../../../app/http/request';
 
 function unwrap(res) {
+  // 백엔드 응답이 보통 { data: 실제값 } 형태라서
+  // 화면에서는 매번 res.data.data처럼 접근하지 않도록 여기서 한 번 풀어 줍니다.
   return res && typeof res === 'object' && 'data' in res ? res.data : res;
 }
 
-// 검색-방 목록 조회 GET
+// 기존 필터 검색 API입니다.
+// cond: 검색 조건 객체
+// page, size: 몇 번째 페이지를 몇 개씩 가져올지 정하는 값
 export async function searchRooms(cond, page = 0, size = 10) {
   const { data } = await apiJson().get('/api/rooms/search', {
     params: { ...cond, page, size },
   });
   return unwrap(data); // Slice<RoomSearchResponse>
+}
+
+// 자연어 검색 API입니다.
+// 일반 검색과 달리 "문장 전체"를 그대로 보내야 해서 plain text body를 사용합니다.
+export async function searchRoomsByNaturalText(text) {
+  const { data } = await apiJson().post('/api/rooms/rag/room', text, {
+    headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+  });
+  return unwrap(data); // List<RoomDto>
 }
 
 // 방 등록 POST
@@ -51,6 +64,18 @@ export async function getRoomImages(roomNo) {
   return unwrap(data); // List<RoomImageDto>
 }
 
+// 방 상세: AI 종합 요약 조회 GET
+export async function getSummarizedRoom(roomNo) {
+  const { data } = await apiJson().get(`/api/rooms/${roomNo}/summarized_room`);
+  return unwrap(data); // RoomFinalSummaryEntity
+}
+
+// 방 상세: AI 종합 요약 생성 요청 POST
+export async function requestSummarizedRoom(roomNo) {
+  const { data } = await apiJson().post(`/api/rooms/${roomNo}/summarized_room/request`);
+  return unwrap(data); // RoomFinalSummaryEntity
+}
+
 // 방 상세: 리뷰 목록 조회 GET
 export async function getRoomReviews(
   roomNo,
@@ -76,14 +101,15 @@ export async function modifyRoom(
   const fd = new FormData();
 
   roomDto.forEach(([key, value]) => {
-    if (value === null || value === undefined) return; //forEach에서 return은 continue역할
+    if (value === null || value === undefined) return;
     if (value === 'null') return;
     fd.append(key, value);
   });
 
   (deleteImageNos ?? []).forEach((imageNo) => {
-    if (imageNo !== null && imageNo !== undefined)
+    if (imageNo !== null && imageNo !== undefined) {
       fd.append('deleteImageNos', imageNo);
+    }
   });
 
   (newImages ?? []).forEach((file) => {
@@ -120,40 +146,38 @@ export async function modifyRoomReview(roomNo, reviewNo, reviewDto) {
   return unwrap(data); // Void
 }
 
-// 방 입주 가능 일자 변경 PATCH
+// 방 입주 가능일 변경 PATCH
 export async function modifyRoomAvailability(roomNo, date) {
   const { data } = await apiJson().patch(
     `/api/rooms/${roomNo}/availability`,
     date
-  ); // date: LocalDate
+  );
   return unwrap(data); // Void
 }
 
-// 방 공실여부 변경 PATCH
+// 방 공실 여부 변경 PATCH
 export async function modifyRoomEmptyYn(roomNo) {
   const { data } = await apiJson().patch(`/api/rooms/${roomNo}/emptyyn`);
   return unwrap(data);
 }
 
-// 조회수 높은 순 roomNo 조회
+// 조회 수 기준 방 랭킹 조회
 export async function getViewsRankingOfRooms(period, limit) {
-  // period: {DAY1: 최근1일, DAY7: 최근7일, DAY: 30: 최근30일}
-  // limit: 조회할 갯수
   const { data } = await apiJson().get('/api/rooms/view/popular', {
     params: { period, limit },
-  }); //  @ModelAttribute: params로 보냄
+  });
   return unwrap(data); // List<ViewsRankingResponse>
 }
 
-// 리뷰 평균 높은 순 방 목록 조회, period일 동안, limit개 조회함
+// 리뷰 평점 기준 방 랭킹 조회
 export async function getReviewRanking(period, limit) {
   const { data } = await apiJson().get(`/api/rooms/review/popular`, {
     params: { period, limit },
   });
-  return unwrap(data); // ApiResponse<List<ReviewRankingResponse>>
+  return unwrap(data); // List<ReviewRankingResponse>
 }
 
-// 위시 많은 순 방 목록 조회, limit개 조회함
+// 찜 수 기준 방 랭킹 조회
 export async function getWishRanking(limit) {
   const { data } = await apiJson().get(`/api/rooms/wish/popular`, {
     params: { limit },
@@ -161,7 +185,7 @@ export async function getWishRanking(limit) {
   return unwrap(data);
 }
 
-// 방 이미지 분석함
+// 방 이미지 AI 분석
 export async function analyzeRoomImages(images = []) {
   const fd = new FormData();
 

@@ -23,6 +23,7 @@ CREATE TABLE tb_house_view_hourly (
 DROP TABLE IF EXISTS `tb_room_review_summary`;
 DROP TABLE IF EXISTS `tb_room_image_summary`;
 DROP TABLE IF EXISTS `tb_room_embedding_status`;
+DROP TABLE IF EXISTS `tb_room_final_summary`;
 
 CREATE TABLE tb_room_review_summary (
 	room_no CHAR(36) PRIMARY KEY COMMENT '방번호',
@@ -55,6 +56,17 @@ CREATE TABLE tb_room_embedding_status (
   last_error_message TEXT COMMENT '임베딩 수행중 에러메세지(가장 마지막)',
   retry_count INT DEFAULT 0 COMMENT '재시도 횟수(최대3회)',
   CONSTRAINT FK_ROOM_EMBEDDING_ROOM_NO FOREIGN KEY (room_no) REFERENCES `tb_rooms` (room_no)
+  ON DELETE CASCADE
+  ON UPDATE CASCADE
+);
+CREATE TABLE tb_room_final_summary (
+	room_no CHAR(36) PRIMARY KEY COMMENT '방번호',
+  final_summary TEXT COMMENT '방 최종 종합 요약 텍스트',
+  summary_status ENUM('PENDING', 'PROCESSING', 'DONE', 'FAILED') COMMENT '방 최종 종합요약 처리 상태',
+	updated_at TIMESTAMP COMMENT '최근 요약 수행 일시',
+  last_error_message TEXT COMMENT '요약 수행중 에러메세지(가장 마지막)',
+  retry_count INT DEFAULT 0 COMMENT '재시도 횟수(최대3회)',
+  CONSTRAINT FK_ROOM_SUMMARY_ROOM_NO FOREIGN KEY (room_no) REFERENCES `tb_rooms` (room_no)
   ON DELETE CASCADE
   ON UPDATE CASCADE
 );

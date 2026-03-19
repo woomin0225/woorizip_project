@@ -96,7 +96,7 @@ public class RoomImageSummaryServiceImpl implements RoomImageSummaryService{
 			entity.setImageCount(analyzedList.size());
 			entity.setUpdatedAt(LocalDateTime.now());
 			roomImageSummaryRepository.save(entity);
-			log.info("방 번호("+response.getRoomNo()+") - 사진분석 요약: "+response.getSummary()+", "+response.getMessage());
+//			log.info("방 번호("+response.getRoomNo()+") - 사진분석 요약: "+response.getSummary()+", "+response.getMessage());
 			
 			return response.getSummary();
 	}
