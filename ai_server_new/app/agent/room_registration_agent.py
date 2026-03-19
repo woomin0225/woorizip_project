@@ -1,21 +1,6 @@
 from __future__ import annotations
 
-"""방 등록 전용 에이전트의 메인 오케스트레이터.
-
-이 파일은 "사용자 요청 하나"를 받아서 아래 순서로 흘려보낸다.
-
-1. 세션 상태를 불러온다.
-2. 지금 요청이 정말 방 등록 대화인지 판단한다.
-3. 문장에서 슬롯을 추출해 기존 상태에 합친다.
-4. 아직 모자란 값이 있는지, 확인/취소 단계인지 검증한다.
-5. 사용자에게 돌려줄 응답 payload를 만든다.
-6. 대화가 계속되면 세션을 저장하고, 끝났으면 정리한다.
-
-초심자 관점에서 핵심은 "에이전트"를 거대한 마법 상자로 볼 필요가 없다는 점이다.
-여기서는 대부분의 흐름이 아주 명시적인 함수 단계로 쪼개져 있고,
-LangGraph는 그 단계를 보기 좋게 연결해 주는 선택지일 뿐이다.
-LangGraph가 없어도 같은 순서를 순차 실행으로 그대로 수행할 수 있게 작성되어 있다.
-"""
+"""방 등록 전용 멀티턴 에이전트."""
 
 from copy import deepcopy
 from typing import Any, TypedDict
@@ -29,7 +14,10 @@ from app.agent.room_registration_response import (
 from app.agent.room_registration_slots import (
     ROOM_CREATE_INTENT,
     compact_text,
+    find_house_match,
     get_missing_slots,
+    get_next_missing_slot,
+    get_room_create_context,
     is_confirm_message,
     is_deny_message,
     should_handle_room_create,
@@ -45,10 +33,10 @@ except Exception:  # pragma: no cover - optional dependency fallback
 
 
 class RoomRegistrationState(TypedDict, total=False):
-    """방 등록 파이프라인을 흐르며 조금씩 채워지는 상태 객체.
+    """단계별 함수가 이어받는 공유 상태 객체.
 
-    한 단계에서 만든 값을 다음 단계가 이어서 쓰기 때문에,
-    에이전트 전체를 관통하는 "공유 작업 메모장"처럼 이해하면 편하다.
+    각 단계가 만든 값을 다음 단계가 그대로 이어서 쓰기 때문에
+    방 등록 흐름 전체를 관통하는 작업 메모처럼 보면 된다.
     """
 
     session_id: str
@@ -59,6 +47,8 @@ class RoomRegistrationState(TypedDict, total=False):
     extracted_slots: dict[str, Any]
     slots: dict[str, Any]
     missing_slots: list[str]
+    available_houses: list[dict[str, str]]
+    room_create_allowed: bool
     reply_payload: dict[str, Any]
     completed: bool
     cancel: bool
@@ -68,26 +58,18 @@ class RoomRegistrationAgent:
     """방 등록 대화를 전담하는 규칙 기반 멀티턴 에이전트."""
 
     def __init__(self, store: InMemorySessionStore | None = None):
-        # 저장소를 주입 가능하게 해 둔 이유는 테스트와 확장 때문이다.
-        # 지금은 메모리 저장소를 쓰지만, 나중에 Redis 같은 외부 저장소로 바꿔도
-        # 에이전트 본체의 흐름은 거의 그대로 유지할 수 있다.
         self.store = store or InMemorySessionStore()
         self.graph = self._build_graph()
 
     def should_handle(self, payload: dict[str, Any]) -> bool:
-        """이 요청을 범용 LLM 대신 방 등록 에이전트가 먼저 가져갈지 판단한다."""
+        """현재 요청을 범용 LLM 대신 방 등록 에이전트가 맡을지 판별한다."""
 
         session_id = str(payload.get("sessionId") or "")
         session_state = self.store.get(session_id)
         return should_handle_room_create(payload.get("text", ""), session_state)
 
     async def run(self, payload: dict[str, Any]) -> dict[str, Any]:
-        """방 등록 에이전트 한 턴을 실행한다.
-
-        비동기 함수 형태를 쓰는 이유는 상위 서비스 인터페이스와 맞추기 위해서다.
-        실제 내부 처리는 현재 동기적이지만, 추후 외부 저장소/LLM 호출이 붙어도
-        상위 코드를 크게 바꾸지 않도록 인터페이스를 미리 맞춰 둔 셈이다.
-        """
+        """방 등록 흐름을 실행하고 표준 응답 payload를 돌려준다."""
 
         state: RoomRegistrationState = {
             "session_id": str(payload.get("sessionId") or ""),
@@ -95,16 +77,11 @@ class RoomRegistrationAgent:
             "request_meta": payload,
         }
 
-        # LangGraph가 설치되어 있으면 그래프 엔진으로 실행하고,
-        # 그렇지 않더라도 같은 단계를 순차적으로 밟아 결과를 낼 수 있게 해 두었다.
         if self.graph is not None:
             result = self.graph.invoke(state)
         else:
             result = self._run_sequential(state)
 
-        # 응답 표준 필드는 마지막에 한 번 더 보정해 준다.
-        # 이렇게 해 두면 각 하위 단계는 본질적인 값(reply, intent, action...)에 집중하고
-        # 공통 메타데이터(schemaVersion 등)는 여기서 일괄 정리할 수 있다.
         reply_payload = deepcopy(result.get("reply_payload", {}))
         reply_payload.setdefault("schemaVersion", payload.get("schemaVersion") or "v1")
         reply_payload.setdefault("sessionId", payload.get("sessionId"))
@@ -114,7 +91,7 @@ class RoomRegistrationAgent:
         return reply_payload
 
     def _run_sequential(self, state: RoomRegistrationState) -> RoomRegistrationState:
-        """LangGraph 없이도 동일한 흐름을 순서대로 실행하는 백업 경로."""
+        """LangGraph가 없을 때도 같은 순서로 처리할 수 있게 둔 백업 경로다."""
 
         state.update(self._load_session(state))
         state.update(self._detect_intent(state))
@@ -125,11 +102,11 @@ class RoomRegistrationAgent:
         return state
 
     def _build_graph(self):
-        """동일한 처리 단계를 LangGraph 노드로 연결한다.
+        """각 단계를 LangGraph 노드로 연결한다.
 
-        이 그래프는 복잡한 분기형 에이전트라기보다,
-        지금 단계에서는 "상태 머신처럼 읽히는 선형 파이프라인"에 가깝다.
-        그래도 노드를 분리해 두면 나중에 검증/분기 단계를 늘리기 쉽다.
+        지금 구조는 분기보다 "정해진 단계 파이프라인"에 가깝기 때문에
+        그래프가 없어도 되지만, 나중에 검증 단계나 예외 분기가 늘어나면
+        여기서 흐름을 더 쉽게 확장할 수 있다.
         """
 
         if StateGraph is None:
@@ -152,28 +129,121 @@ class RoomRegistrationAgent:
         builder.add_edge("save_session", END)
         return builder.compile()
 
+    def _default_session_state(self) -> dict[str, Any]:
+        """새 대화를 시작할 때 쓰는 기본 세션 상태다."""
+
+        return {
+            "intent": ROOM_CREATE_INTENT,
+            "slots": {
+                "roomEmptyYn": True,
+                "roomStatus": "ACTIVE",
+            },
+            "pending_slot": None,
+            "completed": False,
+            "available_houses": [],
+            "room_create_allowed": True,
+        }
+
+    def _get_room_create_permission(self, request_meta: dict[str, Any] | None) -> bool:
+        """방 등록 권한 여부를 프론트 컨텍스트에서 읽는다.
+
+        현재 챗봇 요청 payload에는 인증 헤더가 직접 실리지 않으므로
+        프론트가 함께 보낸 `userProfile` 정보를 기준으로 1차 판별한다.
+        관리자 또는 임대인만 방 등록 흐름을 이어갈 수 있다.
+        """
+
+        context = (request_meta or {}).get("context")
+        if not isinstance(context, dict):
+            # userProfile을 아직 보내지 않는 클라이언트도 있을 수 있다.
+            # 그런 요청까지 전부 막지 않기 위해 기본값은 True로 둔다.
+            return True
+
+        user_profile = context.get("userProfile")
+        if not isinstance(user_profile, dict):
+            return True
+
+        is_admin = bool(user_profile.get("isAdmin"))
+        is_lessor = bool(user_profile.get("isLessor"))
+        return is_admin or is_lessor
+
+    def _apply_house_context(
+        self,
+        session_state: dict[str, Any],
+        request_meta: dict[str, Any] | None,
+    ) -> dict[str, Any]:
+        """프론트 컨텍스트에 담긴 건물 정보를 세션 슬롯에 반영한다.
+
+        핵심은 "사용자에게는 건물명으로 묻되, 내부 payload는 houseNo로 유지"다.
+        그래서 현재 선택 건물이나 보유 건물 목록이 있으면 먼저 houseNo를 채우고,
+        표시용으로는 houseName도 같이 저장해 둔다.
+        """
+
+        context = get_room_create_context(request_meta)
+        slots = session_state.setdefault("slots", {})
+        available_houses = context.get("available_houses") or session_state.get("available_houses") or []
+        current_house = context.get("current_house") or {}
+        # 권한 결과를 세션에 저장해 두면 같은 턴의 응답 생성과 세션 정리에서 재사용할 수 있다.
+        session_state["room_create_allowed"] = self._get_room_create_permission(request_meta)
+
+        # 프론트가 보낸 후보 건물 목록은 세션에 보관해 두어야
+        # 다음 턴에서 사용자가 건물명만 말해도 houseNo로 다시 연결할 수 있다.
+        session_state["available_houses"] = available_houses
+
+        if current_house:
+            if current_house.get("houseNo") and not slots.get("houseNo"):
+                slots["houseNo"] = current_house["houseNo"]
+            if current_house.get("houseName"):
+                slots["houseName"] = current_house["houseName"]
+        elif len(available_houses) == 1 and not slots.get("houseNo"):
+            # 선택 가능한 건물이 하나뿐이면 굳이 다시 묻지 않고 바로 채운다.
+            only_house = available_houses[0]
+            if only_house.get("houseNo"):
+                slots["houseNo"] = only_house["houseNo"]
+            if only_house.get("houseName"):
+                slots["houseName"] = only_house["houseName"]
+
+        if slots.get("houseNo") and not slots.get("houseName"):
+            # 내부 식별자만 있을 때 확인 문구가 딱딱해지지 않도록 건물명을 복원해 둔다.
+            for house in available_houses:
+                if house.get("houseNo") == slots.get("houseNo") and house.get("houseName"):
+                    slots["houseName"] = house["houseName"]
+                    break
+
+        session_state["slots"] = slots
+        return session_state
+
     def _load_session(self, state: RoomRegistrationState) -> dict[str, Any]:
-        """기존 대화 상태를 불러오거나, 없으면 새 기본 상태를 만든다."""
+        """기존 세션을 불러오고, 이번 요청의 프론트 컨텍스트도 덧입힌다."""
 
         session_id = state.get("session_id") or ""
-        session_state = self.store.get(session_id)
-        if not session_state:
-            session_state = {
-                "intent": ROOM_CREATE_INTENT,
-                "slots": {
-                    # 아래 값들은 등록 API에 항상 기본값으로 들어가는 속성이다.
-                    "roomEmptyYn": True,
-                    "roomStatus": "ACTIVE",
-                },
-                # 직전에 어떤 슬롯을 질문했는지 기억해 두면
-                # 사용자가 "1000"처럼 짧게 답했을 때도 의미를 복원할 수 있다.
-                "pending_slot": None,
-                "completed": False,
-            }
-        return {"session_state": session_state}
+        session_state = self.store.get(session_id) or self._default_session_state()
+        session_state = self._apply_house_context(
+            deepcopy(session_state),
+            state.get("request_meta"),
+        )
+        session_state = self._normalize_pending_slot(session_state)
+        return {
+            "session_state": session_state,
+            "available_houses": deepcopy(session_state.get("available_houses", [])),
+            "room_create_allowed": bool(session_state.get("room_create_allowed", True)),
+        }
+
+    def _normalize_pending_slot(self, session_state: dict[str, Any]) -> dict[str, Any]:
+        """예전 세션의 다음 질문 포인터를 현재 규칙에 맞게 보정한다."""
+
+        slots = deepcopy(session_state.get("slots", {}))
+        next_missing_slot = get_next_missing_slot(slots)
+        pending_slot = session_state.get("pending_slot")
+
+        if pending_slot != next_missing_slot:
+            # 과거 순서(roomMonthly 먼저 묻기)로 저장된 세션이 남아 있어도
+            # 현재 규칙의 다음 질문을 기준으로 다시 맞춘다.
+            session_state["pending_slot"] = next_missing_slot
+
+        return session_state
 
     def _detect_intent(self, state: RoomRegistrationState) -> dict[str, Any]:
-        """현재 사용자 입력이 방 등록 흐름인지 일반 채팅인지 구분한다."""
+        """현재 입력이 방 등록 흐름인지 일반 채팅인지 구분한다."""
 
         text = state.get("user_text", "")
         session_state = state.get("session_state", {})
@@ -181,12 +251,39 @@ class RoomRegistrationAgent:
             return {"intent": ROOM_CREATE_INTENT}
         return {"intent": "CHAT"}
 
+    def _resolve_house_slot(
+        self,
+        text: str,
+        slots: dict[str, Any],
+        available_houses: list[dict[str, str]],
+    ) -> None:
+        """사용자 입력의 건물명을 houseNo로 해석해 슬롯에 반영한다."""
+
+        if slots.get("houseNo") and slots.get("houseName"):
+            return
+
+        if slots.get("houseNo"):
+            for house in available_houses:
+                if house.get("houseNo") == slots.get("houseNo") and house.get("houseName"):
+                    slots["houseName"] = house["houseName"]
+                    return
+
+        house_match = find_house_match(text, available_houses)
+        if not house_match:
+            return
+
+        if house_match.get("houseNo"):
+            slots["houseNo"] = house_match["houseNo"]
+        if house_match.get("houseName"):
+            slots["houseName"] = house_match["houseName"]
+
     def _extract_slots(self, state: RoomRegistrationState) -> dict[str, Any]:
-        """사용자 문장에서 슬롯 값을 추출해 기존 세션 상태에 반영한다."""
+        """사용자 입력에서 슬롯 값을 추출하고 짧은 자유 입력도 보완한다."""
 
         session_state = deepcopy(state.get("session_state", {}))
         slots = deepcopy(session_state.get("slots", {}))
         text = state.get("user_text", "")
+        available_houses = deepcopy(session_state.get("available_houses", []))
 
         extracted = extract_room_slots(
             text,
@@ -197,15 +294,21 @@ class RoomRegistrationAgent:
         )
         slots.update(extracted)
 
-        # 방 등록 흐름이 아니면 추출값을 굳이 확장 해석하지 않고 바로 반환한다.
         if state.get("intent") != ROOM_CREATE_INTENT:
-            return {"session_state": session_state, "extracted_slots": {}, "slots": slots}
+            return {
+                "session_state": session_state,
+                "extracted_slots": {},
+                "slots": slots,
+                "available_houses": available_houses,
+            }
 
         compact = compact_text(text)
         can_fill_free_text = not is_confirm_message(text) and not is_deny_message(text)
 
-        # 규칙 파서가 잡지 못한 짧은 자유 입력을 보완하는 구간이다.
-        # 예를 들어 방 이름은 꼭 "방이름: 햇살방"처럼 말하지 않고 그냥 "햇살방"만 말할 수 있다.
+        # 규칙 파서가 houseNo만 바로 잡아내는 구조라서,
+        # 건물명 답변은 여기서 후보 목록과 대조해 보완한다.
+        self._resolve_house_slot(text, slots, available_houses)
+
         if session_state.get("pending_slot") == "roomName" and not extracted.get("roomName") and can_fill_free_text:
             if compact and len(text.strip()) <= 40:
                 slots["roomName"] = text.strip()
@@ -220,11 +323,18 @@ class RoomRegistrationAgent:
         if session_state.get("pending_slot") == "roomOptions" and text.strip() and can_fill_free_text:
             slots["roomOptions"] = text.strip().replace(" ", "")
 
+        if session_state.get("pending_slot") == "houseNo" and can_fill_free_text:
+            # houseNo 슬롯 차례에는 "성수스테이" 같은 자유 답변이 자주 들어오므로
+            # 한 번 더 건물명 매칭을 시도한다.
+            self._resolve_house_slot(text, slots, available_houses)
+
         session_state["slots"] = slots
+        session_state["available_houses"] = available_houses
         return {
             "session_state": session_state,
             "extracted_slots": extracted,
             "slots": slots,
+            "available_houses": available_houses,
         }
 
     def _validate_state(self, state: RoomRegistrationState) -> dict[str, Any]:
@@ -237,8 +347,6 @@ class RoomRegistrationAgent:
         completed = not missing_slots
         cancel = False
 
-        # 모든 필수 슬롯이 모인 다음에는 사용자의 마지막 의사표현이 중요하다.
-        # "확인"이면 완료, "취소/수정"이면 종료 또는 재수정 흐름으로 보낸다.
         if completed and is_confirm_message(text):
             session_state["completed"] = True
         elif completed and is_deny_message(text):
@@ -254,7 +362,7 @@ class RoomRegistrationAgent:
         }
 
     def _build_reply(self, state: RoomRegistrationState) -> dict[str, Any]:
-        """검증 결과를 바탕으로 실제 사용자 응답 payload를 조립한다."""
+        """검증 결과를 바탕으로 실제 사용자 응답 payload를 만든다."""
 
         session_state = deepcopy(state.get("session_state", {}))
 
@@ -270,12 +378,39 @@ class RoomRegistrationAgent:
                 }
             }
 
+        if not bool(session_state.get("room_create_allowed", True)):
+            # 권한이 없으면 슬롯 수집을 더 진행하지 않는다.
+            # 여기서 즉시 끊어야 건물명 질문이 반복되는 문제를 막을 수 있다.
+            return {
+                "reply_payload": {
+                    "reply": "방 등록은 임대인 또는 관리자만 진행할 수 있습니다.",
+                    "intent": ROOM_CREATE_INTENT,
+                    "slots": {},
+                    "action": {
+                        "name": "ROOM_CREATE_DRAFT",
+                        "target": "bff_room_api",
+                        "operation": "create_room",
+                        "status": "forbidden",
+                    },
+                    "result": {
+                        "missingSlots": [],
+                        "draftPayload": {},
+                    },
+                    "requiresConfirm": False,
+                }
+            }
+
         if state.get("cancel"):
-            # 취소 시에는 이전에 모았던 슬롯을 비우고 새로 시작할 수 있게 만든다.
+            # 취소 뒤에는 다음 시작이 자연스럽도록 방 정보만 초기화하되,
+            # 현재 페이지 컨텍스트의 건물 정보는 다시 덧입혀 둔다.
             session_state["slots"] = {
                 "roomEmptyYn": True,
                 "roomStatus": "ACTIVE",
             }
+            session_state = self._apply_house_context(
+                session_state,
+                state.get("request_meta"),
+            )
             session_state["pending_slot"] = None
             payload = build_cancelled_response(session_state)
             return {"session_state": session_state, "reply_payload": payload}
@@ -288,13 +423,16 @@ class RoomRegistrationAgent:
         return {"session_state": session_state, "reply_payload": payload}
 
     def _save_session(self, state: RoomRegistrationState) -> dict[str, Any]:
-        """대화가 계속되면 세션을 저장하고, 끝났으면 정리한다."""
+        """대화가 이어지면 세션을 저장하고, 끝났으면 정리한다."""
 
         session_id = state.get("session_id") or ""
         session_state = deepcopy(state.get("session_state", {}))
 
-        # 완료/취소가 났다면 더 이상 이어질 대화가 아니므로 세션을 제거한다.
-        if state.get("cancel") or state.get("completed"):
+        if (
+            state.get("cancel")
+            or state.get("completed")
+            or not bool(session_state.get("room_create_allowed", True))
+        ):
             self.store.delete(session_id)
         else:
             self.store.set(session_id, session_state)

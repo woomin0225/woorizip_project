@@ -8,6 +8,7 @@ import re
 from app.clients.qwen_llm_client import QwenLlmClient
 from app.schemas import RoomTotalRequest
 
+import asyncio
 import logging
 logger=logging.getLogger(__name__)
 
@@ -465,7 +466,7 @@ class RoomSummaryService:
             {"role": "user", "content": prompt},
             {"role": "assistant", "content": "summarized result is "}
         ]
-        result = self.client.generate_from_messages(messages, max_new_tokens=256)
+        result = await asyncio.to_thread(self.client.generate_from_messages, messages, 256)
         return result.strip()
     
     async def summary_room_image_captions(self, room_image_captions: list):
@@ -478,7 +479,7 @@ class RoomSummaryService:
             {"role": "user", "content": prompt},
             {"role": "assistant", "content": "summarized result is "}
         ]
-        result = self.client.generate_from_messages(messages, max_new_tokens=256)
+        result = await asyncio.to_thread(self.client.generate_from_messages, messages, 256)
         return result.strip()
     
     async def summary_room_total(self, room: RoomTotalRequest):
@@ -494,5 +495,5 @@ class RoomSummaryService:
             {"role": "user", "content": prompt},
             {"role": "assistant", "content": "summarized result is "}
         ]
-        result = self.client.generate_from_messages(messages, max_new_tokens=360)
+        result = await asyncio.to_thread(self.client.generate_from_messages, messages, 360)
         return result.strip()

@@ -22,27 +22,35 @@ public class RoomScheduler {
 	private final ReviewSummaryService reviewSummaryService;
 	private final RoomImageSummaryService roomImageSummaryService;
 	
-	@Scheduled(initialDelay = 180000, fixedDelay = 3600000)
+	@Scheduled(initialDelay = 1200000, fixedDelay = 1800000)
 	public void roomEmbeddingSchedule() {
 		log.info("방 임베딩/벡터저장 스케줄러 작동");
 		
 		List<RoomEmbeddingEntity> list = roomAiService.findEmbeddingPendingRooms();
-		
-		for(RoomEmbeddingEntity entity : list) {
-			if(entity.getEmbeddingStatus().equals("PROCESSING") || entity.getEmbeddingStatus().equals("DONE")) continue;
-			if(!reviewSummaryService.selectSummarizedReview(entity.getRoomNo()).getSummaryStatus().equals("DONE")
-					||!roomImageSummaryService.selectSummarizedImageCaption(entity.getRoomNo()).getSummaryStatus().equals("DONE")		
-			) continue;
+		if(!(list.size()==0 || list==null)) {
+			int i = 0;
 			
-			try {
-				EmbedResponse response = roomAiService.embedRoom(entity.getRoomNo());
-				log.info("방 번호("+response.getRoomNo()+") - 임베딩/벡터저장: "+response.getMessage()+", 저장된 collection:"+response.getCollection());
-			} catch (Exception e) {
-				log.info("방 번호" + entity.getRoomNo() + "의 임베딩/벡터저장에서 에러 발생: " + e.getMessage());
-				continue;
+			for(RoomEmbeddingEntity entity : list) {
+				if(i>50) continue;
+				if(entity.getEmbeddingStatus().equals("PROCESSING") || entity.getEmbeddingStatus().equals("DONE")) continue;
+				if(reviewSummaryService.selectSummarizedReview(entity.getRoomNo())==null || roomImageSummaryService.selectSummarizedImageCaption(entity.getRoomNo())==null) continue;
+				if(
+						(reviewSummaryService.selectSummarizedReview(entity.getRoomNo()).getSummaryStatus()!=null && roomImageSummaryService.selectSummarizedImageCaption(entity.getRoomNo()).getSummaryStatus()!=null)
+						&&
+						(!reviewSummaryService.selectSummarizedReview(entity.getRoomNo()).getSummaryStatus().equals("DONE")
+						||!roomImageSummaryService.selectSummarizedImageCaption(entity.getRoomNo()).getSummaryStatus().equals("DONE"))	
+				) continue;
+				
+				try {
+					EmbedResponse response = roomAiService.embedRoom(entity.getRoomNo());
+					i += 1;
+					log.info("방 번호("+response.getRoomNo()+") - 임베딩/벡터저장: "+response.getMessage()+", 저장된 collection:"+response.getCollection());
+				} catch (Exception e) {
+					log.info("방 번호" + entity.getRoomNo() + "의 임베딩/벡터저장에서 에러 발생: " + e.getMessage());
+					continue;
+				}
 			}
 		}
-		
 		log.info("방 임베딩/벡터저장 스케줄러 종료");
 	}
 	

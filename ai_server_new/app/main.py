@@ -42,6 +42,9 @@ from app.services.embedding_service import EmbeddingService
 from app.services.summary_service import SummaryService
 from app.services.vision_service import VisionService
 
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
+
 logger = logging.getLogger(__name__)
 
 

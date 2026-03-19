@@ -92,7 +92,7 @@ public class ReviewSummaryServiceImpl implements ReviewSummaryService{
 			// 요약문구 저장하고, state를 DONE으로 전환, 업데이트 일시를 현재일시로 최신화
 			entity.setReviewSummary(response.getSummary());
 			entity.setSummaryStatus("DONE");
-			entity.setReviewCount(entity.getReviewCount()+1);
+			entity.setReviewCount(reviews.size());
 			entity.setUpdatedAt(LocalDateTime.now());
 			reviewSummaryRepository.save(entity);
 			log.info("방 번호("+response.getRoomNo()+") - 리뷰 요약: "+response.getSummary()+", "+response.getMessage());

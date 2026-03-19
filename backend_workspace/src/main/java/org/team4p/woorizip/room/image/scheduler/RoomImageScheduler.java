@@ -19,16 +19,20 @@ public class RoomImageScheduler {
 	
 	private final RoomImageSummaryService roomImageSummaryService;
 	
-	@Scheduled(initialDelay = 60000, fixedDelay = 3600000)	// 1000 => 1초 마다 실행	
+	@Scheduled(initialDelay = 60000, fixedDelay = 1800000)	// 1000 => 1초 마다 실행	
 	public void roomImageCaptionsSummery() {
 		log.info("방 사진 분석결과 요약 스케줄러 작동");
 		
 		List<RoomImageSummaryEntity> list = roomImageSummaryService.findSummaryPendingRooms();
+	
+		int i = 0;
 		
 		for(RoomImageSummaryEntity entity : list) {
+			if(i > 50) continue;
 			if(entity.getSummaryStatus().equals("PROCESSING") || entity.getSummaryStatus().equals("DONE")) continue;
 			try {
 				String summary = roomImageSummaryService.summaryPendingRooms(entity);
+				i += 1;
 			} catch (Exception e) {
 				log.info("방 번호" + entity.getRoomNo() + "의 사진분석결과 요약에서 에러 발생: " + e.getMessage());
 				continue;

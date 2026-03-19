@@ -35,6 +35,7 @@ import org.team4p.woorizip.room.review.service.ReviewSummaryService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import ch.qos.logback.classic.Logger;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
@@ -221,7 +222,7 @@ public class RoomAiServiceImpl implements RoomAiService {
 	
 	private RoomTotalRequest buildRoomTotalRequest(String roomNo){
 		RoomEntity room = roomRepository.findById(roomNo).get();
-		HouseEntity house = houseRepository.findByroomNo(roomNo).get();
+		HouseEntity house = houseRepository.findByRoomNo(roomNo).get();
 		String reviewSummary = reviewSummaryService.selectSummarizedReview(roomNo).getReviewSummary();
 		String roomImageSummary = roomImageSummaryService.selectSummarizedImageCaption(roomNo).getImageSummary();
 		
@@ -232,7 +233,7 @@ public class RoomAiServiceImpl implements RoomAiService {
 				.houseName(house.getHouseName())
 				.houseAddress(house.getHouseAddress())
 				.houseCompletionYear(house.getHouseCompletionYear())
-				.houseFloor(house.getHouseFloors())
+				.houseFloors(house.getHouseFloors())
 				.houseHouseHolds(house.getHouseHouseHolds())
 				.houseElevatorYn(house.getHouseElevatorYn())
 				.housePetYn(house.getHousePetYn())
@@ -256,7 +257,7 @@ public class RoomAiServiceImpl implements RoomAiService {
 				.imageSummary(roomImageSummary)
 				.reviewSummary(reviewSummary)
 				.build();
-		
+		log.info(request.toString());
 		return request;
 	}
 
@@ -272,8 +273,8 @@ public class RoomAiServiceImpl implements RoomAiService {
 		WebClient webClient = webClientBuilder.build();
 		EmbedResponse response = null;
 		try {
-			Mono<EmbedResponse> monoResponse = webClient.post()
-					.uri(aiServerBaseUrl+"/ai/embed/room", roomNo)
+			Mono<EmbedResponse> monoResponse = webClient.delete()
+					.uri(aiServerBaseUrl+"/ai/embed/room/{roomNo}", roomNo)
 					.retrieve()
 					.bodyToMono(EmbedResponse.class)
 					;

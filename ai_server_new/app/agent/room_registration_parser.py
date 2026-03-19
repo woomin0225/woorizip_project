@@ -7,7 +7,7 @@ from datetime import date
 from typing import Any
 
 
-HOUSE_NO_PATTERN = re.compile(r"\b([A-Za-z]{1,4}\d{1,10})\b")
+HOUSE_NO_PATTERN = re.compile(r"\b([A-Za-z][A-Za-z0-9_-]*\d[A-Za-z0-9_-]*)\b")
 ISO_DATE_PATTERN = re.compile(r"\b(20\d{2})[-/.](\d{1,2})[-/.](\d{1,2})\b")
 NUMBER_PATTERN = re.compile(r"(?<!\d)(\d+(?:\.\d+)?)(?!\d)")
 
@@ -110,6 +110,12 @@ def extract_room_slots(text: str, existing_slots: dict[str, Any] | None = None) 
     house_no = HOUSE_NO_PATTERN.search(text)
     if house_no and not existing_slots.get("houseNo"):
         slots["houseNo"] = house_no.group(1)
+    elif existing_slots.get("pending_slot") == "houseNo" and not existing_slots.get("houseNo"):
+        # house_s014 같은 식별자는 언더스코어/하이픈이 섞이기 쉬워서
+        # 정규식에 걸리지 않아도 "한 단어짜리 답변"이면 houseNo 후보로 한 번 더 받아 준다.
+        compact = text.strip()
+        if compact and " " not in compact and len(compact) <= 50:
+            slots["houseNo"] = compact
 
     room_name = _extract_room_name(text)
     if room_name:
@@ -164,6 +170,10 @@ def extract_room_slots(text: str, existing_slots: dict[str, Any] | None = None) 
         "roomRoomCount",
         "roomBathCount",
     }:
+        if pending_slot == "roomMonthly" and existing_slots.get("roomMethod") != "M":
+            # 거래 방식이 월세(M)로 확정되기 전에는
+            # 숫자 한 개 입력을 월세로 자동 해석하지 않는다.
+            return slots
         numeric_value = numeric_values[0]
         slots[pending_slot] = float(numeric_value) if pending_slot == "roomArea" else int(float(numeric_value))
 
