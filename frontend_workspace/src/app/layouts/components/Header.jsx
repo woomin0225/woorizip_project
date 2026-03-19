@@ -4,6 +4,7 @@ import Headroom from 'headroom.js';
 import { ROUTES } from './../../../shared/constants/routes';
 import logo from '../../../logo.png';
 import { axiosInstance } from '../../http/axiosInstance';
+import { tokenStore } from '../../http/tokenStore';
 import { useAuth } from '../../providers/AuthProvider';
 import { parseJwt } from '../../providers/utils/jwt';
 
@@ -37,7 +38,7 @@ export default function Header() {
   const location = useLocation();
   const [myPageRoute, setMyPageRoute] = useState(ROUTES.MEMBER.MYPAGE);
 
-  const token = localStorage.getItem('accessToken');
+  const token = tokenStore.getAccess();
   const isLoggedIn = !!token;
 
   useEffect(() => {
@@ -82,7 +83,11 @@ export default function Header() {
 
         setMyPageRoute(isAdmin ? ROUTES.ADMIN.MEMBERS : ROUTES.MEMBER.MYPAGE);
 
-        const latestName = localStorage.getItem('userName') || decodedToken.name || '고객';
+        const latestName =
+          decodedToken.name ||
+          sessionStorage.getItem('userName') ||
+          localStorage.getItem('userName') ||
+          '고객';
         setUserName(latestName);
       } catch (e) {
         console.error('토큰 파싱 에러:', e);
@@ -117,8 +122,12 @@ export default function Header() {
 
   const handleLogout = () => {
     clearTokens();
+    sessionStorage.removeItem('userName');
+    sessionStorage.removeItem('userNo');
+    sessionStorage.removeItem('userType');
     localStorage.removeItem('userName');
     localStorage.removeItem('userNo');
+    localStorage.removeItem('userType');
     alert('로그아웃 되었습니다.');
     navigate('/');
     window.location.reload();

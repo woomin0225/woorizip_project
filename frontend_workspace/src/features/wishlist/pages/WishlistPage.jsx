@@ -3,20 +3,18 @@ import { Container, Row, Col, Card, CardBody } from 'reactstrap';
 import MyPageSideNav from '../../user/components/MyPageSideNav';
 import { getWishlistPageByUser, deleteWishlist } from '../api/wishlistAPI';
 import { getRoom, getRoomImages } from '../../houseAndRoom/api/roomApi';
+import { tokenStore } from '../../../app/http/tokenStore';
 import { parseJwt } from '../../../app/providers/utils/jwt';
 import WishlistTable from '../components/WishlistTable';
 import styles from '../../../app/layouts/MyPageLayout.module.css';
 
 function getCurrentUserNo() {
-  const storedUserNo = localStorage.getItem('userNo');
+  const storedUserNo =
+    sessionStorage.getItem('userNo') || localStorage.getItem('userNo');
   if (storedUserNo) return storedUserNo;
 
-  const raw = localStorage.getItem('accessToken');
-  if (!raw) return null;
-  let token = String(raw).trim();
-  if (token.startsWith('"') && token.endsWith('"')) token = token.slice(1, -1).trim();
-  if (token.startsWith('Bearer ')) token = token.slice('Bearer '.length).trim();
-  if (!token || token === 'null' || token === 'undefined') return null;
+  const token = tokenStore.getAccess();
+  if (!token) return null;
 
   const payload = parseJwt(token);
   if (!payload) return null;
