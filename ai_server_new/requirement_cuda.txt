@@ -1,0 +1,9 @@
+# Install after creating the shared environment from requirement_complete.txt:
+#   .\.venv\Scripts\python.exe -m pip install -r requirement_cuda.txt
+#
+# This file only overrides PyTorch packages for CUDA-enabled machines.
+-r requirement_complete.txt
+--extra-index-url https://download.pytorch.org/whl/cu128
+
+torch==2.10.0
+torchvision==0.25.0

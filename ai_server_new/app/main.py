@@ -22,7 +22,7 @@ from app.clients.qwen_caption_client import QwenCaptionClient
 from app.clients.qwen_llm_client import QwenLlmClient
 
 from app.core.security import require_internal_api_key
-from app.ibm.groq_llm_client import GroqLLMClient
+from app.clients.groq_llm_client import GroqLLMClient
 from app.routers import (
     assistant_router,
     embed_router,
@@ -41,6 +41,9 @@ from app.schemas import (
 from app.services.embedding_service import EmbeddingService
 from app.services.summary_service import SummaryService
 from app.services.vision_service import VisionService
+
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 
 logger = logging.getLogger(__name__)
 

@@ -96,37 +96,72 @@ class RoomCaptionSanitizer:
     def get_high_risk_caption_options() -> set[str]:
         return {'옷장', '냉장고', 'TV', '에어컨'}
 
+    @staticmethod
+    def normalize_sentence(text: str) -> str:
+        cleaned = re.sub(r"\s+", " ", text or "").strip()
+        cleaned = re.sub(r"\s*,\s*", ", ", cleaned)
+        cleaned = re.sub(r"(,\s*){2,}", ", ", cleaned)
+        cleaned = cleaned.strip(" ,")
+        
+        if cleaned and not re.search(r"[.!?]$", cleaned):
+            cleaned += "."
+            
+        return cleaned
+    
+    @staticmethod
+    def get_optioin_priority() -> list[str]:
+        return [
+            "에어컨", "침대", "책상", "의자", "옷장",
+            "냉장고", "세탁기", "전자레인지", "TV",
+            "창문", "신발장", "수납장", "인덕션", "화장실",
+        ]
+        
     @classmethod
-    def sanitize_caption(cls, caption_text: str, normalized_options: list[str]) -> str:
-        if not caption_text:
-            return ''
-
-        cleaned = caption_text
-        allowed = set(normalized_options or [])
-        aliases_map = cls.get_caption_aliases()
-
-        for option_name in cls.get_high_risk_caption_options():
-            if option_name in allowed:
+    def order_options(cls, normalized_options: list[str]) -> list[str]:
+        seen: set[str] = set()
+        cleand_option: list[str] = []
+        
+        for option in normalized_options or []:
+            value = str(option).strip()
+            if not value or value in seen:
                 continue
-
-            for alias in aliases_map.get(option_name, []):
-                cleaned = re.sub(re.escape(alias), '', cleaned, flags=re.IGNORECASE)
-
-        cleaned = re.sub(r'\s+', ' ', cleaned).strip()
-        cleaned = re.sub(r'\s*,\s*', ', ', cleaned)
-        cleaned = re.sub(r',\s*,+', ', ', cleaned)
-        cleaned = re.sub(r'^,\s*', '', cleaned)
-        cleaned = re.sub(r'\s*\.\s*', '. ', cleaned)
-
-        cleaned = re.sub(r',\s*([이가은는을를와과])', r' \1', cleaned)
-        cleaned = re.sub(r'\s{2,}', ' ', cleaned)
-        cleaned = re.sub(r'\s+,', ',', cleaned)
-
-        cleaned = re.sub(r'(\S)\s+가 보입니다', r'\1이 보입니다', cleaned)
-        cleaned = re.sub(r'(\S)\s+이 있습니다', r'\1이 있습니다', cleaned)
-        cleaned = re.sub(r'(\S)\s+가 있다', r'\1이 있다', cleaned)
-
-        cleaned = cleaned.strip(' ,')
-        if cleaned and not cleaned.endswith('.'):
-            cleaned += '.'
-        return cleaned.strip(' ,')
+            seen.add(value)
+            cleand_option.append(value)
+            
+        priority = cls.get_optioin_priority()
+        ordered = [name for name in priority if name in cleand_option]
+        ordered.extend([name for name in cleand_option if name not in ordered])
+        return ordered
+    
+    @staticmethod
+    def _has_final_consonant(text: str) -> bool:
+        if not text:
+            return False
+        
+        last = text[-1]
+        if "가" <= last <= "힣":
+            return (ord(last) - ord("가")) % 28 != 0
+        
+        return False
+    
+    @classmethod
+    def _subject_particle(cls, text:str) -> str:
+        if not text:
+            return "이"
+        
+        if text[-1].isascii():
+            return "가"
+        
+        return "이" if cls._has_final_consonant(text) else "가"
+    
+    @classmethod
+    def sanitize_caption(cls, caption_text: str, normalized_option: list[str]) -> str:
+        ordered_options = cls.order_options(normalized_option)
+        visible_options = ordered_options[:5]
+        
+        if visible_options:
+            joined = ", ".join(visible_options)
+            particle = cls._subject_particle(visible_options[-1])
+            return f"방 사진에서 {joined}{particle} 보입니다."
+        
+        return cls.normalize_sentence(caption_text)

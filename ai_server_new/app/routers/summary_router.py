@@ -22,7 +22,7 @@ async def room_reviews_summary(
     logger.info("router entered roomNo=%s texts=%s", room_reviews.roomNo, len(room_reviews.texts or []))
     
     try:
-        summary = room_summary_service.summary_room_reviews(room_reviews.texts)
+        summary = await room_summary_service.summary_room_reviews(room_reviews.texts)
         return {
             "status": True,
             "status_code": 200,
@@ -53,7 +53,7 @@ async def room_images_summary(
     room_image_captions:RoomSummaryRequest,
     room_summary_service: Annotated[RoomSummaryService, Depends(get_room_summary_service)]
 ):
-    summary = room_summary_service.summary_room_image_captions(room_image_captions.texts)
+    summary = await room_summary_service.summary_room_image_captions(room_image_captions.texts)
     return {
         "status": True,
         "roomNo": room_image_captions.roomNo,
@@ -66,7 +66,7 @@ async def room_total_summary(
     room:RoomTotalRequest,
     room_summary_service: Annotated[RoomSummaryService, Depends(get_room_summary_service)]
 ):
-    summary = room_summary_service.summary_room_total(room)
+    summary = await room_summary_service.summary_room_total(room)
     return {
         "status": True,
         "roomNo": room.roomNo,

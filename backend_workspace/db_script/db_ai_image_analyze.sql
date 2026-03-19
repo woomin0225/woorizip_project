@@ -6,6 +6,7 @@
 -- 1개 방 이미지(room_image_no) 당 1개의 분석 결과만 저장하도록 UNIQUE 제약 적용
 -- 나중에 요약 생성, 검색용 데이터 활용, 재분석 결과 관리에 사용
 -- ==========================================================
+DROP TABLE IF EXISTS `tb_rooms_image_analysis`;
 
 CREATE TABLE `tb_rooms_image_analysis` (
   `analysis_no` BIGINT NOT NULL AUTO_INCREMENT COMMENT '방 이미지 분석 번호',

@@ -76,6 +76,9 @@ export default function EventList() {
           <EventListItem
             key={post.postNo}
             post={post}
+            isAdmin={hook.isAdmin}
+            toggling={hook.togglingPostNo === post.postNo}
+            onToggleVisibility={hook.toggleVisibility}
             onClick={() => nav(`/event/${post.postNo}`)}
           />
         ))}
@@ -128,7 +131,7 @@ export default function EventList() {
                 fontWeight: 800,
               }}
             >
-              이벤트 등록
+              글 등록
             </button>
           </div>
         )}

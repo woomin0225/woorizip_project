@@ -16,7 +16,7 @@ async def room_search(
     rag_service: Annotated[RagService, Depends(get_rag_service)],
     tokenizer = Depends(get_tokenizer)
 ):
-    room_list = rag_service.room_rag(text, tokenizer)
+    room_list = await rag_service.room_rag(text, tokenizer)
     
     return {
         "status": True,

@@ -8,7 +8,7 @@ public interface ReviewSummaryService {
 	// review AI summary 상태가 PENDING인 방 조회
 	List<ReviewSummaryEntity> findSummaryPendingRooms();
 	// review AI summary 수행
-	void summaryPendingRooms(ReviewSummaryEntity reviewSummaryEntity);
+	String summaryPendingRooms(ReviewSummaryEntity reviewSummaryEntity);
 	// roomNo로 리뷰 요약 조회
 	ReviewSummaryEntity selectSummarizedReview(String roomNo);
 }

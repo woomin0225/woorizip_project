@@ -10,4 +10,7 @@ public interface RoomImageAnalysisService {
 	
 	// 임베딩용 텍스트 변환 메소드 
 	String buildEmbeddingText(RoomImageAnalysisEntity entity);
+	
+	// 분석하여 저장한 결과 1건을 db에서 삭제
+	void deleteAnalyzedOne(int roomImageNo);
 }

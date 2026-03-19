@@ -1,13 +1,15 @@
 # app/clients/qdrant_client.py
 
-from uuid import uuid4, uuid5, UUID
-import uuid
+from uuid import NAMESPACE_URL, uuid4, uuid5
 
-from qdrant_client import QdrantClient
+from qdrant_client import QdrantClient, models
 from qdrant_client.models import PointStruct
 from qdrant_client.models import VectorParams, Distance
 from app.schemas import RoomTotalRequest
 from numpy import shape
+import logging
+
+logger = logging.getLogger(__name__)
 
 # qdrant client 생성
 class QdrantDbClient:
@@ -40,7 +42,8 @@ class QdrantDbClient:
         
         points=[]
         for i in range(0, n):
-            point_id = str(uuid5(UUID(target.roomNo), f"{i}"))
+            # roomNo is a business key like "room_s0030", not a UUID.
+            point_id = str(uuid5(NAMESPACE_URL, f"room:{target.roomNo}:{i}"))
             points.append(PointStruct(id=point_id, vector=vector[i], payload=target.model_dump(mode="json")))
         
         info = self.client.upsert(
@@ -61,3 +64,26 @@ class QdrantDbClient:
             print(hit.payload, "score:", hit.score)
             
         return hits
+    
+    def remove_room_vector(self, collection_name: str, room_no):
+        logger.info("Qdrant에 방 벡터 삭제요청. room_no=%s, collection_name=%s", room_no, collection_name)
+        try:
+            result = self.client.delete(
+                collection_name=collection_name,
+                points_selector=models.FilterSelector(
+                    filter=models.Filter(
+                        must=[
+                            models.FieldCondition(
+                                key="roomNo",
+                                match=models.MatchValue(value=room_no),
+                            )
+                        ]
+                    )
+                ),
+                wait=True
+            )
+            logger.info("Qdrant 방 벡터 삭제 성공. room_no=%s, collection_name=%s, result=%s", room_no, collection_name, result)
+            return result
+        except Exception:
+            logger.exception("Qdrant 방 벡터 삭제 에러발생. room_no=%s, collection_name=%s", room_no, collection_name)
+            raise

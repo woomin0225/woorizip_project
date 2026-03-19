@@ -18,21 +18,27 @@ public class ReviewScheduler {
 	
 	private final ReviewSummaryService reviewSummaryService;
 	
-	@Scheduled(fixedDelay = 300000)	// 1000 => 1초 마다 실행	
+	@Scheduled(initialDelay = 600000,fixedDelay = 1800000)	// 1000 => 1초 마다 실행	
 	public void roomReviewSummery() {
 		log.info("방 리뷰 요약 스케줄러 작동");
 		
 		List<ReviewSummaryEntity> list = reviewSummaryService.findSummaryPendingRooms();
 		
+		int i = 0;
+		
 		for(ReviewSummaryEntity entity : list) {
+			if(i > 50) continue;
 			if(entity.getSummaryStatus().equals("PROCESSING") || entity.getSummaryStatus().equals("DONE")) continue;
 			try {
-				reviewSummaryService.summaryPendingRooms(entity);
+				String summary = reviewSummaryService.summaryPendingRooms(entity);
+				i += 1;
 			} catch (Exception e) {
 				log.info("방 번호" + entity.getRoomNo() + "의 리뷰요약에서 에러 발생: " + e.getMessage());
 				continue;
 			}
 		}
+		
+		log.info("방 리뷰 요약 스케줄러 종료");
 	}
 	
 }

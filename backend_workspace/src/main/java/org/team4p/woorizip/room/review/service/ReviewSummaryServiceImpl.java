@@ -38,14 +38,14 @@ public class ReviewSummaryServiceImpl implements ReviewSummaryService{
 
 	@Override
 	@Transactional
-	public void summaryPendingRooms(ReviewSummaryEntity entity) {
+	public String summaryPendingRooms(ReviewSummaryEntity entity) {
 		// state를 PROCESSING으로 전환
 		entity.setSummaryStatus("PROCESSING");
 		reviewSummaryRepository.save(entity);
 		
 		// 요약할 리뷰목록 조회
 		String roomNo = entity.getRoomNo();
-		List<String> reviews = reviewRepository.findAllByRoomNoOrderByReviewCreatedAtDesc(roomNo);
+		List<String> reviews = reviewRepository.findAllReviewContentsByRoomNoOrderByReviewCreatedAtDesc(roomNo);
 		ReviewSummaryRequest request = ReviewSummaryRequest.builder()
 								.roomNo(roomNo)
 								.texts(reviews)
@@ -74,7 +74,7 @@ public class ReviewSummaryServiceImpl implements ReviewSummaryService{
 				entity.setSummaryStatus("PENDING");
 			}
 			reviewSummaryRepository.save(entity);
-			return;
+			return "요약실패";
 		}
 		
 		if(response.getStatus() != true) {
@@ -87,21 +87,23 @@ public class ReviewSummaryServiceImpl implements ReviewSummaryService{
 				entity.setSummaryStatus("PENDING");
 			}
 			reviewSummaryRepository.save(entity);
-			return;
+			return "요약실패";
 		}
 			// 요약문구 저장하고, state를 DONE으로 전환, 업데이트 일시를 현재일시로 최신화
 			entity.setReviewSummary(response.getSummary());
 			entity.setSummaryStatus("DONE");
+			entity.setReviewCount(reviews.size());
 			entity.setUpdatedAt(LocalDateTime.now());
 			reviewSummaryRepository.save(entity);
 			log.info("방 번호("+response.getRoomNo()+") - 리뷰 요약: "+response.getSummary()+", "+response.getMessage());
 			
+			return response.getSummary();
 	}
 
 	@Override
 	public ReviewSummaryEntity selectSummarizedReview(String roomNo) {
 		
-		return reviewSummaryRepository.findById(roomNo).get();
+		return reviewSummaryRepository.findById(roomNo).orElse(null);
 	}
 
 }
