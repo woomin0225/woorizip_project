@@ -9,7 +9,11 @@ import {
   getOwnerContractsPage,
 } from '../../contract/api/contractAPI';
 import { getHouse, getHouseMarkers } from '../../houseAndRoom/api/houseApi';
-import { getRoom } from '../../houseAndRoom/api/roomApi';
+import { getRoom, getRoomImages } from '../../houseAndRoom/api/roomApi';
+import {
+  pickRepresentativeRoomImageName,
+  toRoomImageUrl,
+} from '../../houseAndRoom/utils/roomImage';
 import { getMyInfo, isLessorType } from '../../user/api/userAPI';
 import layoutStyles from '../../../app/layouts/MyPageLayout.module.css';
 import styles from './OccupyApply.module.css';
@@ -100,6 +104,7 @@ export default function OccupyApply() {
   const [contractPage, setContractPage] = useState(1);
   const [contractTotalPages, setContractTotalPages] = useState(0);
   const [roomLabelByNo, setRoomLabelByNo] = useState({});
+  const [roomImageByNo, setRoomImageByNo] = useState({});
   const [houseNameMap, setHouseNameMap] = useState({});
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
@@ -262,6 +267,48 @@ export default function OccupyApply() {
     };
   }, [tourItems, contractItems, roomLabelByNo, houseNameMap]);
 
+  useEffect(() => {
+    const roomNos = Array.from(
+      new Set(
+        [...tourItems, ...contractItems]
+          .map((item) => String(item?.roomNo || '').trim())
+          .filter(Boolean)
+      )
+    );
+    const missing = roomNos.filter((roomNo) => roomImageByNo[roomNo] === undefined);
+    if (missing.length === 0) return;
+
+    let mounted = true;
+    (async () => {
+      const results = await Promise.all(
+        missing.map(async (roomNo) => {
+          try {
+            const images = await getRoomImages(roomNo);
+            const imageName = Array.isArray(images) && images.length > 0
+              ? pickRepresentativeRoomImageName(images[0])
+              : null;
+            return [roomNo, toRoomImageUrl(imageName)];
+          } catch {
+            return [roomNo, null];
+          }
+        })
+      );
+
+      if (!mounted) return;
+      setRoomImageByNo((prev) => {
+        const next = { ...prev };
+        results.forEach(([roomNo, imageUrl]) => {
+          next[roomNo] = imageUrl;
+        });
+        return next;
+      });
+    })();
+
+    return () => {
+      mounted = false;
+    };
+  }, [contractItems, roomImageByNo, tourItems]);
+
   const canReviewTour = useCallback((item) => {
     const status = String(item?.status || '').toUpperCase();
     return ['PENDING', 'APPLIED'].includes(status);
@@ -369,7 +416,18 @@ export default function OccupyApply() {
                             key={item.tourNo}
                             className={`${styles.listRow} ${isLessor ? styles.listRowLessor : ''}`}
                           >
-                            <span className={styles.oneLine}>{getRoomName(item, roomLabelByNo[item.roomNo])}</span>
+                            <span className={styles.roomCell}>
+                              {roomImageByNo[item.roomNo] ? (
+                                <img
+                                  className={styles.roomThumb}
+                                  src={roomImageByNo[item.roomNo]}
+                                  alt="방 대표 이미지"
+                                />
+                              ) : (
+                                <div className={styles.roomThumbPlaceholder}>No Image</div>
+                              )}
+                              <span className={styles.oneLine}>{getRoomName(item, roomLabelByNo[item.roomNo])}</span>
+                            </span>
                             <span>{fmtDate(item.visitDate)}</span>
                             <span>{fmtTime(item.visitTime)}</span>
                             <span>{statusLabel(item.status)}</span>
@@ -477,7 +535,18 @@ export default function OccupyApply() {
                             key={item.contractNo}
                             className={`${styles.listRow} ${isLessor ? styles.listRowLessor : ''}`}
                           >
-                            <span className={styles.oneLine}>{getRoomName(item, roomLabelByNo[item.roomNo])}</span>
+                            <span className={styles.roomCell}>
+                              {roomImageByNo[item.roomNo] ? (
+                                <img
+                                  className={styles.roomThumb}
+                                  src={roomImageByNo[item.roomNo]}
+                                  alt="방 대표 이미지"
+                                />
+                              ) : (
+                                <div className={styles.roomThumbPlaceholder}>No Image</div>
+                              )}
+                              <span className={styles.oneLine}>{getRoomName(item, roomLabelByNo[item.roomNo])}</span>
+                            </span>
                             <span>{fmtDate(item.moveInDate)}</span>
                             <span>{item.termMonths ? `${item.termMonths}개월` : '-'}</span>
                             <span>{statusLabel(item.status)}</span>

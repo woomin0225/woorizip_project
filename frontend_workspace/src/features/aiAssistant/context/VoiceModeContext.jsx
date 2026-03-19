@@ -98,11 +98,18 @@ export function VoiceModeProvider({ children }) {
     if (typeof window === 'undefined') return;
     window.localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(settings));
 
+    const pageZoom = Number(settings.pageZoom) || 1;
+
     document.documentElement.style.setProperty('--app-font-scale', String(settings.fontScale));
     document.documentElement.style.setProperty('--app-button-scale', String(settings.buttonScale));
-    document.documentElement.style.zoom = String(settings.pageZoom);
+    document.documentElement.style.setProperty('--app-page-zoom', String(pageZoom));
 
-    const largeView = settings.fontScale > 1 || settings.pageZoom > 1 || settings.buttonScale > 1;
+    document.body.style.transformOrigin = 'top center';
+    document.body.style.transform = pageZoom === 1 ? '' : `scale(${pageZoom})`;
+    document.body.style.width = pageZoom === 1 ? '' : `${100 / pageZoom}%`;
+    document.body.style.minHeight = pageZoom === 1 ? '' : `${100 / pageZoom}vh`;
+
+    const largeView = settings.fontScale > 1 || pageZoom > 1 || settings.buttonScale > 1;
     document.body.classList.toggle('large-view', largeView);
     localStorage.setItem('ui-large-view', largeView ? '1' : '0');
   }, [settings]);
@@ -295,6 +302,7 @@ export function VoiceModeProvider({ children }) {
     stopSpeaking();
     setVoiceModeEnabled(false);
     setPromptDismissed(true);
+    setSettings((prev) => ({ ...prev, autoReadPageSummary: false }));
   }, [stopListening, stopSpeaking]);
 
   const dismissPrompt = useCallback(() => {
@@ -370,3 +378,4 @@ export function useVoiceMode() {
   if (!value) throw new Error('useVoiceMode must be used within VoiceModeProvider');
   return value;
 }
+

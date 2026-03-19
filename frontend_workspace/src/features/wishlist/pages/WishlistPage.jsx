@@ -3,6 +3,7 @@ import { Container, Row, Col, Card, CardBody } from 'reactstrap';
 import MyPageSideNav from '../../user/components/MyPageSideNav';
 import { getWishlistPageByUser, deleteWishlist } from '../api/wishlistAPI';
 import { getRoom, getRoomImages } from '../../houseAndRoom/api/roomApi';
+import { pickRepresentativeRoomImageName } from '../../houseAndRoom/utils/roomImage';
 import { parseJwt } from '../../../app/providers/utils/jwt';
 import WishlistTable from '../components/WishlistTable';
 import styles from '../../../app/layouts/MyPageLayout.module.css';
@@ -22,12 +23,6 @@ function getCurrentUserNo() {
   if (!payload) return null;
 
   return payload.userNo || null;
-}
-
-function pickImageName(x) {
-  if (!x) return null;
-  if (typeof x === 'string') return x;
-  return x.imageName || x.storedImageName || x.fileName || x.roomImageName || x.name || null;
 }
 
 export default function WishlistPage() {
@@ -59,7 +54,9 @@ export default function WishlistPage() {
             ]);
 
             const firstImageName =
-              Array.isArray(images) && images.length > 0 ? pickImageName(images[0]) : null;
+              Array.isArray(images) && images.length > 0
+                ? pickRepresentativeRoomImageName(images[0])
+                : pickRepresentativeRoomImageName(room);
 
             return {
               ...item,

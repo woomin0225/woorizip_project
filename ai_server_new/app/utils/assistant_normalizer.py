@@ -57,6 +57,12 @@ def normalize_user_profile(item: Any) -> dict[str, Any]:
         normalized['isAdmin'] = item['isAdmin']
     if isinstance(item.get('isLessor'), bool):
         normalized['isLessor'] = item['isLessor']
+    user_name = compact_text(item.get('userName'), 80)
+    if user_name:
+        normalized['userName'] = user_name
+    user_phone = compact_text(item.get('userPhone'), 40)
+    if user_phone:
+        normalized['userPhone'] = user_phone
     return normalized
 
 
@@ -92,6 +98,17 @@ def normalize_context(context: dict[str, Any] | None) -> dict[str, Any]:
         normalized['siteProfile'] = {
             key: value for key, value in normalized_site.items() if value
         }
+
+    room_no = compact_text(context.get('roomNo'), 120)
+    if room_no:
+        normalized['roomNo'] = room_no
+
+    room_name = compact_text(context.get('roomName'), 160)
+    if room_name:
+        normalized['roomName'] = room_name
+
+    if isinstance(context.get('currentRoomResolved'), bool):
+        normalized['currentRoomResolved'] = context['currentRoomResolved']
 
     current_house = normalize_house_context_item(context.get('currentHouse'))
     if current_house:
@@ -283,6 +300,22 @@ def _extract_action(raw: dict[str, Any]) -> dict[str, Any]:
     return {'name': intent}
 
 
+def _should_redirect_tour_apply_to_room_detail(request_meta: dict[str, Any]) -> bool:
+    workflow_hint = _stringify(request_meta.get('workflowHint'), 80).upper()
+    if workflow_hint != 'TOUR_APPLY':
+        return False
+
+    context = request_meta.get('context')
+    if not isinstance(context, dict):
+        return True
+
+    room_no = _stringify(context.get('roomNo'), 120)
+    if room_no:
+        return False
+
+    return not bool(context.get('currentRoomResolved'))
+
+
 def normalize_assistant_response(
     raw: dict[str, Any],
     request_meta: dict[str, Any],
@@ -292,6 +325,21 @@ def normalize_assistant_response(
     stage = _stringify(raw.get('stage'), 40)
     if stage == 'draft':
         requires_confirm = True
+
+    if _should_redirect_tour_apply_to_room_detail(request_meta):
+        return {
+            'schemaVersion': request_meta.get('schemaVersion') or 'v1',
+            'reply': '투어신청을 하시고 싶은 방 상세페이지에서 다시 입력해주세요.',
+            'intent': 'CHAT',
+            'slots': {},
+            'action': {'name': 'CHAT'},
+            'result': raw.get('data') if isinstance(raw.get('data'), dict) else raw.get('result') or {},
+            'errorCode': _stringify(raw.get('errorCode'), 80) or None,
+            'requiresConfirm': False,
+            'sessionId': request_meta.get('sessionId'),
+            'clientRequestId': request_meta.get('clientRequestId'),
+            'raw': raw,
+        }
 
     return {
         'schemaVersion': request_meta.get('schemaVersion') or 'v1',

@@ -7,6 +7,10 @@ import {
   verifyElectronicSignature,
 } from '../api/contractAPI';
 import { getRoom, getRoomImages } from '../../houseAndRoom/api/roomApi';
+import {
+  pickRepresentativeRoomImageName,
+  toRoomImageUrl,
+} from '../../houseAndRoom/utils/roomImage';
 import { getHouse } from '../../houseAndRoom/api/houseApi';
 import { getMyInfo, getUserByUserNo } from '../../user/api/userAPI';
 import InlineCalendar from '../../../shared/components/InlineCalendar';
@@ -44,12 +48,6 @@ function normalizeIsoDate(value) {
   const s = String(value).trim();
   const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s);
   return m ? `${m[1]}-${m[2]}-${m[3]}` : '';
-}
-
-function pickImageName(x) {
-  if (!x) return null;
-  if (typeof x === 'string') return x;
-  return x.imageName || x.storedImageName || x.fileName || x.roomImageName || x.name || null;
 }
 
 function addMonthsIso(dateString, months) {
@@ -376,13 +374,15 @@ export default function ContractCreate() {
       try {
         const images = await getRoomImages(routeRoomNo);
         const firstImageName =
-          Array.isArray(images) && images.length > 0 ? pickImageName(images[0]) : null;
-        setThumb(firstImageName ? `/upload_files/room_image/${firstImageName}` : '');
+          Array.isArray(images) && images.length > 0
+            ? pickRepresentativeRoomImageName(images[0])
+            : pickRepresentativeRoomImageName(room);
+        setThumb(toRoomImageUrl(firstImageName) || '');
       } catch {
         setThumb('');
       }
     })();
-  }, [routeRoomNo]);
+  }, [room, routeRoomNo]);
 
   useEffect(() => {
     (async () => {

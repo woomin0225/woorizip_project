@@ -3,6 +3,10 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Container, Row, Col, Card, CardBody } from 'reactstrap';
 import { createTour, getReservedTourTimes } from '../api/tourAPI';
 import { getRoom, getRoomImages } from '../../houseAndRoom/api/roomApi';
+import {
+  pickRepresentativeRoomImageName,
+  toRoomImageUrl,
+} from '../../houseAndRoom/utils/roomImage';
 import { getMyInfo } from '../../user/api/userAPI';
 import InlineCalendar from '../../../shared/components/InlineCalendar';
 import styles from './TourApply.module.css';
@@ -53,19 +57,14 @@ export default function TourApply() {
     (async () => {
       try {
         const images = await getRoomImages(roomNo);
-        const first = Array.isArray(images) && images.length > 0 ? images[0] : null;
-        const imageName =
-          first?.imageName ||
-          first?.storedImageName ||
-          first?.fileName ||
-          first?.roomImageName ||
-          '';
-        setThumb(imageName ? `/upload_files/room_image/${imageName}` : '');
+        const first = Array.isArray(images) && images.length > 0 ? images[0] : room;
+        const imageName = pickRepresentativeRoomImageName(first);
+        setThumb(toRoomImageUrl(imageName) || '');
       } catch {
         setThumb('');
       }
     })();
-  }, [roomNo]);
+  }, [room, roomNo]);
 
   useEffect(() => {
     (async () => {

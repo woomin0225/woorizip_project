@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { toRoomImageUrl } from '../../houseAndRoom/utils/roomImage';
 import styles from './WishlistTable.module.css';
 
 function methodLabel(method) {
@@ -55,9 +56,7 @@ function occupancyLabel(roomCount) {
 }
 
 function imageUrl(imageName) {
-  if (!imageName) return null;
-  if (imageName.startsWith('http')) return imageName;
-  return `/upload_files/room_image/${imageName}`;
+  return toRoomImageUrl(imageName);
 }
 
 export default function WishlistTable({ items = [], onDelete }) {
