@@ -85,15 +85,31 @@ class OpenAIAgentClient:
             attempts = [
                 (
                     base + '/protocols/openai/responses',
-                    self._build_responses_payload(instruction, system_prompt, is_agent_endpoint=True),
+                    self._build_responses_payload(
+                        instruction,
+                        system_prompt,
+                        is_agent_endpoint=True,
+                    ),
                 ),
-                (base + '/responses', self._build_responses_payload(instruction, system_prompt)),
+                (
+                    base + '/responses',
+                    self._build_responses_payload(
+                        instruction,
+                        system_prompt,
+                    ),
+                ),
                 (base + '/chat/completions', self._build_chat_payload(instruction, system_prompt)),
                 (base + '/models/chat/completions', self._build_chat_payload(instruction, system_prompt)),
             ]
         elif is_openai_root:
             attempts = [
-                (base + '/responses', self._build_responses_payload(instruction, system_prompt)),
+                (
+                    base + '/responses',
+                    self._build_responses_payload(
+                        instruction,
+                        system_prompt,
+                    ),
+                ),
                 (base + '/chat/completions', self._build_chat_payload(instruction, system_prompt)),
             ]
         else:

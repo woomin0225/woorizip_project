@@ -5,8 +5,12 @@ import MyPageSideNav from '../../user/components/MyPageSideNav';
 import { getTour, updateTour } from '../api/tourAPI';
 import { cancelContract, getContract, requestContractAmendment } from '../../contract/api/contractAPI';
 import { getMyInfo, isLessorType } from '../../user/api/userAPI';
-import { getRoom } from '../../houseAndRoom/api/roomApi';
+import { getRoom, getRoomImages } from '../../houseAndRoom/api/roomApi';
 import { getHouse } from '../../houseAndRoom/api/houseApi';
+import {
+  pickRepresentativeRoomImageName,
+  toRoomImageUrl,
+} from '../../houseAndRoom/utils/roomImage';
 import InlineCalendar from '../../../shared/components/InlineCalendar';
 import layoutStyles from '../../../app/layouts/MyPageLayout.module.css';
 import styles from './ApplicationDetail.module.css';
@@ -111,6 +115,7 @@ export default function ApplicationDetail() {
   const [contractCancelReason, setContractCancelReason] = useState('');
   const todayIso = useMemo(() => getTodayLocalIso(), []);
   const [roomAvailableDateIso, setRoomAvailableDateIso] = useState('');
+  const [roomThumb, setRoomThumb] = useState('');
   const [, setRoomDisplayName] = useState('');
   const minDate = todayIso;
   const contractMinDate = useMemo(() => {
@@ -285,6 +290,30 @@ export default function ApplicationDetail() {
       mounted = false;
     };
   }, [roomNoForDisplay, itemRoomName, itemRoomAbstract, itemHouseName, itemHouseNo, fallbackRoomNameFromItem]);
+
+  useEffect(() => {
+    if (!roomNoForDisplay) {
+      setRoomThumb('');
+      return;
+    }
+    let mounted = true;
+    (async () => {
+      try {
+        const images = await getRoomImages(roomNoForDisplay);
+        if (!mounted) return;
+        const imageName = Array.isArray(images) && images.length > 0
+          ? pickRepresentativeRoomImageName(images[0])
+          : null;
+        setRoomThumb(toRoomImageUrl(imageName) || '');
+      } catch {
+        if (!mounted) return;
+        setRoomThumb('');
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, [roomNoForDisplay]);
 
   useEffect(() => {
     if (!isContract || !contractDate || !contractMinDate) return;
@@ -471,6 +500,26 @@ export default function ApplicationDetail() {
 
                   {!loading && canRender && item && (
                     <>
+                      <div className={styles.roomSummaryCard}>
+                        <div className={styles.roomImageWrap}>
+                          {roomThumb ? (
+                            <img
+                              className={styles.roomImage}
+                              src={roomThumb}
+                              alt="방 대표 이미지"
+                            />
+                          ) : (
+                            <div className={styles.noImage}>대표 이미지 없음</div>
+                          )}
+                        </div>
+                        <div className={styles.roomSummaryInfo}>
+                          <h4 className={styles.roomTitle}>{getRoomName(item)}</h4>
+                          <p className={styles.roomSubtitle}>
+                            {isTour ? '투어 신청 내역입니다.' : '입주 신청 내역입니다.'}
+                          </p>
+                        </div>
+                      </div>
+
                       <div className={styles.detailCard}>
                         {detailRows.map((row) => (
                           <div key={row.label} className={styles.detailRow}>

@@ -37,6 +37,39 @@
   text-overflow: ellipsis;
 }
 
+.roomCell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.roomThumb,
+.roomThumbPlaceholder {
+  width: 42px;
+  height: 42px;
+  border-radius: 8px;
+  flex: 0 0 42px;
+}
+
+.roomThumb {
+  object-fit: cover;
+  border: 1px solid #e9ecef;
+  background: #fff;
+}
+
+.roomThumbPlaceholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed #dfe4ea;
+  background: #f8f9fe;
+  color: #8898aa;
+  font-size: 0.55rem;
+  text-align: center;
+  line-height: 1.1;
+}
+
 .smallBtn {
   width: 100%;
   border: 1px solid #11cdef;
@@ -100,5 +133,9 @@
 
   .oneLine {
     white-space: normal;
+  }
+
+  .roomCell {
+    align-items: flex-start;
   }
 }
