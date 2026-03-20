@@ -14,31 +14,29 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 @RequiredArgsConstructor
 public class ReviewScheduler {
-// https://tao-tech.tistory.com/2 를 참고하여 작성하였습니다.
-	
+
 	private final ReviewSummaryService reviewSummaryService;
-	
-	@Scheduled(initialDelay = 600000,fixedDelay = 1800000)	// 1000 => 1초 마다 실행	
+
+	@Scheduled(initialDelay = 360000, fixedDelay = 600000)
 	public void roomReviewSummery() {
-		log.info("방 리뷰 요약 스케줄러 작동");
-		
+		log.info("방 리뷰 요약 스케줄러 시작");
+
 		List<ReviewSummaryEntity> list = reviewSummaryService.findSummaryPendingRooms();
-		
 		int i = 0;
-		
+
 		for(ReviewSummaryEntity entity : list) {
-			if(i > 50) continue;
+			if(i >= 50) break;
 			if(entity.getSummaryStatus().equals("PROCESSING") || entity.getSummaryStatus().equals("DONE")) continue;
 			try {
 				String summary = reviewSummaryService.summaryPendingRooms(entity);
 				i += 1;
+				log.info("방번호({}) - 리뷰 요약({}/50): {}", entity.getRoomNo(), i, (list.size()<50?list.size():50), summary);
 			} catch (Exception e) {
-				log.info("방 번호" + entity.getRoomNo() + "의 리뷰요약에서 에러 발생: " + e.getMessage());
-				continue;
+				log.info("방번호 {} 리뷰 요약 중 오류 발생: {}", entity.getRoomNo(), e.getMessage());
 			}
 		}
-		
+
 		log.info("방 리뷰 요약 스케줄러 종료");
 	}
-	
+
 }
