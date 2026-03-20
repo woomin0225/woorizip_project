@@ -338,7 +338,6 @@ public class RoomAiServiceImpl implements RoomAiService {
 		return targets;
 	}
 
-	@Async("aiTaskExecutor")
 	@Override
 	@Transactional
 	public EmbedResponse embedRoom(String roomNo) {

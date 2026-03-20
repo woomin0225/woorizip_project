@@ -28,6 +28,12 @@ class QdrantDbClient:
                 # text-embedding-3-small은 차원수 1536, 벡터유사도 계산방식 COSINE 추천
                 # nlpai-lab/KURE-v1은 차원수 1024
         )
+        # roomNo payload field를 keyword 인덱스로 보장 (삭제시에도 필요함)
+        self.client.create_payload_index(
+            collection_name=name,
+            field_name="roomNo",
+            field_schema=models.PayloadSchemaType.KEYWORD,
+        )
 
     def upsert(self, collection_name: str, vector):
         info = self.client.upsert(
