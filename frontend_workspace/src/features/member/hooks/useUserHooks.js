@@ -1,4 +1,5 @@
-﻿import { useAuth } from '../../../app/providers/AuthProvider';
+import { useAuth } from '../../../app/providers/AuthProvider';
+import { tokenStore } from '../../../app/http/tokenStore';
 import { useState, useEffect, useCallback } from 'react';
 import {
   findId as findIdApi,
@@ -466,7 +467,7 @@ export function useAdminUserList() {
 
         const res = await fetch(url, {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
+            Authorization: `Bearer ${tokenStore.getAccess()}`,
           },
         });
 

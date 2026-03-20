@@ -185,21 +185,27 @@ public class BoardSummaryServiceImpl implements BoardSummaryService {
 
         try {
             String requestJson = objectMapper.writeValueAsString(request);
-            log.info("FastAPI summary url={}", url);
-            log.info("FastAPI summary request body={}", requestJson);
+            
+            List<String> attachmentNames = request.attachments().stream()
+            		.map(FastApiSummaryRequest.SummaryAttachment::filename)
+            		.filter(StringUtils::hasText)
+            		.toList();
+            
+            log.info(
+            		"FastAPI summary request url={}, targetType={}, attachmentCount={}, attachments={}",
+            		url,
+            		request.targetType(),
+            		request.attachments().size(),
+            		attachmentNames
+    		);
 
-            java.net.http.HttpRequest.Builder builder = java.net.http.HttpRequest.newBuilder()
-                    .uri(java.net.URI.create(url))
-                    .header("Content-Type", "application/json")
-                    .header("Accept", "application/json")
-                    .header("X-API-KEY", aiSummaryProperties.apiKey())
-                    .POST(java.net.http.HttpRequest.BodyPublishers.ofString(
-                            requestJson,
-                            java.nio.charset.StandardCharsets.UTF_8
-                    ));
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.setAccept(List.of(MediaType.APPLICATION_JSON));
+            headers.set("X-API-KEY", aiSummaryProperties.apiKey());
 
             if (authentication != null && authentication.getName() != null) {
-                builder.header("X-User-Id", authentication.getName());
+                headers.set("X-User-Id", authentication.getName());
 
                 String roles = authentication.getAuthorities().stream()
                         .map(grantedAuthority -> grantedAuthority.getAuthority())
@@ -207,39 +213,46 @@ public class BoardSummaryServiceImpl implements BoardSummaryService {
                         .orElse("");
 
                 if (StringUtils.hasText(roles)) {
-                    builder.header("X-Roles", roles);
+                    headers.set("X-Roles", roles);
                 }
             }
-
-            java.net.http.HttpClient client = java.net.http.HttpClient.newBuilder()
-                    .version(java.net.http.HttpClient.Version.HTTP_1_1)
-                    .build();
-
-            java.net.http.HttpResponse<String> response = client.send(
-                    builder.build(),
-                    java.net.http.HttpResponse.BodyHandlers.ofString(java.nio.charset.StandardCharsets.UTF_8)
-            );
-
-            log.info("FastAPI raw response status={}, body={}", response.statusCode(), response.body());
-
-            if (response.statusCode() < 200 || response.statusCode() >= 300) {
-                throw new IllegalStateException("AI 요약 서버 응답 오류: " + response.statusCode());
+            
+            HttpEntity<String> requestEntity = new HttpEntity<>(requestJson, headers);
+            
+            ResponseEntity<String> response = restTemplate.exchange(
+            		url,
+            		HttpMethod.POST,
+            		requestEntity,
+            		String.class
+    		);
+            
+            if(!response.getStatusCode().is2xxSuccessful()) {
+            	throw new IllegalStateException("AI 요약 서버 응답 오류: " + response.getStatusCode().value());
             }
 
-            String responseBody = response.body();
+            String responseBody = response.getBody();
             if (!StringUtils.hasText(responseBody)) {
                 throw new IllegalStateException("AI 요약 응답이 비어 있습니다.");
             }
+            
+            FastApiSummaryResponse parsed = objectMapper.readValue(responseBody, FastApiSummaryResponse.class);
+            
+            log.info(
+            		"FastAPI summary response status={}, summaryLength={}, warningCount={}, attachmentCount={}",
+            		response.getStatusCode().value(),
+            		parsed.summary() == null ? 0 : parsed.summary().length(),
+            		parsed.warnings() == null ? 0 : parsed.warnings().size(),
+            		parsed.attachmentCount()
+    		);
 
-            return objectMapper.readValue(responseBody, FastApiSummaryResponse.class);
+            return parsed;
 
-        } catch (java.io.IOException e) {
-            log.error("FastAPI 요약 호출 실패", e);
+        } catch (JsonProcessingException e) {
+            log.error("FastAPI summary JSON 처리 실패 url={}", url, e);
+            throw new IllegalStateException("AI 요약 응답 처리에 실패했습니다.");
+        } catch (RestClientException e) {
+            log.error("FastAPI summary 호출 실패 url={}", url, e);
             throw new IllegalStateException("AI 요약 서버 호출에 실패했습니다.");
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            log.error("FastAPI 요약 호출 중 인터럽트 발생", e);
-            throw new IllegalStateException("AI 요약 서버 호출이 중단되었습니다.");
         }
     }
 

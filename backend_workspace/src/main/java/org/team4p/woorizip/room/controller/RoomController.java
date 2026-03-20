@@ -35,6 +35,7 @@ import org.team4p.woorizip.room.image.dto.RoomImageDto;
 import org.team4p.woorizip.room.image.jpa.entity.RoomImageSummaryEntity;
 import org.team4p.woorizip.room.image.service.RoomImageService;
 import org.team4p.woorizip.room.image.service.RoomImageSummaryService;
+import org.team4p.woorizip.room.jpa.entity.RoomFinalSummaryEntity;
 import org.team4p.woorizip.room.review.dto.ReviewDto;
 import org.team4p.woorizip.room.review.jpa.entity.ReviewSummaryEntity;
 import org.team4p.woorizip.room.review.service.ReviewService;
@@ -275,8 +276,8 @@ public class RoomController {
 	}
 
 	@PostMapping("/rag/room")
-	public ResponseEntity<ApiResponse<List<RoomDto>>> ragSearchRooms(@RequestBody String text){		
-		List<RoomDto> list = roomService.selectRoomRag(text);
+	public ResponseEntity<ApiResponse<List<RoomSearchResponse>>> ragSearchRooms(@RequestBody String text){
+		List<RoomSearchResponse> list = roomService.selectRoomRag(text);
 		
 		return ResponseEntity.status(200).body(ApiResponse.ok("방 rag 검색 성공", list));
 	}
@@ -296,9 +297,20 @@ public class RoomController {
 	}
 	
 	@GetMapping("/{roomNo}/summarized_room")
-	public ResponseEntity<ApiResponse<String>> callSummarizedRoom(@PathVariable("roomNo") String roomNo){
-		String result = roomAiService.selectSummarizedRoom(roomNo);
+	public ResponseEntity<ApiResponse<RoomFinalSummaryEntity>> callSummarizedRoom(@PathVariable("roomNo") String roomNo){
+		RoomFinalSummaryEntity result = roomAiService.selectSummarizedRoom(roomNo);
+		if(result != null && !"DONE".equals(result.getSummaryStatus())) {
+			roomAiService.startSummarizedRoomAsync(roomNo);
+		}
 		
-		return ResponseEntity.status(200).body(ApiResponse.ok("방 종합 요약 결과 불러오기 성공", result));
+		return ResponseEntity.status(200).body(ApiResponse.ok("방 종합 요약 상태 조회 성공", result));
+	}
+
+	@PostMapping("/{roomNo}/summarized_room/request")
+	public ResponseEntity<ApiResponse<RoomFinalSummaryEntity>> requestSummarizedRoom(@PathVariable("roomNo") String roomNo){
+		RoomFinalSummaryEntity result = roomAiService.requestSummarizedRoom(roomNo);
+		roomAiService.startSummarizedRoomAsync(roomNo);
+		
+		return ResponseEntity.status(202).body(ApiResponse.ok("방 종합 요약 생성 요청 성공", result));
 	}
 }

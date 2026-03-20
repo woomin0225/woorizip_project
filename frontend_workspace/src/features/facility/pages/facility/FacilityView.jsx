@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import FacilityList from '../../components/list/FacilityList';
 import { axiosInstance } from '../../../../app/http/axiosInstance';
+import { tokenStore } from '../../../../app/http/tokenStore';
 import styles from './FacilityPage.module.css';
 
 export default function FacilityViewPage() {
@@ -11,7 +12,7 @@ export default function FacilityViewPage() {
     isLessor: null,
     isAdmin: null,
   });
-  const token = localStorage.getItem('accessToken');
+  const token = tokenStore.getAccess();
 
   useEffect(() => {
     const checkUser = async () => {

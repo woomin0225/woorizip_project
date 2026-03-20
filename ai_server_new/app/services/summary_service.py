@@ -466,7 +466,7 @@ class RoomSummaryService:
             {"role": "user", "content": prompt},
             {"role": "assistant", "content": "summarized result is "}
         ]
-        result = await asyncio.to_thread(self.client.generate_from_messages, messages, 256)
+        result = await asyncio.to_thread(self.client.generate_from_messages, messages, 180)
         return result.strip()
     
     async def summary_room_image_captions(self, room_image_captions: list):
@@ -479,7 +479,7 @@ class RoomSummaryService:
             {"role": "user", "content": prompt},
             {"role": "assistant", "content": "summarized result is "}
         ]
-        result = await asyncio.to_thread(self.client.generate_from_messages, messages, 256)
+        result = await asyncio.to_thread(self.client.generate_from_messages, messages, 180)
         return result.strip()
     
     async def summary_room_total(self, room: RoomTotalRequest):
@@ -490,10 +490,10 @@ class RoomSummaryService:
         채광, 치안, 소음, 주변시설, 공용시설, 관리, 관리비, 주차, 학교, 마트, 배달, 이웃, 풍경, 냄새, 위치
         """
         messages = [
-            {"role": "system", "content": f"You are real estate agent. You have to summarize about room information and return the summary. You can use following category keywords on summarize work. category: {category}"},
+            {"role": "system", "content": f"You are real estate agent. You have to summarize about room information and return the summary. You can use following category keywords on summarize work. Connect the descriptions for each category into neat sentences. category: {category}"},
             {"role": "system", "content": f"refer to next definition. definition: {RoomTotalRequest}"},
             {"role": "user", "content": prompt},
             {"role": "assistant", "content": "summarized result is "}
         ]
-        result = await asyncio.to_thread(self.client.generate_from_messages, messages, 360)
+        result = await asyncio.to_thread(self.client.generate_from_messages, messages, 256)
         return result.strip()

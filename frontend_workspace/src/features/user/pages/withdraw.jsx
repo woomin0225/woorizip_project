@@ -41,8 +41,12 @@ export default function Withdraw() {
 
       alert('회원탈퇴가 완료되었습니다.');
       clearTokens();
+      sessionStorage.removeItem('userName');
+      sessionStorage.removeItem('userNo');
+      sessionStorage.removeItem('userType');
       localStorage.removeItem('userName');
       localStorage.removeItem('userNo');
+      localStorage.removeItem('userType');
       localStorage.removeItem('email');
       localStorage.removeItem('emailId');
       navigate('/');
