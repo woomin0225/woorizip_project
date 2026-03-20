@@ -159,17 +159,6 @@ class RoomVisionAnalyzeRes(BaseModel):
     data: RoomVisionResult
 
 
-class EmbeddingReq(BaseModel):
-    text: str
-    model: str = "intfloat/multilingual-e5-small"
-
-
-class EmbeddingRes(BaseModel):
-    model: str
-    dimension: int
-    embedding: list[float]
-
-
 class VoiceTranscribeReq(BaseModel):
     audio_base64: str
     mime_type: str = "audio/webm"
