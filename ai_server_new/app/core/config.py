@@ -1,4 +1,4 @@
-# app/core/config.py
+﻿# app/core/config.py
 
 from __future__ import annotations
 
@@ -60,11 +60,13 @@ class Settings(BaseSettings):
     SPRING_INTERNAL_API_KEY: str | None = None
 
     # ===== Audio =====
-    DEFAULT_TTS_VOICE: str = "ko-KR-SunHiNeural"
-    DEFAULT_AUDIO_FORMAT: str = "wav"
+    DEFAULT_TTS_VOICE: str = "sage"
+    DEFAULT_AUDIO_FORMAT: str = "mp3"
     AZURE_TTS_ENDPOINT: str | None = None
     AZURE_TTS_REGION: str | None = None
     AZURE_TTS_API_KEY: str | None = None
+    AZURE_TTS_DEPLOYMENT: str | None = None
+    AZURE_TTS_API_VERSION: str = "2025-01-01-preview"
     AZURE_TTS_OUTPUT_FORMAT: str = "audio-24khz-48kbitrate-mono-mp3"
 
     # ===== Assistant =====
@@ -133,3 +135,5 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
+

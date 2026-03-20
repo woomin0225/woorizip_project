@@ -58,6 +58,7 @@ public class RoomServiceImpl implements RoomService {
 	private final ReviewRepository reviewRepository;
 	private final WishlistRepository wishlistRepository;
 	private final RoomEmbeddingRepository roomEmbeddingRepository;
+	private final RoomAvailabilityPolicyService roomAvailabilityPolicyService;
 	
 	private final WebClient.Builder webClientBuilder;
 	@Value("${ai.server.base-url}")
@@ -72,7 +73,25 @@ public class RoomServiceImpl implements RoomService {
 		
 		// 방 검색 결과 조회 -> 응답객체에 저장
 		Slice<RoomSearchResponse> slice = roomRepository.searchRooms(cond, pageable)
-				.map(this::toRoomSearchResponse);
+				.map((entity)->RoomSearchResponse.builder()
+								.roomNo(entity.getRoomNo())
+								.roomName(entity.getRoomName())
+								.houseNo(entity.getHouseNo())
+								.roomUpdatedAt(entity.getRoomUpdatedAt())
+								.roomDeposit(entity.getRoomDeposit())
+								.roomMonthly(entity.getRoomMonthly())
+								.roomMethod(entity.getRoomMethod())
+								.roomArea(entity.getRoomArea())
+								.roomFacing(entity.getRoomFacing())
+								.roomRoomCount(entity.getRoomRoomCount())
+								.roomEmptyYn(entity.getRoomEmptyYn())
+								.roomImageCount(entity.getRoomImageCount())
+								.build()
+		);
+
+		for (RoomSearchResponse item : slice.getContent()) {
+			applyAvailability(item, item.getRoomNo(), null, item.getRoomEmptyYn());
+		}
 		
 		// 주소 추가
 		for (RoomSearchResponse item : slice.getContent()) {
@@ -178,6 +197,7 @@ public class RoomServiceImpl implements RoomService {
 		RoomEntity roomEntity = optional.get();
 		if(roomEntity == null) throw new NotFoundException("해당 방을 조회할 수 없습니다.");
 		RoomDto roomDto = roomEntity.toDto();
+		applyAvailability(roomDto, roomEntity);
 
 		return roomDto;
 	}
@@ -210,7 +230,11 @@ public class RoomServiceImpl implements RoomService {
 		// 건물 내 방 목록 조회
 		List<RoomEntity> rows = roomRepository.findAllByHouseNoAndDeletedFalseOrderByRoomName(houseNo);
 		List<RoomDto> list = new ArrayList<>();
-		rows.forEach(entity->list.add(entity.toDto()));
+		rows.forEach(entity -> {
+			RoomDto dto = entity.toDto();
+			applyAvailability(dto, entity);
+			list.add(dto);
+		});
 		return list;
 	}
 
@@ -295,6 +319,10 @@ public class RoomServiceImpl implements RoomService {
 								.roomImageCount(entity.getRoomImageCount())
 								.build()
 		);
+
+		for (RoomSearchResponse item : slice.getContent()) {
+			applyAvailability(item, item.getRoomNo(), null, item.getRoomEmptyYn());
+		}
 		
 		// 사진 조회 -> 이름 추출 -> 응답에 저장
 		for (RoomSearchResponse item : slice.getContent()) {
@@ -419,6 +447,12 @@ public class RoomServiceImpl implements RoomService {
 
 		// DB 조회는 roomNo 기준으로 한 번에 처리해 성능을 아낍니다.
 		List<RoomEntity> entityList = roomRepository.findAllById(roomNoList);
+		List<RoomDto> dtoList = new ArrayList<>();
+		entityList.forEach(entity -> {
+			RoomDto dto = entity.toDto();
+			applyAvailability(dto, entity);
+			dtoList.add(dto);
+		});
 
 		// entityMap:
 		// roomNo -> RoomEntity 형태로 바꿔 두면
@@ -472,6 +506,35 @@ public class RoomServiceImpl implements RoomService {
 		return dtoList;
 	}
 
+	private void applyAvailability(RoomDto dto, RoomEntity entity) {
+		applyAvailability(dto, entity.getRoomNo(), entity.getRoomAvailableDate(), entity.getRoomEmptyYn());
+	}
+
+	private void applyAvailability(RoomDto dto, String roomNo, LocalDate fallbackAvailableDate, Boolean fallbackEmptyYn) {
+		RoomAvailabilityPolicyService.RoomAvailabilityPolicy policy = roomAvailabilityPolicyService.evaluate(
+				roomNo,
+				fallbackAvailableDate,
+				fallbackEmptyYn
+		);
+		dto.setRoomEmptyYn(policy.roomEmpty());
+		dto.setCanTourApply(policy.canTourApply());
+		dto.setCanContractApply(policy.canContractApply());
+		dto.setOccupancyEndDate(policy.occupancyEndDate());
+		if (policy.actualAvailableDate() != null) {
+			dto.setRoomAvailableDate(policy.actualAvailableDate());
+		}
+	}
+
+	private void applyAvailability(RoomSearchResponse dto, String roomNo, LocalDate fallbackAvailableDate, Boolean fallbackEmptyYn) {
+		RoomAvailabilityPolicyService.RoomAvailabilityPolicy policy = roomAvailabilityPolicyService.evaluate(
+				roomNo,
+				fallbackAvailableDate,
+				fallbackEmptyYn
+		);
+		dto.setRoomEmptyYn(policy.roomEmpty());
+		dto.setCanTourApply(policy.canTourApply());
+		dto.setCanContractApply(policy.canContractApply());
+		dto.setOccupancyEndDate(policy.occupancyEndDate());
 	private Long normalizeRoomMonthly(String roomMethod, Long roomMonthly) {
 		if ("L".equals(roomMethod) && roomMonthly == null) {
 			return 0L;

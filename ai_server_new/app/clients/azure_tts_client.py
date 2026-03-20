@@ -1,8 +1,8 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import asyncio
 import base64
-from html import escape
+import json
 from urllib import error, request
 
 from app.clients.mock_clients import MockTextToSpeechClient
@@ -10,14 +10,26 @@ from app.clients.protocols import TextToSpeechClient
 from app.core.config import settings
 
 
-FORMAT_TO_HEADER = {
-    'mp3': 'audio-24khz-48kbitrate-mono-mp3',
-    'wav': 'riff-24khz-16bit-mono-pcm',
-}
-
 FORMAT_TO_MIME = {
     'mp3': 'audio/mpeg',
     'wav': 'audio/wav',
+    'flac': 'audio/flac',
+    'opus': 'audio/opus',
+    'pcm16': 'audio/wav',
+    'aac': 'audio/aac',
+}
+
+OPENAI_TTS_VOICES = {
+    'alloy',
+    'ash',
+    'ballad',
+    'coral',
+    'echo',
+    'sage',
+    'shimmer',
+    'verse',
+    'marin',
+    'cedar',
 }
 
 
@@ -26,9 +38,7 @@ class AzureSpeechTTSClient(TextToSpeechClient):
         self._fallback = MockTextToSpeechClient()
 
     async def speak(self, text: str, voice: str | None = None, audio_format: str | None = None) -> dict:
-        if not settings.AZURE_TTS_API_KEY or not (
-            settings.AZURE_TTS_ENDPOINT or settings.AZURE_TTS_REGION
-        ):
+        if not settings.AZURE_TTS_API_KEY or not settings.AZURE_TTS_ENDPOINT:
             return await self._fallback.speak(text, voice=voice, audio_format=audio_format)
 
         return await asyncio.to_thread(
@@ -39,21 +49,65 @@ class AzureSpeechTTSClient(TextToSpeechClient):
         )
 
     def _speak_sync(self, text: str, voice: str, audio_format: str) -> dict:
-        endpoint = self._resolve_endpoint()
+        endpoint = self._resolve_openai_endpoint()
         resolved_format = 'mp3' if audio_format == 'mpeg' else audio_format
-        output_header = FORMAT_TO_HEADER.get(
-            resolved_format,
-            settings.AZURE_TTS_OUTPUT_FORMAT,
+        resolved_voice = self._normalize_openai_voice(voice)
+        audio_bytes = self._request_openai_audio(
+            endpoint=endpoint,
+            deployment=settings.AZURE_TTS_DEPLOYMENT,
+            api_version=settings.AZURE_TTS_API_VERSION,
+            text=text,
+            voice=resolved_voice,
+            audio_format=resolved_format,
         )
 
-        ssml = self._to_ssml(text, voice)
+        return {
+            'voice': resolved_voice,
+            'audio_format': resolved_format,
+            'mime_type': FORMAT_TO_MIME.get(resolved_format, 'application/octet-stream'),
+            'audio_base64': base64.b64encode(audio_bytes).decode('ascii'),
+            'text': text,
+            'provider': 'azure-openai',
+        }
+
+    def _request_openai_audio(
+        self,
+        *,
+        endpoint: str,
+        deployment: str | None,
+        api_version: str,
+        text: str,
+        voice: str,
+        audio_format: str,
+    ) -> bytes:
+        if not deployment:
+            raise ValueError('AZURE_TTS_DEPLOYMENT 설정이 필요합니다.')
+
+        url = (
+            f'{endpoint}/openai/deployments/{deployment}/chat/completions'
+            f'?api-version={api_version}'
+        )
+        payload = {
+            'model': deployment,
+            'modalities': ['text', 'audio'],
+            'audio': {
+                'voice': voice,
+                'format': audio_format,
+            },
+            'messages': [
+                {
+                    'role': 'user',
+                    'content': text,
+                }
+            ],
+        }
+
         req = request.Request(
-            endpoint,
-            data=ssml.encode('utf-8'),
+            url,
+            data=json.dumps(payload).encode('utf-8'),
             headers={
-                'Content-Type': 'application/ssml+xml',
-                'Ocp-Apim-Subscription-Key': settings.AZURE_TTS_API_KEY or '',
-                'X-Microsoft-OutputFormat': output_header,
+                'Content-Type': 'application/json',
+                'api-key': settings.AZURE_TTS_API_KEY or '',
                 'User-Agent': 'woorizip-ai-server',
             },
             method='POST',
@@ -61,39 +115,45 @@ class AzureSpeechTTSClient(TextToSpeechClient):
 
         try:
             with request.urlopen(req, timeout=max(settings.AI_AGENT_TIMEOUT_MS, 1000) / 1000.0) as resp:
-                audio_bytes = resp.read()
+                body = resp.read().decode('utf-8', errors='ignore')
         except error.HTTPError as exc:
             body = exc.read().decode('utf-8', errors='ignore')
             raise ValueError(
-                f'Azure TTS 호출 실패: status={exc.code}, body={body}'
+                f'Azure OpenAI TTS 호출 실패: status={exc.code}, body={body}'
             ) from exc
         except error.URLError as exc:
             raise ValueError(
-                f'Azure TTS 통신 중 오류가 발생했습니다: {exc.reason}'
+                f'Azure OpenAI TTS 통신 중 오류가 발생했습니다: {exc.reason}'
             ) from exc
 
-        return {
-            'voice': voice,
-            'audio_format': resolved_format,
-            'mime_type': FORMAT_TO_MIME.get(resolved_format, 'application/octet-stream'),
-            'audio_base64': base64.b64encode(audio_bytes).decode('ascii'),
-            'text': text,
-            'provider': 'azure',
-        }
-
-    def _resolve_endpoint(self) -> str:
-        if settings.AZURE_TTS_ENDPOINT:
-            return settings.AZURE_TTS_ENDPOINT.rstrip('/')
-        if settings.AZURE_TTS_REGION:
-            return (
-                f'https://{settings.AZURE_TTS_REGION.strip()}'
-                '.tts.speech.microsoft.com/cognitiveservices/v1'
+        try:
+            parsed = json.loads(body)
+            audio_base64 = (
+                parsed.get('choices', [{}])[0]
+                .get('message', {})
+                .get('audio', {})
+                .get('data')
             )
-        raise ValueError('AZURE_TTS_ENDPOINT 또는 AZURE_TTS_REGION 설정이 필요합니다.')
+        except Exception as exc:  # pragma: no cover
+            raise ValueError('Azure OpenAI TTS 응답 파싱에 실패했습니다.') from exc
 
-    def _to_ssml(self, text: str, voice_name: str) -> str:
-        return (
-            '<speak version="1.0" xml:lang="ko-KR">'
-            f'<voice name="{escape(voice_name)}">{escape(text)}</voice>'
-            '</speak>'
-        )
+        if not audio_base64:
+            raise ValueError(f'Azure OpenAI TTS 응답에 audio data가 없습니다: {body}')
+
+        return base64.b64decode(audio_base64)
+
+    def _resolve_openai_endpoint(self) -> str:
+        endpoint = (settings.AZURE_TTS_ENDPOINT or '').rstrip('/')
+        if not endpoint:
+            raise ValueError('AZURE_TTS_ENDPOINT 설정이 필요합니다.')
+        if endpoint.endswith('/openai/v1'):
+            return endpoint[:-10]
+        if endpoint.endswith('/cognitiveservices/v1'):
+            return endpoint[:-19]
+        return endpoint
+
+    def _normalize_openai_voice(self, voice_name: str | None) -> str:
+        candidate = (voice_name or '').strip().lower()
+        if candidate in OPENAI_TTS_VOICES:
+            return candidate
+        return (settings.DEFAULT_TTS_VOICE or 'alloy').strip().lower()

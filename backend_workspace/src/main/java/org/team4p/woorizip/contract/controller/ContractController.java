@@ -93,6 +93,13 @@ public class ContractController {
         } catch (IllegalStateException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body(ApiResponse.fail(e.getMessage(), null));
+        } catch (Exception e) {
+            log.error("입주 신청 등록 실패: roomNo={}, userNo={}", roomNo, userPrincipal.getUserNo(), e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.fail(
+                            e.getMessage() != null ? e.getMessage() : "입주 신청 처리 중 오류가 발생했습니다.",
+                            null
+                    ));
         }
     }
 
@@ -236,7 +243,18 @@ public class ContractController {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.fail("지원하지 않는 상태값입니다.", null));
             }
 
-            int result = contractService.updateStatus(contractNo, normalizedStatus, reason);
+            String signerName = body != null ? body.get("signerName") : null;
+            String signatureDataUrl = body != null ? body.get("signatureDataUrl") : null;
+            String signedAt = body != null ? body.get("signedAt") : null;
+
+            int result = contractService.updateStatus(
+                    contractNo,
+                    normalizedStatus,
+                    reason,
+                    signerName,
+                    signatureDataUrl,
+                    signedAt
+            );
             return result > 0
                     ? ResponseEntity.ok(ApiResponse.ok("입주 신청 승인/거절 처리 완료", null))
                     : ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.fail("입주 신청 처리 실패", null));

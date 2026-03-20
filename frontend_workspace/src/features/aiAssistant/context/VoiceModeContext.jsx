@@ -41,6 +41,9 @@ const readStoredSettings = () => {
   }
 };
 
+const clampScale = (value, min = 1, max = 1.5) =>
+  Math.min(max, Math.max(min, Number(value) || 1));
+
 const normalizeSpeakableText = (node) => {
   if (!node) return '';
   const ariaLabel = node.getAttribute?.('aria-label');
@@ -98,18 +101,37 @@ export function VoiceModeProvider({ children }) {
     if (typeof window === 'undefined') return;
     window.localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(settings));
 
-    const pageZoom = Number(settings.pageZoom) || 1;
+    const fontScale = clampScale(settings.fontScale, 1, 1.25);
+    const pageZoom = clampScale(settings.pageZoom, 1, 1.3);
+    const buttonScale = clampScale(settings.buttonScale, 1, 1.3);
+    const textScale = clampScale(
+      1 + (fontScale - 1) * 0.82 + (pageZoom - 1) * 0.9,
+      1,
+      1.45
+    );
+    const controlScale = clampScale(
+      1 + (buttonScale - 1) * 0.9 + (pageZoom - 1) * 0.72,
+      1,
+      1.42
+    );
+    const spaceScale = clampScale(
+      1 + (fontScale - 1) * 0.28 + (buttonScale - 1) * 0.2 + (pageZoom - 1) * 0.55,
+      1,
+      1.28
+    );
+    const lineHeight = Math.min(1.8, 1.52 + (textScale - 1) * 0.52);
 
-    document.documentElement.style.setProperty('--app-font-scale', String(settings.fontScale));
-    document.documentElement.style.setProperty('--app-button-scale', String(settings.buttonScale));
-    document.documentElement.style.setProperty('--app-page-zoom', String(pageZoom));
+    document.documentElement.style.setProperty('--app-font-scale', String(textScale));
+    document.documentElement.style.setProperty('--app-button-scale', String(controlScale));
+    document.documentElement.style.setProperty('--app-space-scale', String(spaceScale));
+    document.documentElement.style.setProperty('--app-line-height', String(lineHeight));
 
-    document.body.style.transformOrigin = 'top center';
-    document.body.style.transform = pageZoom === 1 ? '' : `scale(${pageZoom})`;
-    document.body.style.width = pageZoom === 1 ? '' : `${100 / pageZoom}%`;
-    document.body.style.minHeight = pageZoom === 1 ? '' : `${100 / pageZoom}vh`;
+    document.body.style.transformOrigin = '';
+    document.body.style.transform = '';
+    document.body.style.width = '';
+    document.body.style.minHeight = '';
 
-    const largeView = settings.fontScale > 1 || pageZoom > 1 || settings.buttonScale > 1;
+    const largeView = textScale > 1 || controlScale > 1 || spaceScale > 1;
     document.body.classList.toggle('large-view', largeView);
     localStorage.setItem('ui-large-view', largeView ? '1' : '0');
   }, [settings]);
@@ -378,4 +400,6 @@ export function useVoiceMode() {
   if (!value) throw new Error('useVoiceMode must be used within VoiceModeProvider');
   return value;
 }
+
+
 
