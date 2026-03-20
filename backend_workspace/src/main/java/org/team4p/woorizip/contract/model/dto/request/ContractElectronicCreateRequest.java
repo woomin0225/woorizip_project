@@ -18,4 +18,8 @@ public class ContractElectronicCreateRequest {
     private Integer termMonths;
 
     private String memo;
+
+    private String signatureDataUrl;
+
+    private String previewHtml;
 }

@@ -56,6 +56,7 @@ public class RoomServiceImpl implements RoomService {
 	private final ReviewRepository reviewRepository;
 	private final WishlistRepository wishlistRepository;
 	private final RoomEmbeddingRepository roomEmbeddingRepository;
+	private final RoomAvailabilityPolicyService roomAvailabilityPolicyService;
 	
 	private final WebClient.Builder webClientBuilder;
 	@Value("${ai.server.base-url}")
@@ -85,6 +86,10 @@ public class RoomServiceImpl implements RoomService {
 								.roomImageCount(entity.getRoomImageCount())
 								.build()
 		);
+
+		for (RoomSearchResponse item : slice.getContent()) {
+			applyAvailability(item, item.getRoomNo(), null, item.getRoomEmptyYn());
+		}
 		
 		// 주소 추가
 		for (RoomSearchResponse item : slice.getContent()) {
@@ -174,6 +179,7 @@ public class RoomServiceImpl implements RoomService {
 		RoomEntity roomEntity = optional.get();
 		if(roomEntity == null) throw new NotFoundException("해당 방을 조회할 수 없습니다.");
 		RoomDto roomDto = roomEntity.toDto();
+		applyAvailability(roomDto, roomEntity);
 
 		return roomDto;
 	}
@@ -206,7 +212,11 @@ public class RoomServiceImpl implements RoomService {
 		// 건물 내 방 목록 조회
 		List<RoomEntity> rows = roomRepository.findAllByHouseNoAndDeletedFalseOrderByRoomName(houseNo);
 		List<RoomDto> list = new ArrayList<>();
-		rows.forEach(entity->list.add(entity.toDto()));
+		rows.forEach(entity -> {
+			RoomDto dto = entity.toDto();
+			applyAvailability(dto, entity);
+			list.add(dto);
+		});
 		return list;
 	}
 
@@ -291,6 +301,10 @@ public class RoomServiceImpl implements RoomService {
 								.roomImageCount(entity.getRoomImageCount())
 								.build()
 		);
+
+		for (RoomSearchResponse item : slice.getContent()) {
+			applyAvailability(item, item.getRoomNo(), null, item.getRoomEmptyYn());
+		}
 		
 		// 사진 조회 -> 이름 추출 -> 응답에 저장
 		for (RoomSearchResponse item : slice.getContent()) {
@@ -399,8 +413,43 @@ public class RoomServiceImpl implements RoomService {
 		
 		List<RoomEntity> entityList = roomRepository.findAllById(roomNoList);
 		List<RoomDto> dtoList = new ArrayList<>();
-		entityList.forEach(entity->dtoList.add(entity.toDto()));
+		entityList.forEach(entity -> {
+			RoomDto dto = entity.toDto();
+			applyAvailability(dto, entity);
+			dtoList.add(dto);
+		});
 		
 		return dtoList;
+	}
+
+	private void applyAvailability(RoomDto dto, RoomEntity entity) {
+		applyAvailability(dto, entity.getRoomNo(), entity.getRoomAvailableDate(), entity.getRoomEmptyYn());
+	}
+
+	private void applyAvailability(RoomDto dto, String roomNo, LocalDate fallbackAvailableDate, Boolean fallbackEmptyYn) {
+		RoomAvailabilityPolicyService.RoomAvailabilityPolicy policy = roomAvailabilityPolicyService.evaluate(
+				roomNo,
+				fallbackAvailableDate,
+				fallbackEmptyYn
+		);
+		dto.setRoomEmptyYn(policy.roomEmpty());
+		dto.setCanTourApply(policy.canTourApply());
+		dto.setCanContractApply(policy.canContractApply());
+		dto.setOccupancyEndDate(policy.occupancyEndDate());
+		if (policy.actualAvailableDate() != null) {
+			dto.setRoomAvailableDate(policy.actualAvailableDate());
+		}
+	}
+
+	private void applyAvailability(RoomSearchResponse dto, String roomNo, LocalDate fallbackAvailableDate, Boolean fallbackEmptyYn) {
+		RoomAvailabilityPolicyService.RoomAvailabilityPolicy policy = roomAvailabilityPolicyService.evaluate(
+				roomNo,
+				fallbackAvailableDate,
+				fallbackEmptyYn
+		);
+		dto.setRoomEmptyYn(policy.roomEmpty());
+		dto.setCanTourApply(policy.canTourApply());
+		dto.setCanContractApply(policy.canContractApply());
+		dto.setOccupancyEndDate(policy.occupancyEndDate());
 	}
 }

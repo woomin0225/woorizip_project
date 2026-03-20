@@ -221,6 +221,9 @@ export default function Detail() {
     () => roomImageNames.map((n) => toUrl(`http://localhost:8080/upload/room_image`, n)).filter(Boolean),
     [roomImageNames]
   );
+  const canApplyTour = room?.canTourApply !== false;
+  const canApplyContract = room?.canContractApply !== false;
+  const occupancyEndDateText = room?.occupancyEndDate ?? '';
 
   function onSelectRoom(nextRoomNo) {
     if (String(nextRoomNo) === String(selectedRoomNo)) {
@@ -255,8 +258,18 @@ export default function Detail() {
           </div>
 
           <div className={styles.sideButtons}>
-            <TourApplyButton roomNo={selectedRoomNo} />
-            <ContractApplyButton roomNo={selectedRoomNo} />
+            <TourApplyButton roomNo={selectedRoomNo} disabled={!canApplyTour} />
+            <ContractApplyButton roomNo={selectedRoomNo} disabled={!canApplyContract} />
+            {room?.roomEmptyYn === false && !canApplyTour && occupancyEndDateText && (
+              <div className={styles.applyHint}>
+                현재 거주중인 방입니다. 투어/입주 신청은 계약 종료 1개월 전부터 가능하며, 예상 종료일은 {occupancyEndDateText}입니다.
+              </div>
+            )}
+            {room?.roomEmptyYn === false && canApplyTour && occupancyEndDateText && (
+              <div className={styles.applyHint}>
+                현재 거주중인 방이지만 계약 종료 1개월 전 기간으로, {occupancyEndDateText} 이후 입주 기준으로 투어/입주 신청이 가능합니다.
+              </div>
+            )}
           </div>
         </div>
       </aside>

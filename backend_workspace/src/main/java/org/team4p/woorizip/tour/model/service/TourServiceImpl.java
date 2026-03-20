@@ -12,6 +12,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.team4p.woorizip.common.api.PageResponse;
+import org.team4p.woorizip.room.service.RoomAvailabilityPolicyService;
 import org.team4p.woorizip.tour.jpa.entity.TourEntity;
 import org.team4p.woorizip.tour.jpa.repository.TourRepository;
 import org.team4p.woorizip.tour.model.dto.TourDto;
@@ -29,6 +30,7 @@ public class TourServiceImpl implements TourService {
     private static final Set<String> ACTIVE_TOUR_STATUSES = Set.of("PENDING", "APPROVED");
 
     private final TourRepository tourRepository;
+    private final RoomAvailabilityPolicyService roomAvailabilityPolicyService;
 
     @Override
     public TourDto selectTour(String tourNo) {
@@ -75,6 +77,7 @@ public class TourServiceImpl implements TourService {
     public int insertTour(TourDto tourDto) {
         TourEntity entity = tourDto.toEntity();
         entity.setStatus("PENDING");
+        roomAvailabilityPolicyService.validateTourApplication(entity.getRoomNo());
 
         // 선조회로 중복 예약 차단
         boolean alreadyReserved = tourRepository.existsByRoomNoAndVisitDateAndVisitTimeAndStatusIn(

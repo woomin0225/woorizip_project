@@ -61,6 +61,9 @@ public class SecurityConfig {
         http.csrf(csrf -> csrf.disable())
             .formLogin(form -> form.disable())
             .httpBasic(basic -> basic.disable())
+            .headers(headers -> headers
+                .frameOptions(frame -> frame.disable())
+            )
 
             .oauth2Login(oauth2 -> oauth2
                     .authorizationEndpoint(endpoint -> endpoint.baseUri("/oauth2/authorization"))

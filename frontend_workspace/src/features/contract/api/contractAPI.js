@@ -136,7 +136,7 @@ export async function requestContractPayment(contractNo, payload) {
   });
 }
 
-export async function decideContract(contractNo, status, reason = '', currentStatus = '') {
+export async function decideContract(contractNo, status, reason = '', currentStatus = '', extra = {}) {
   const normalizedStatus = String(status || '').toUpperCase();
   const normalizedCurrentStatus = String(currentStatus || '').toUpperCase();
 
@@ -147,6 +147,7 @@ export async function decideContract(contractNo, status, reason = '', currentSta
         status: normalizedStatus,
         reason: normalizedStatus === 'REJECTED' ? reason : '',
         currentStatus: normalizedCurrentStatus,
+        ...extra,
       }),
     });
   } catch (e) {

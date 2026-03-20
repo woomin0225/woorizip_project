@@ -9,7 +9,7 @@ const BASE_MENUS = [
   { label: '내정보 수정', to: '/mypage/edit' },
   { label: '찜목록', to: '/wishlist' },
   { label: '신청현황', to: '/tour/list', lessorLabel: '승인현황' },
-  { label: '계약 내역', to: '/contract/list' },
+  { label: '계약현황', to: '/contract/list' },
 ];
 
 const WITHDRAW_MENU = { label: '회원탈퇴', to: '/mypage/withdraw' };
