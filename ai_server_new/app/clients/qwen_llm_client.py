@@ -37,14 +37,14 @@ class QwenLlmClient:
             generate_kwargs["top_p"] = top_p    # 다음 토큰 후보를 보는 정도: 높을수록 다양한 후보 허용. do_sample=False이면 안써도됨
         
         try:
-            logger.info("qwen generate start")
+            # logger.info("qwen generate start")
             generated_ids = self.model.generate(
                 **model_inputs,
                 **generate_kwargs
             )
-            logger.info("qwen generate done")
+            # logger.info("qwen generate done")
         except Exception:
-            logger.exception("qwen generate failed")
+            # logger.exception("qwen generate failed")
             raise
         
         generated_ids = [

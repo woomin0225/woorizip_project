@@ -277,7 +277,7 @@ public class RoomAiServiceImpl implements RoomAiService {
 	}
 
 	@Override
-	@Async
+	@Async("aiTaskExecutor")
 	public void startSummarizedRoomAsync(String roomNo) {
 		RoomFinalSummaryEntity entity = roomFinalSummaryRepository.findById(roomNo).orElse(null);
 		if(entity == null) {
@@ -338,6 +338,7 @@ public class RoomAiServiceImpl implements RoomAiService {
 		return targets;
 	}
 
+	@Async("aiTaskExecutor")
 	@Override
 	@Transactional
 	public EmbedResponse embedRoom(String roomNo) {

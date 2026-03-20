@@ -455,7 +455,7 @@ class RoomSummaryService:
         self.client=client
         
     async def summary_room_reviews(self, room_reviews: list):
-        logger.info("service entered review_count=%s", len(room_reviews or []))
+        # logger.info("service entered review_count=%s", len(room_reviews or []))
          
         if not room_reviews:
             raise ValueError("요약할 리뷰 텍스트가 비어있습니다.")
