@@ -108,6 +108,27 @@
   word-break: break-word;
 }
 
+.content p,
+.content ul,
+.content ol {
+  margin: 0 0 16px;
+}
+
+.content p:last-child,
+.content ul:last-child,
+.content ol:last-child {
+  margin-bottom: 0;
+}
+
+.content ul,
+.content ol {
+  padding-left: 20px;
+}
+
+.content li + li {
+  margin-top: 6px;
+}
+
 .content img {
   max-width: 100%;
   height: auto;
