@@ -187,7 +187,7 @@ export default function RoomForm({
 
       <div className={styles.grid2}>
         <div className={styles.row}>
-          <label>전세금</label>
+          <label>보증금</label>
           <input
             type="number"
             name="roomDeposit"
