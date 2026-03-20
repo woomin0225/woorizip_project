@@ -8,7 +8,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.data.domain.PageRequest;
@@ -17,6 +16,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -29,15 +29,17 @@ import org.team4p.woorizip.room.dto.ai.EmbedResponse;
 import org.team4p.woorizip.room.dto.ai.RoomTotalRequest;
 import org.team4p.woorizip.room.dto.ai.RoomTotalResponse;
 import org.team4p.woorizip.room.dto.response.RoomAiAnalyzeResponse;
+import org.team4p.woorizip.room.image.analyze.jpa.repository.RoomImageAnalysisRepository;
 import org.team4p.woorizip.room.image.jpa.entity.RoomImageSummaryEntity;
 import org.team4p.woorizip.room.image.service.RoomImageSummaryService;
 import org.team4p.woorizip.room.jpa.entity.RoomEmbeddingEntity;
-import org.team4p.woorizip.room.jpa.entity.RoomFinalSummaryEntity;
 import org.team4p.woorizip.room.jpa.entity.RoomEntity;
+import org.team4p.woorizip.room.jpa.entity.RoomFinalSummaryEntity;
 import org.team4p.woorizip.room.jpa.repository.RoomEmbeddingRepository;
 import org.team4p.woorizip.room.jpa.repository.RoomFinalSummaryRepository;
 import org.team4p.woorizip.room.jpa.repository.RoomRepository;
 import org.team4p.woorizip.room.review.jpa.entity.ReviewSummaryEntity;
+import org.team4p.woorizip.room.review.jpa.repository.ReviewRepository;
 import org.team4p.woorizip.room.review.service.ReviewSummaryService;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -46,7 +48,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import reactor.core.publisher.Mono;
 
 @Slf4j
 @Service
@@ -65,6 +66,8 @@ public class RoomAiServiceImpl implements RoomAiService {
     private final RoomImageSummaryService roomImageSummaryService;
     private final RoomEmbeddingRepository roomEmbeddingRepository;
     private final RoomFinalSummaryRepository roomFinalSummaryRepository;
+    private final ReviewRepository reviewRepository;
+    private final RoomImageAnalysisRepository roomImageAnalysisRepository;
 
 	private final ObjectMapper objectMapper;
 
@@ -379,6 +382,8 @@ public class RoomAiServiceImpl implements RoomAiService {
 				.orElseThrow(() -> new IllegalArgumentException("House not found for room. roomNo=" + roomNo));
 		ReviewSummaryEntity reviewSummary = reviewSummaryService.selectSummarizedReview(roomNo);
 		RoomImageSummaryEntity imageSummary = roomImageSummaryService.selectSummarizedImageCaption(roomNo);
+		List<String> reviews = reviewRepository.findAllReviewContentsByRoomNo(roomNo);
+		List<String> imageCaptions = roomImageAnalysisRepository.findAllImageCaptionsByRoomNo(roomNo);
 
 		if(reviewSummary == null || imageSummary == null) {
 			throw new IllegalStateException("Embedding prerequisites are missing. roomNo=" + roomNo);
@@ -413,7 +418,9 @@ public class RoomAiServiceImpl implements RoomAiService {
 				.roomStatus(defaultString(room.getRoomStatus()))
 				.roomOptions(defaultString(room.getRoomOptions()))
 				.imageSummary(defaultString(imageSummary.getImageSummary()))
+				.imageCaptions(defaultList(imageCaptions))
 				.reviewSummary(defaultString(reviewSummary.getReviewSummary()))
+				.reviews(defaultList(reviews))
 				.build();
 //		log.info("Prepared embedding payload. roomNo={}", roomNo);
 		return request;
@@ -525,6 +532,10 @@ public class RoomAiServiceImpl implements RoomAiService {
 
 	private String defaultString(String value) {
 		return value == null ? "" : value;
+	}
+	
+	private <T> List<T> defaultList(List<T> list) {
+		return list == null ? new ArrayList<>() : list; 
 	}
 
 	private LocalDateTime defaultRoomCreatedAt(RoomEntity room) {

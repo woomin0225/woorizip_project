@@ -7,6 +7,7 @@ from qdrant_client.models import PointStruct
 from qdrant_client.models import VectorParams, Distance
 from app.schemas import RoomTotalRequest
 import logging
+from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -15,8 +16,8 @@ class QdrantDbClient:
     def __init__(self, url:str="http://localhost:6333"):
         # self.client=QdrantClient(url=url) # 로컬용
         self.client = QdrantClient(
-            url="https://67244007-2025-4429-8b6c-764e71885a21.sa-east-1-0.aws.cloud.qdrant.io:6333",    # 임시 무료 클라우드 서버
-            api_key="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2Nlc3MiOiJtIn0.Jj_WYSz2iWyht8ki9B2Q4uhdJ-WkGQpFLZo3bF54nmM", # 임시
+            url=settings.QDRANT_URL,
+            api_key=settings.QDRANT_APIKEY,
         )
         
     def ensure_collection(self, name:str):

@@ -51,8 +51,8 @@ class Settings(BaseSettings):
     APP_API_KEY: str = "local-dev-key"
 
     # ===== Vector store =====
-    CHROMA_DIR: str = "./chroma_data"
-    CHROMA_COLLECTION: str = "woorizip"
+    QDRANT_URL: str = "https://67244007-2025-4429-8b6c-764e71885a21.sa-east-1-0.aws.cloud.qdrant.io:6333"
+    QDRANT_APIKEY: str = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2Nlc3MiOiJtIn0.Jj_WYSz2iWyht8ki9B2Q4uhdJ-WkGQpFLZo3bF54nmM"
 
     # ===== Tool execution =====
     TOOL_EXECUTION_MODE: str = Field(default="plan", description="plan | execute")

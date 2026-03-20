@@ -30,5 +30,5 @@ public interface RoomImageAnalysisRepository extends JpaRepository<RoomImageAnal
 			WHERE ria.room_no = :roomNo
 			ORDER BY ria.analysis_created_at DESC
 			""", nativeQuery=true)
-	List<String> findAllImageCaptionsByRoomNoOrderByAnalysisCreatedAtDesc(@Param("roomNo") String roomNo);	// AI 서버로 요약 요청 보내기 위해 해당 방의 사진분석 전체 조회
+	List<String> findAllImageCaptionsByRoomNo(@Param("roomNo") String roomNo);	// AI 서버로 요약 요청 보내기 위해 해당 방의 사진분석 전체 조회
 }

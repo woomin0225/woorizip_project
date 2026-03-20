@@ -16,7 +16,7 @@ class QwenLlmClient:
         
         self.model = AutoModelForCausalLM.from_pretrained(
             model_name,
-            torch_dtype=dtype,
+            dtype=dtype,
         ).to(device)
     
     def generate_from_messages(self, messages, max_new_tokens: int = 512, do_sample: bool = False, temperature: float = 0.2, top_p: float = 0.9):
