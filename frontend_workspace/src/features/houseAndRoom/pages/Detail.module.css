@@ -41,6 +41,16 @@
   flex-shrink: 0;
 }
 
+.applyHint {
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: #667085;
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
 .main {
   border: 1px solid #eee;
   border-radius: 12px;

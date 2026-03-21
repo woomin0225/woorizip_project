@@ -2,9 +2,9 @@
 import { Link } from "react-router-dom";
 import styles from "./TourApplyButton.module.css";
 
-export default function TourApplyButton({ roomNo }) {
-  const disabled = !roomNo;
-  if (disabled) return <button className={styles.btn} disabled>투어신청</button>;
+export default function TourApplyButton({ roomNo, disabled = false }) {
+  const isDisabled = !roomNo || disabled;
+  if (isDisabled) return <button className={styles.btn} disabled>투어신청</button>;
 
   // 라우트는 나중에 붙일 예정이므로 “뼈대”만
   return (

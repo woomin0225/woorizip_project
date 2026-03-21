@@ -56,6 +56,10 @@ public class RoomDto {
 	private Boolean roomEmptyYn;
 	@NotNull
 	private String roomStatus;
+
+	private Boolean canTourApply;
+	private Boolean canContractApply;
+	private LocalDate occupancyEndDate;
 	
 	private String roomOptions;
 	@Null

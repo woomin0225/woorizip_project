@@ -79,18 +79,22 @@ public class TourController {
             @PathVariable("roomNo") String roomNo,
             @AuthenticationPrincipal CustomUserPrincipal userPrincipal,
             @RequestBody @Valid TourDto tourDto) {
+        try {
+            tourDto.setRoomNo(roomNo);
+            tourDto.setUserNo(userPrincipal.getUserNo());
 
-        tourDto.setRoomNo(roomNo);
-        tourDto.setUserNo(userPrincipal.getUserNo());
-
-        int result = tourService.insertTour(tourDto);
-        if (result == -1) {
-            return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body(ApiResponse.fail("이미 신청된 투어 시간입니다.", null));
+            int result = tourService.insertTour(tourDto);
+            if (result == -1) {
+                return ResponseEntity.status(HttpStatus.CONFLICT)
+                        .body(ApiResponse.fail("이미 신청된 투어 시간입니다.", null));
+            }
+            return result > 0
+                    ? ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok("투어 추가 성공", null))
+                    : ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.fail(e.getMessage(), null));
         }
-        return result > 0
-                ? ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok("투어 추가 성공", null))
-                : ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
     }
 
     /**

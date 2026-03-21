@@ -2,13 +2,15 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Container, Row, Col, Card, CardBody } from 'reactstrap';
 import MyPageSideNav from '../../user/components/MyPageSideNav';
 import { getApiBaseUrl } from '../../../app/config/env';
-import { getMyContractsPage } from '../api/contractAPI';
+import { getMyContractsPage, getOwnerContractsPage } from '../api/contractAPI';
 import { getRoom } from '../../houseAndRoom/api/roomApi';
 import { getHouse } from '../../houseAndRoom/api/houseApi';
+import { getMyInfo, getUserByUserNo, isLessorType } from '../../user/api/userAPI';
 import styles from '../../../app/layouts/MyPageLayout.module.css';
 
 const PAGE_SIZE = 8;
 const API_BASE_URL = getApiBaseUrl();
+const PENDING_CONTRACT_STATUSES = new Set(['APPLIED', 'AMENDMENT_REQUESTED']);
 
 function moneyLabel(amount) {
   if (!amount && amount !== 0) return '-';
@@ -44,16 +46,25 @@ function contractStatusLabel(status) {
   }
 }
 
+function addMonthsIso(dateValue, months) {
+  if (!dateValue || !months) return '-';
+  const base = typeof dateValue === 'string' ? new Date(dateValue) : new Date(dateValue);
+  if (Number.isNaN(base.getTime())) return '-';
+  base.setMonth(base.getMonth() + Number(months));
+  return `${base.getFullYear()}-${String(base.getMonth() + 1).padStart(2, '0')}-${String(base.getDate()).padStart(2, '0')}`;
+}
+
 function resolveContractUrl(url) {
   if (!url) return '';
   const s = String(url).trim();
   if (!s) return '';
-  if (s.startsWith('http://') || s.startsWith('https://')) return s;
+  if (s.startsWith('http://') || s.startsWith('https://') || s.startsWith('data:')) return s;
   if (s.startsWith('/')) return `${API_BASE_URL}${s}`;
   return `${API_BASE_URL}/${s}`;
 }
 
 export default function Statement() {
+  const [isLessor, setIsLessor] = useState(false);
   const [items, setItems] = useState([]);
   const [roomMeta, setRoomMeta] = useState({});
   const [selected, setSelected] = useState(null);
@@ -62,8 +73,13 @@ export default function Statement() {
   const [totalPages, setTotalPages] = useState(0);
 
   const loadPage = useCallback(async (nextPage = 1) => {
-    const res = await getMyContractsPage(nextPage, PAGE_SIZE);
-    const content = res.content || [];
+    const fetcher = isLessor ? getOwnerContractsPage : getMyContractsPage;
+    const res = await fetcher(nextPage, PAGE_SIZE);
+    const content = Array.isArray(res.content)
+      ? res.content.filter(
+          (item) => !PENDING_CONTRACT_STATUSES.has(String(item?.status || '').toUpperCase())
+        )
+      : [];
     setItems(content);
     setPage(res.page || nextPage);
     setTotalPages(res.totalPages || 0);
@@ -93,6 +109,7 @@ export default function Statement() {
               monthly: room?.roomMonthly,
               area: room?.roomArea,
               address: house?.houseAddress || '',
+              moveOutDate: addMonthsIso(contract.moveInDate, contract.termMonths),
             },
           ];
         } catch {
@@ -101,6 +118,43 @@ export default function Statement() {
       })
     );
     setRoomMeta(Object.fromEntries(metaList));
+
+    if (isLessor) {
+      const tenantEntries = await Promise.all(
+        content.map(async (contract) => {
+          if (!contract?.userNo) return [contract.contractNo, ''];
+          try {
+            const user = await getUserByUserNo(contract.userNo);
+            return [contract.contractNo, String(user?.name || '').trim()];
+          } catch {
+            return [contract.contractNo, ''];
+          }
+        })
+      );
+      setRoomMeta((prev) => {
+        const next = { ...prev };
+        tenantEntries.forEach(([contractNo, tenantName]) => {
+          next[contractNo] = { ...(next[contractNo] || {}), tenantName };
+        });
+        return next;
+      });
+    }
+  }, [isLessor]);
+
+  useEffect(() => {
+    let mounted = true;
+    getMyInfo()
+      .then((info) => {
+        if (!mounted) return;
+        setIsLessor(isLessorType(info?.type));
+      })
+      .catch(() => {
+        if (!mounted) return;
+        setIsLessor(false);
+      });
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -135,20 +189,22 @@ export default function Statement() {
               <Card className={`shadow border-0 ${styles.mainCard}`}>
                 <CardBody>
                   <div className={styles.headerRow}>
-                    <h2 className={styles.title}>계약 내역</h2>
-                    <p className={styles.subTitle}>계약 요약 목록 (클릭 시 계약서 보기)</p>
+                    <h2 className={styles.title}>계약 현황</h2>
+                    <p className={styles.subTitle}>
+                      {isLessor ? '승인 완료된 계약 목록입니다.' : '승인 이후 계약 목록입니다.'}
+                    </p>
                   </div>
                   {error && <p className={styles.desc}>{error}</p>}
-                  {!error && items.length === 0 && <p className={styles.desc}>계약 내역이 없습니다.</p>}
+                  {!error && items.length === 0 && <p className={styles.desc}>표시할 계약 현황이 없습니다.</p>}
                   {!error && items.length > 0 && (
                     <>
                       <div className={styles.listHeader}>
                         <span>상태</span>
                         <span>방</span>
-                        <span>보증금/월세</span>
-                        <span>면적</span>
+                        <span>{isLessor ? '계약자' : '보증금/월세'}</span>
+                        <span>{isLessor ? '계약 종료일' : '면적'}</span>
                         <span>주소</span>
-                        <span>계약일</span>
+                        <span>{isLessor ? '입주일' : '계약일'}</span>
                       </div>
                       {items.map((item) => {
                         const meta = roomMeta[item.contractNo] || {};
@@ -165,10 +221,10 @@ export default function Statement() {
                           >
                             <span>{contractStatusLabel(item.status)}</span>
                             <span>{meta.roomName || item.roomNo || '-'}</span>
-                            <span>{`보증금 ${moneyLabel(meta.deposit)} / 월세 ${moneyLabel(meta.monthly)}`}</span>
-                            <span>{meta.area ? `${meta.area}㎡` : '-'}</span>
+                            <span>{isLessor ? (meta.tenantName || item.userNo || '-') : `보증금 ${moneyLabel(meta.deposit)} / 월세 ${moneyLabel(meta.monthly)}`}</span>
+                            <span>{isLessor ? (meta.moveOutDate || '-') : (meta.area ? `${meta.area}㎡` : '-')}</span>
                             <span className={styles.oneLine}>{meta.address || '-'}</span>
-                            <span>{fmtDate(item.paymentDate || item.moveInDate)}</span>
+                            <span>{fmtDate(isLessor ? item.moveInDate : (item.paymentDate || item.moveInDate))}</span>
                           </div>
                         );
                       })}

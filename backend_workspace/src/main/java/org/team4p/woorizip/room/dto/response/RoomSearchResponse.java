@@ -1,5 +1,6 @@
 package org.team4p.woorizip.room.dto.response;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -25,6 +26,9 @@ public class RoomSearchResponse {
 	private String roomFacing;
 	private Integer roomRoomCount;
 	private Boolean roomEmptyYn;
+	private Boolean canTourApply;
+	private Boolean canContractApply;
+	private LocalDate occupancyEndDate;
 	private Integer roomImageCount;
 	private String houseName;
 	private String houseAddress;

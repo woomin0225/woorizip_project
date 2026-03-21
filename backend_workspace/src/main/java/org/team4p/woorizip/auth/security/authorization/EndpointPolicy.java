@@ -88,3 +88,4 @@ public final class EndpointPolicy {
     // 공용시설 예약
     public static final String RESERVATION_ALL = "/api/reservations/**";
 }
+
