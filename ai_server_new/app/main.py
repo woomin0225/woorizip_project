@@ -21,7 +21,7 @@ from app.clients.qdrant_client import QdrantDbClient
 from app.clients.qwen_caption_client import QwenCaptionClient
 from app.clients.qwen_llm_client import QwenLlmClient
 
-from app.core.security import require_internal_api_key
+from app.core.security import require_internal_api_key, get_user_context
 from app.clients.groq_llm_client import GroqLLMClient
 from app.routers import (
     assistant_router,
@@ -37,10 +37,13 @@ from app.schemas import (
     RoomVisionAnalyzeRes,
     SummaryReq,
     VisionAnalyzeReq,
+    ReservationAssistReq,
+    ReservationAnalyzeReq,
 )
 from app.services.embedding_service import EmbeddingService
 from app.services.summary_service import SummaryService
 from app.services.vision_service import VisionService
+from app.services.reservation_service import ReservationService
 
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
@@ -52,7 +55,9 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     # 앱시작시 구동될 클라이언트 작성
     try:
-        app.state.qwen_llm_client = QwenLlmClient("Qwen/Qwen2.5-3B-Instruct")  # Qwen/Qwen3-4B-Instruct-2507 : 추후 상위모델로 교체
+        app.state.qwen_llm_client = QwenLlmClient(
+            "Qwen/Qwen2.5-3B-Instruct"
+        )  # Qwen/Qwen3-4B-Instruct-2507 : 추후 상위모델로 교체
     except Exception as exc:
         logger.warning("Qwen LLM client initialization skipped: %s", exc)
         app.state.qwen_llm_client = None
@@ -71,29 +76,25 @@ async def lifespan(app: FastAPI):
     yield
     # 앱 종료시
 
+
 app = FastAPI(
     title="AI Summary + Vision Server",
     default_response_class=JSONResponse,
-    lifespan=lifespan
+    lifespan=lifespan,
 )
-app.include_router(
-    embed_router.router,
-    tags=["embed"]
-)
-app.include_router(
-    summary_router.router,
-    tags=["summary"]
-)
-app.include_router(
-    rag_router.router,
-    tags=["rag"]
-)
+app.include_router(embed_router.router, tags=["embed"])
+app.include_router(summary_router.router, tags=["summary"])
+app.include_router(rag_router.router, tags=["rag"])
+
 
 @app.middleware("http")
 async def add_utf8_charset(request, call_next):
     response = await call_next(request)
     content_type = response.headers.get("content-type", "")
-    if content_type.startswith("application/json") and "charset=" not in content_type.lower():
+    if (
+        content_type.startswith("application/json")
+        and "charset=" not in content_type.lower()
+    ):
         response.headers["content-type"] = "application/json; charset=utf-8"
     return response
 
@@ -118,7 +119,9 @@ def decode_base64_image(image_base64: str) -> Image.Image:
         raw = base64.b64decode(image_base64)
         return Image.open(BytesIO(raw)).convert("RGB")
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"이미지 디코딩 실패: {str(e)}") from e
+        raise HTTPException(
+            status_code=400, detail=f"이미지 디코딩 실패: {str(e)}"
+        ) from e
 
 
 def parse_grounding_labels(text_prompt: str) -> list[str]:
@@ -157,6 +160,7 @@ vision = VisionService(
     ocr_client=ocr_client,
     rag=None,
 )
+reservation = ReservationService(llm)
 
 
 @app.get("/")
@@ -175,11 +179,15 @@ def welcome(request: Request):
             },
             "embedding_client": {
                 "ready": embedding_client is not None,
-                "model_name": "nlpai-lab/KURE-v1" if embedding_client is not None else None,
+                "model_name": (
+                    "nlpai-lab/KURE-v1" if embedding_client is not None else None
+                ),
             },
             "vector_client": {
                 "ready": vector_client is not None,
-                "type": type(vector_client).__name__ if vector_client is not None else None,
+                "type": (
+                    type(vector_client).__name__ if vector_client is not None else None
+                ),
             },
             "tokenizer": {
                 "ready": tokenizer is not None,
@@ -187,7 +195,6 @@ def welcome(request: Request):
             },
         },
     }
-
 
 
 @app.get("/health")
@@ -200,7 +207,15 @@ def health() -> dict[str, Any]:
         "ocr_provider": settings.OCR_PROVIDER,
         "stt_provider": settings.STT_PROVIDER,
         "tts_provider": settings.TTS_PROVIDER,
-        "features": ["assistant", "tour", "stt", "tts", "summary", "vision", "embedding"],
+        "features": [
+            "assistant",
+            "tour",
+            "stt",
+            "tts",
+            "summary",
+            "vision",
+            "embedding",
+        ],
     }
 
 
@@ -308,3 +323,22 @@ async def create_embedding(req: EmbeddingReq) -> dict[str, Any]:
         "dimension": result["dimension"],
         "embedding": result["embedding"],
     }
+
+
+@app.post("/ai/facility/assist", dependencies=[Depends(require_internal_api_key)])
+async def reservation_assist(
+    req: ReservationAssistReq, ctx: dict = Depends(get_user_context)
+):
+    """
+    사용자의 자연어(req.message)를 분석해서 예약 객체(JSON)로 변환
+    """
+    result = await reservation.analyze_reservation(req.message, ctx)
+    return result
+
+
+@app.post("/ai/facility/reservation", dependencies=[Depends(require_internal_api_key)])
+async def reservation_confirm(req: ReservationAnalyzeReq):
+    """
+    AI가 분석한 결과를 프론트에서 최종 확인 후 호출하는 저장 단계
+    """
+    return {"status": "success", "data": req}

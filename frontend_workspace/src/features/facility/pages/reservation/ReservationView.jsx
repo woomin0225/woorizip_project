@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { axiosInstance } from '../../../../app/http/axiosInstance';
+import { tokenStore } from '../../../../app/http/tokenStore';
 import ReservationList from '../../components/list/ReservationList';
 import styles from './ReservationPage.module.css';
 
 export default function ReservationViewPage() {
   const { facilityNo } = useParams(); 
   const [isLessor, setIsLessor] = useState(null);
-  const token = localStorage.getItem('accessToken');
+  const token = tokenStore.getAccess();
 
   useEffect(() => {
     const checkUser = async () => {

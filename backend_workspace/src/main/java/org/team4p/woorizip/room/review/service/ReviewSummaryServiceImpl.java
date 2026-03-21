@@ -95,7 +95,7 @@ public class ReviewSummaryServiceImpl implements ReviewSummaryService{
 			entity.setReviewCount(reviews.size());
 			entity.setUpdatedAt(LocalDateTime.now());
 			reviewSummaryRepository.save(entity);
-			log.info("방 번호("+response.getRoomNo()+") - 리뷰 요약: "+response.getSummary()+", "+response.getMessage());
+//			log.info("방 번호("+response.getRoomNo()+") - 리뷰 요약: "+response.getSummary()+", "+response.getMessage());
 			
 			return response.getSummary();
 	}

@@ -217,10 +217,10 @@ export default function ContractCreate() {
     updateSignatureDataUrl();
   }, [updateSignatureDataUrl]);
 
-  const buildLeasePreviewDataUrl = () => {
+  const buildLeasePreviewHtml = () => {
     const contractWrittenDate = getTodayLocalIso();
     const specialTerms = (amendReason || '').trim() || '특약 없음';
-    const html = `<!doctype html>
+    return `<!doctype html>
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
@@ -277,8 +277,9 @@ export default function ContractCreate() {
   </table>
 </body>
 </html>`;
-    return toDataUrlHtml(html);
   };
+
+  const buildLeasePreviewDataUrl = () => toDataUrlHtml(buildLeasePreviewHtml());
 
   const loadTossPaymentsSdk = () =>
     new Promise((resolve, reject) => {
@@ -475,20 +476,36 @@ export default function ContractCreate() {
 
     try {
       setIsProcessing(true);
-      const ensuredContractNo = await ensureContractCreated();
+      let ensuredContractNo = null;
+      try {
+        ensuredContractNo = await ensureContractCreated();
+      } catch (stageError) {
+        throw new Error(stageError?.message || '입주 신청 생성 중 오류가 발생했습니다.');
+      }
       if (!ensuredContractNo) {
         throw new Error('계약번호 생성에 실패했습니다.');
       }
-      const eContractRes = await createElectronicContract(ensuredContractNo, {
-        roomNo: routeRoomNo,
-        moveInDate,
-        termMonths: Number(termMonths),
-        memo: amendReason.trim(),
-      });
-      const signRes = await verifyElectronicSignature(ensuredContractNo, {
-        signerName: (userInfo?.name || signatureName || '').trim(),
-        agreedAt: new Date().toISOString(),
-      });
+      let eContractRes = null;
+      try {
+        eContractRes = await createElectronicContract(ensuredContractNo, {
+          roomNo: routeRoomNo,
+          moveInDate,
+          termMonths: Number(termMonths),
+          memo: amendReason.trim(),
+          signatureDataUrl,
+        });
+      } catch (stageError) {
+        throw new Error(stageError?.message || '전자계약서 생성 중 오류가 발생했습니다.');
+      }
+      let signRes = null;
+      try {
+        signRes = await verifyElectronicSignature(ensuredContractNo, {
+          signerName: (userInfo?.name || signatureName || '').trim(),
+          agreedAt: new Date().toISOString(),
+        });
+      } catch (stageError) {
+        throw new Error(stageError?.message || '임차인 전자서명 확인 중 오류가 발생했습니다.');
+      }
       const contractUrl = signRes?.contractUrl || eContractRes?.contractUrl || '';
       const orderId = createOrderId();
       const context = {
@@ -511,13 +528,17 @@ export default function ContractCreate() {
         customerName: who,
       };
       sessionStorage.setItem(PAYMENT_CONTEXT_KEY, JSON.stringify(context));
-      await requestTossPayment({
-        orderId,
-        amount: totalMonthlyPayment,
-        roomName: displayRoomName,
-        customerName: who,
-        method: paymentMethod,
-      });
+      try {
+        await requestTossPayment({
+          orderId,
+          amount: totalMonthlyPayment,
+          roomName: displayRoomName,
+          customerName: who,
+          method: paymentMethod,
+        });
+      } catch (stageError) {
+        throw new Error(stageError?.message || '결제창 호출 중 오류가 발생했습니다.');
+      }
     } catch (e2) {
       setError(e2.message || '결제 처리 중 오류가 발생했습니다.');
     } finally {

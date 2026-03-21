@@ -1,3 +1,7 @@
+﻿* {
+  box-sizing: border-box;
+}
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
@@ -5,11 +9,14 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  line-height: var(--app-line-height);
 }
 
 :root {
   --app-font-scale: 1;
   --app-button-scale: 1;
+  --app-space-scale: 1;
+  --app-line-height: 1.52;
 }
 
 html {
@@ -26,18 +33,29 @@ textarea {
 
 button,
 .btn {
-  transform-origin: center;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   text-align: center;
   vertical-align: middle;
-  line-height: 1.2;
+  line-height: 1.35;
+  min-height: calc(2.5rem * var(--app-button-scale));
+  padding-inline: calc(0.875rem * var(--app-space-scale));
+  border-radius: calc(0.75rem * var(--app-space-scale));
 }
 
-.btn,
-button:not(.navbar-toggler) {
-  min-height: calc(2.4rem * var(--app-button-scale));
+input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='color']),
+select,
+textarea {
+  line-height: 1.45;
+  min-height: calc(2.6rem * var(--app-button-scale));
+  padding-inline: calc(0.875rem * var(--app-space-scale));
+  padding-block: calc(0.625rem * var(--app-space-scale));
+  border-radius: calc(0.75rem * var(--app-space-scale));
+}
+
+textarea {
+  min-height: calc(6.5rem * var(--app-button-scale));
 }
 
 .btn span,
@@ -46,46 +64,27 @@ button span {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  line-height: 1.2;
+  line-height: 1.3;
 }
 
 body.large-view {
-  line-height: 1.72;
+  color: #111;
   letter-spacing: 0.01em;
   text-rendering: optimizeLegibility;
-  color: #111 !important;
 }
 
 body.large-view p,
 body.large-view li,
-body.large-view a,
-body.large-view button,
+body.large-view label,
 body.large-view input,
 body.large-view select,
 body.large-view textarea,
-body.large-view label,
-body.large-view span {
-  color: #111 !important;
-}
-
-body.large-view .btn,
-body.large-view .btn span,
-body.large-view .btn .nav-link-inner--text {
-  color: inherit !important;
-}
-
-body.large-view .btn-info,
-body.large-view .btn-primary,
-body.large-view .btn-default {
-  color: #fff !important;
-}
-
-body.large-view .btn-neutral,
-body.large-view .btn-light,
-body.large-view .btn-secondary {
-  color: #111 !important;
-}
-
+body.large-view .card-title,
+body.large-view .card-text,
+body.large-view .form-control,
+body.large-view .form-check-label,
+body.large-view .small,
+body.large-view small,
 body.large-view .text-muted,
 body.large-view .text-secondary,
 body.large-view .text-light,
@@ -95,19 +94,7 @@ body.large-view .text-default {
   opacity: 1 !important;
 }
 
-body.large-view .nav-link,
-body.large-view .dropdown-item,
-body.large-view .card-title,
-body.large-view .card-text,
-body.large-view .form-control,
-body.large-view .form-check-label,
-body.large-view .small,
-body.large-view small {
-  color: #111 !important;
-}
-
 body.large-view a {
-  color: #111 !important;
   text-decoration-thickness: 2px;
 }
 

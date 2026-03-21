@@ -1,26 +1,10 @@
-﻿import { getApiBaseUrl } from '../../../app/config/env';
+import { getApiBaseUrl } from '../../../app/config/env';
+import { tokenStore } from '../../../app/http/tokenStore';
 
 const API_BASE_URL = getApiBaseUrl();
 
 function getNormalizedAccessToken() {
-  const raw = localStorage.getItem('accessToken');
-  if (!raw) return null;
-
-  let token = String(raw).trim();
-  if (token.startsWith('"') && token.endsWith('"')) {
-    token = token.slice(1, -1).trim();
-  }
-  if (token.startsWith('Bearer ')) {
-    token = token.slice('Bearer '.length).trim();
-  }
-  if (!token || token === 'null' || token === 'undefined') {
-    return null;
-  }
-
-  if (token !== raw) {
-    localStorage.setItem('accessToken', token);
-  }
-  return token;
+  return tokenStore.getAccess();
 }
 
 function authHeader() {
@@ -136,7 +120,7 @@ export async function requestContractPayment(contractNo, payload) {
   });
 }
 
-export async function decideContract(contractNo, status, reason = '', currentStatus = '') {
+export async function decideContract(contractNo, status, reason = '', currentStatus = '', extra = {}) {
   const normalizedStatus = String(status || '').toUpperCase();
   const normalizedCurrentStatus = String(currentStatus || '').toUpperCase();
 
@@ -147,6 +131,7 @@ export async function decideContract(contractNo, status, reason = '', currentSta
         status: normalizedStatus,
         reason: normalizedStatus === 'REJECTED' ? reason : '',
         currentStatus: normalizedCurrentStatus,
+        ...extra,
       }),
     });
   } catch (e) {

@@ -32,7 +32,10 @@ public final class EndpointPolicy {
             "/api/voice/tts",
             "/api/voice/stt",
             "/auth/login",
-            "/api/facilities/ai**"
+            "/api/facilities/ai**",
+            "/api/rooms/rag/room",
+            "/api/rooms/*/summarized_room/request",
+            "/auth/login"
     };
 
     // 공지사항, 정책・정보, 이벤트 : ADMIN만 (POST/PUT/DELETE)
@@ -87,3 +90,4 @@ public final class EndpointPolicy {
     // 공용시설 예약
     public static final String RESERVATION_ALL = "/api/reservations/**";
 }
+

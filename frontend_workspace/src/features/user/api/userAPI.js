@@ -1,29 +1,12 @@
-﻿import { getApiBaseUrl } from '../../../app/config/env';
+import { getApiBaseUrl } from '../../../app/config/env';
+import { tokenStore } from '../../../app/http/tokenStore';
 import { parseJwt } from '../../../app/providers/utils/jwt';
 import { apiJson } from '../../../app/http/request';
 
 const API_BASE_URL = getApiBaseUrl();
 
 function getNormalizedAccessToken() {
-  const raw = localStorage.getItem('accessToken');
-  if (!raw) return null;
-
-  let token = String(raw).trim();
-  if (token.startsWith('"') && token.endsWith('"')) {
-    token = token.slice(1, -1).trim();
-  }
-  if (token.startsWith('Bearer ')) {
-    token = token.slice('Bearer '.length).trim();
-  }
-  if (!token || token === 'null' || token === 'undefined') {
-    return null;
-  }
-
-  // 정규화된 토큰으로 저장 상태 통일
-  if (token !== raw) {
-    localStorage.setItem('accessToken', token);
-  }
-  return token;
+  return tokenStore.getAccess();
 }
 
 function authHeader() {
@@ -112,7 +95,7 @@ export function getIsLessorHint() {
   if (tokenType) return isLessorType(tokenType);
 
   const cachedType =
-    localStorage.getItem('userType') || sessionStorage.getItem('userType');
+    sessionStorage.getItem('userType') || localStorage.getItem('userType');
   if (cachedType) return isLessorType(cachedType);
 
   return null;

@@ -6,7 +6,6 @@ from qdrant_client import QdrantClient, models
 from qdrant_client.models import PointStruct
 from qdrant_client.models import VectorParams, Distance
 from app.schemas import RoomTotalRequest
-from numpy import shape
 import logging
 
 logger = logging.getLogger(__name__)
@@ -51,7 +50,7 @@ class QdrantDbClient:
             wait=True,
             points=points,
         )
-        print(info)
+        logger.info("Qdrant 방 벡터 등록 성공: %s", info)
         
     def room_query(self, collection_name:str, point):
         hits = self.client.query_points(
@@ -61,7 +60,9 @@ class QdrantDbClient:
         ).points
         
         for hit in hits:
-            print(hit.payload, "score:", hit.score)
+            payload = hit.payload if isinstance(hit.payload, dict) else {}
+            room_no = payload.get("roomNo")
+            logger.info("Qdrant room hit roomNo=%s score=%s", room_no, hit.score)
             
         return hits
     

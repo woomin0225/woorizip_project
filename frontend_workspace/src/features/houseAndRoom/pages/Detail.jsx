@@ -19,7 +19,13 @@ import { ROUTES } from '../../../shared/constants/routes';
 
 import { useAuth } from '../../../app/providers/AuthProvider';
 
-import { getRoom, getRoomImages, getRoomReviews } from './../api/roomApi';
+import {
+  getRoom,
+  getRoomImages,
+  getRoomReviews,
+  getSummarizedRoom,
+  requestSummarizedRoom,
+} from './../api/roomApi';
 import { getHouse, getHouseImages, getRoomByHouseNo } from './../api/houseApi';
 import {
   addWishlist,
@@ -66,9 +72,16 @@ export default function Detail() {
   // 리뷰는 Page로 오고, 숫자 페이지네이션
   const [reviewPageNo, setReviewPageNo] = useState(0);
   const [reviewPage, setReviewPage] = useState(null);
+  const [roomSummaryMap, setRoomSummaryMap] = useState({});
+  const [summaryLoading, setSummaryLoading] = useState(false);
+  const [summaryError, setSummaryError] = useState('');
 
   const [loading, setLoading] = useState(false);
   const activeHouseNo = routeHouseNo || room?.houseNo || '';
+  const summaryRequestIdRef = useRef(0);
+  const summaryPollTimeoutRef = useRef(null);
+  const currentSummaryState = selectedRoomNo ? roomSummaryMap[selectedRoomNo] ?? null : null;
+  const currentRoomSummary = currentSummaryState?.finalSummary || '';
 
   const refreshReviews = async () => {
     if (!selectedRoomNo) return;
@@ -142,6 +155,19 @@ export default function Detail() {
     shouldScrollToRoomRef.current = false;
   }, [selectedRoomNo]);
 
+  useEffect(() => {
+    summaryRequestIdRef.current += 1;
+    clearTimeout(summaryPollTimeoutRef.current);
+    setSummaryLoading(false);
+    setSummaryError('');
+
+    if (!selectedRoomNo) return;
+
+    loadRoomSummaryStatus(selectedRoomNo, summaryRequestIdRef.current);
+  }, [selectedRoomNo]);
+
+  useEffect(() => () => clearTimeout(summaryPollTimeoutRef.current), []);
+
   // 방 선택 -> 방/방이미지 로드 + 리뷰 0페이지
   useEffect(() => {
     if (!selectedRoomNo) {
@@ -212,6 +238,50 @@ export default function Detail() {
     };
   }, [activeHouseNo]);
 
+  function storeRoomSummary(roomNo, summaryState) {
+    setRoomSummaryMap((prev) => ({
+      ...prev,
+      [roomNo]: summaryState || null,
+    }));
+  }
+
+  function scheduleSummaryPoll(roomNo, requestId) {
+    clearTimeout(summaryPollTimeoutRef.current);
+    summaryPollTimeoutRef.current = setTimeout(() => {
+      loadRoomSummaryStatus(roomNo, requestId);
+    }, 2000);
+  }
+
+  async function loadRoomSummaryStatus(roomNo, requestId = summaryRequestIdRef.current) {
+    try {
+      const summaryState = await getSummarizedRoom(roomNo);
+      if (summaryRequestIdRef.current !== requestId) return;
+
+      storeRoomSummary(roomNo, summaryState);
+
+      const status = summaryState?.summaryStatus;
+      if (status === 'PENDING' || status === 'PROCESSING') {
+        setSummaryLoading(true);
+        setSummaryError('');
+        scheduleSummaryPoll(roomNo, requestId);
+        return;
+      }
+
+      clearTimeout(summaryPollTimeoutRef.current);
+      setSummaryLoading(false);
+      setSummaryError(
+        status === 'FAILED'
+          ? summaryState?.lastErrorMessage || 'AI 방 정보 요약 생성에 실패했습니다.'
+          : ''
+      );
+    } catch (e) {
+      if (summaryRequestIdRef.current !== requestId) return;
+      clearTimeout(summaryPollTimeoutRef.current);
+      setSummaryLoading(false);
+      setSummaryError(e.message || 'AI 방 정보 요약 상태를 불러오지 못했습니다.');
+    }
+  }
+
   // 업로드 경로(UploadProperties 기준)
   const houseImageUrls = useMemo(
     () => houseImageNames.map((n) => toUrl(`http://localhost:8080/upload/house_image`, n)).filter(Boolean),
@@ -221,6 +291,9 @@ export default function Detail() {
     () => roomImageNames.map((n) => toUrl(`http://localhost:8080/upload/room_image`, n)).filter(Boolean),
     [roomImageNames]
   );
+  const canApplyTour = room?.canTourApply !== false;
+  const canApplyContract = room?.canContractApply !== false;
+  const occupancyEndDateText = room?.occupancyEndDate ?? '';
 
   function onSelectRoom(nextRoomNo) {
     if (String(nextRoomNo) === String(selectedRoomNo)) {
@@ -235,6 +308,50 @@ export default function Detail() {
   function handleRequireLoginForWish() {
     alert('찜 기능은 로그인 후 사용할 수 있습니다.');
     navigate(ROUTES.AUTH.LOGIN, { replace: true });
+  }
+
+  async function handleLoadRoomSummary() {
+    if (!selectedRoomNo || summaryLoading) return;
+
+    const requestRoomNo = selectedRoomNo;
+    const requestId = summaryRequestIdRef.current + 1;
+    let shouldKeepPolling = false;
+    summaryRequestIdRef.current = requestId;
+    clearTimeout(summaryPollTimeoutRef.current);
+
+    setSummaryLoading(true);
+    setSummaryError('');
+
+    try {
+      const summary = await requestSummarizedRoom(requestRoomNo);
+      if (summaryRequestIdRef.current !== requestId) return;
+
+      storeRoomSummary(requestRoomNo, summary);
+
+      const status = summary?.summaryStatus;
+      if (status === 'DONE') {
+        setSummaryLoading(false);
+        setSummaryError('');
+        return;
+      }
+
+      if (status === 'FAILED') {
+        setSummaryLoading(false);
+        setSummaryError(summary?.lastErrorMessage || 'AI 방 정보 요약 생성에 실패했습니다.');
+        return;
+      }
+
+      scheduleSummaryPoll(requestRoomNo, requestId);
+      shouldKeepPolling = true;
+    } catch (e) {
+      if (summaryRequestIdRef.current !== requestId) return;
+      clearTimeout(summaryPollTimeoutRef.current);
+      setSummaryError(e.message || 'AI 방 정보 요약 생성 요청에 실패했습니다.');
+    } finally {
+      if (summaryRequestIdRef.current === requestId && !shouldKeepPolling) {
+        setSummaryLoading(false);
+      }
+    }
   }
 
   return (
@@ -255,8 +372,18 @@ export default function Detail() {
           </div>
 
           <div className={styles.sideButtons}>
-            <TourApplyButton roomNo={selectedRoomNo} />
-            <ContractApplyButton roomNo={selectedRoomNo} />
+            <TourApplyButton roomNo={selectedRoomNo} disabled={!canApplyTour} />
+            <ContractApplyButton roomNo={selectedRoomNo} disabled={!canApplyContract} />
+            {room?.roomEmptyYn === false && !canApplyTour && occupancyEndDateText && (
+              <div className={styles.applyHint}>
+                현재 거주중인 방입니다. 투어/입주 신청은 계약 종료 1개월 전부터 가능하며, 예상 종료일은 {occupancyEndDateText}입니다.
+              </div>
+            )}
+            {room?.roomEmptyYn === false && canApplyTour && occupancyEndDateText && (
+              <div className={styles.applyHint}>
+                현재 거주중인 방이지만 계약 종료 1개월 전 기간으로, {occupancyEndDateText} 이후 입주 기준으로 투어/입주 신청이 가능합니다.
+              </div>
+            )}
           </div>
         </div>
       </aside>
@@ -309,6 +436,62 @@ export default function Detail() {
                   <br />
                   <br />
                   <h3 className={styles.sectionTitle}>🛋️ {room?.roomName}</h3>
+                </section>
+
+                <section className={styles.section}>
+                  <div className={styles.summaryCard}>
+                    <div className={styles.summaryHeader}>
+                      <div className={styles.summaryHeadingBlock}>
+                        <h4 className={styles.summaryTitle}>AI 방 정보 요약</h4>
+                        <p className={styles.summaryHint}>
+                          방 기본 정보, 사진 요약, 리뷰 요약을 묶어서 AI가 한 번에 정리합니다.
+                        </p>
+                      </div>
+
+                      <button
+                        type="button"
+                        className={styles.summaryButton}
+                        onClick={handleLoadRoomSummary}
+                        disabled={!selectedRoomNo || summaryLoading}
+                      >
+                        {summaryLoading
+                          ? '요약 생성 중...'
+                          : currentSummaryState?.summaryStatus === 'DONE' && currentRoomSummary
+                            ? 'AI 방 정보 요약 다시 불러오기'
+                            : 'AI 방 정보 요약'}
+                      </button>
+                    </div>
+
+                    {summaryLoading && (
+                      <div
+                        className={styles.summaryLoading}
+                        role="status"
+                        aria-live="polite"
+                      >
+                        <span className={styles.summarySpinner} aria-hidden="true" />
+                        <span>AI가 방 정보를 요약하는 중입니다...</span>
+                      </div>
+                    )}
+
+                    {!summaryLoading && summaryError && (
+                      <div className={styles.summaryError}>{summaryError}</div>
+                    )}
+
+                    {!summaryLoading &&
+                      !summaryError &&
+                      currentSummaryState?.summaryStatus === 'DONE' &&
+                      currentRoomSummary && (
+                      <div className={styles.summaryResult}>{currentRoomSummary}</div>
+                    )}
+
+                    {!summaryLoading &&
+                      !summaryError &&
+                      currentSummaryState?.summaryStatus !== 'DONE' && (
+                      <div className={styles.summaryPlaceholder}>
+                        버튼을 누르면 현재 방의 종합 요약 결과를 여기에서 확인할 수 있습니다.
+                      </div>
+                    )}
+                  </div>
                 </section>
 
                 {/* 5) 방이미지 */}

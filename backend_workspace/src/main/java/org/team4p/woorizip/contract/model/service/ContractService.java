@@ -45,6 +45,13 @@ public interface ContractService {
 
     ContractDto requestContractPayment(String contractNo, ContractPaymentRequest request);
 
-    int updateStatus(String contractNo, String status, String reason);
+    int updateStatus(
+            String contractNo,
+            String status,
+            String reason,
+            String signerName,
+            String signatureDataUrl,
+            String signedAt
+    );
     
 }

@@ -1,11 +1,7 @@
 # app/services/rag.py
 
-from fastapi import Request
-from torch import embedding
-
 from app.clients.embedding_client import KureEmbeddingClient
 from app.clients.qdrant_client import QdrantDbClient
-from app.services.chunking import chunking
 
 
 class RagService:
@@ -13,7 +9,7 @@ class RagService:
         self.vectorClient = vectorClient
         self.embeddingClient = embeddingClient
         
-    def room_rag(self, text: str, tokenizer):
+    async def room_rag(self, text: str, tokenizer):
         # 질문문장은 청킹 안함 (2차원 벡터 검색됨)
         embeded = self.embeddingClient.embed(text)
         
@@ -21,7 +17,10 @@ class RagService:
         hits = self.vectorClient.room_query(collection_name=collection_name, point=embeded)
         best={}
         for hit in hits:
-            room_no = hit.payload["roomNo"]
+            payload = hit.payload if isinstance(hit.payload, dict) else {}
+            room_no = payload.get("roomNo")
+            if not room_no:
+                continue
             best[room_no] = max(best.get(room_no, -1), hit.score)
         
         ranked_rooms = sorted(

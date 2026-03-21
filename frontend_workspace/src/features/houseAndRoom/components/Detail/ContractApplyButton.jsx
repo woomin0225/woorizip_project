@@ -2,9 +2,9 @@
 import { Link } from "react-router-dom";
 import styles from "./ContractApplyButton.module.css";
 
-export default function ContractApplyButton({ roomNo }) {
-  const disabled = !roomNo;
-  if (disabled) return <button className={styles.btn} disabled>계약신청</button>;
+export default function ContractApplyButton({ roomNo, disabled = false }) {
+  const isDisabled = !roomNo || disabled;
+  if (isDisabled) return <button className={styles.btn} disabled>계약신청</button>;
 
   return (
     <Link to={`/rooms/${roomNo}/contract`} className={styles.link}>

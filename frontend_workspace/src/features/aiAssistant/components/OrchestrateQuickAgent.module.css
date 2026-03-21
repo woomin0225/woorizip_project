@@ -107,11 +107,11 @@
 .settingBtn {
   border: none;
   border-radius: 10px;
-  color: #fff;
-  height: 30px;
-  padding: 0 10px;
+  color: #fff !important;
+  min-height: calc(1.9rem * var(--app-button-scale));
+  padding: calc(0.3rem * var(--app-space-scale)) calc(0.75rem * var(--app-space-scale));
   cursor: pointer;
-  font-size: 12px;
+  font-size: 0.78rem;
   font-weight: 600;
 }
 
@@ -151,10 +151,10 @@
 }
 
 .voiceGuide {
-  padding: 10px 16px;
+  padding: calc(0.625rem * var(--app-space-scale)) calc(1rem * var(--app-space-scale));
   background: #fff7ed;
   color: #9a3412;
-  font-size: 12px;
+  font-size: 0.78rem;
   line-height: 1.5;
   border-bottom: 1px solid #fed7aa;
 }
@@ -173,7 +173,7 @@
 .userMsg {
   margin: 0;
   max-width: 82%;
-  padding: 10px 12px;
+  padding: calc(0.625rem * var(--app-space-scale)) calc(0.75rem * var(--app-space-scale));
   border-radius: 14px;
   line-height: 1.55;
   white-space: pre-wrap;
@@ -190,7 +190,7 @@
 .userMsg {
   align-self: flex-end;
   background: #d17a42;
-  color: #fff;
+  color: #fff !important;
   box-shadow: 0 4px 10px rgba(209, 122, 66, 0.18);
 }
 
@@ -207,11 +207,11 @@
   background: #fff7ed;
   color: #9a3412;
   border-radius: 999px;
-  padding: 5px 10px;
+  padding: calc(0.35rem * var(--app-space-scale)) calc(0.7rem * var(--app-space-scale));
   max-width: 100%;
   white-space: normal;
   word-break: keep-all;
-  font-size: 12px;
+  font-size: 0.78rem;
   cursor: pointer;
 }
 
@@ -223,7 +223,7 @@
 .form {
   display: flex;
   gap: 10px;
-  padding: 14px;
+  padding: calc(0.875rem * var(--app-space-scale));
   border-top: 1px solid #e5e7eb;
   background: #fff;
 }
@@ -231,10 +231,10 @@
 .input {
   flex: 1;
   min-width: 0;
-  height: 42px;
+  min-height: calc(2.6rem * var(--app-button-scale));
   border: 1px solid #d1d5db;
   border-radius: 12px;
-  padding: 0 12px;
+  padding: calc(0.625rem * var(--app-space-scale)) calc(0.75rem * var(--app-space-scale));
 }
 
 .input::placeholder {
@@ -243,11 +243,11 @@
 
 .sendBtn {
   min-width: 72px;
-  height: 42px;
+  min-height: calc(2.6rem * var(--app-button-scale));
   border: none;
   border-radius: 12px;
   background: #c9713f;
-  color: #fff;
+  color: #fff !important;
   font-weight: 700;
   cursor: pointer;
 }
@@ -323,3 +323,5 @@
   font-size: 0.86rem;
   line-height: 1.55;
 }
+
+

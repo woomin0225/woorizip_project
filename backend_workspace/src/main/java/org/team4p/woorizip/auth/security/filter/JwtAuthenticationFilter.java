@@ -61,7 +61,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 uri.equals("/api/user/find-id") ||
                 uri.equals("/api/user/password/send-code") ||
                 uri.equals("/api/user/password/verify-code") ||
-                uri.equals("/api/user/find-password")
+                uri.equals("/api/user/find-password") ||
+                uri.equals("/api/rooms/rag/room")
         )) {
             return true;
         }

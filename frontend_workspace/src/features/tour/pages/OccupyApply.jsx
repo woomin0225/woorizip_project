@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Container, Row, Col, Card, CardBody } from 'reactstrap';
 import MyPageSideNav from '../../user/components/MyPageSideNav';
@@ -19,6 +19,7 @@ import layoutStyles from '../../../app/layouts/MyPageLayout.module.css';
 import styles from './OccupyApply.module.css';
 
 const PAGE_SIZE = 8;
+const PENDING_CONTRACT_STATUSES = new Set(['APPLIED', 'AMENDMENT_REQUESTED']);
 
 function statusLabel(status) {
   switch (String(status || '').toUpperCase()) {
@@ -108,6 +109,11 @@ export default function OccupyApply() {
   const [houseNameMap, setHouseNameMap] = useState({});
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
+  const [approvalSignerName, setApprovalSignerName] = useState('');
+  const [approvalSignatureDataUrl, setApprovalSignatureDataUrl] = useState('');
+  const [approvalModalItem, setApprovalModalItem] = useState(null);
+  const approvalCanvasRef = useRef(null);
+  const isApprovalDrawingRef = useRef(false);
 
   const loadTours = useCallback(async (nextPage = 1) => {
     const fetcher = isLessor ? getOwnerTourPage : getTourPage;
@@ -120,7 +126,12 @@ export default function OccupyApply() {
   const loadContracts = useCallback(async (nextPage = 1) => {
     const fetcher = isLessor ? getOwnerContractsPage : getMyContractsPage;
     const res = await fetcher(nextPage, PAGE_SIZE);
-    setContractItems(res.content || []);
+    const content = Array.isArray(res.content)
+      ? res.content.filter((item) =>
+          PENDING_CONTRACT_STATUSES.has(String(item?.status || '').toUpperCase())
+        )
+      : [];
+    setContractItems(content);
     setContractPage(res.page || nextPage);
     setContractTotalPages(res.totalPages || 0);
   }, [isLessor]);
@@ -131,6 +142,7 @@ export default function OccupyApply() {
       .then((info) => {
         if (!mounted) return;
         setIsLessor(isLessorType(info?.type));
+        setApprovalSignerName(String(info?.name || '').trim());
       })
       .catch(() => {
         if (!mounted) return;
@@ -144,6 +156,94 @@ export default function OccupyApply() {
       mounted = false;
     };
   }, []);
+
+  const drawApprovalLine = useCallback((x0, y0, x1, y1) => {
+    const canvas = approvalCanvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = '#172b4d';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(x0, y0);
+    ctx.lineTo(x1, y1);
+    ctx.stroke();
+  }, []);
+
+  const getApprovalCanvasPoint = useCallback((evt) => {
+    const canvas = approvalCanvasRef.current;
+    if (!canvas) return { x: 0, y: 0 };
+    const rect = canvas.getBoundingClientRect();
+    return {
+      x: evt.clientX - rect.left,
+      y: evt.clientY - rect.top,
+    };
+  }, []);
+
+  const syncApprovalSignatureDataUrl = useCallback(() => {
+    const canvas = approvalCanvasRef.current;
+    if (!canvas) return;
+    setApprovalSignatureDataUrl(canvas.toDataURL('image/png'));
+  }, []);
+
+  const clearApprovalSignature = useCallback(() => {
+    const canvas = approvalCanvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    setApprovalSignatureDataUrl('');
+  }, []);
+
+  const onApprovalPointerDown = useCallback((evt) => {
+    const canvas = approvalCanvasRef.current;
+    if (!canvas) return;
+    canvas.setPointerCapture(evt.pointerId);
+    isApprovalDrawingRef.current = true;
+    const point = getApprovalCanvasPoint(evt);
+    canvas.dataset.prevX = String(point.x);
+    canvas.dataset.prevY = String(point.y);
+  }, [getApprovalCanvasPoint]);
+
+  const onApprovalPointerMove = useCallback((evt) => {
+    const canvas = approvalCanvasRef.current;
+    if (!canvas || !isApprovalDrawingRef.current) return;
+    const point = getApprovalCanvasPoint(evt);
+    const prevX = Number(canvas.dataset.prevX || point.x);
+    const prevY = Number(canvas.dataset.prevY || point.y);
+    drawApprovalLine(prevX, prevY, point.x, point.y);
+    canvas.dataset.prevX = String(point.x);
+    canvas.dataset.prevY = String(point.y);
+  }, [drawApprovalLine, getApprovalCanvasPoint]);
+
+  const onApprovalPointerUp = useCallback((evt) => {
+    const canvas = approvalCanvasRef.current;
+    if (!canvas) return;
+    if (canvas.hasPointerCapture(evt.pointerId)) {
+      canvas.releasePointerCapture(evt.pointerId);
+    }
+    isApprovalDrawingRef.current = false;
+    syncApprovalSignatureDataUrl();
+  }, [syncApprovalSignatureDataUrl]);
+
+  useEffect(() => {
+    if (!approvalModalItem) return;
+    const canvas = approvalCanvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    if (!approvalSignatureDataUrl) return;
+    const img = new Image();
+    img.onload = () => {
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    };
+    img.src = approvalSignatureDataUrl;
+  }, [approvalModalItem, approvalSignatureDataUrl]);
 
   useEffect(() => {
     if (!userTypeLoaded) return;
@@ -345,6 +445,11 @@ export default function OccupyApply() {
       try {
         setError('');
         setNotice('');
+        if (nextStatus === 'APPROVED') {
+          setApprovalSignatureDataUrl('');
+          setApprovalModalItem(item);
+          return;
+        }
         let reason = '';
         if (nextStatus === 'REJECTED') {
           reason = window.prompt('거절 사유를 입력해 주세요.', '') || '';
@@ -358,6 +463,51 @@ export default function OccupyApply() {
     },
     [contractPage, loadContracts]
   );
+
+  const closeApprovalModal = useCallback(() => {
+    setApprovalModalItem(null);
+    setApprovalSignatureDataUrl('');
+  }, []);
+
+  const submitContractApproval = useCallback(async () => {
+    if (!approvalModalItem?.contractNo) return;
+    if (!approvalSignerName.trim()) {
+      setError('임대인 서명자 이름을 입력해 주세요.');
+      return;
+    }
+    if (!approvalSignatureDataUrl) {
+      setError('임대인 서명을 입력해 주세요.');
+      return;
+    }
+
+    try {
+      setError('');
+      setNotice('');
+      await decideContract(
+        approvalModalItem.contractNo,
+        'APPROVED',
+        '',
+        approvalModalItem.status,
+        {
+          signerName: approvalSignerName.trim(),
+          signatureDataUrl: approvalSignatureDataUrl,
+          signedAt: new Date().toISOString(),
+        }
+      );
+      closeApprovalModal();
+      setNotice('입주 신청을 승인했습니다.');
+      await loadContracts(contractPage);
+    } catch (e) {
+      setError(e.message || '입주 신청 승인 처리 실패');
+    }
+  }, [
+    approvalModalItem,
+    approvalSignerName,
+    approvalSignatureDataUrl,
+    closeApprovalModal,
+    contractPage,
+    loadContracts,
+  ]);
 
   const tourPages = useMemo(() => Array.from({ length: tourTotalPages }, (_, i) => i + 1), [tourTotalPages]);
   const contractPages = useMemo(
@@ -642,6 +792,51 @@ export default function OccupyApply() {
           </Row>
         </Container>
       </section>
+      {approvalModalItem && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalCard}>
+            <h4 className={styles.modalTitle}>임대인 승인 서명</h4>
+            <p className={styles.modalDesc}>
+              {getRoomName(approvalModalItem, roomLabelByNo[approvalModalItem.roomNo])} 계약 승인 전 서명을 남겨주세요.
+            </p>
+            <label className={styles.modalLabel}>서명자 이름</label>
+            <input
+              className={styles.modalInput}
+              type="text"
+              value={approvalSignerName}
+              onChange={(e) => setApprovalSignerName(e.target.value)}
+              placeholder="임대인 이름"
+            />
+            <label className={styles.modalLabel}>임대인 서명</label>
+            <div className={styles.signatureWrap}>
+              <canvas
+                ref={approvalCanvasRef}
+                width={640}
+                height={180}
+                className={styles.signatureCanvas}
+                onPointerDown={onApprovalPointerDown}
+                onPointerMove={onApprovalPointerMove}
+                onPointerUp={onApprovalPointerUp}
+                onPointerCancel={onApprovalPointerUp}
+                onPointerLeave={onApprovalPointerUp}
+              />
+              <div className={styles.signatureActions}>
+                <button type="button" className={styles.smallBtn} onClick={clearApprovalSignature}>
+                  서명 지우기
+                </button>
+              </div>
+            </div>
+            <div className={styles.modalActions}>
+              <button type="button" className={`${styles.smallBtn} ${styles.rejectBtn}`} onClick={closeApprovalModal}>
+                취소
+              </button>
+              <button type="button" className={styles.smallBtn} onClick={submitContractApproval}>
+                서명 후 승인
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

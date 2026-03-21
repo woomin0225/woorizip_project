@@ -13,6 +13,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Locale;
 import java.util.Set;
+import java.time.ZoneId;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -33,9 +34,11 @@ import org.team4p.woorizip.house.jpa.entity.HouseEntity;
 import org.team4p.woorizip.house.jpa.repository.HouseRepository;
 import org.team4p.woorizip.room.jpa.entity.RoomEntity;
 import org.team4p.woorizip.room.jpa.repository.RoomRepository;
+import org.team4p.woorizip.room.service.RoomAvailabilityPolicyService;
 import org.team4p.woorizip.user.jpa.entity.UserEntity;
 import org.team4p.woorizip.user.jpa.repository.UserRepository;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 
 import java.io.ByteArrayOutputStream;
@@ -58,6 +61,8 @@ public class ContractServiceImpl implements ContractService {
     private final UserRepository userRepository;
     private final RoomRepository roomRepository;
     private final HouseRepository houseRepository;
+    private final ObjectMapper objectMapper;
+    private final RoomAvailabilityPolicyService roomAvailabilityPolicyService;
 
     @Value("${app.contract-doc-url-prefix:/contract-docs}")
     private String contractDocUrlPrefix;
@@ -107,6 +112,21 @@ public class ContractServiceImpl implements ContractService {
     public ContractDto insertContract(ContractDto contractDto) {
         contractDto.setStatus("APPLIED");
         ContractEntity entity = contractDto.toEntity();
+        roomAvailabilityPolicyService.validateContractApplication(
+                entity.getRoomNo(),
+                entity.getMoveInDate() == null ? null : entity.getMoveInDate().toInstant().atZone(ZoneId.of("Asia/Seoul")).toLocalDate()
+        );
+
+        Optional<ContractEntity> existingMine = contractRepository
+                .findFirstByRoomNoAndMoveInDateAndStatusInAndUserNoOrderByContractNoDesc(
+                        entity.getRoomNo(),
+                        entity.getMoveInDate(),
+                        ACTIVE_CONTRACT_STATUSES,
+                        entity.getUserNo()
+                );
+        if (existingMine.isPresent()) {
+            return ContractDto.fromEntity(existingMine.get());
+        }
 
         boolean alreadyReserved = contractRepository.existsByRoomNoAndMoveInDateAndStatusIn(
                 entity.getRoomNo(),
@@ -122,6 +142,16 @@ public class ContractServiceImpl implements ContractService {
             return ContractDto.fromEntity(saved);
         } catch (DataIntegrityViolationException e) {
             log.warn("입주 신청 중복 차단: roomNo={}, moveInDate={}", entity.getRoomNo(), entity.getMoveInDate());
+            Optional<ContractEntity> existingAfterRace = contractRepository
+                    .findFirstByRoomNoAndMoveInDateAndStatusInAndUserNoOrderByContractNoDesc(
+                            entity.getRoomNo(),
+                            entity.getMoveInDate(),
+                            ACTIVE_CONTRACT_STATUSES,
+                            entity.getUserNo()
+                    );
+            if (existingAfterRace.isPresent()) {
+                return ContractDto.fromEntity(existingAfterRace.get());
+            }
             throw new IllegalStateException("이미 신청된 입주 날짜입니다.");
         } catch (Exception e) {
             log.error("계약 등록 중 오류 발생: {}", e.getMessage());
@@ -210,10 +240,8 @@ public class ContractServiceImpl implements ContractService {
         ContractEntity target = contractRepository.findById(contractNo)
                 .orElseThrow(() -> new IllegalArgumentException("계약 정보를 찾을 수 없습니다."));
 
+        updateTenantSignatureMeta(contractNo, request);
         target.setContractUrl(writeContractPdf(target, request));
-        if ("APPLIED".equalsIgnoreCase(target.getStatus())) {
-            target.setStatus("APPROVED");
-        }
         return ContractDto.fromEntity(target);
     }
 
@@ -228,13 +256,8 @@ public class ContractServiceImpl implements ContractService {
             throw new IllegalArgumentException("전자서명자 이름은 필수입니다.");
         }
 
-        if (target.getContractUrl() == null || target.getContractUrl().isBlank()) {
-            target.setContractUrl(writeContractPdf(target, null));
-        }
-
-        if ("APPLIED".equalsIgnoreCase(target.getStatus())) {
-            target.setStatus("APPROVED");
-        }
+        updateTenantSignerMeta(contractNo, request);
+        target.setContractUrl(writeContractPdf(target, null));
         return ContractDto.fromEntity(target);
     }
 
@@ -256,7 +279,14 @@ public class ContractServiceImpl implements ContractService {
 
     @Override
     @Transactional
-    public int updateStatus(String contractNo, String status, String reason) {
+    public int updateStatus(
+            String contractNo,
+            String status,
+            String reason,
+            String signerName,
+            String signatureDataUrl,
+            String signedAt
+    ) {
         ContractEntity target = contractRepository.findById(contractNo).orElse(null);
         if (target == null) return 0;
 
@@ -268,6 +298,16 @@ public class ContractServiceImpl implements ContractService {
             target.setRejectionReason(reason != null ? reason.trim() : "");
         } else {
             target.setRejectionReason(null);
+            if ("APPROVED".equals(normalized)) {
+                if (signatureDataUrl == null || signatureDataUrl.isBlank()) {
+                    throw new IllegalArgumentException("임대인 승인 시 서명이 필요합니다.");
+                }
+                if (signerName == null || signerName.isBlank()) {
+                    throw new IllegalArgumentException("임대인 서명자 이름이 필요합니다.");
+                }
+                updateLessorSignatureMeta(contractNo, signerName, signatureDataUrl, signedAt);
+                target.setContractUrl(writeContractPdf(target, null));
+            }
         }
         return 1;
     }
@@ -324,6 +364,24 @@ public class ContractServiceImpl implements ContractService {
         String moveInText = moveIn != null ? new SimpleDateFormat("yyyy-MM-dd").format(moveIn) : "-";
         String memo = request != null && request.getMemo() != null ? request.getMemo().trim() : "";
         String memoRow = memo.isEmpty() ? "" : "<tr><th>요청 메모</th><td>" + escapeHtml(memo) + "</td></tr>";
+        ContractSignatureMeta signatureMeta = readContractSignatureMeta(target.getContractNo());
+        String requestSignatureDataUrl = request != null ? safe(request.getSignatureDataUrl()) : "";
+        String tenantSignatureDataUrl = !requestSignatureDataUrl.isBlank()
+                ? requestSignatureDataUrl
+                : safe(signatureMeta.tenantSignatureDataUrl);
+        String tenantSignatureMarkup = buildSignatureMarkup(tenantSignatureDataUrl, "임차인 서명 정보 없음");
+        String lessorSignatureMarkup = buildSignatureMarkup(
+                safe(signatureMeta.lessorSignatureDataUrl),
+                "임대인 승인 시 서명이 추가됩니다."
+        );
+        String tenantSignerMeta = buildSignerMetaText(
+                safe(signatureMeta.tenantSignerName),
+                safe(signatureMeta.tenantSignedAt)
+        );
+        String lessorSignerMeta = buildSignerMetaText(
+                safe(signatureMeta.lessorSignerName),
+                safe(signatureMeta.lessorSignedAt)
+        );
 
         Optional<UserEntity> tenantOpt = userRepository.findById(target.getUserNo());
         RoomEntity room = roomRepository.findById(target.getRoomNo()).orElse(null);
@@ -370,6 +428,11 @@ public class ContractServiceImpl implements ContractService {
                     table { width: 100%%; border-collapse: collapse; margin-top: 12px; }
                     th, td { border: 1px solid #ddd; padding: 10px; text-align: left; font-size: 14px; }
                     th { width: 200px; background: #f7f7f7; }
+                    .agreement-box { margin-top: 16px; border: 1px solid #ddd; background: #fafafa; padding: 12px; font-size: 13px; }
+                    .signature-wrap { min-height: 92px; border: 1px dashed #bbb; background: #fff; padding: 8px; }
+                    .signature-image { max-width: 280px; max-height: 90px; object-fit: contain; }
+                    .sig-placeholder { color: #666; }
+                    .sig-meta { margin-top: 6px; color: #666; font-size: 12px; }
                     .meta { margin-top: 20px; color: #666; font-size: 12px; }
                   </style>
                 </head>
@@ -395,6 +458,14 @@ public class ContractServiceImpl implements ContractService {
                     <tr><th>임차인 이름</th><td>%s</td></tr>
                     <tr><th>임차인 연락처</th><td>%s</td></tr>
                   </table>
+                  <h2>전자 동의 및 서명</h2>
+                  <div class="agreement-box">
+                    <p>임차인은 개인정보 수집 및 이용, 전자계약서 내용, 전자문서 및 전자서명 이용에 동의한 후 본 계약을 진행하였습니다.</p>
+                  </div>
+                  <table>
+                    <tr><th>임차인 전자서명</th><td><div class="signature-wrap">%s</div><div class="sig-meta">%s</div></td></tr>
+                    <tr><th>임대인 전자서명</th><td><div class="signature-wrap">%s</div><div class="sig-meta">%s</div></td></tr>
+                  </table>
                   <p class="meta">본 문서는 시스템에 저장된 계약 정보 기준으로 생성되었습니다.</p>
                 </body>
                 </html>
@@ -412,8 +483,87 @@ public class ContractServiceImpl implements ContractService {
                 escapeHtml(lessorName),
                 escapeHtml(lessorPhone),
                 escapeHtml(tenantName),
-                escapeHtml(tenantPhone)
+                escapeHtml(tenantPhone),
+                tenantSignatureMarkup,
+                escapeHtml(tenantSignerMeta),
+                lessorSignatureMarkup,
+                escapeHtml(lessorSignerMeta)
         );
+    }
+
+    private void updateTenantSignatureMeta(String contractNo, ContractElectronicCreateRequest request) {
+        if (request == null || request.getSignatureDataUrl() == null || request.getSignatureDataUrl().isBlank()) {
+            return;
+        }
+        ContractSignatureMeta meta = readContractSignatureMeta(contractNo);
+        meta.tenantSignatureDataUrl = request.getSignatureDataUrl().trim();
+        writeContractSignatureMeta(contractNo, meta);
+    }
+
+    private void updateTenantSignerMeta(String contractNo, ContractSignatureVerifyRequest request) {
+        if (request == null) {
+            return;
+        }
+        ContractSignatureMeta meta = readContractSignatureMeta(contractNo);
+        meta.tenantSignerName = safe(request.getSignerName());
+        meta.tenantSignedAt = safe(request.getAgreedAt());
+        writeContractSignatureMeta(contractNo, meta);
+    }
+
+    private void updateLessorSignatureMeta(String contractNo, String signerName, String signatureDataUrl, String signedAt) {
+        ContractSignatureMeta meta = readContractSignatureMeta(contractNo);
+        meta.lessorSignerName = safe(signerName);
+        meta.lessorSignatureDataUrl = safe(signatureDataUrl);
+        meta.lessorSignedAt = safe(signedAt);
+        writeContractSignatureMeta(contractNo, meta);
+    }
+
+    private ContractSignatureMeta readContractSignatureMeta(String contractNo) {
+        Path metaPath = resolveContractMetaPath(contractNo);
+        if (!Files.exists(metaPath)) {
+            return new ContractSignatureMeta();
+        }
+        try {
+            return objectMapper.readValue(Files.readString(metaPath), ContractSignatureMeta.class);
+        } catch (Exception e) {
+            log.warn("계약 서명 메타데이터 읽기 실패: contractNo={}", contractNo, e);
+            return new ContractSignatureMeta();
+        }
+    }
+
+    private void writeContractSignatureMeta(String contractNo, ContractSignatureMeta meta) {
+        try {
+            Path metaPath = resolveContractMetaPath(contractNo);
+            Files.createDirectories(metaPath.getParent());
+            Files.writeString(
+                    metaPath,
+                    objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(meta),
+                    StandardOpenOption.CREATE,
+                    StandardOpenOption.TRUNCATE_EXISTING
+            );
+        } catch (Exception e) {
+            throw new IllegalStateException("계약 서명 정보 저장에 실패했습니다.");
+        }
+    }
+
+    private Path resolveContractMetaPath(String contractNo) {
+        return resolveContractDocRoot()
+                .resolve("contract-" + contractNo + "-meta.json")
+                .normalize();
+    }
+
+    private String buildSignatureMarkup(String dataUrl, String emptyMessage) {
+        if (dataUrl == null || dataUrl.isBlank()) {
+            return "<div class='sig-placeholder'>" + escapeHtml(emptyMessage) + "</div>";
+        }
+        return "<img src=\"" + escapeHtml(dataUrl)
+                + "\" alt=\"signature\" class=\"signature-image\" />";
+    }
+
+    private String buildSignerMetaText(String signerName, String signedAt) {
+        String safeName = signerName == null || signerName.isBlank() ? "-" : signerName;
+        String safeTime = signedAt == null || signedAt.isBlank() ? "-" : signedAt;
+        return "서명자: " + safeName + " / 서명시각: " + safeTime;
     }
 
     private byte[] renderPdfBytes(String html) throws Exception {
@@ -497,5 +647,14 @@ public class ContractServiceImpl implements ContractService {
                 .replace(">", "&gt;")
                 .replace("\"", "&quot;")
                 .replace("'", "&#39;");
+    }
+
+    private static final class ContractSignatureMeta {
+        public String tenantSignatureDataUrl = "";
+        public String tenantSignerName = "";
+        public String tenantSignedAt = "";
+        public String lessorSignatureDataUrl = "";
+        public String lessorSignerName = "";
+        public String lessorSignedAt = "";
     }
 }
