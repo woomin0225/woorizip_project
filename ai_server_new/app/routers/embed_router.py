@@ -2,15 +2,11 @@
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Request, HTTPException
-from tokenizers import Tokenizer
+from fastapi import APIRouter, Depends, HTTPException
 
-# from app.clients.embedding_client import OpenaiEmbeddingClient
-from app.clients.qdrant_client import QdrantDbClient
 from app.dependencies import get_embedding_service, get_tokenizer, get_vector_store
 from app.schemas import RoomTotalRequest
-from app.services.chunking import chunking
-from app.services.embedding_service import EmbeddingService
+from app.services.embedding_service import RoomEmbeddingService
 from app.store.vector_store import VectorStore
 import logging
 
@@ -24,7 +20,7 @@ router = APIRouter(
 @router.post("/room", summary="방 정보 임베딩+벡터저장", description="방의 정보(기본정보+사진캡션요약+리뷰요약)를 임베딩하여 qdrant db에 저장합니다.")
 async def RoomInfoEmbeddingAndStore(
     target:RoomTotalRequest,
-    embedding_service: Annotated[EmbeddingService, Depends(get_embedding_service)],
+    embedding_service: Annotated[RoomEmbeddingService, Depends(get_embedding_service)],
     vector_store: Annotated[VectorStore, Depends(get_vector_store)],
     tokenizer= Depends(get_tokenizer)
 ):
