@@ -32,15 +32,12 @@ from app.routers import (
     voice_router,
 )
 from app.schemas import (
-    EmbeddingReq,
-    EmbeddingRes,
     RoomVisionAnalyzeRes,
     SummaryReq,
     VisionAnalyzeReq,
     ReservationAssistReq,
     ReservationAnalyzeReq,
 )
-from app.services.embedding_service import EmbeddingService
 from app.services.summary_service import SummaryService
 from app.services.vision_service import VisionService
 from app.services.reservation_service import ReservationService
@@ -153,7 +150,6 @@ summary = SummaryService(llm)
 caption_client = QwenCaptionClient()
 detection_client = GroundingDINOClient()
 ocr_client = PaddleOCRClient()
-embedding_service = EmbeddingService()
 vision = VisionService(
     caption_client=caption_client,
     detection_client=detection_client,
@@ -309,20 +305,6 @@ async def room_vision_analyze(
         source_prefix=source_prefix,
         save_embedding=save_embedding,
     )
-
-
-@app.post(
-    "/ai/embedding",
-    dependencies=[Depends(require_internal_api_key)],
-    response_model=EmbeddingRes,
-)
-async def create_embedding(req: EmbeddingReq) -> dict[str, Any]:
-    result = embedding_service.embed_text(req.text)
-    return {
-        "model": result["model"],
-        "dimension": result["dimension"],
-        "embedding": result["embedding"],
-    }
 
 
 @app.post("/ai/facility/assist", dependencies=[Depends(require_internal_api_key)])

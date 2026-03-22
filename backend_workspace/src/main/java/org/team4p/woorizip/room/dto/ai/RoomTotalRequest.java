@@ -2,6 +2,7 @@ package org.team4p.woorizip.room.dto.ai;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 
@@ -47,5 +48,7 @@ public class RoomTotalRequest {
 	private String roomOptions;
 	
 	private String imageSummary;
+	private List<String> imageCaptions;
 	private String reviewSummary;
+	private List<String> reviews;
 }

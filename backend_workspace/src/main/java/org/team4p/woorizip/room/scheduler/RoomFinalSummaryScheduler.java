@@ -30,7 +30,8 @@ public class RoomFinalSummaryScheduler {
 			if(i >= 50) break;
 			if(entity.getSummaryStatus().equals("PROCESSING") || entity.getSummaryStatus().equals("DONE")) continue;
 			try {
-				String summary = roomAiService.summaryPendingRooms(entity);
+				// Pass only roomNo so every caller goes through the same claim logic in the service.
+				String summary = roomAiService.summaryPendingRooms(entity.getRoomNo());
 				i += 1;
 				log.info("방번호({}) - 방 종합 요약({}/50): {}", entity.getRoomNo(), i, summary);
 			} catch (Exception e) {

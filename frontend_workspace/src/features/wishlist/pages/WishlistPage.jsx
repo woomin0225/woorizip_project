@@ -4,6 +4,7 @@ import MyPageSideNav from '../../user/components/MyPageSideNav';
 import { getWishlistPageByUser, deleteWishlist } from '../api/wishlistAPI';
 import { getRoom, getRoomImages } from '../../houseAndRoom/api/roomApi';
 import { pickRepresentativeRoomImageName } from '../../houseAndRoom/utils/roomImage';
+import { tokenStore } from '../../../app/http/tokenStore';
 import { parseJwt } from '../../../app/providers/utils/jwt';
 import WishlistTable from '../components/WishlistTable';
 import styles from '../../../app/layouts/MyPageLayout.module.css';

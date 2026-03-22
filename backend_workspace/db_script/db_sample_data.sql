@@ -2,12 +2,20 @@
 -- ==========================================================
 
 
--- 1. 회원 (임대인 1명, 임차인 2명, 관리자 1명)
+-- 1. 회원 (임대인 1명, 임차인 10명, 관리자 1명)
 INSERT INTO `tb_users` (`user_no`, `email_id`, `password`, `name`, `phone`, `gender`, `birth_date`, `type`, `role`, `deleted_yn`) 
 VALUES 
 ('lessor1', 'lessor@test.com', '$2a$10$cuSDGuEpLkxydGri9qhQcuWym4C8sEWca4j6ZglG7QmIgI.KHuNs.', '김임대', '010-1111-1111', 'M', '1980-01-01', 'LESSOR', 'USER', 'N'),
-('user1', 'user1@test.com', '$2a$10$cuSDGuEpLkxydGri9qhQcuWym4C8sEWca4j6ZglG7QmIgI.KHuNs.', '박일번', '010-2222-2222', 'F', '1995-05-05', 'USER', 'USER', 'N'),
-('user2', 'user2@test.com', '$2a$10$GVeykywuFavxmd8HHN.y7OznrDGyHuWiD/y2Uav3vuLgQjMgvKh4W', '이이번', '010-3333-3333', 'M', '1998-08-08', 'USER', 'USER', 'N'),
+('user1', 'user1@test.com', '$2y$10$yDo/X/eoLq/w.OlG/hxlOeEdYO8V5jqiNjfqgpcnkIeWz7TNmK2T.', '박일번', '010-2222-2222', 'F', '1995-05-05', 'USER', 'USER', 'N'),
+('user2', 'user2@test.com', '$2y$10$yDo/X/eoLq/w.OlG/hxlOeEdYO8V5jqiNjfqgpcnkIeWz7TNmK2T.', '이이번', '010-3333-3333', 'M', '1998-08-08', 'USER', 'USER', 'N'),
+('user3', 'user3@test.com', '$2y$10$yDo/X/eoLq/w.OlG/hxlOeEdYO8V5jqiNjfqgpcnkIeWz7TNmK2T.', '김서연', '010-5555-5555', 'F', '1996-03-14', 'USER', 'USER', 'N'),
+('user4', 'user4@test.com', '$2y$10$yDo/X/eoLq/w.OlG/hxlOeEdYO8V5jqiNjfqgpcnkIeWz7TNmK2T.', '정민호', '010-6666-6666', 'M', '1994-07-22', 'USER', 'USER', 'N'),
+('user5', 'user5@test.com', '$2y$10$yDo/X/eoLq/w.OlG/hxlOeEdYO8V5jqiNjfqgpcnkIeWz7TNmK2T.', '한지우', '010-7777-7777', 'F', '1999-11-03', 'USER', 'USER', 'N'),
+('user6', 'user6@test.com', '$2y$10$yDo/X/eoLq/w.OlG/hxlOeEdYO8V5jqiNjfqgpcnkIeWz7TNmK2T.', '윤도현', '010-8888-8888', 'M', '1997-01-19', 'USER', 'USER', 'N'),
+('user7', 'user7@test.com', '$2y$10$yDo/X/eoLq/w.OlG/hxlOeEdYO8V5jqiNjfqgpcnkIeWz7TNmK2T.', '송다은', '010-9999-9999', 'F', '2000-06-27', 'USER', 'USER', 'N'),
+('user8', 'user8@test.com', '$2y$10$yDo/X/eoLq/w.OlG/hxlOeEdYO8V5jqiNjfqgpcnkIeWz7TNmK2T.', '임현우', '010-1212-3434', 'M', '1998-09-11', 'USER', 'USER', 'N'),
+('user9', 'user9@test.com', '$2y$10$yDo/X/eoLq/w.OlG/hxlOeEdYO8V5jqiNjfqgpcnkIeWz7TNmK2T.', '오가은', '010-2323-4545', 'F', '1995-12-02', 'USER', 'USER', 'N'),
+('user10', 'user10@test.com', '$2y$10$yDo/X/eoLq/w.OlG/hxlOeEdYO8V5jqiNjfqgpcnkIeWz7TNmK2T.', '최유진', '010-3434-5656', 'F', '1993-10-08', 'USER', 'USER', 'N'),
 ('admin1', 'admin@test.com', '$2a$10$cuSDGuEpLkxydGri9qhQcuWym4C8sEWca4j6ZglG7QmIgI.KHuNs.', '최관리', '010-4444-4444', 'F', '1997-01-08', 'USER', 'ADMIN', 'N');
 
 -- 2. 건물 (모두 '김임대' 소유)

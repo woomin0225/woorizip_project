@@ -45,7 +45,7 @@ public class ReviewSummaryServiceImpl implements ReviewSummaryService{
 		
 		// 요약할 리뷰목록 조회
 		String roomNo = entity.getRoomNo();
-		List<String> reviews = reviewRepository.findAllReviewContentsByRoomNoOrderByReviewCreatedAtDesc(roomNo);
+		List<String> reviews = reviewRepository.findAllReviewContentsByRoomNo(roomNo);
 		ReviewSummaryRequest request = ReviewSummaryRequest.builder()
 								.roomNo(roomNo)
 								.texts(reviews)
