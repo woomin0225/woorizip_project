@@ -1,7 +1,9 @@
 package org.team4p.woorizip.facility.controller;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -28,7 +30,8 @@ import org.team4p.woorizip.facility.dto.FacilityImageDTO;
 import org.team4p.woorizip.facility.dto.FacilityListResponseDTO;
 import org.team4p.woorizip.facility.dto.FacilityModifyRequestDTO;
 import org.team4p.woorizip.facility.service.FacilityService;
-import org.team4p.woorizip.user.jpa.repository.UserRepository;
+import org.team4p.woorizip.user.model.dto.UserDto;
+import org.team4p.woorizip.user.model.service.UserService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -41,7 +44,7 @@ import lombok.extern.slf4j.Slf4j;
 public class FacilityController {
 
 	private final FacilityService facilityService;
-	private final UserRepository userRepository;
+	private final UserService userService;
 	
 	// 시설 목록 조회
 	@GetMapping({"", "/{houseNo}"})
@@ -53,13 +56,24 @@ public class FacilityController {
 		return ResponseEntity.ok(ApiResponse.ok("시설 목록 조회 성공", body));
 	}
 	
-	// 시설 목록 조회 for ai_server
+	// 예약 정보 생성을 위한 시설 목록과 유저 정보 조회 for ai_server
 	@GetMapping("/ailist")
-	public ResponseEntity<ApiResponse<List<FacilityListResponseDTO>>> getFacilityListForAi(
-	        @RequestParam(value = "userId") String userId) { 
-	    String userNo = userRepository.findUserNoByEmailId(userId);
-	    List<FacilityListResponseDTO> body = facilityService.getFacilityList(null, userNo);
-	    return ResponseEntity.ok(ApiResponse.ok("AI용 시설 목록 조회 성공", body));
+	public ResponseEntity<ApiResponse<Map<String, Object>>> getFacilityListForAi(
+	        @RequestParam(value = "userId") String userId) {
+		// 유저 정보 조회
+		UserDto params = UserDto.builder().emailId(userId).build();
+        UserDto user = userService.selectUser(params);
+        
+	    // 시설 목록 조회
+	    List<FacilityListResponseDTO> facilityList = facilityService.getFacilityList(null, String.valueOf(user.getUserNo()));
+
+	    // 데이터 매칭
+	    Map<String, Object> responseData = new HashMap<>();
+	    responseData.put("userName", user.getName());
+	    responseData.put("userPhone", user.getPhone());
+	    responseData.put("facilities", facilityList);
+
+	    return ResponseEntity.ok(ApiResponse.ok("AI용 데이터 로드 성공", responseData));
 	}
 	
 	// 시설 신규 등록

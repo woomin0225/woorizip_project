@@ -59,7 +59,7 @@ VALUES
 INSERT INTO `tb_rooms`
 (`room_no`, `room_name`, `house_no`, `user_no`, `room_created_at`, `room_updated_at`, `room_deposit`, `room_monthly`, `room_method`, `room_area`, `room_facing`, `room_available_date`, `room_abstract`, `room_room_count`, `room_bath_count`, `room_empty_yn`, `room_status`, `room_options`, `room_image_count`, `deleted`, `deleted_at`)
 VALUES
-('room1', '101호', 'house1', 'lessor1', '2026-02-10 14:05:00', '2026-02-27 09:00:00', 10000000, 500000, 'M', 30.50, '남향', '2026-01-01', '채광 좋은 남향 방', 1, 1, 1, 'ACTIVE', '에어컨,냉장고,세탁기', 8, 0, NULL),
+('room1', '101호', 'house1', 'lessor1', '2026-01-10 14:05:00', '2026-02-27 09:00:00', 10000000, 500000, 'M', 30.50, '남향', '2026-01-01', '채광 좋은 남향 방', 1, 1, 1, 'ACTIVE', '에어컨,냉장고,세탁기', 8, 0, NULL),
 ('room2', '102호', 'house1', 'lessor1', '2026-02-11 09:15:30', '2026-02-27 09:00:00', 15000000, 600000, 'M', 35.00, '동향', '2026-03-15', '넓은 원룸', 1, 1, 1, 'ACTIVE', '침대,책상,옷장,WiFi', 2, 0, NULL),
 ('room3', '201호', 'house2', 'lessor1', '2026-02-03 10:20:00', '2026-02-27 09:00:00', 50000000, NULL, 'L', 45.00, '남향', '2026-04-01', '전세 귀한 매물', 2, 1, 1, 'ACTIVE', '', 1, 0, NULL),
 ('room4', '301호', 'house3', 'lessor1', '2026-02-25 19:10:00', '2026-02-27 09:00:00', 10000000, 650000, 'M', 22.50, '남향', '2026-03-03', '강서 네스트, 채광 좋은 남향 원룸', 1, 1, 1, 'ACTIVE', '에어컨,냉장고,세탁기', 6, 0, NULL),
@@ -2378,9 +2378,6 @@ VALUES
 ('fac_house_s030_9', 'house_s030', 9, '카페 라운지', '{"coffeeMachine": true, "snacks": true, "wifi": true, "charging": true}', 8, '00:00:00', '23:59:00', 'AVAILABLE', 0, NULL, NULL, NULL, NOW(), 22);
 
 -- 17. 부대시설 사진 (tb_fm_images)
-INSERT INTO `tb_fm_images` (`facility_image_no`, `facility_no`, `facility_original_image_name`, `facility_stored_image_name`) 
-VALUES 
-(1, 'fac1', 'gym_main.jpg', 'uuid-fac1-img1.jpg');
 INSERT INTO `tb_fm_images` (`facility_no`, `facility_original_image_name`, `facility_stored_image_name`)
 VALUES
 ('fac1', 'facility_3_운동시설.png', '1231f10f-2b8c-455c-a2e7-58694f239f16.png'),

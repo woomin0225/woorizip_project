@@ -43,7 +43,9 @@ import org.team4p.woorizip.user.jpa.entity.UserEntity;
 import org.team4p.woorizip.user.jpa.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class FacilityServiceImpl implements FacilityService {
@@ -65,6 +67,8 @@ public class FacilityServiceImpl implements FacilityService {
 		// 임차인
 	    if (houseNo == null) {			
 	    	String userHouseNo = lesseeValidator.validLessee(userNo);
+	    	log.info("1. 넘어온 유저번호: {}", userNo);
+	    	log.info("2. 찾아낸 하우스번호: {}", userHouseNo);
 			return facilityRepository.findByHouseHouseNoAndFacilityDeletedAtIsNull(userHouseNo)
 		    		.stream()
 		            .map(FacilityListResponseDTO::from)
@@ -268,7 +272,8 @@ public class FacilityServiceImpl implements FacilityService {
 				.map(FacilityDetailResponseDTO::from)
 				.orElseThrow(() -> new NotFoundException("해당 시설 정보를 찾을 수 없습니다."));
 	}
-
+	
+	// 시설 정보 수정
 	@Override
 	@Transactional
 	public void modifyFacility(List<MultipartFile> files, String facilityNo, FacilityModifyRequestDTO dto, String currentUserNo) {

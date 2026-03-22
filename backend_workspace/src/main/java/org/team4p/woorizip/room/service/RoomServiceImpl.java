@@ -465,7 +465,7 @@ public class RoomServiceImpl implements RoomService {
 		// dtoList:
 		// 최종적으로 프론트에 내려줄 결과입니다.
 		// roomNoList 순서대로 다시 꺼내기 때문에 RAG 점수 순위가 유지됩니다.
-		List<RoomSearchResponse> dtoList = new ArrayList<>();
+		List<RoomSearchResponse> dtoLists = new ArrayList<>();
 		for (String roomNo : roomNoList) {
 			RoomEntity entity = entityMap.get(roomNo);
 			if (entity != null) {
@@ -499,11 +499,11 @@ public class RoomServiceImpl implements RoomService {
 					item.setImageNames(imageNames);
 				}
 
-				dtoList.add(item);
+				dtoLists.add(item);
 			}
 		}
 		
-		return dtoList;
+		return dtoLists;
 	}
 
 	private void applyAvailability(RoomDto dto, RoomEntity entity) {
@@ -535,6 +535,8 @@ public class RoomServiceImpl implements RoomService {
 		dto.setCanTourApply(policy.canTourApply());
 		dto.setCanContractApply(policy.canContractApply());
 		dto.setOccupancyEndDate(policy.occupancyEndDate());
+	}
+	
 	private Long normalizeRoomMonthly(String roomMethod, Long roomMonthly) {
 		if ("L".equals(roomMethod) && roomMonthly == null) {
 			return 0L;

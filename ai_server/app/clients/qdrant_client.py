@@ -1,6 +1,6 @@
 # app/clients/qdrant_client.py
 
-from uuid import uuid4, uuid5, UUID
+from uuid import uuid4, uuid5, UUID, NAMESPACE_DNS
 import uuid
 
 from qdrant_client import QdrantClient

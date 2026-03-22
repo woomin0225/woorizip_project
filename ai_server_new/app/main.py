@@ -337,8 +337,18 @@ async def reservation_assist(
 
 
 @app.post("/ai/facility/reservation", dependencies=[Depends(require_internal_api_key)])
-async def reservation_confirm(req: ReservationAnalyzeReq):
+async def reservation_confirm(
+    req: ReservationAnalyzeReq, ctx: dict = Depends(get_user_context)
+):
     """
     AI가 분석한 결과를 프론트에서 최종 확인 후 호출하는 저장 단계
     """
-    return {"status": "success", "data": req}
+    save_result = await reservation.save_reservation(req)
+
+    if save_result["status"] == "success":
+        # 2. 저장 성공했으면 세션 삭제 (이게 핵심!)
+        user_id = ctx.get("user_id")
+        reservation.clear_session(user_id)
+        return {"status": "success", "data": req}
+    else:
+        return {"status": "error", "message": "저장 중 오류가 발생했습니다."}

@@ -93,8 +93,6 @@ from app.schemas import (
     SummaryReq,
     VisionAnalyzeReq,
     RoomVisionAnalyzeRes,
-    ReservationAssistReq,
-    ReservationAnalyzeReq,
 )
 from app.services.agent_router import AgentRouter
 from app.services.doc_service import DocService
@@ -108,7 +106,7 @@ from app.services.spring_tools import SpringTools
 from app.services.summary_service import SummaryService
 from app.services.vision_service import VisionService
 from app.services.voice_service import VoiceService
-from app.services.reservation_service import ReservationService
+
 from app.store.vector_store import build_vector_store
 
 
@@ -159,9 +157,7 @@ summary = SummaryService(llm)
 policy = PolicyService(llm=None)
 monitoring = MonitoringService(llm=llm)
 tools = SpringTools()
-reservation = ReservationService(
-    llm=llm, tools=tools, embedder=embedding_client, qdrant_db=store.client
-)
+
 agent = AgentRouter(
     llm, rag, doc, reco, summary, policy, monitoring, tools, reservation
 )
@@ -338,23 +334,3 @@ async def review_summary(req: ReviewSummaryReq):
     return await review.summarize_room_reviews(
         req.room_id, req.reviews, room_meta=req.room_meta
     )
-
-
-@app.post("/ai/facility/assist", dependencies=[Depends(require_internal_api_key)])
-async def reservation_assist(
-    req: ReservationAssistReq, ctx: dict = Depends(get_user_context)
-):
-    """
-    사용자의 자연어(req.message)를 분석해서 예약 객체(JSON)로 변환
-    """
-    return await reservation.analyze_reservation(
-        user_text=req.message, ctx={"user_id": req.userId}
-    )
-
-
-@app.post("/ai/facility/reservation", dependencies=[Depends(require_internal_api_key)])
-async def reservation_confirm(req: ReservationAnalyzeReq):
-    """
-    AI가 분석한 결과를 프론트에서 최종 확인 후 호출하는 저장 단계
-    """
-    return {"status": "success", "data": req}

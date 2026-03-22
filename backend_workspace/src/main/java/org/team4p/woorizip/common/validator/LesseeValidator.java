@@ -64,6 +64,7 @@ public class LesseeValidator {
 		}
 
 		// 실존하는 방인지 확인
+		@SuppressWarnings("null")
 		RoomEntity room = roomRepository.findById(validContract.getRoomNo())
 				.orElseThrow(() -> new NotFoundException("방 정보를 찾을 수 없습니다."));
 

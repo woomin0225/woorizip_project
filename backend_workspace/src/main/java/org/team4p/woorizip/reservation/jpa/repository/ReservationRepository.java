@@ -1,6 +1,7 @@
 package org.team4p.woorizip.reservation.jpa.repository;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 
@@ -31,8 +32,8 @@ public interface ReservationRepository extends JpaRepository<ReservationEntity, 
 	long countByUser_UserNoAndFacility_FacilityNoAndReservationDateAndReservationStatus(String user, String facility, LocalDate date, ReservationStatus status);
 
 	// 신규 예약 시 중복 예약 확인용 메서드
-	boolean existsByFacility_FacilityNoAndReservationDateAndReservationStartTimeBeforeAndReservationEndTimeAfterAndReservationStatus(
-			String facilityNo, LocalDate date, LocalTime endTime, LocalTime startTime, ReservationStatus status);
+	boolean existsByFacility_FacilityNoAndReservationDateAndReservationStartTimeBeforeAndReservationEndTimeAfterAndReservationStatusIn(
+			String facilityNo, LocalDate date, LocalTime endTime, LocalTime startTime, List<ReservationStatus> statuses);
 
 	// 신규 예약 시 특정 날짜 시간대 중복 확인 메서드
 	boolean existsByUser_UserNoAndReservationDateAndReservationStartTimeBeforeAndReservationEndTimeAfterAndReservationStatus(
@@ -43,8 +44,8 @@ public interface ReservationRepository extends JpaRepository<ReservationEntity, 
 			LocalDate date, String reservationNo, ReservationStatus status);
 
 	// 기존 예약 수정 시 중복 예약 확인용 메서드
-	boolean existsByFacility_FacilityNoAndReservationDateAndReservationStartTimeBeforeAndReservationEndTimeAfterAndReservationNoNotAndReservationStatus(
-			String facilityNo, LocalDate date, LocalTime endTime, LocalTime startTime, String reservationNo, ReservationStatus status);
+	boolean existsByFacility_FacilityNoAndReservationDateAndReservationStartTimeBeforeAndReservationEndTimeAfterAndReservationNoNotAndReservationStatusIn(
+			String facilityNo, LocalDate date, LocalTime endTime, LocalTime startTime, String reservationNo, List<ReservationStatus> statuses);
 
 	// 기존 예약 수정 시 특정 날짜 시간대 중복 확인 메서드
 	boolean existsByUser_UserNoAndReservationDateAndReservationStartTimeBeforeAndReservationEndTimeAfterAndReservationNoNotAndReservationStatus(
@@ -63,4 +64,12 @@ public interface ReservationRepository extends JpaRepository<ReservationEntity, 
 	// facilityStatus == FacilityStatus.UNAVAILABLE 시 해당 날짜에 예약이 있는지 조회하는 메서드
 	List<ReservationEntity> findByFacility_FacilityNoAndReservationDateBetweenAndReservationStatus(String facilityNo, LocalDate startDate,
 			LocalDate endDate, ReservationStatus status);
+	
+	// facilityStatus 지정 기간 도래 시 예약 삭제
+	// 오늘 이전 날짜의 예약 방지용 예약 삭제
+	void deleteByReservationStatusAndReservationDateBefore(ReservationStatus status, LocalDate date);
+	// 오늘인데 시간 지난 예약 방지용 예약 삭제
+	void deleteByReservationStatusAndReservationDateAndReservationEndTimeBefore(ReservationStatus status, LocalDate date, LocalTime time);
+	// 예약 방지용 예약이 있는지 확인
+	boolean existsByFacility_FacilityNoAndReservationStatus(String facilityNo, ReservationStatus status);
 }
