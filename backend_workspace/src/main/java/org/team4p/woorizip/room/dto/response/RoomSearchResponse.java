@@ -26,6 +26,7 @@ public class RoomSearchResponse {
 	private String roomFacing;
 	private Integer roomRoomCount;
 	private Boolean roomEmptyYn;
+	private LocalDate roomAvailableDate;
 	private Boolean canTourApply;
 	private Boolean canContractApply;
 	private LocalDate occupancyEndDate;

@@ -447,12 +447,6 @@ public class RoomServiceImpl implements RoomService {
 
 		// DB 조회는 roomNo 기준으로 한 번에 처리해 성능을 아낍니다.
 		List<RoomEntity> entityList = roomRepository.findAllById(roomNoList);
-		List<RoomDto> dtoList = new ArrayList<>();
-		entityList.forEach(entity -> {
-			RoomDto dto = entity.toDto();
-			applyAvailability(dto, entity);
-			dtoList.add(dto);
-		});
 
 		// entityMap:
 		// roomNo -> RoomEntity 형태로 바꿔 두면
@@ -535,6 +529,11 @@ public class RoomServiceImpl implements RoomService {
 		dto.setCanTourApply(policy.canTourApply());
 		dto.setCanContractApply(policy.canContractApply());
 		dto.setOccupancyEndDate(policy.occupancyEndDate());
+		if (policy.actualAvailableDate() != null) {
+			dto.setRoomAvailableDate(policy.actualAvailableDate());
+		}
+	}
+
 	private Long normalizeRoomMonthly(String roomMethod, Long roomMonthly) {
 		if ("L".equals(roomMethod) && roomMonthly == null) {
 			return 0L;
