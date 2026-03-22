@@ -14,7 +14,7 @@ public interface RoomAiService {
 	RoomFinalSummaryEntity requestSummarizedRoom(String roomNo);
 	RoomFinalSummaryEntity selectSummarizedRoom(String roomNo);
 	List<RoomFinalSummaryEntity> findSummaryPendingRooms();
-	String summaryPendingRooms(RoomFinalSummaryEntity entity);
+	String summaryPendingRooms(String roomNo);
 	void startSummarizedRoomAsync(String roomNo);
 	
 	EmbedResponse embedRoom(String roomNo);

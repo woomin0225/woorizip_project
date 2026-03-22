@@ -455,7 +455,7 @@ class RoomSummaryService:
         self.client=client
         
     async def summary_room_reviews(self, room_reviews: list):
-        logger.info("service entered review_count=%s", len(room_reviews or []))
+        # logger.info("service entered review_count=%s", len(room_reviews or []))
          
         if not room_reviews:
             raise ValueError("요약할 리뷰 텍스트가 비어있습니다.")
@@ -464,7 +464,7 @@ class RoomSummaryService:
         messages = [
             {"role": "system", "content": f"You are real estate summary master. You have to summarize about room's reviews and return the summary text."},
             {"role": "user", "content": prompt},
-            {"role": "assistant", "content": "summarized result is "}
+            {"role": "assistant", "content": ""}
         ]
         result = await asyncio.to_thread(self.client.generate_from_messages, messages, 180)
         return result.strip()
@@ -477,7 +477,7 @@ class RoomSummaryService:
         messages = [
             {"role": "system", "content": f"You are real estate summary master. You have to summarize about room's image captions and return the summary text."},
             {"role": "user", "content": prompt},
-            {"role": "assistant", "content": "summarized result is "}
+            {"role": "assistant", "content": ""}
         ]
         result = await asyncio.to_thread(self.client.generate_from_messages, messages, 180)
         return result.strip()
@@ -493,7 +493,7 @@ class RoomSummaryService:
             {"role": "system", "content": f"You are real estate agent. You have to summarize about room information and return the summary. You can use following category keywords on summarize work. Connect the descriptions for each category into neat sentences. category: {category}"},
             {"role": "system", "content": f"refer to next definition. definition: {RoomTotalRequest}"},
             {"role": "user", "content": prompt},
-            {"role": "assistant", "content": "summarized result is "}
+            {"role": "assistant", "content": ""}
         ]
         result = await asyncio.to_thread(self.client.generate_from_messages, messages, 256)
         return result.strip()

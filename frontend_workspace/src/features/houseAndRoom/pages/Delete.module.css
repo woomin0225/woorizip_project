@@ -54,6 +54,13 @@
   font-weight: 800;
 }
 
+.dangerBtn:disabled,
+.smallDangerBtn:disabled {
+  background: #f3f4f6;
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
 .roomList {
   display: grid;
   gap: 10px;
@@ -75,6 +82,12 @@
   color: #666;
   font-size: 12px;
   margin-top: 4px;
+}
+
+.disabledHint {
+  margin-top: 6px;
+  color: #c2410c;
+  font-size: 12px;
 }
 
 .smallDangerBtn {

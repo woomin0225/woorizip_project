@@ -299,9 +299,7 @@ public class RoomController {
 	@GetMapping("/{roomNo}/summarized_room")
 	public ResponseEntity<ApiResponse<RoomFinalSummaryEntity>> callSummarizedRoom(@PathVariable("roomNo") String roomNo){
 		RoomFinalSummaryEntity result = roomAiService.selectSummarizedRoom(roomNo);
-		if(result != null && !"DONE".equals(result.getSummaryStatus())) {
-			roomAiService.startSummarizedRoomAsync(roomNo);
-		}
+		// Polling this status endpoint must not enqueue new work, or duplicate summary workers get created.
 		
 		return ResponseEntity.status(200).body(ApiResponse.ok("방 종합 요약 상태 조회 성공", result));
 	}

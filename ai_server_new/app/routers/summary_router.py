@@ -19,7 +19,7 @@ async def room_reviews_summary(
     room_reviews:RoomSummaryRequest,
     room_summary_service: Annotated[RoomSummaryService, Depends(get_room_summary_service)]
 ):
-    logger.info("router entered roomNo=%s texts=%s", room_reviews.roomNo, len(room_reviews.texts or []))
+    # logger.info("router entered roomNo=%s texts=%s", room_reviews.roomNo, len(room_reviews.texts or []))
     
     try:
         summary = await room_summary_service.summary_room_reviews(room_reviews.texts)

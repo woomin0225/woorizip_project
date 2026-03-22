@@ -8,7 +8,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.data.domain.PageRequest;
@@ -17,6 +16,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -29,15 +29,17 @@ import org.team4p.woorizip.room.dto.ai.EmbedResponse;
 import org.team4p.woorizip.room.dto.ai.RoomTotalRequest;
 import org.team4p.woorizip.room.dto.ai.RoomTotalResponse;
 import org.team4p.woorizip.room.dto.response.RoomAiAnalyzeResponse;
+import org.team4p.woorizip.room.image.analyze.jpa.repository.RoomImageAnalysisRepository;
 import org.team4p.woorizip.room.image.jpa.entity.RoomImageSummaryEntity;
 import org.team4p.woorizip.room.image.service.RoomImageSummaryService;
 import org.team4p.woorizip.room.jpa.entity.RoomEmbeddingEntity;
-import org.team4p.woorizip.room.jpa.entity.RoomFinalSummaryEntity;
 import org.team4p.woorizip.room.jpa.entity.RoomEntity;
+import org.team4p.woorizip.room.jpa.entity.RoomFinalSummaryEntity;
 import org.team4p.woorizip.room.jpa.repository.RoomEmbeddingRepository;
 import org.team4p.woorizip.room.jpa.repository.RoomFinalSummaryRepository;
 import org.team4p.woorizip.room.jpa.repository.RoomRepository;
 import org.team4p.woorizip.room.review.jpa.entity.ReviewSummaryEntity;
+import org.team4p.woorizip.room.review.jpa.repository.ReviewRepository;
 import org.team4p.woorizip.room.review.service.ReviewSummaryService;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -46,7 +48,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import reactor.core.publisher.Mono;
 
 @Slf4j
 @Service
@@ -65,6 +66,8 @@ public class RoomAiServiceImpl implements RoomAiService {
     private final RoomImageSummaryService roomImageSummaryService;
     private final RoomEmbeddingRepository roomEmbeddingRepository;
     private final RoomFinalSummaryRepository roomFinalSummaryRepository;
+    private final ReviewRepository reviewRepository;
+    private final RoomImageAnalysisRepository roomImageAnalysisRepository;
 
 	private final ObjectMapper objectMapper;
 
@@ -190,6 +193,10 @@ public class RoomAiServiceImpl implements RoomAiService {
 		if(isFinalSummaryFresh(entity, roomNo)) {
 			return entity;
 		}
+		if(STATUS_PROCESSING.equals(entity.getSummaryStatus())) {
+			// Keep the current worker running instead of resetting an in-flight summary back to PENDING.
+			return entity;
+		}
 
 		entity.setSummaryStatus(STATUS_PENDING);
 		entity.setLastErrorMessage(null);
@@ -219,26 +226,40 @@ public class RoomAiServiceImpl implements RoomAiService {
 	}
 
 	@Override
-	@Transactional
-	public String summaryPendingRooms(RoomFinalSummaryEntity entity) {
-		if(entity == null) {
-			throw new IllegalArgumentException("Room final summary row not found.");
+	public String summaryPendingRooms(String roomNo) {
+		if(roomNo == null || roomNo.isBlank()) {
+			throw new IllegalArgumentException("roomNo is required.");
 		}
-		if(!isReadyForFinalSummary(entity.getRoomNo())) {
-			return "요약 대기";
+
+		RoomFinalSummaryEntity entity = roomFinalSummaryRepository.findById(roomNo)
+				.orElseThrow(() -> new IllegalArgumentException("Room final summary row not found."));
+		if(!isReadyForFinalSummary(roomNo)) {
+			return "Summary pending prerequisites";
 		}
 		if(STATUS_PROCESSING.equals(entity.getSummaryStatus())) {
-			return "요약 처리중";
+			return "Summary already processing";
 		}
-		if(STATUS_DONE.equals(entity.getSummaryStatus()) && isFinalSummaryFresh(entity, entity.getRoomNo())) {
+		if(STATUS_DONE.equals(entity.getSummaryStatus()) && isFinalSummaryFresh(entity, roomNo)) {
 			return defaultString(entity.getFinalSummary());
 		}
 
-		entity.setSummaryStatus(STATUS_PROCESSING);
-		roomFinalSummaryRepository.save(entity);
+		// Claim the row in a short transaction first so the long AI call does not hold the row lock.
+		int claimed = roomFinalSummaryRepository.claimProcessing(roomNo, STATUS_PENDING, STATUS_PROCESSING, LocalDateTime.now());
+		if(claimed == 0) {
+			RoomFinalSummaryEntity current = roomFinalSummaryRepository.findById(roomNo)
+					.orElseThrow(() -> new IllegalArgumentException("Room final summary row not found."));
+			if(STATUS_PROCESSING.equals(current.getSummaryStatus())) {
+				return "Summary already processing";
+			}
+			if(STATUS_DONE.equals(current.getSummaryStatus()) && isFinalSummaryFresh(current, roomNo)) {
+				return defaultString(current.getFinalSummary());
+			}
+			return defaultString(current.getFinalSummary());
+		}
 
+		entity = roomFinalSummaryRepository.findById(roomNo)
+				.orElseThrow(() -> new IllegalArgumentException("Room final summary row not found."));
 		WebClient webClient = webClientBuilder.build();
-		String roomNo = entity.getRoomNo();
 		RoomTotalRequest request = buildRoomTotalRequest(roomNo);
 
 		try {
@@ -268,13 +289,14 @@ public class RoomAiServiceImpl implements RoomAiService {
 				entity.setSummaryStatus(STATUS_PENDING);
 			}
 			entity.setLastErrorMessage(e.getMessage());
+			entity.setUpdatedAt(LocalDateTime.now());
 			roomFinalSummaryRepository.save(entity);
 			throw new RuntimeException("Room summary request failed: " + e.getMessage(), e);
 		}
 	}
 
 	@Override
-	@Async
+	@Async("aiTaskExecutor")
 	public void startSummarizedRoomAsync(String roomNo) {
 		RoomFinalSummaryEntity entity = roomFinalSummaryRepository.findById(roomNo).orElse(null);
 		if(entity == null) {
@@ -291,7 +313,8 @@ public class RoomAiServiceImpl implements RoomAiService {
 		}
 
 		try {
-			summaryPendingRooms(entity);
+			// Reuse the same claim path as the scheduler so both entry points follow identical rules.
+			summaryPendingRooms(roomNo);
 		} catch (Exception e) {
 			log.info("방 종합 요약 비동기 처리중 에러 발생 {}: {}", roomNo, e.getMessage());
 		}
@@ -379,6 +402,8 @@ public class RoomAiServiceImpl implements RoomAiService {
 				.orElseThrow(() -> new IllegalArgumentException("House not found for room. roomNo=" + roomNo));
 		ReviewSummaryEntity reviewSummary = reviewSummaryService.selectSummarizedReview(roomNo);
 		RoomImageSummaryEntity imageSummary = roomImageSummaryService.selectSummarizedImageCaption(roomNo);
+		List<String> reviews = reviewRepository.findAllReviewContentsByRoomNo(roomNo);
+		List<String> imageCaptions = roomImageAnalysisRepository.findAllImageCaptionsByRoomNo(roomNo);
 
 		if(reviewSummary == null || imageSummary == null) {
 			throw new IllegalStateException("Embedding prerequisites are missing. roomNo=" + roomNo);
@@ -413,7 +438,9 @@ public class RoomAiServiceImpl implements RoomAiService {
 				.roomStatus(defaultString(room.getRoomStatus()))
 				.roomOptions(defaultString(room.getRoomOptions()))
 				.imageSummary(defaultString(imageSummary.getImageSummary()))
+				.imageCaptions(defaultList(imageCaptions))
 				.reviewSummary(defaultString(reviewSummary.getReviewSummary()))
+				.reviews(defaultList(reviews))
 				.build();
 //		log.info("Prepared embedding payload. roomNo={}", roomNo);
 		return request;
@@ -525,6 +552,10 @@ public class RoomAiServiceImpl implements RoomAiService {
 
 	private String defaultString(String value) {
 		return value == null ? "" : value;
+	}
+	
+	private <T> List<T> defaultList(List<T> list) {
+		return list == null ? new ArrayList<>() : list; 
 	}
 
 	private LocalDateTime defaultRoomCreatedAt(RoomEntity room) {

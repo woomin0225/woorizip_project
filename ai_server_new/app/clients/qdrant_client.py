@@ -7,6 +7,7 @@ from qdrant_client.models import PointStruct
 from qdrant_client.models import VectorParams, Distance
 from app.schemas import RoomTotalRequest
 import logging
+from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -15,8 +16,8 @@ class QdrantDbClient:
     def __init__(self, url:str="http://localhost:6333"):
         # self.client=QdrantClient(url=url) # 로컬용
         self.client = QdrantClient(
-            url="https://67244007-2025-4429-8b6c-764e71885a21.sa-east-1-0.aws.cloud.qdrant.io:6333",    # 임시 무료 클라우드 서버
-            api_key="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2Nlc3MiOiJtIn0.Jj_WYSz2iWyht8ki9B2Q4uhdJ-WkGQpFLZo3bF54nmM", # 임시
+            url=settings.QDRANT_URL,
+            api_key=settings.QDRANT_APIKEY,
         )
         
     def ensure_collection(self, name:str):
@@ -26,6 +27,12 @@ class QdrantDbClient:
                 vectors_config=VectorParams(size=1024, distance=Distance.COSINE),
                 # text-embedding-3-small은 차원수 1536, 벡터유사도 계산방식 COSINE 추천
                 # nlpai-lab/KURE-v1은 차원수 1024
+        )
+        # roomNo payload field를 keyword 인덱스로 보장 (삭제시에도 필요함)
+        self.client.create_payload_index(
+            collection_name=name,
+            field_name="roomNo",
+            field_schema=models.PayloadSchemaType.KEYWORD,
         )
 
     def upsert(self, collection_name: str, vector):
@@ -50,7 +57,7 @@ class QdrantDbClient:
             wait=True,
             points=points,
         )
-        logger.info("Qdrant 방 벡터 등록 성공: %s", info)
+        # logger.info("Qdrant 방 벡터 등록 성공: %s", info)
         
     def room_query(self, collection_name:str, point):
         hits = self.client.query_points(
@@ -62,12 +69,12 @@ class QdrantDbClient:
         for hit in hits:
             payload = hit.payload if isinstance(hit.payload, dict) else {}
             room_no = payload.get("roomNo")
-            logger.info("Qdrant room hit roomNo=%s score=%s", room_no, hit.score)
+            # logger.info("Qdrant room hit roomNo=%s score=%s", room_no, hit.score)
             
         return hits
     
     def remove_room_vector(self, collection_name: str, room_no):
-        logger.info("Qdrant에 방 벡터 삭제요청. room_no=%s, collection_name=%s", room_no, collection_name)
+        # logger.info("Qdrant에 방 벡터 삭제요청. room_no=%s, collection_name=%s", room_no, collection_name)
         try:
             result = self.client.delete(
                 collection_name=collection_name,
@@ -83,8 +90,8 @@ class QdrantDbClient:
                 ),
                 wait=True
             )
-            logger.info("Qdrant 방 벡터 삭제 성공. room_no=%s, collection_name=%s, result=%s", room_no, collection_name, result)
+            # logger.info("Qdrant 방 벡터 삭제 성공. room_no=%s, collection_name=%s, result=%s", room_no, collection_name, result)
             return result
         except Exception:
-            logger.exception("Qdrant 방 벡터 삭제 에러발생. room_no=%s, collection_name=%s", room_no, collection_name)
+            # logger.exception("Qdrant 방 벡터 삭제 에러발생. room_no=%s, collection_name=%s", room_no, collection_name)
             raise

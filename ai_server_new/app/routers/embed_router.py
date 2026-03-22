@@ -32,8 +32,8 @@ async def RoomInfoEmbeddingAndStore(
     vector = await embedding_service.room_embed(target, tokenizer)
     
     # vectorStore
-    collection_name = "room_collection" # 저장할 컬렉션 이름
-    await vector_store.room_vector_store(collection_name, target, vector)
+    collection_name = "room_collection" # 저장할 컬렉션 이름(리턴용)
+    await vector_store.room_vector_store(target, vector)
     
     return {
         "status": True,
@@ -50,7 +50,7 @@ async def RemoveRoomVector(
     collection_name = "room_collection"
     logger.info("방 벡터 삭제 시작. room_no=%s, collection_name=%s", room_no, collection_name)
     try:
-        await vector_store.remove_room_vector(collection_name, room_no)
+        await vector_store.remove_room_vector(room_no)
         logger.info("방 벡터 삭제 마침. room_no=%s, collection_name=%s", room_no, collection_name)
     except Exception:
         logger.exception("방 벡터 삭제 실패. room_no=%s, collection_name=%s", room_no, collection_name)

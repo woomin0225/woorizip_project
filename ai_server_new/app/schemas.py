@@ -41,8 +41,10 @@ class RoomTotalRequest(BaseModel):
     roomEmptyYn: bool = Field(description="방의 공실여부")
     roomStatus: str = Field(description="방의 공개/숨김 상태")
     roomOptions: str = Field(description="방의 가구/옵션들")
-    imageSummary: str = Field(description="방의 이미지 캡션들을 요약한 글")
-    reviewSummary: str = Field(description="방의 리뷰들을 요약한 글")
+    imageSummary: Optional[str] = Field(description="방의 이미지 캡션들을 요약한 글")
+    imageCaptions: Optional[list] = Field(description="방의 각 이미지들의 설명")
+    reviewSummary: Optional[str] = Field(description="방의 리뷰들을 요약한 글")
+    reviews: Optional[list] = Field(description="방의 리뷰들")
     
     
 # 리뷰나 이미지 캡션들 요약시 사용

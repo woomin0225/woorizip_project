@@ -46,7 +46,7 @@ public class RoomImageSummaryServiceImpl implements RoomImageSummaryService{
 		
 		// 요약할 사진분석 목록 조회
 		String roomNo = entity.getRoomNo();
-		List<String> analyzedList = roomImageAnalysisRepository.findAllImageCaptionsByRoomNoOrderByAnalysisCreatedAtDesc(roomNo);
+		List<String> analyzedList = roomImageAnalysisRepository.findAllImageCaptionsByRoomNo(roomNo);
 		RoomImageSummaryRequest request = RoomImageSummaryRequest.builder()
 								.roomNo(roomNo)
 								.texts(analyzedList)
