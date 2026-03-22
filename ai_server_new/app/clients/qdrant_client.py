@@ -57,7 +57,7 @@ class QdrantDbClient:
             wait=True,
             points=points,
         )
-        logger.info("Qdrant 방 벡터 등록 성공: %s", info)
+        # logger.info("Qdrant 방 벡터 등록 성공: %s", info)
         
     def room_query(self, collection_name:str, point):
         hits = self.client.query_points(
@@ -69,12 +69,12 @@ class QdrantDbClient:
         for hit in hits:
             payload = hit.payload if isinstance(hit.payload, dict) else {}
             room_no = payload.get("roomNo")
-            logger.info("Qdrant room hit roomNo=%s score=%s", room_no, hit.score)
+            # logger.info("Qdrant room hit roomNo=%s score=%s", room_no, hit.score)
             
         return hits
     
     def remove_room_vector(self, collection_name: str, room_no):
-        logger.info("Qdrant에 방 벡터 삭제요청. room_no=%s, collection_name=%s", room_no, collection_name)
+        # logger.info("Qdrant에 방 벡터 삭제요청. room_no=%s, collection_name=%s", room_no, collection_name)
         try:
             result = self.client.delete(
                 collection_name=collection_name,
@@ -90,8 +90,8 @@ class QdrantDbClient:
                 ),
                 wait=True
             )
-            logger.info("Qdrant 방 벡터 삭제 성공. room_no=%s, collection_name=%s, result=%s", room_no, collection_name, result)
+            # logger.info("Qdrant 방 벡터 삭제 성공. room_no=%s, collection_name=%s, result=%s", room_no, collection_name, result)
             return result
         except Exception:
-            logger.exception("Qdrant 방 벡터 삭제 에러발생. room_no=%s, collection_name=%s", room_no, collection_name)
+            # logger.exception("Qdrant 방 벡터 삭제 에러발생. room_no=%s, collection_name=%s", room_no, collection_name)
             raise

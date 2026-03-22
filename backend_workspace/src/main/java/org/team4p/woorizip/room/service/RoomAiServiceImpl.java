@@ -193,6 +193,10 @@ public class RoomAiServiceImpl implements RoomAiService {
 		if(isFinalSummaryFresh(entity, roomNo)) {
 			return entity;
 		}
+		if(STATUS_PROCESSING.equals(entity.getSummaryStatus())) {
+			// Keep the current worker running instead of resetting an in-flight summary back to PENDING.
+			return entity;
+		}
 
 		entity.setSummaryStatus(STATUS_PENDING);
 		entity.setLastErrorMessage(null);
@@ -222,26 +226,40 @@ public class RoomAiServiceImpl implements RoomAiService {
 	}
 
 	@Override
-	@Transactional
-	public String summaryPendingRooms(RoomFinalSummaryEntity entity) {
-		if(entity == null) {
-			throw new IllegalArgumentException("Room final summary row not found.");
+	public String summaryPendingRooms(String roomNo) {
+		if(roomNo == null || roomNo.isBlank()) {
+			throw new IllegalArgumentException("roomNo is required.");
 		}
-		if(!isReadyForFinalSummary(entity.getRoomNo())) {
-			return "요약 대기";
+
+		RoomFinalSummaryEntity entity = roomFinalSummaryRepository.findById(roomNo)
+				.orElseThrow(() -> new IllegalArgumentException("Room final summary row not found."));
+		if(!isReadyForFinalSummary(roomNo)) {
+			return "Summary pending prerequisites";
 		}
 		if(STATUS_PROCESSING.equals(entity.getSummaryStatus())) {
-			return "요약 처리중";
+			return "Summary already processing";
 		}
-		if(STATUS_DONE.equals(entity.getSummaryStatus()) && isFinalSummaryFresh(entity, entity.getRoomNo())) {
+		if(STATUS_DONE.equals(entity.getSummaryStatus()) && isFinalSummaryFresh(entity, roomNo)) {
 			return defaultString(entity.getFinalSummary());
 		}
 
-		entity.setSummaryStatus(STATUS_PROCESSING);
-		roomFinalSummaryRepository.save(entity);
+		// Claim the row in a short transaction first so the long AI call does not hold the row lock.
+		int claimed = roomFinalSummaryRepository.claimProcessing(roomNo, STATUS_PENDING, STATUS_PROCESSING, LocalDateTime.now());
+		if(claimed == 0) {
+			RoomFinalSummaryEntity current = roomFinalSummaryRepository.findById(roomNo)
+					.orElseThrow(() -> new IllegalArgumentException("Room final summary row not found."));
+			if(STATUS_PROCESSING.equals(current.getSummaryStatus())) {
+				return "Summary already processing";
+			}
+			if(STATUS_DONE.equals(current.getSummaryStatus()) && isFinalSummaryFresh(current, roomNo)) {
+				return defaultString(current.getFinalSummary());
+			}
+			return defaultString(current.getFinalSummary());
+		}
 
+		entity = roomFinalSummaryRepository.findById(roomNo)
+				.orElseThrow(() -> new IllegalArgumentException("Room final summary row not found."));
 		WebClient webClient = webClientBuilder.build();
-		String roomNo = entity.getRoomNo();
 		RoomTotalRequest request = buildRoomTotalRequest(roomNo);
 
 		try {
@@ -271,6 +289,7 @@ public class RoomAiServiceImpl implements RoomAiService {
 				entity.setSummaryStatus(STATUS_PENDING);
 			}
 			entity.setLastErrorMessage(e.getMessage());
+			entity.setUpdatedAt(LocalDateTime.now());
 			roomFinalSummaryRepository.save(entity);
 			throw new RuntimeException("Room summary request failed: " + e.getMessage(), e);
 		}
@@ -294,7 +313,8 @@ public class RoomAiServiceImpl implements RoomAiService {
 		}
 
 		try {
-			summaryPendingRooms(entity);
+			// Reuse the same claim path as the scheduler so both entry points follow identical rules.
+			summaryPendingRooms(roomNo);
 		} catch (Exception e) {
 			log.info("방 종합 요약 비동기 처리중 에러 발생 {}: {}", roomNo, e.getMessage());
 		}
