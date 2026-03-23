@@ -2,8 +2,11 @@ import { useAuth } from '../../../app/providers/AuthProvider';
 import { tokenStore } from '../../../app/http/tokenStore';
 import { useState, useEffect, useCallback } from 'react';
 import {
+  checkId as checkIdApi,
   findId as findIdApi,
   findPassword as findPasswordApi,
+  login as loginApi,
+  signup as signupApi,
 } from '../api/authApi';
 import { usePassVerification } from './usePassVerification';
 
@@ -121,18 +124,9 @@ export function useSignup() {
     if (!form.emailId) return alert('이메일 아이디를 입력해주세요.');
 
     try {
-      const res = await fetch(
-        `http://localhost:8080/api/user/check-id?email_id=${form.emailId}`,
-        { method: 'POST' }
-      );
-      const data = await res.json();
+      const result = await checkIdApi(form.emailId);
 
-      if (
-        res.ok &&
-        (data.body === 'ok' ||
-          data.data === 'ok' ||
-          data.message?.includes('ok'))
-      ) {
+      if (result.isAvailable) {
         alert('사용 가능한 아이디입니다.');
         setIsIdChecked(true);
       } else {
@@ -172,28 +166,18 @@ export function useSignup() {
     setError('');
 
     try {
-      const res = await fetch('http://localhost:8080/api/user/signup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          emailId: form.emailId,
-          password: form.password,
-          name: form.name,
-          phone: String(form.phone || '').replace(/\D/g, ''),
-          gender: derived.gender,
-          birthDate: derived.birthDate,
-          type: form.type,
-        }),
+      await signupApi({
+        emailId: form.emailId,
+        password: form.password,
+        name: form.name,
+        phone: String(form.phone || '').replace(/\D/g, ''),
+        gender: derived.gender,
+        birthDate: derived.birthDate,
+        type: form.type,
       });
 
-      const data = await res.json();
-
-      if (res.ok) {
-        alert('회원가입이 완료되었습니다.');
-        navigate('/login');
-      } else {
-        throw new Error(data.message || '회원가입에 실패했습니다.');
-      }
+      alert('회원가입이 완료되었습니다.');
+      navigate('/login');
     } catch (err) {
       setError(err.message || '서버와 통신할 수 없습니다.');
     } finally {
@@ -403,17 +387,7 @@ export function useLogin() {
     setError('');
 
     try {
-      const res = await fetch('http://localhost:8080/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
-      });
-
-      if (!res.ok) {
-        throw new Error('이메일 아이디 또는 비밀번호가 일치하지 않습니다.');
-      }
-
-      const data = await res.json();
+      const data = await loginApi(form);
 
       if (!data.accessToken) {
         throw new Error('토큰 발급에 실패했습니다.');

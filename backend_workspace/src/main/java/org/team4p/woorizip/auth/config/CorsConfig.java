@@ -22,7 +22,9 @@ public class CorsConfig {
                 "https://localhost:3000",
                 "https://127.0.0.1:3000",
                 "https://localhost:5173",
-                "https://127.0.0.1:5173"
+                "https://127.0.0.1:5173",
+                "https://www.woorizip.life",
+                "https://djp03e6kjvr2l.cloudfront.net"
         ));
 
         config.setAllowedMethods(List.of("GET","POST","PUT","PATCH","DELETE","OPTIONS"));

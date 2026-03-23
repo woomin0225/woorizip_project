@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useLogin } from '../hooks/useUserHooks';
+import { getApiBaseUrl } from '../../../app/config/env';
 import {
   Button,
   Card,
@@ -22,6 +23,7 @@ export default function Login() {
   const mainRef = useRef(null);
   const { form, loading, error, handleChange, handleLogin } = useLogin();
   const [validated, setValidated] = useState(false);
+  const backendBaseUrl = getApiBaseUrl();
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -37,7 +39,7 @@ export default function Login() {
   };
 
   const handleSocialLogin = (provider) => {
-    const backendUrl = `http://localhost:8080/oauth2/authorization/${provider}`;
+    const backendUrl = `${backendBaseUrl}/oauth2/authorization/${provider}`;
     window.location.href = backendUrl;
   };
 
