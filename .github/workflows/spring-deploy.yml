@@ -46,6 +46,11 @@ jobs:
           aws s3 cp build/libs/*.jar
           s3://${{ secrets.ARTIFACT_BUCKET }}/spring/${{ github.sha }}/app.jar
 
+      - name: Upload env writer to artifact bucket
+        run: >
+          aws s3 cp ../.github/scripts/spring-write-env.sh
+          s3://${{ secrets.ARTIFACT_BUCKET }}/spring/${{ github.sha }}/write-env.sh
+
       - name: Deploy with SSM
         run: >
           aws ssm send-command
@@ -59,6 +64,8 @@ jobs:
               "mkdir -p /opt/myapp/storage/upload_files",
               "mkdir -p /opt/myapp/storage/contract_docs",
               "aws s3 cp s3://${{ secrets.ARTIFACT_BUCKET }}/spring/${{ github.sha }}/app.jar /opt/myapp/spring/app.jar",
+              "aws s3 cp s3://${{ secrets.ARTIFACT_BUCKET }}/spring/${{ github.sha }}/write-env.sh /opt/myapp/spring/write-env.sh",
+              "chmod +x /opt/myapp/spring/write-env.sh",
               "/opt/myapp/spring/write-env.sh",
               "chown -R ubuntu:ubuntu /opt/myapp",
               "sudo systemctl restart spring-app",
