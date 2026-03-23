@@ -1,4 +1,5 @@
 import { useAuth } from '../../../app/providers/AuthProvider';
+import { getApiBaseUrl } from '../../../app/config/env';
 import { tokenStore } from '../../../app/http/tokenStore';
 import { useState, useEffect, useCallback } from 'react';
 import {
@@ -427,16 +428,17 @@ export function useAdminUserList() {
   const [searchType, setSearchType] = useState('emailId');
   const [searchKeyword, setSearchKeyword] = useState('');
   const [activeSearch, setActiveSearch] = useState({ type: '', keyword: '' });
+  const apiBaseUrl = getApiBaseUrl();
 
   const fetchUsers = useCallback(
     async (currentPage, searchParams) => {
       setLoading(true);
       setError('');
       try {
-        let url = `/api/user/list?page=${currentPage}&size=${size}&sort=createdAt&direct=DESC`;
+        let url = `${apiBaseUrl}/api/user/list?page=${currentPage}&size=${size}&sort=createdAt&direct=DESC`;
 
         if (searchParams.keyword) {
-          url = `/api/user/search?page=${currentPage}&size=${size}&${searchParams.type}=${searchParams.keyword}`;
+          url = `${apiBaseUrl}/api/user/search?page=${currentPage}&size=${size}&${searchParams.type}=${searchParams.keyword}`;
         }
 
         const res = await fetch(url, {
