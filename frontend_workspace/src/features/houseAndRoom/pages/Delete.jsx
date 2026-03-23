@@ -73,10 +73,15 @@ export default function Delete() {
   function openDeleteHouse() {
     if (!selectedHouse) return;
 
+    const roomCount = rooms.filter(Boolean).length;
+    const occupiedRoomCount = rooms.filter((room) => room && !isRoomEmpty(room)).length;
+
     setTarget({
       type: "HOUSE",
       houseNo: selectedHouse.houseNo,
       houseName: selectedHouse.houseName,
+      roomCount,
+      occupiedRoomCount,
     });
     setModalOpen(true);
   }
@@ -126,13 +131,23 @@ export default function Delete() {
   }
 
   const modalTitle =
-    target?.type === "HOUSE" ? "건물 삭제" : target?.type === "ROOM" ? "방 삭제" : "삭제";
+    target?.type === "HOUSE" ? "건물 삭제 확인" : target?.type === "ROOM" ? "방 삭제" : "삭제";
 
   const modalMessage = !target
     ? ""
     : target.type === "HOUSE"
-      ? `건물(${target.houseName ?? target.houseNo})을(를) 삭제할까요?\n(건물에 속한 방도 삭제됩니다.)`
+      ? `${target.houseName ?? target.houseNo} 건물을 삭제하면${
+          target.roomCount > 0 ? `\n이 건물에 속한 방 ${target.roomCount}개도 함께 삭제됩니다.` : ""
+        }`
       : `방(${target.roomName ?? target.roomNo})을(를) 삭제할까요?`;
+
+  const modalWarning = !target
+    ? ""
+    : target.type === "HOUSE"
+      ? `${target.occupiedRoomCount > 0 ? `현재 거주중인 방 ${target.occupiedRoomCount}개가 포함되어 있습니다.\n` : ""}그래도 삭제하시겠습니까?`
+      : "";
+
+  const modalConfirmText = target?.type === "HOUSE" ? "그래도 삭제" : "삭제";
 
   return (
     <div className={styles.wrap}>
@@ -226,6 +241,8 @@ export default function Delete() {
         open={modalOpen}
         title={modalTitle}
         message={modalMessage}
+        warning={modalWarning}
+        confirmText={modalConfirmText}
         onCancel={() => {
           setModalOpen(false);
           setTarget(null);
