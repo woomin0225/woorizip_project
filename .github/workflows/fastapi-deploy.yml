@@ -24,6 +24,7 @@ jobs:
         run: |
           cd ai_server_new
           zip -r ../fastapi.zip . -x ".venv/*" "__pycache__/*" "*.pyc" ".git/*"
+          unzip -t ../fastapi.zip
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v5
@@ -36,24 +37,81 @@ jobs:
           aws s3 cp fastapi.zip
           s3://${{ secrets.ARTIFACT_BUCKET }}/fastapi/${{ github.sha }}/fastapi.zip
 
+      - name: Create presigned URLs
+        id: presign
+        run: |
+          ZIP_URL=$(aws s3 presign s3://${{ secrets.ARTIFACT_BUCKET }}/fastapi/${{ github.sha }}/fastapi.zip --expires-in 3600)
+          echo "zip_url=$ZIP_URL" >> $GITHUB_OUTPUT
+
       - name: Deploy with SSM
-        run: >
-          aws ssm send-command
-          --instance-ids "${{ secrets.FASTAPI_INSTANCE_ID }}"
-          --document-name "AWS-RunShellScript"
-          --comment "Deploy FastAPI"
-          --parameters '{
-            "commands":[
-              "set -e",
-              "mkdir -p /opt/myapp/fastapi/releases/${{ github.sha }}",
-              "aws s3 cp s3://${{ secrets.ARTIFACT_BUCKET }}/fastapi/${{ github.sha }}/fastapi.zip /opt/myapp/fastapi/releases/${{ github.sha }}/fastapi.zip",
-              "cd /opt/myapp/fastapi/releases/${{ github.sha }} && unzip -o fastapi.zip",
-              "/opt/myapp/fastapi/venv/bin/pip install -r /opt/myapp/fastapi/releases/${{ github.sha }}/requirements.txt",
-              "ln -sfn /opt/myapp/fastapi/releases/${{ github.sha }} /opt/myapp/fastapi/current",
-              "/opt/myapp/fastapi/write-env.sh",
-              "chown -R ubuntu:ubuntu /opt/myapp",
-              "sudo systemctl restart fastapi-app",
-              "sleep 5",
-              "sudo systemctl --no-pager --full status fastapi-app"
-            ]
-          }'
+        id: deploy_ssm
+        run: |
+          COMMAND_ID=$(aws ssm send-command \
+            --instance-ids "${{ secrets.FASTAPI_INSTANCE_ID }}" \
+            --document-name "AWS-RunShellScript" \
+            --comment "Deploy FastAPI" \
+            --query "Command.CommandId" \
+            --output text \
+            --parameters '{
+              "commands":[
+                "set -e",
+                "if ! command -v unzip >/dev/null 2>&1; then sudo apt-get update && sudo apt-get install -y unzip; fi",
+                "mkdir -p /opt/myapp/fastapi/releases/${{ github.sha }}",
+                "curl -fL \"${{ steps.presign.outputs.zip_url }}\" -o /opt/myapp/fastapi/releases/${{ github.sha }}/fastapi.zip",
+                "ls -lh /opt/myapp/fastapi/releases/${{ github.sha }}/fastapi.zip",
+                "unzip -t /opt/myapp/fastapi/releases/${{ github.sha }}/fastapi.zip",
+                "cd /opt/myapp/fastapi/releases/${{ github.sha }} && unzip -o fastapi.zip",
+                "ls -la /opt/myapp/fastapi/releases/${{ github.sha }}",
+                "/opt/myapp/fastapi/venv/bin/pip install -r /opt/myapp/fastapi/releases/${{ github.sha }}/requirements.txt",
+                "ln -sfn /opt/myapp/fastapi/releases/${{ github.sha }} /opt/myapp/fastapi/current",
+                "test -f /opt/myapp/env/fastapi.env",
+                "chown -R ubuntu:ubuntu /opt/myapp",
+                "sudo systemctl restart fastapi-app",
+                "sleep 5",
+                "sudo systemctl --no-pager --full status fastapi-app"
+              ]
+            }')
+          echo "command_id=$COMMAND_ID" >> $GITHUB_OUTPUT
+          echo "SSM command submitted: $COMMAND_ID"
+
+      - name: Wait for SSM command
+        run: |
+          COMMAND_ID="${{ steps.deploy_ssm.outputs.command_id }}"
+
+          for i in $(seq 1 60); do
+            STATUS=$(aws ssm get-command-invocation \
+              --command-id "$COMMAND_ID" \
+              --instance-id "${{ secrets.FASTAPI_INSTANCE_ID }}" \
+              --query "Status" \
+              --output text 2>/dev/null || echo "Pending")
+
+            echo "SSM status: $STATUS"
+
+            if [ "$STATUS" = "Success" ]; then
+              aws ssm get-command-invocation \
+                --command-id "$COMMAND_ID" \
+                --instance-id "${{ secrets.FASTAPI_INSTANCE_ID }}" \
+                --query "StandardOutputContent" \
+                --output text
+              exit 0
+            fi
+
+            if [ "$STATUS" = "Cancelled" ] || [ "$STATUS" = "TimedOut" ] || [ "$STATUS" = "Failed" ] || [ "$STATUS" = "Cancelling" ]; then
+              aws ssm get-command-invocation \
+                --command-id "$COMMAND_ID" \
+                --instance-id "${{ secrets.FASTAPI_INSTANCE_ID }}" \
+                --query "StandardOutputContent" \
+                --output text || true
+              aws ssm get-command-invocation \
+                --command-id "$COMMAND_ID" \
+                --instance-id "${{ secrets.FASTAPI_INSTANCE_ID }}" \
+                --query "StandardErrorContent" \
+                --output text || true
+              exit 1
+            fi
+
+            sleep 5
+          done
+
+          echo "SSM command did not finish in time"
+          exit 1
