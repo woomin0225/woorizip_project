@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
+import { getApiAssetUrl } from '../../../../app/config/env';
 import defaultMarkerIcon from '../../../../assets/images/map/marker-default.svg';
 import activeMarkerIcon from '../../../../assets/images/map/marker-active.svg';
 import styles from './MapPanel.module.css';
@@ -36,7 +37,7 @@ function formatMoneyKRW(value) {
 function houseImgUrl(imageName) {
   if (!imageName) return null;
   if (imageName.startsWith('http')) return imageName;
-  return `http://localhost:8080/upload/house_image/${imageName}`;
+  return getApiAssetUrl(`/upload/house_image/${imageName}`);
 }
 
 function MarkerPopup({ house, rooms, onClose, onEnter, onLeave }) {

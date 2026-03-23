@@ -2,6 +2,7 @@
 import React from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
+import { getApiAssetUrl } from '../../../../app/config/env';
 import styles from '../notice/NoticeDetail.module.css';
 import FileDownloadButton from '../../components/FileDownloadButton';
 import CommentBox from '../../components/CommentBox';
@@ -50,9 +51,7 @@ export default function QnaDetail() {
   };
 
   const getQnaFileUrl = (f) => {
-    // 백엔드 정적서빙 경로에 맞춰 필요시만 바꿔주세요
-    // (지금 배너처럼 /upload_files/qna/... 형태를 쓴다는 가정)
-    return `http://localhost:8080/upload/qna/${f.updatedFileName}`;
+    return getApiAssetUrl(`/upload/qna/${f.updatedFileName}`);
   };
 
   const imageFiles = files.filter(isImageFile);

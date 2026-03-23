@@ -1,6 +1,7 @@
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import { Card, CardBody, Row, Col } from 'reactstrap';
+import { getApiAssetUrl } from '../../../../app/config/env';
 import styles from './ViewsRankingList.module.css';
 import woorizipLogo from '../../../../assets/images/logo-muted.png';
 
@@ -29,7 +30,7 @@ export default function ReviewRankingList({ list = [] }) {
         ) : (
           list.map((item, index) => {
             const imageSrc = item?.repImageName
-              ? `http://localhost:8080/upload/room_image/${item.repImageName}`
+              ? getApiAssetUrl(`/upload/room_image/${item.repImageName}`)
               : null;
 
             const avgRating = Number(item?.avgRating);

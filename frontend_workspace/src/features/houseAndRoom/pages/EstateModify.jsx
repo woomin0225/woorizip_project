@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { getApiAssetUrl } from "../../../app/config/env";
 import styles from "./EstateModify.module.css";
 
 import { getMyHouses, getHouse, getHouseImages, modifyHouse, getRoomByHouseNo } from "../api/houseApi";
@@ -287,7 +288,7 @@ export default function EstateModify() {
                   <div className={styles.sectionTitle}>기존 건물 사진 삭제 선택</div>
                   <ExistingImagePicker
                     items={houseImages}
-                    baseUrl="http://localhost:8080/upload/house_image"
+                    baseUrl={getApiAssetUrl('/upload/house_image')}
                     selectedIds={deleteHouseImageNos}
                     onToggle={toggleDeleteHouseImage}
                   />
@@ -315,7 +316,7 @@ export default function EstateModify() {
                   <div className={styles.sectionTitle}>기존 방 사진 삭제 선택</div>
                   <ExistingImagePicker
                     items={roomImages}
-                    baseUrl="http://localhost:8080/upload/room_image"
+                    baseUrl={getApiAssetUrl('/upload/room_image')}
                     selectedIds={deleteRoomImageNos}
                     onToggle={toggleDeleteRoomImage}
                   />
