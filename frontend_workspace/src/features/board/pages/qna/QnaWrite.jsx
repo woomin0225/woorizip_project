@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 
 import PostEditor from '../../components/PostEditor';
 import { useQnaWrite } from '../../hooks/useQnaWrite';
+import { buildUploadUrl } from '../../../../app/config/env';
 
 export default function QnaWrite() {
   const navigate = useNavigate();
@@ -27,9 +28,7 @@ export default function QnaWrite() {
       newFiles={newFiles}
       setNewFiles={setNewFiles}
       filePreviewUrls={filePreviewUrls}
-      getFileUrl={(f) =>
-        `http://localhost:8080/upload_files/qna/${f.updatedFileName}`
-      }
+      getFileUrl={(f) => buildUploadUrl('upload/qna', f.updatedFileName)}
       submitting={submitting}
       onSubmit={handleSubmit}
       onCancel={() => navigate('/qna')}

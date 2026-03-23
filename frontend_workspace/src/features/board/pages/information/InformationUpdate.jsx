@@ -3,6 +3,7 @@ import React from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import PostEditor from '../../components/PostEditor';
 import { useInformationUpdate } from '../../hooks/useInformationUpdate';
+import { buildUploadUrl } from '../../../../app/config/env';
 
 export default function InformationUpdate() {
   const { postNo } = useParams();
@@ -43,7 +44,7 @@ export default function InformationUpdate() {
       submitting={submitting}
       onSubmit={onSubmit}
       getFileUrl={(f) =>
-        `http://localhost:8080/upload_files/information/${f.updatedFileName}`
+        buildUploadUrl('upload/information', f.updatedFileName)
       }
       onCancel={() => nav(`/information/${postNo}`)}
     />

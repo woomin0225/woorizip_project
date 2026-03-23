@@ -3,6 +3,7 @@ import React from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import PostEditor from '../../components/PostEditor';
 import { useQnaUpdate } from '../../hooks/useQnaUpdate';
+import { buildUploadUrl } from '../../../../app/config/env';
 
 export default function QnaUpdate() {
   const { postNo } = useParams();
@@ -44,9 +45,7 @@ export default function QnaUpdate() {
       submitting={submitting}
       onSubmit={onSubmit}
       filePreviewUrls={filePreviewUrls}
-      getFileUrl={(f) =>
-        `http://localhost:8080/upload_files/qna/${f.updatedFileName}`
-      }
+      getFileUrl={(f) => buildUploadUrl('upload/qna', f.updatedFileName)}
       onCancel={() => nav(`/qna/${postNo}`)}
     />
   );

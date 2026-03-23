@@ -3,6 +3,7 @@ import React from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import PostEditor from '../../components/PostEditor';
 import { useNoticeUpdate } from '../../hooks/useNoticeUpdate';
+import { buildUploadUrl } from '../../../../app/config/env';
 
 export default function NoticeUpdate() {
   const { postNo } = useParams();
@@ -42,9 +43,7 @@ export default function NoticeUpdate() {
       newFiles={newFiles}
       setNewFiles={setNewFiles}
       filePreviewUrls={filePreviewUrls}
-      getFileUrl={(f) =>
-        `http://localhost:8080/upload/notice/${f.updatedFileName}`
-      }
+      getFileUrl={(f) => buildUploadUrl('upload/notice', f.updatedFileName)}
       submitting={submitting}
       onSubmit={onSubmit}
       onCancel={() => nav(`/notices/${postNo}`)}

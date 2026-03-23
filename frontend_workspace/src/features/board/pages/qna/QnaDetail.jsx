@@ -7,6 +7,7 @@ import FileDownloadButton from '../../components/FileDownloadButton';
 import CommentBox from '../../components/CommentBox';
 import { useQnaDetail } from '../../hooks/useQnaDetail';
 import { downloadQnaFile } from '../../api/QnaApi';
+import { buildUploadUrl } from '../../../../app/config/env';
 
 // 라우트가 다르면 여기만 수정
 const EDIT_PATH = (postNo) => `/qna/${postNo}/edit`;
@@ -52,7 +53,7 @@ export default function QnaDetail() {
   const getQnaFileUrl = (f) => {
     // 백엔드 정적서빙 경로에 맞춰 필요시만 바꿔주세요
     // (지금 배너처럼 /upload_files/qna/... 형태를 쓴다는 가정)
-    return `http://localhost:8080/upload/qna/${f.updatedFileName}`;
+    return buildUploadUrl('upload/qna', f.updatedFileName);
   };
 
   const imageFiles = files.filter(isImageFile);

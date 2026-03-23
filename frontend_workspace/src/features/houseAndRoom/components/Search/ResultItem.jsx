@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import styles from './ResultItem.module.css';
+import { buildUploadUrl } from '../../../../app/config/env';
 
 // ===== 표시용 포맷 함수들 =====
 function methodLabel(method) {
@@ -97,7 +98,7 @@ export default function ResultItem({
   function imgUrl(imageName) {
     if (!imageName) return '#';
     if (imageName.startsWith('http')) return imageName;
-    return `http://localhost:8080/upload/room_image/${imageName}`;
+    return buildUploadUrl('upload/room_image', imageName);
   }
 
   // ✅ roomSearchResponse가 진짜 없으면 렌더만 비워주기

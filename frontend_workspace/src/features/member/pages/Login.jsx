@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { getApiBaseUrl } from '../../../app/config/env';
 import { useLogin } from '../hooks/useUserHooks';
 import {
   Button,
@@ -16,6 +17,8 @@ import {
   FormFeedback,
 } from 'reactstrap';
 import styles from './Login.module.css';
+
+const API_BASE_URL = getApiBaseUrl();
 
 export default function Login() {
   const navigate = useNavigate();
@@ -37,7 +40,7 @@ export default function Login() {
   };
 
   const handleSocialLogin = (provider) => {
-    const backendUrl = `http://localhost:8080/oauth2/authorization/${provider}`;
+    const backendUrl = `${API_BASE_URL}/oauth2/authorization/${provider}`;
     window.location.href = backendUrl;
   };
 

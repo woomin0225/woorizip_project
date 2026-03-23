@@ -6,6 +6,9 @@ import {
   findPassword as findPasswordApi,
 } from '../api/authApi';
 import { usePassVerification } from './usePassVerification';
+import { getApiBaseUrl } from '../../../app/config/env';
+
+const API_BASE_URL = getApiBaseUrl();
 
 function parseJwtPayload(token) {
   if (!token) return null;
@@ -122,7 +125,7 @@ export function useSignup() {
 
     try {
       const res = await fetch(
-        `http://localhost:8080/api/user/check-id?email_id=${form.emailId}`,
+        `${API_BASE_URL}/api/user/check-id?email_id=${form.emailId}`,
         { method: 'POST' }
       );
       const data = await res.json();
@@ -172,7 +175,7 @@ export function useSignup() {
     setError('');
 
     try {
-      const res = await fetch('http://localhost:8080/api/user/signup', {
+      const res = await fetch(`${API_BASE_URL}/api/user/signup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -269,7 +272,9 @@ export const useFindId = () => {
       const name = String(form.name || '').trim();
       const rawPhone = String(form.phone || '').trim();
       const normalizedPhone = rawPhone.replace(/\D/g, '');
-      const phoneCandidates = [...new Set([rawPhone, normalizedPhone].filter(Boolean))];
+      const phoneCandidates = [
+        ...new Set([rawPhone, normalizedPhone].filter(Boolean)),
+      ];
 
       let lastError = null;
       for (const phone of phoneCandidates) {
@@ -281,7 +286,9 @@ export const useFindId = () => {
           lastError = apiError;
           const isNotFound =
             apiError?.status === 404 ||
-            String(apiError?.message || '').includes('일치하는 회원 정보가 없습니다');
+            String(apiError?.message || '').includes(
+              '일치하는 회원 정보가 없습니다'
+            );
 
           if (!isNotFound) {
             throw apiError;
@@ -403,7 +410,7 @@ export function useLogin() {
     setError('');
 
     try {
-      const res = await fetch('http://localhost:8080/auth/login', {
+      const res = await fetch(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),

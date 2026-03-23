@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { useNoticeWrite } from '../../hooks/useNoticeWrite';
 import PostEditor from '../../components/PostEditor';
+import { buildUploadUrl } from '../../../../app/config/env';
 
 export default function NoticeWrite() {
   const navigate = useNavigate();
@@ -27,9 +28,7 @@ export default function NoticeWrite() {
       newFiles={newFiles}
       setNewFiles={setNewFiles}
       filePreviewUrls={filePreviewUrls}
-      getFileUrl={(f) =>
-        `http://localhost:8080/upload/notice/${f.updatedFileName}`
-      }
+      getFileUrl={(f) => buildUploadUrl('upload/notice', f.updatedFileName)}
       submitting={submitting}
       onSubmit={handleSubmit}
       onCancel={() => navigate('/notices')}

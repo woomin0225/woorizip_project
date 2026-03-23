@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import styles from './MapPanel.module.css';
+import { buildUploadUrl } from '../../../../app/config/env';
 
 function formatMoneyKRW(value) {
   if (value === null || value === undefined) return '';
@@ -22,14 +23,14 @@ function formatMoneyKRW(value) {
 function houseImgUrl(imageName) {
   if (!imageName) return null;
   if (imageName.startsWith('http')) return imageName;
-  return `http://localhost:8080/upload/house_image/${imageName}`;
+  return buildUploadUrl('upload/house_image', imageName);
 }
 
 function MarkerPopup({ house, rooms, onClose, onEnter, onLeave }) {
   const name = house?.houseName ?? '건물';
   const address = house?.houseAddressDetail
     ? `${house?.houseAddress ?? ''} ${house.houseAddressDetail}`
-    : house?.houseAddress ?? '';
+    : (house?.houseAddress ?? '');
   const imgName = Array.isArray(house?.imageNames) ? house.imageNames[0] : null;
   const imgSrc = houseImgUrl(imgName);
 
@@ -62,13 +63,19 @@ function MarkerPopup({ house, rooms, onClose, onEnter, onLeave }) {
         <button
           type="button"
           onClick={onClose}
-          style={{ border: 'none', background: 'transparent', cursor: 'pointer' }}
+          style={{
+            border: 'none',
+            background: 'transparent',
+            cursor: 'pointer',
+          }}
         >
           X
         </button>
       </div>
 
-      <div style={{ fontSize: 14, color: '#555', marginTop: 4, lineHeight: 1.35 }}>
+      <div
+        style={{ fontSize: 14, color: '#555', marginTop: 4, lineHeight: 1.35 }}
+      >
         {address || '주소 정보 없음'}
       </div>
 
@@ -118,15 +125,26 @@ function MarkerPopup({ house, rooms, onClose, onEnter, onLeave }) {
         <b style={{ fontSize: 13 }}>방 목록</b>
       </div>
 
-      {rooms.length === 0 && <div style={{ fontSize: 13, marginTop: 6 }}>표시할 방이 없습니다.</div>}
+      {rooms.length === 0 && (
+        <div style={{ fontSize: 13, marginTop: 6 }}>표시할 방이 없습니다.</div>
+      )}
 
       {rooms.map((r) => (
-        <div key={r.roomNo} style={{ padding: '6px 0', borderTop: '1px solid #eee' }}>
-          <Link to={`/rooms/${r.roomNo}`} onClick={onClose} style={{ textDecoration: 'none' }}>
+        <div
+          key={r.roomNo}
+          style={{ padding: '6px 0', borderTop: '1px solid #eee' }}
+        >
+          <Link
+            to={`/rooms/${r.roomNo}`}
+            onClick={onClose}
+            style={{ textDecoration: 'none' }}
+          >
             <div style={{ fontWeight: 600, fontSize: 18 }}>{r.roomName}</div>
             <div style={{ fontSize: 14, color: '#555' }}>
               {r.roomMethod === 'L' ? '전세' : '월세'}{' '}
-              {r.roomDeposit ? `|보증금 ${formatMoneyKRW(r.roomDeposit)}원 ` : ''}
+              {r.roomDeposit
+                ? `|보증금 ${formatMoneyKRW(r.roomDeposit)}원 `
+                : ''}
               {r.roomMonthly ? `|월세:${formatMoneyKRW(r.roomMonthly)}원` : ''}
             </div>
           </Link>
@@ -291,10 +309,21 @@ export default function MapPanel({
 
   return (
     <div className={styles.mapWrap} id="map">
-      <div ref={mapDivRef} style={{ width: '100%', height: '100%', background: '#f7f7f7' }} />
+      <div
+        ref={mapDivRef}
+        style={{ width: '100%', height: '100%', background: '#f7f7f7' }}
+      />
 
       {loadingMarkers && (
-        <div style={{ position: 'absolute', top: 10, left: 10, background: 'white', padding: 6 }}>
+        <div
+          style={{
+            position: 'absolute',
+            top: 10,
+            left: 10,
+            background: 'white',
+            padding: 6,
+          }}
+        >
           마커 로딩중...
         </div>
       )}

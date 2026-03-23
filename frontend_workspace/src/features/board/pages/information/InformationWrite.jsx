@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { useInformationWrite } from '../../hooks/useInformationWrite';
 import PostEditor from '../../components/PostEditor';
+import { buildUploadUrl } from '../../../../app/config/env';
 
 export default function InformationWrite() {
   const navigate = useNavigate();
@@ -28,7 +29,7 @@ export default function InformationWrite() {
       setNewFiles={setNewFiles}
       filePreviewUrls={filePreviewUrls}
       getFileUrl={(f) =>
-        `http://localhost:8080/upload_files/information/${f.updatedFileName}`
+        buildUploadUrl('upload/information', f.updatedFileName)
       }
       submitting={submitting}
       onSubmit={handleSubmit}

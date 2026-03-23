@@ -3,8 +3,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useFacilityDetail } from '../../hooks/facility/useFacilityDetail';
 import styles from './Detail.module.css';
-
-const FAC_IMG_DIR = 'http://localhost:8080/upload/facility_image';
+import { buildUploadUrl } from '../../../../app/config/env';
 
 export default function FacilityDetail({
   facilityNo,
@@ -67,7 +66,10 @@ export default function FacilityDetail({
               {images.map((img) => (
                 <img
                   key={img.facilityImageNo}
-                  src={`${FAC_IMG_DIR}/${img?.facilityStoredImageName}`}
+                  src={buildUploadUrl(
+                    'upload/facility_image',
+                    img?.facilityStoredImageName
+                  )}
                   alt={facilityName}
                   className={styles.facilityImg}
                 />

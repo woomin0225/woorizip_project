@@ -1,6 +1,7 @@
 // src/features/board/components/EventPostEditor.jsx
 import React, { useRef } from 'react';
 import RichTextEditor from './RichTextEditor';
+import { buildUploadUrl } from '../../../app/config/env';
 
 export default function EventPostEditor({
   mode = 'create', // 'create' | 'update'
@@ -223,7 +224,7 @@ export default function EventPostEditor({
                 {String(file.fileType || '').startsWith('image/') && (
                   <div style={{ margin: '8px 0 12px 22px' }}>
                     <img
-                      src={`http://localhost:8080/upload_files/event/${file.updatedFileName}`}
+                      src={buildUploadUrl('upload/event', file.updatedFileName)}
                       alt={file.originalFileName}
                       style={{
                         maxWidth: 260,

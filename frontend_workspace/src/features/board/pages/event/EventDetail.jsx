@@ -6,6 +6,7 @@ import styles from '../notice/NoticeDetail.module.css';
 import FileDownloadButton from '../../components/FileDownloadButton';
 import { useEventDetail } from '../../hooks/useEventDetail';
 import { downloadEventFile } from '../../api/EventApi';
+import { buildUploadUrl } from '../../../../app/config/env';
 
 const EDIT_PATH = (postNo) => `/event/${postNo}/edit`;
 const LIST_PATH = '/event';
@@ -31,7 +32,7 @@ export default function EventDetail() {
   const isVisible = event.postVisibleYn !== false;
 
   const bannerUrl = banner?.updatedFileName
-    ? `http://localhost:8080/upload/event/banner/${banner.updatedFileName}`
+    ? buildUploadUrl('upload/event/banner', banner.updatedFileName)
     : null;
 
   const isImageFile = (f) => {
@@ -53,7 +54,7 @@ export default function EventDetail() {
   const getEventFileUrl = (f) => {
     // 백엔드 정적서빙 경로에 맞춰 필요시만 바꿔주세요
     // (지금 배너처럼 /upload_files/event/... 형태를 쓴다는 가정)
-    return `http://localhost:8080/upload/event/${f.updatedFileName}`;
+    return buildUploadUrl('upload/event', f.updatedFileName);
   };
 
   const imageFiles = files.filter(isImageFile);
