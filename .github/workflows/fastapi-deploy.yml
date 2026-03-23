@@ -1,0 +1,58 @@
+name: Deploy FastAPI
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "ai_server_new/**"
+      - ".github/workflows/fastapi-deploy.yml"
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Zip app
+        run: |
+          cd ai_server_new
+          zip -r ../fastapi.zip . -x ".venv/*" "__pycache__/*" "*.pyc" ".git/*"
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          aws-region: ${{ secrets.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+
+      - name: Upload zip
+        run: >
+          aws s3 cp fastapi.zip
+          s3://${{ secrets.ARTIFACT_BUCKET }}/fastapi/${{ github.sha }}/fastapi.zip
+
+      - name: Deploy with SSM
+        run: >
+          aws ssm send-command
+          --instance-ids "${{ secrets.FASTAPI_INSTANCE_ID }}"
+          --document-name "AWS-RunShellScript"
+          --comment "Deploy FastAPI"
+          --parameters '{
+            "commands":[
+              "set -e",
+              "mkdir -p /opt/myapp/fastapi/releases/${{ github.sha }}",
+              "aws s3 cp s3://${{ secrets.ARTIFACT_BUCKET }}/fastapi/${{ github.sha }}/fastapi.zip /opt/myapp/fastapi/releases/${{ github.sha }}/fastapi.zip",
+              "cd /opt/myapp/fastapi/releases/${{ github.sha }} && unzip -o fastapi.zip",
+              "/opt/myapp/fastapi/venv/bin/pip install -r /opt/myapp/fastapi/releases/${{ github.sha }}/requirements.txt",
+              "ln -sfn /opt/myapp/fastapi/releases/${{ github.sha }} /opt/myapp/fastapi/current",
+              "/opt/myapp/fastapi/write-env.sh",
+              "chown -R ubuntu:ubuntu /opt/myapp",
+              "sudo systemctl restart fastapi-app",
+              "sleep 5",
+              "sudo systemctl --no-pager --full status fastapi-app"
+            ]
+          }'
