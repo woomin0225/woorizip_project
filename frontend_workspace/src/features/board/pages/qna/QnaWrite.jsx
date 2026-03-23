@@ -2,9 +2,9 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { buildUploadUrl } from '../../../../app/config/env';
 import PostEditor from '../../components/PostEditor';
 import { useQnaWrite } from '../../hooks/useQnaWrite';
-import { buildUploadUrl } from '../../../../app/config/env';
 
 export default function QnaWrite() {
   const navigate = useNavigate();

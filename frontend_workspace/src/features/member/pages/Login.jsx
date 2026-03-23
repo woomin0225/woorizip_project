@@ -18,13 +18,12 @@ import {
 } from 'reactstrap';
 import styles from './Login.module.css';
 
-const API_BASE_URL = getApiBaseUrl();
-
 export default function Login() {
   const navigate = useNavigate();
   const mainRef = useRef(null);
   const { form, loading, error, handleChange, handleLogin } = useLogin();
   const [validated, setValidated] = useState(false);
+  const backendBaseUrl = getApiBaseUrl();
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -40,7 +39,7 @@ export default function Login() {
   };
 
   const handleSocialLogin = (provider) => {
-    const backendUrl = `${API_BASE_URL}/oauth2/authorization/${provider}`;
+    const backendUrl = `${backendBaseUrl}/oauth2/authorization/${provider}`;
     window.location.href = backendUrl;
   };
 

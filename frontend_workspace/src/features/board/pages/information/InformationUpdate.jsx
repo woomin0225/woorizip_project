@@ -1,9 +1,9 @@
 // src/features/board/pages/Information/informationUpdate.jsx
 import React from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { buildUploadUrl } from '../../../../app/config/env';
 import PostEditor from '../../components/PostEditor';
 import { useInformationUpdate } from '../../hooks/useInformationUpdate';
-import { buildUploadUrl } from '../../../../app/config/env';
 
 export default function InformationUpdate() {
   const { postNo } = useParams();

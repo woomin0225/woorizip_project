@@ -1,4 +1,4 @@
-import React, {
+﻿import React, {
   createContext,
   useCallback,
   useContext,
@@ -15,12 +15,9 @@ const STORAGE_KEY_SETTINGS = 'woorizip.accessibilitySettings';
 
 const DEFAULT_SETTINGS = {
   autoReadPageSummary: false,
-  readFocusedElement: false,
   autoReadBotReplies: true,
   voiceCommandEnabled: true,
   fontScale: 1,
-  pageZoom: 1,
-  buttonScale: 1,
 };
 
 const VoiceModeContext = createContext(null);
@@ -30,34 +27,31 @@ const getSpeechRecognitionCtor = () => {
   return window.SpeechRecognition || window.webkitSpeechRecognition || null;
 };
 
+const clampScale = (value, min = 1, max = 1.5) =>
+  Math.min(max, Math.max(min, Number(value) || 1));
+
+const normalizeSettings = (raw = {}) => ({
+  autoReadPageSummary: Boolean(raw.autoReadPageSummary),
+  autoReadBotReplies:
+    raw.autoReadBotReplies === undefined
+      ? DEFAULT_SETTINGS.autoReadBotReplies
+      : Boolean(raw.autoReadBotReplies),
+  voiceCommandEnabled:
+    raw.voiceCommandEnabled === undefined
+      ? DEFAULT_SETTINGS.voiceCommandEnabled
+      : Boolean(raw.voiceCommandEnabled),
+  fontScale: clampScale(raw.fontScale, 1, 1.24),
+});
+
 const readStoredSettings = () => {
   if (typeof window === 'undefined') return DEFAULT_SETTINGS;
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY_SETTINGS);
     if (!raw) return DEFAULT_SETTINGS;
-    return { ...DEFAULT_SETTINGS, ...JSON.parse(raw) };
+    return normalizeSettings(JSON.parse(raw));
   } catch {
     return DEFAULT_SETTINGS;
   }
-};
-
-const clampScale = (value, min = 1, max = 1.5) =>
-  Math.min(max, Math.max(min, Number(value) || 1));
-
-const normalizeSpeakableText = (node) => {
-  if (!node) return '';
-  const ariaLabel = node.getAttribute?.('aria-label');
-  const labelledBy = node.getAttribute?.('aria-labelledby');
-  const placeholder = node.getAttribute?.('placeholder');
-  const text = node.innerText || node.textContent || '';
-
-  if (ariaLabel) return ariaLabel.trim();
-  if (labelledBy && typeof document !== 'undefined') {
-    const labelNode = document.getElementById(labelledBy);
-    if (labelNode?.textContent) return labelNode.textContent.trim();
-  }
-  if (placeholder) return placeholder.trim();
-  return String(text).replace(/\s+/g, ' ').trim();
 };
 
 export function VoiceModeProvider({ children }) {
@@ -72,18 +66,22 @@ export function VoiceModeProvider({ children }) {
   const [settings, setSettings] = useState(readStoredSettings);
   const [listening, setListening] = useState(false);
   const [speaking, setSpeaking] = useState(false);
-  const [supported, setSupported] = useState({ recognition: false, synthesis: false });
+  const [supported, setSupported] = useState({
+    recognition: false,
+    synthesis: false,
+  });
   const recognitionRef = useRef(null);
   const recognitionHandlerRef = useRef({});
   const speechUtteranceRef = useRef(null);
   const audioRef = useRef(null);
-  const lastFocusAnnouncementRef = useRef('');
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
     setSupported({
       recognition: Boolean(getSpeechRecognitionCtor()),
-      synthesis: Boolean(window.speechSynthesis && window.SpeechSynthesisUtterance),
+      synthesis: Boolean(
+        window.speechSynthesis && window.SpeechSynthesisUtterance
+      ),
     });
   }, []);
 
@@ -99,41 +97,45 @@ export function VoiceModeProvider({ children }) {
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    window.localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(settings));
 
-    const fontScale = clampScale(settings.fontScale, 1, 1.25);
-    const pageZoom = clampScale(settings.pageZoom, 1, 1.3);
-    const buttonScale = clampScale(settings.buttonScale, 1, 1.3);
-    const textScale = clampScale(
-      1 + (fontScale - 1) * 0.82 + (pageZoom - 1) * 0.9,
-      1,
-      1.45
+    const normalizedSettings = normalizeSettings(settings);
+    window.localStorage.setItem(
+      STORAGE_KEY_SETTINGS,
+      JSON.stringify(normalizedSettings)
     );
-    const controlScale = clampScale(
-      1 + (buttonScale - 1) * 0.9 + (pageZoom - 1) * 0.72,
-      1,
-      1.42
+
+    const fontScale = clampScale(normalizedSettings.fontScale, 1, 1.24);
+    const textScale = clampScale(1 + (fontScale - 1) * 0.92, 1, 1.22);
+    const fontAdjust = clampScale(1 + (fontScale - 1) * 0.78, 1, 1.2);
+    const controlScale = clampScale(1 + (fontScale - 1) * 0.2, 1, 1.08);
+    const spaceScale = clampScale(1 + (fontScale - 1) * 0.16, 1, 1.06);
+    const lineHeight = Math.min(1.82, 1.56 + (fontScale - 1) * 0.56);
+
+    document.documentElement.style.setProperty(
+      '--app-font-scale',
+      String(textScale)
     );
-    const spaceScale = clampScale(
-      1 + (fontScale - 1) * 0.28 + (buttonScale - 1) * 0.2 + (pageZoom - 1) * 0.55,
-      1,
-      1.28
+    document.documentElement.style.setProperty(
+      '--app-font-adjust',
+      String(fontAdjust)
     );
-    const lineHeight = Math.min(1.8, 1.52 + (textScale - 1) * 0.52);
+    document.documentElement.style.setProperty(
+      '--app-button-scale',
+      String(controlScale)
+    );
+    document.documentElement.style.setProperty(
+      '--app-space-scale',
+      String(spaceScale)
+    );
+    document.documentElement.style.setProperty(
+      '--app-line-height',
+      String(lineHeight)
+    );
 
-    document.documentElement.style.setProperty('--app-font-scale', String(textScale));
-    document.documentElement.style.setProperty('--app-button-scale', String(controlScale));
-    document.documentElement.style.setProperty('--app-space-scale', String(spaceScale));
-    document.documentElement.style.setProperty('--app-line-height', String(lineHeight));
-
-    document.body.style.transformOrigin = '';
-    document.body.style.transform = '';
-    document.body.style.width = '';
-    document.body.style.minHeight = '';
-
-    const largeView = textScale > 1 || controlScale > 1 || spaceScale > 1;
-    document.body.classList.toggle('large-view', largeView);
-    localStorage.setItem('ui-large-view', largeView ? '1' : '0');
+    const largeTextMode = fontScale > 1.001;
+    document.body.classList.toggle('large-view', largeTextMode);
+    document.body.classList.toggle('accessibility-text-resize', largeTextMode);
+    localStorage.setItem('ui-large-view', largeTextMode ? '1' : '0');
   }, [settings]);
 
   const stopSpeaking = useCallback(() => {
@@ -158,7 +160,11 @@ export function VoiceModeProvider({ children }) {
   }, []);
 
   const playBrowserSpeech = useCallback((text, options = {}) => {
-    if (typeof window === 'undefined' || !window.speechSynthesis || !window.SpeechSynthesisUtterance) {
+    if (
+      typeof window === 'undefined' ||
+      !window.speechSynthesis ||
+      !window.SpeechSynthesisUtterance
+    ) {
       return Promise.resolve(false);
     }
 
@@ -312,7 +318,9 @@ export function VoiceModeProvider({ children }) {
       setPromptDismissed(true);
       if (speakWelcome) {
         window.setTimeout(() => {
-          speak('음성 모드가 켜졌습니다. 약 2초 정도 멈추면 자동으로 듣기를 마치고 안내를 이어갑니다.');
+          speak(
+            '음성 모드가 켜졌습니다. 약 2초 정도 멈추면 자동으로 듣기를 마치고 안내를 이어갑니다.'
+          );
         }, 150);
       }
     },
@@ -336,23 +344,8 @@ export function VoiceModeProvider({ children }) {
   }, []);
 
   const updateSetting = useCallback((key, value) => {
-    setSettings((prev) => ({ ...prev, [key]: value }));
+    setSettings((prev) => normalizeSettings({ ...prev, [key]: value }));
   }, []);
-
-  useEffect(() => {
-    if (!voiceModeEnabled || !settings.readFocusedElement) return undefined;
-
-    const onFocusIn = (event) => {
-      const target = event.target;
-      const text = normalizeSpeakableText(target);
-      if (!text || text === lastFocusAnnouncementRef.current) return;
-      lastFocusAnnouncementRef.current = text;
-      speak(`현재 포커스: ${text}`);
-    };
-
-    window.addEventListener('focusin', onFocusIn);
-    return () => window.removeEventListener('focusin', onFocusIn);
-  }, [voiceModeEnabled, settings.readFocusedElement, speak]);
 
   const value = useMemo(
     () => ({
@@ -392,14 +385,17 @@ export function VoiceModeProvider({ children }) {
     ]
   );
 
-  return <VoiceModeContext.Provider value={value}>{children}</VoiceModeContext.Provider>;
+  return (
+    <VoiceModeContext.Provider value={value}>
+      {children}
+    </VoiceModeContext.Provider>
+  );
 }
 
 export function useVoiceMode() {
   const value = useContext(VoiceModeContext);
-  if (!value) throw new Error('useVoiceMode must be used within VoiceModeProvider');
+  if (!value) {
+    throw new Error('useVoiceMode must be used within VoiceModeProvider');
+  }
   return value;
 }
-
-
-

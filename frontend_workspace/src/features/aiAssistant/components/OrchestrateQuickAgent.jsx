@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+﻿import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   ACTION_MAP,
@@ -114,6 +114,20 @@ export default function OrchestrateQuickAgent() {
   const [awaitingRoomRecommendation, setAwaitingRoomRecommendation] = useState(false);
   const [lastRecommendedRooms, setLastRecommendedRooms] = useState([]);
   const [profileEditFlow, setProfileEditFlow] = useState(null);
+
+  const resetConversation = useCallback(() => {
+    setInput('');
+    setLoading(false);
+    setPendingConfirmation(null);
+    setAwaitingRoomRecommendation(false);
+    setLastRecommendedRooms([]);
+    setProfileEditFlow(null);
+    setSessionId(newSessionId());
+    lastSpokenMessageRef.current = '';
+    setMessages([
+      { role: 'assistant', text: greetingText, actionIds: STARTER_ACTION_IDS },
+    ]);
+  }, [greetingText]);
 
   useEffect(() => {
     voiceLoopStateRef.current = {
@@ -231,7 +245,7 @@ export default function OrchestrateQuickAgent() {
     setProfileEditFlow({ step: 'field' });
     appendAssistantMessage(
       `내정보 수정 페이지로 이동했습니다. 수정할 항목을 말씀해 주세요.\n${getProfileEditSupportMessage()} 예: 이름을 강우민으로 바꿔줘`,
-      ['summary', 'contract', 'reservationStatus']
+      []
     );
   };
 
@@ -239,7 +253,7 @@ export default function OrchestrateQuickAgent() {
     setProfileEditFlow({ step: 'value', field });
     appendAssistantMessage(
       `${field.label}을 어떤 내용으로 바꿀까요? 새 값을 입력해 주세요.`,
-      ['summary', 'contract', 'reservationStatus']
+      []
     );
   };
 
@@ -247,7 +261,7 @@ export default function OrchestrateQuickAgent() {
     setProfileEditFlow({ step: 'confirm', field, value, displayValue });
     appendAssistantMessage(
       `${field.label}을 ${displayValue}(으)로 변경할까요? 예 또는 아니오로 말씀해 주세요.`,
-      ['summary', 'contract', 'reservationStatus']
+      []
     );
   };
 
@@ -282,14 +296,14 @@ export default function OrchestrateQuickAgent() {
       setProfileEditFlow({ step: 'field' });
       appendAssistantMessage(
         `${field.label}이 ${displayValue}(으)로 변경되었습니다. 다른 항목도 수정하려면 항목 이름과 새 값을 말씀해 주세요.`,
-        ['summary', 'contract', 'reservationStatus']
+        []
       );
       return true;
     } catch (error) {
       setProfileEditFlow({ step: 'value', field });
       appendAssistantMessage(
         error?.message || '내정보 수정 중 오류가 발생했습니다.',
-        ['summary', 'contract', 'reservationStatus']
+        []
       );
       return true;
     } finally {
@@ -326,7 +340,7 @@ export default function OrchestrateQuickAgent() {
     if (parsed.kind === 'unsupported') {
       appendAssistantMessage(
         `${parsed.fieldLabel} 항목은 현재 챗봇으로 수정할 수 없습니다. ${getProfileEditSupportMessage()}`,
-        ['summary', 'contract', 'reservationStatus']
+        []
       );
       return true;
     }
@@ -345,7 +359,7 @@ export default function OrchestrateQuickAgent() {
       }
       appendAssistantMessage(
         '변경 여부를 확인할게요. 예 또는 아니오로 말씀해 주세요.',
-        ['summary', 'contract', 'reservationStatus']
+        []
       );
       return true;
     }
@@ -374,7 +388,7 @@ export default function OrchestrateQuickAgent() {
       setProfileEditFlow({ step: 'field' });
       appendAssistantMessage(
         `수정할 항목을 먼저 말씀해 주세요. ${getProfileEditSupportMessage()}`,
-        ['summary', 'contract', 'reservationStatus']
+        []
       );
       return true;
     }
@@ -454,7 +468,7 @@ export default function OrchestrateQuickAgent() {
       if (rooms.length === 0) {
         appendAssistantMessage(
           '조건에 맞는 방을 아직 찾지 못했어요. 지역이나 예산을 조금 넓히거나 방 종류를 바꿔서 다시 말씀해 주시면 다시 찾아볼게요.',
-          ['roomRecommend', 'availableRooms', 'deposit']
+          ['roomRecommend', 'tour', 'wishlist']
         );
         return true;
       }
@@ -512,7 +526,7 @@ export default function OrchestrateQuickAgent() {
       goToPage(
         '/rooms',
         '방 추천을 확인할 수 있도록 방 목록 페이지로 이동했습니다.',
-        ['availableRooms', 'deposit', 'monthlyRent']
+        ['tour', 'wishlist', 'summary']
       );
       return;
     }
@@ -599,7 +613,7 @@ export default function OrchestrateQuickAgent() {
       goToPage(
         '/facility/view',
         '이용시간 확인을 위해 시설 페이지로 이동했습니다. 시설을 선택하면 운영시간을 확인할 수 있습니다.',
-        ['reserve', 'facilityInfo', 'facilityCancel']
+        ['reserve', 'reservationStatus', 'facilityCancel']
       );
       return;
     }
@@ -709,7 +723,7 @@ export default function OrchestrateQuickAgent() {
       goToPage(
         '/mypage/edit',
         '내정보 수정 페이지로 이동했습니다. 변경할 항목과 새로 바꿀 내용을 말씀해 주세요.',
-        ['summary', 'contract', 'reservationStatus']
+        []
       );
       return true;
     }
@@ -752,7 +766,7 @@ export default function OrchestrateQuickAgent() {
       goToPage(
         '/wishlist',
         '찜 목록 페이지로 이동했습니다. 저장해둔 방을 확인할 수 있습니다.',
-        ['roomRecommend', 'availableRooms', 'reviews']
+        ['roomRecommend', 'tour', 'contract']
       );
       return true;
     }
@@ -780,7 +794,7 @@ export default function OrchestrateQuickAgent() {
       goToPage(
         '/mypage/tour',
         '투어 페이지로 이동했습니다. 투어 신청과 진행 내역을 확인할 수 있습니다.',
-        ['tour', 'roomRecommend', 'availableRooms']
+        ['tour', 'roomRecommend', 'wishlist']
       );
       return true;
     }
@@ -802,7 +816,7 @@ export default function OrchestrateQuickAgent() {
       goToPage(
         '/facility/view',
         '공용시설 페이지로 이동했습니다. 시설 안내와 예약 정보를 확인할 수 있습니다.',
-        ['facilityHours', 'reserve']
+        ['facilityHours', 'reserve', 'reservationStatus']
       );
       return true;
     }
@@ -1178,6 +1192,14 @@ export default function OrchestrateQuickAgent() {
             <div className={styles.headerActions}>
               <button
                 type="button"
+                className={styles.resetBtn}
+                onClick={resetConversation}
+                disabled={loading}
+              >
+                새 대화
+              </button>
+              <button
+                type="button"
                 className={styles.modeBtn}
                 onClick={
                   voiceModeEnabled ? disableVoiceMode : () => enableVoiceMode()
@@ -1268,6 +1290,10 @@ export default function OrchestrateQuickAgent() {
     </div>
   );
 }
+
+
+
+
 
 
 

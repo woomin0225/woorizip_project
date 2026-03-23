@@ -2,11 +2,11 @@
 import React from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
+import { buildUploadUrl } from '../../../../app/config/env';
 import styles from '../notice/NoticeDetail.module.css';
 import FileDownloadButton from '../../components/FileDownloadButton';
 import { useInformationDetail } from '../../hooks/useInformationDetail';
 import { downloadInformationFile } from '../../api/InformationApi';
-import { buildUploadUrl } from '../../../../app/config/env';
 
 // 라우트가 다르면 여기만 수정
 const EDIT_PATH = (postNo) => `/information/${postNo}/edit`;
@@ -46,8 +46,6 @@ export default function InformationDetail() {
   };
 
   const getInformationFileUrl = (f) => {
-    // 백엔드 정적서빙 경로에 맞춰 필요시만 바꿔주세요
-    // (지금 배너처럼 /upload_files/information/... 형태를 쓴다는 가정)
     return buildUploadUrl('upload/information', f.updatedFileName);
   };
 

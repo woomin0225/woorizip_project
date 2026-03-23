@@ -2,9 +2,9 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { buildUploadUrl } from '../../../../app/config/env';
 import { useNoticeWrite } from '../../hooks/useNoticeWrite';
 import PostEditor from '../../components/PostEditor';
-import { buildUploadUrl } from '../../../../app/config/env';
 
 export default function NoticeWrite() {
   const navigate = useNavigate();

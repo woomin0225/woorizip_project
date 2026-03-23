@@ -1,9 +1,9 @@
 // src/features/facility/components/detail/FacilityDetail.jsx
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { buildUploadUrl } from '../../../../app/config/env';
 import { useFacilityDetail } from '../../hooks/facility/useFacilityDetail';
 import styles from './Detail.module.css';
-import { buildUploadUrl } from '../../../../app/config/env';
 
 export default function FacilityDetail({
   facilityNo,

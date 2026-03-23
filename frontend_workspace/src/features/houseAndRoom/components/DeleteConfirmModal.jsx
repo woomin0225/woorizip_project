@@ -5,6 +5,7 @@ export default function DeleteConfirmModal({
   open,
   title = "삭제",
   message = "정말 삭제할까요?",
+  warning = "",
   confirmText = "삭제",
   cancelText = "취소",
   onConfirm,
@@ -17,6 +18,7 @@ export default function DeleteConfirmModal({
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         <h3 className={styles.title}>{title}</h3>
         <p className={styles.msg}>{message}</p>
+        {warning ? <div className={styles.warning}>{warning}</div> : null}
 
         <div className={styles.actions}>
           <button type="button" className={styles.cancel} onClick={onCancel}>

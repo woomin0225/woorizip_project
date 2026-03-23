@@ -48,7 +48,6 @@ export default function MyInfoModify() {
     name: '',
     phone: '',
     address: '',
-    nickname: '',
     birthDate: '',
     gender: '',
     type: 'USER',
@@ -57,7 +56,6 @@ export default function MyInfoModify() {
     name: false,
     phone: false,
     address: false,
-    nickname: false,
     type: false,
   });
   const [message, setMessage] = useState('');
@@ -70,7 +68,6 @@ export default function MyInfoModify() {
           name: info?.name || '',
           phone: pickFirst(info?.phone, info?.phoneNumber, info?.phone_number),
           address: pickFirst(info?.address, info?.addr, info?.roadAddress),
-          nickname: pickFirst(info?.nickname, info?.nickName),
           birthDate: normalizeBirthDate(
             pickFirst(info?.birthDate, info?.birth_date)
           ),
@@ -97,6 +94,7 @@ export default function MyInfoModify() {
       const payload = {
         name: form.name?.trim(),
         phone: form.phone?.trim(),
+        address: form.address?.trim(),
         type: form.type || undefined,
       };
 
@@ -119,7 +117,6 @@ export default function MyInfoModify() {
         name: false,
         phone: false,
         address: false,
-        nickname: false,
         type: false,
       });
     } catch (e) {
@@ -163,165 +160,162 @@ export default function MyInfoModify() {
                     </p>
                   </div>
                   <div className={styles.compactForm}>
-                  <div className={styles.fieldRow}>
-                    <p className={styles.fieldLabel}>이메일</p>
-                    <div className={styles.fieldControl}>
-                      <input
-                        className={`${styles.input} ${styles.readOnlyInput}`}
-                        value={form.emailId}
-                        readOnly
-                      />
+                    <div className={styles.fieldRow}>
+                      <p className={styles.fieldLabel}>이메일</p>
+                      <div className={styles.fieldControl}>
+                        <input
+                          className={`${styles.input} ${styles.readOnlyInput}`}
+                          value={form.emailId}
+                          readOnly
+                        />
+                      </div>
                     </div>
-                  </div>
 
-                  <div className={styles.fieldRow}>
-                    <p className={styles.fieldLabel}>이름</p>
-                    <div className={styles.fieldControl}>
-                      <input
-                        className={`${styles.input} ${!editable.name ? styles.readOnlyInput : ''}`}
-                        value={form.name}
-                        onChange={onChange('name')}
-                        disabled={!editable.name}
-                      />
-                    </div>
-                    <button
-                      type="button"
-                      className={`${styles.inlineBtn} ${editable.name ? styles.inlineBtnActive : ''}`}
-                      onClick={() => toggleEdit('name')}
-                    >
-                      {editable.name ? '완료' : '수정'}
-                    </button>
-                  </div>
-
-                  <div className={styles.fieldRow}>
-                    <p className={styles.fieldLabel}>휴대번호</p>
-                    <div className={styles.fieldControl}>
-                      <input
-                        className={`${styles.input} ${!editable.phone ? styles.readOnlyInput : ''}`}
-                        value={form.phone}
-                        onChange={onChange('phone')}
-                        disabled={!editable.phone}
-                      />
-                    </div>
-                    <button
-                      type="button"
-                      className={`${styles.inlineBtn} ${editable.phone ? styles.inlineBtnActive : ''}`}
-                      onClick={() => toggleEdit('phone')}
-                    >
-                      {editable.phone ? '완료' : '수정'}
-                    </button>
-                  </div>
-
-                  <div className={styles.fieldRow}>
-                    <p className={styles.fieldLabel}>주소</p>
-                    <div className={styles.fieldControl}>
-                      <input
-                        className={`${styles.input} ${!editable.address ? styles.readOnlyInput : ''}`}
-                        value={form.address}
-                        onChange={onChange('address')}
-                        disabled={!editable.address}
-                      />
-                    </div>
-                    <button
-                      type="button"
-                      className={`${styles.inlineBtn} ${editable.address ? styles.inlineBtnActive : ''}`}
-                      onClick={() => toggleEdit('address')}
-                    >
-                      {editable.address ? '완료' : '수정'}
-                    </button>
-                  </div>
-
-                  <div className={styles.fieldRow}>
-                    <p className={styles.fieldLabel}>닉네임</p>
-                    <div className={styles.fieldControl}>
-                      <input
-                        className={`${styles.input} ${!editable.nickname ? styles.readOnlyInput : ''}`}
-                        value={form.nickname}
-                        onChange={onChange('nickname')}
-                        disabled={!editable.nickname}
-                      />
-                    </div>
-                    <button
-                      type="button"
-                      className={`${styles.inlineBtn} ${editable.nickname ? styles.inlineBtnActive : ''}`}
-                      onClick={() => toggleEdit('nickname')}
-                    >
-                      {editable.nickname ? '완료' : '수정'}
-                    </button>
-                  </div>
-
-                  <div className={styles.fieldRow}>
-                    <p className={styles.fieldLabel}>생년월일</p>
-                    <div className={styles.fieldControl}>
-                      <input
-                        className={`${styles.input} ${styles.readOnlyInput}`}
-                        type="date"
-                        value={form.birthDate}
-                        readOnly
-                      />
-                    </div>
-                  </div>
-
-                  <div className={styles.fieldRow}>
-                    <p className={styles.fieldLabel}>나이</p>
-                    <div className={styles.fieldControl}>
-                      <input
-                        className={`${styles.input} ${styles.readOnlyInput}`}
-                        value={age}
-                        readOnly
-                      />
-                    </div>
-                  </div>
-
-                  <div className={styles.fieldRow}>
-                    <p className={styles.fieldLabel}>성별</p>
-                    <div className={styles.fieldControl}>
-                      <select
-                        className={`${styles.input} ${styles.readOnlyInput}`}
-                        value={form.gender}
-                        disabled
+                    <div className={styles.fieldRow}>
+                      <p className={styles.fieldLabel}>이름</p>
+                      <div className={styles.fieldControl}>
+                        <input
+                          className={`${styles.input} ${
+                            !editable.name ? styles.readOnlyInput : ''
+                          }`}
+                          value={form.name}
+                          onChange={onChange('name')}
+                          disabled={!editable.name}
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        className={`${styles.inlineBtn} ${
+                          editable.name ? styles.inlineBtnActive : ''
+                        }`}
+                        onClick={() => toggleEdit('name')}
                       >
-                        <option value="">성별 선택</option>
-                        <option value="M">남성</option>
-                        <option value="F">여성</option>
-                      </select>
+                        {editable.name ? '완료' : '수정'}
+                      </button>
                     </div>
-                  </div>
 
-                  <div className={styles.fieldRow}>
-                    <p className={styles.fieldLabel}>회원유형</p>
-                    <div className={styles.fieldControl}>
-                      <select
-                        className={`${styles.input} ${!editable.type ? styles.readOnlyInput : ''}`}
-                        value={form.type}
-                        onChange={onChange('type')}
-                        disabled={!editable.type}
+                    <div className={styles.fieldRow}>
+                      <p className={styles.fieldLabel}>휴대번호</p>
+                      <div className={styles.fieldControl}>
+                        <input
+                          className={`${styles.input} ${
+                            !editable.phone ? styles.readOnlyInput : ''
+                          }`}
+                          value={form.phone}
+                          onChange={onChange('phone')}
+                          disabled={!editable.phone}
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        className={`${styles.inlineBtn} ${
+                          editable.phone ? styles.inlineBtnActive : ''
+                        }`}
+                        onClick={() => toggleEdit('phone')}
                       >
-                        <option value="USER">사용자</option>
-                        <option value="LESSOR">임대인</option>
-                      </select>
+                        {editable.phone ? '완료' : '수정'}
+                      </button>
                     </div>
+
+                    <div className={styles.fieldRow}>
+                      <p className={styles.fieldLabel}>주소</p>
+                      <div className={styles.fieldControl}>
+                        <input
+                          className={`${styles.input} ${
+                            !editable.address ? styles.readOnlyInput : ''
+                          }`}
+                          value={form.address}
+                          onChange={onChange('address')}
+                          disabled={!editable.address}
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        className={`${styles.inlineBtn} ${
+                          editable.address ? styles.inlineBtnActive : ''
+                        }`}
+                        onClick={() => toggleEdit('address')}
+                      >
+                        {editable.address ? '완료' : '수정'}
+                      </button>
+                    </div>
+
+                    <div className={styles.fieldRow}>
+                      <p className={styles.fieldLabel}>생년월일</p>
+                      <div className={styles.fieldControl}>
+                        <input
+                          className={`${styles.input} ${styles.readOnlyInput}`}
+                          type="date"
+                          value={form.birthDate}
+                          readOnly
+                        />
+                      </div>
+                    </div>
+
+                    <div className={styles.fieldRow}>
+                      <p className={styles.fieldLabel}>나이</p>
+                      <div className={styles.fieldControl}>
+                        <input
+                          className={`${styles.input} ${styles.readOnlyInput}`}
+                          value={age}
+                          readOnly
+                        />
+                      </div>
+                    </div>
+
+                    <div className={styles.fieldRow}>
+                      <p className={styles.fieldLabel}>성별</p>
+                      <div className={styles.fieldControl}>
+                        <select
+                          className={`${styles.input} ${styles.readOnlyInput}`}
+                          value={form.gender}
+                          disabled
+                        >
+                          <option value="">성별 선택</option>
+                          <option value="M">남성</option>
+                          <option value="F">여성</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className={styles.fieldRow}>
+                      <p className={styles.fieldLabel}>회원유형</p>
+                      <div className={styles.fieldControl}>
+                        <select
+                          className={`${styles.input} ${
+                            !editable.type ? styles.readOnlyInput : ''
+                          }`}
+                          value={form.type}
+                          onChange={onChange('type')}
+                          disabled={!editable.type}
+                        >
+                          <option value="USER">사용자</option>
+                          <option value="LESSOR">임대인</option>
+                        </select>
+                      </div>
+                      <button
+                        type="button"
+                        className={`${styles.inlineBtn} ${
+                          editable.type ? styles.inlineBtnActive : ''
+                        }`}
+                        onClick={() => toggleEdit('type')}
+                      >
+                        {editable.type ? '완료' : '수정'}
+                      </button>
+                    </div>
+
                     <button
                       type="button"
-                      className={`${styles.inlineBtn} ${editable.type ? styles.inlineBtnActive : ''}`}
-                      onClick={() => toggleEdit('type')}
+                      className={styles.primaryBtn}
+                      onClick={onSave}
                     >
-                      {editable.type ? '완료' : '수정'}
+                      저장
                     </button>
-                  </div>
-
-                  <button
-                    type="button"
-                    className={styles.primaryBtn}
-                    onClick={onSave}
-                  >
-                    저장
-                  </button>
-                  {message && (
-                    <p className={styles.desc} style={{ marginTop: 10 }}>
-                      {message}
-                    </p>
-                  )}
+                    {message && (
+                      <p className={styles.desc} style={{ marginTop: 10 }}>
+                        {message}
+                      </p>
+                    )}
                   </div>
                 </CardBody>
               </Card>

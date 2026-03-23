@@ -2,12 +2,12 @@ import { useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import { Card, CardBody, Row, Col } from 'reactstrap';
+import { buildUploadUrl } from '../../../../app/config/env';
 import styles from './ViewsRankingList.module.css';
 import woorizipLogo from '../../../../assets/images/logo-muted.png';
 import { getRoomReviews } from '../../api/roomApi';
 import { getFacilityList } from '../../../facility/api/facilityApi';
 import { getFacilityIcon } from '../../constants/facilityIcons';
-import { buildUploadUrl } from '../../../../app/config/env';
 
 const REVIEW_LIMIT = 3;
 const FACILITY_LIMIT = 2;

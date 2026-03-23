@@ -1,70 +1,62 @@
-name: Frontend Deploy
+name: Deploy Frontend
 
 on:
+  workflow_dispatch:
   push:
-    branches:
-      - main
+    branches: ["develop", "main"]
     paths:
       - "frontend_workspace/**"
       - ".github/workflows/frontend-deploy.yml"
-  workflow_dispatch:
 
 concurrency:
   group: frontend-deploy
   cancel-in-progress: true
 
 permissions:
-  contents: read
   id-token: write
+  contents: read
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
-    env:
-      AWS_REGION: ${{ secrets.AWS_REGION }}
-      S3_BUCKET: ${{ secrets.FRONTEND_BUCKET }}
-      CLOUDFRONT_DISTRIBUTION_ID: ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}
-      FRONTEND_DIR: frontend_workspace
+    defaults:
+      run:
+        working-directory: frontend_workspace
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v5
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Setup Node
+        uses: actions/setup-node@v5
         with:
           node-version: 20
           cache: npm
           cache-dependency-path: frontend_workspace/package-lock.json
 
-      - name: Create production env file
-        working-directory: ${{ env.FRONTEND_DIR }}
-        run: |
-          cat <<EOF > .env.production
-          REACT_APP_API_BASE_URL=${{ secrets.REACT_APP_API_BASE_URL }}
-          REACT_APP_AI_BASE_URL=${{ secrets.REACT_APP_AI_BASE_URL }}
-          REACT_APP_KAKAO_MAP_KEY=${{ secrets.REACT_APP_KAKAO_MAP_KEY }}
-          REACT_APP_TOSS_CLIENT_KEY=${{ secrets.REACT_APP_TOSS_CLIENT_KEY }}
-          EOF
-
-      - name: Install dependencies
-        working-directory: ${{ env.FRONTEND_DIR }}
+      - name: Install deps
         run: npm ci
 
-      - name: Build frontend
-        working-directory: ${{ env.FRONTEND_DIR }}
+      - name: Build
         run: npm run build
+        env:
+          CI: "false"
+          REACT_APP_API_BASE_URL: ${{ secrets.REACT_APP_API_BASE_URL }}
+          REACT_APP_AI_BASE_URL: ${{ secrets.REACT_APP_AI_BASE_URL }}
+          REACT_APP_KAKAO_MAP_KEY: ${{ secrets.REACT_APP_KAKAO_MAP_KEY }}
+          REACT_APP_TOSS_CLIENT_KEY: ${{ secrets.REACT_APP_TOSS_CLIENT_KEY }}
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v5
         with:
+          aws-region: ${{ secrets.AWS_REGION }}
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          role-session-name: github-actions-frontend-deploy
-          aws-region: ${{ env.AWS_REGION }}
 
-      - name: Sync build files to S3
-        run: aws s3 sync "${{ env.FRONTEND_DIR }}/build/" "s3://${{ env.S3_BUCKET }}" --delete
+      - name: Upload to S3
+        run: aws s3 sync build/ s3://${{ secrets.FRONTEND_BUCKET }}/ --delete
 
-      - name: Invalidate CloudFront cache
-        run: aws cloudfront create-invalidation --distribution-id "${{ env.CLOUDFRONT_DISTRIBUTION_ID }}" --paths "/*"
+      - name: Invalidate CloudFront
+        run: >
+          aws cloudfront create-invalidation
+          --distribution-id "${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}"
+          --paths "/*"

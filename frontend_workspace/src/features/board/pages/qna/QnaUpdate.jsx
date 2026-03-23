@@ -1,9 +1,9 @@
 // src/features/board/pages/qna/QnaUpdate.jsx
 import React from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { buildUploadUrl } from '../../../../app/config/env';
 import PostEditor from '../../components/PostEditor';
 import { useQnaUpdate } from '../../hooks/useQnaUpdate';
-import { buildUploadUrl } from '../../../../app/config/env';
 
 export default function QnaUpdate() {
   const { postNo } = useParams();

@@ -1,9 +1,9 @@
 // src/features/board/pages/notice/NoticeUpdate.jsx
 import React from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { buildUploadUrl } from '../../../../app/config/env';
 import PostEditor from '../../components/PostEditor';
 import { useNoticeUpdate } from '../../hooks/useNoticeUpdate';
-import { buildUploadUrl } from '../../../../app/config/env';
 
 export default function NoticeUpdate() {
   const { postNo } = useParams();

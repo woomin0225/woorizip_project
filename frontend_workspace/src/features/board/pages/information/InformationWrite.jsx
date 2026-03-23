@@ -2,9 +2,9 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { buildUploadUrl } from '../../../../app/config/env';
 import { useInformationWrite } from '../../hooks/useInformationWrite';
 import PostEditor from '../../components/PostEditor';
-import { buildUploadUrl } from '../../../../app/config/env';
 
 export default function InformationWrite() {
   const navigate = useNavigate();

@@ -2,11 +2,11 @@
 import React from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
+import { buildUploadUrl } from '../../../../app/config/env';
 import styles from './NoticeDetail.module.css';
 import FileDownloadButton from '../../components/FileDownloadButton';
 import { useNoticeDetail } from '../../hooks/useNoticeDetail';
 import { downloadNoticeFile } from '../../api/NoticeApi';
-import { buildUploadUrl } from '../../../../app/config/env';
 
 const EDIT_PATH = (postNo) => `/notices/${postNo}/edit`;
 
@@ -46,8 +46,6 @@ export default function NoticeDetail() {
   };
 
   const getNoticeFileUrl = (f) => {
-    // 백엔드 정적서빙 경로에 맞춰 필요시만 바꿔주세요
-    // (지금 배너처럼 /upload_files/notice/... 형태를 쓴다는 가정)
     return buildUploadUrl('upload/notice', f.updatedFileName);
   };
 

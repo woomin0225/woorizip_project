@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { buildUploadUrl } from '../../../app/config/env';
 
 import styles from './Detail.module.css';
 
@@ -16,7 +17,6 @@ import FacilityList from './../components/Detail/FacilityList';
 import ReviewList from './../components/Detail/ReviewList';
 import ScrollToTopButton from '../../../shared/components/ScrollToTopButton';
 import { ROUTES } from '../../../shared/constants/routes';
-import { buildUploadUrl } from '../../../app/config/env';
 
 import { useAuth } from '../../../app/providers/AuthProvider';
 

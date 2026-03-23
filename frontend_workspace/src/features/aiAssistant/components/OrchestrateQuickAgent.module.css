@@ -102,6 +102,7 @@
 }
 
 .modeBtn,
+.resetBtn,
 .voiceBtn,
 .micBtn,
 .settingBtn {
@@ -119,6 +120,10 @@
   background: #475569;
 }
 
+.resetBtn {
+  background: #0f766e;
+}
+
 .voiceBtn {
   background: #c9713f;
 }
@@ -132,6 +137,7 @@
 }
 
 .modeBtn:disabled,
+.resetBtn:disabled,
 .voiceBtn:disabled,
 .micBtn:disabled,
 .settingBtn:disabled {

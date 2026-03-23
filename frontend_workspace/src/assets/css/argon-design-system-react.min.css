@@ -15296,7 +15296,7 @@ textarea[resize="horizontal"] {
 }
 .icon + .icon-text {
   padding-left: 1rem;
-  width: calc(100% - 3rem - 1);
+  width: calc(100% - 3rem - 1rem);
 }
 .icon-xl {
   width: 5rem;
@@ -15307,7 +15307,7 @@ textarea[resize="horizontal"] {
   font-size: 4.25rem;
 }
 .icon-xl + .icon-text {
-  width: calc(100% - $icon-size-xl - 1);
+  width: calc(100% - 5rem - 1rem);
 }
 .icon-lg {
   width: 4rem;
@@ -15318,7 +15318,7 @@ textarea[resize="horizontal"] {
   font-size: 3.25rem;
 }
 .icon-lg + .icon-text {
-  width: calc(100% - $icon-size-lg - 1);
+  width: calc(100% - 4rem - 1rem);
 }
 .icon-sm {
   width: 2rem;
@@ -15329,7 +15329,7 @@ textarea[resize="horizontal"] {
   font-size: 1.25rem;
 }
 .icon-sm + .icon-text {
-  width: calc(100% - $icon-size-sm - 1);
+  width: calc(100% - 2rem - 1rem);
 }
 .icon-xs {
   width: 1.25rem;
@@ -15340,7 +15340,7 @@ textarea[resize="horizontal"] {
   font-size: 0.5rem !important;
 }
 .icon-xs + .icon-text {
-  width: calc(100% - $icon-size-xs - 1);
+  width: calc(100% - 1.25rem - 1rem);
 }
 .icon-shape {
   padding: 12px;

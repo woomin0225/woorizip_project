@@ -1,7 +1,7 @@
 // src/features/board/components/EventPostEditor.jsx
 import React, { useRef } from 'react';
-import RichTextEditor from './RichTextEditor';
 import { buildUploadUrl } from '../../../app/config/env';
+import RichTextEditor from './RichTextEditor';
 
 export default function EventPostEditor({
   mode = 'create', // 'create' | 'update'

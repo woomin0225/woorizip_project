@@ -2,6 +2,18 @@
   box-sizing: border-box;
 }
 
+:root {
+  --app-font-scale: 1;
+  --app-font-adjust: 1;
+  --app-button-scale: 1;
+  --app-space-scale: 1;
+  --app-line-height: 1.52;
+}
+
+html {
+  font-size: calc(16px * var(--app-font-scale));
+}
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
@@ -12,15 +24,37 @@ body {
   line-height: var(--app-line-height);
 }
 
-:root {
-  --app-font-scale: 1;
-  --app-button-scale: 1;
-  --app-space-scale: 1;
-  --app-line-height: 1.52;
+body,
+body p,
+body li,
+body label,
+body span,
+body a,
+body strong,
+body em,
+body small,
+body dt,
+body dd,
+body th,
+body td,
+body legend,
+body figcaption {
+  line-height: inherit;
 }
 
-html {
-  font-size: calc(16px * var(--app-font-scale));
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+ul,
+ol,
+dl,
+figure,
+blockquote {
+  margin-top: 0;
 }
 
 button,
@@ -94,7 +128,138 @@ body.large-view .text-default {
   opacity: 1 !important;
 }
 
-body.large-view a {
+body.accessibility-text-resize main :where(
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  p,
+  li,
+  label,
+  a,
+  dt,
+  dd,
+  th,
+  td,
+  legend,
+  figcaption,
+  small,
+  strong,
+  em,
+  button,
+  input,
+  select,
+  textarea,
+  .btn,
+  .badge,
+  .nav-link,
+  .dropdown-item,
+  .page-link,
+  .form-control,
+  .form-check-label,
+  .card-title,
+  .card-text,
+  .modal-title,
+  .navbar-brand,
+  .navbar-text,
+  .list-group-item,
+  .accordion-button,
+  .breadcrumb-item,
+  .table,
+  span[class*='Title'],
+  span[class*='title'],
+  span[class*='Label'],
+  span[class*='label'],
+  span[class*='Text'],
+  span[class*='text'],
+  span[class*='Meta'],
+  span[class*='meta'],
+  span[class*='Badge'],
+  span[class*='badge'],
+  span[class*='Status'],
+  span[class*='status']
+) {
+  font-size: calc(1em * var(--app-font-adjust));
+  line-height: inherit;
+}
+
+body.accessibility-text-resize main :where(
+  button,
+  .btn,
+  .nav-link,
+  .dropdown-item,
+  .page-link,
+  .form-check-label,
+  label,
+  a,
+  .badge,
+  .list-group-item,
+  .accordion-button
+) {
+  white-space: normal;
+}
+
+body.accessibility-text-resize main :where(
+  p,
+  li,
+  label,
+  a,
+  dt,
+  dd,
+  th,
+  td,
+  .card-text,
+  .form-check-label,
+  .dropdown-item,
+  .list-group-item,
+  .table,
+  .accordion-button
+) {
+  overflow-wrap: anywhere;
+  word-break: keep-all;
+}
+
+body.accessibility-text-resize main :where(
+  .row,
+  [class*='row'],
+  [class*='Row'],
+  .d-flex,
+  .btn-group,
+  .nav,
+  .navbar-nav,
+  .card-body,
+  .modal-body,
+  .list-group,
+  [class*='Wrap'],
+  [class*='wrap']
+) > * {
+  min-width: 0;
+}
+
+body.accessibility-text-resize main :where(
+  .row,
+  [class*='row'],
+  [class*='Row'],
+  .d-flex,
+  .btn-group,
+  .nav,
+  .navbar-nav,
+  [class*='choiceRow'],
+  [class*='buttonRow'],
+  [class*='metaRow'],
+  [class*='topRow'],
+  [class*='actionRow']
+) {
+  row-gap: calc(0.45rem * var(--app-space-scale));
+}
+
+body.accessibility-text-resize main :where(h1, h2, h3, h4, h5, h6) {
+  line-height: 1.28;
+}
+
+body.accessibility-text-resize a {
   text-decoration-thickness: 2px;
 }
 
