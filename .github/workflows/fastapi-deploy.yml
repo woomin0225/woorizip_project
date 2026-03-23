@@ -36,18 +36,11 @@ jobs:
           aws s3 cp fastapi.zip
           s3://${{ secrets.ARTIFACT_BUCKET }}/fastapi/${{ github.sha }}/fastapi.zip
 
-      - name: Upload env
-        run: >
-          aws s3 cp ai_server_new/.env
-          s3://${{ secrets.ARTIFACT_BUCKET }}/fastapi/${{ github.sha }}/fastapi.env
-
       - name: Create presigned URLs
         id: presign
         run: |
           ZIP_URL=$(aws s3 presign s3://${{ secrets.ARTIFACT_BUCKET }}/fastapi/${{ github.sha }}/fastapi.zip --expires-in 3600)
-          ENV_URL=$(aws s3 presign s3://${{ secrets.ARTIFACT_BUCKET }}/fastapi/${{ github.sha }}/fastapi.env --expires-in 3600)
           echo "zip_url=$ZIP_URL" >> $GITHUB_OUTPUT
-          echo "env_url=$ENV_URL" >> $GITHUB_OUTPUT
 
       - name: Deploy with SSM
         id: deploy_ssm
@@ -63,13 +56,11 @@ jobs:
                 "set -e",
                 "if ! command -v unzip >/dev/null 2>&1; then sudo apt-get update && sudo apt-get install -y unzip; fi",
                 "mkdir -p /opt/myapp/fastapi/releases/${{ github.sha }}",
-                "mkdir -p /opt/myapp/env",
                 "curl -fL \"${{ steps.presign.outputs.zip_url }}\" -o /opt/myapp/fastapi/releases/${{ github.sha }}/fastapi.zip",
-                "curl -fL \"${{ steps.presign.outputs.env_url }}\" -o /opt/myapp/env/fastapi.env",
                 "cd /opt/myapp/fastapi/releases/${{ github.sha }} && unzip -o fastapi.zip",
                 "/opt/myapp/fastapi/venv/bin/pip install -r /opt/myapp/fastapi/releases/${{ github.sha }}/requirements.txt",
                 "ln -sfn /opt/myapp/fastapi/releases/${{ github.sha }} /opt/myapp/fastapi/current",
-                "cp /opt/myapp/env/fastapi.env /opt/myapp/fastapi/current/.env",
+                "test -f /opt/myapp/env/fastapi.env",
                 "chown -R ubuntu:ubuntu /opt/myapp",
                 "sudo systemctl restart fastapi-app",
                 "sleep 5",
