@@ -39,6 +39,7 @@ jobs:
           CI: "false"
           REACT_APP_API_BASE_URL: ${{ secrets.REACT_APP_API_BASE_URL }}
           REACT_APP_AI_BASE_URL: ${{ secrets.REACT_APP_AI_BASE_URL }}
+          REACT_APP_KAKAO_MAP_KEY: ${{ secrets.REACT_APP_KAKAO_MAP_KEY }}
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v5
