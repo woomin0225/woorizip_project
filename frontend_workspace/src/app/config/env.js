@@ -27,3 +27,8 @@ export function getAiBaseUrl() {
 
   return (vite || cra || getApiBaseUrl()).replace(/\/$/, '');
 }
+
+export function getApiAssetUrl(path = '') {
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+  return `${getApiBaseUrl()}${normalizedPath}`;
+}

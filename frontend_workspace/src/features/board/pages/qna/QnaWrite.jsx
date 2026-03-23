@@ -2,6 +2,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { getApiAssetUrl } from '../../../../app/config/env';
 import PostEditor from '../../components/PostEditor';
 import { useQnaWrite } from '../../hooks/useQnaWrite';
 
@@ -28,7 +29,7 @@ export default function QnaWrite() {
       setNewFiles={setNewFiles}
       filePreviewUrls={filePreviewUrls}
       getFileUrl={(f) =>
-        `http://localhost:8080/upload_files/qna/${f.updatedFileName}`
+        getApiAssetUrl(`/upload_files/qna/${f.updatedFileName}`)
       }
       submitting={submitting}
       onSubmit={handleSubmit}

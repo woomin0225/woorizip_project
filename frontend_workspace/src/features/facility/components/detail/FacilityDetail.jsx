@@ -1,10 +1,11 @@
 // src/features/facility/components/detail/FacilityDetail.jsx
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { getApiAssetUrl } from '../../../../app/config/env';
 import { useFacilityDetail } from '../../hooks/facility/useFacilityDetail';
 import styles from './Detail.module.css';
 
-const FAC_IMG_DIR = 'http://localhost:8080/upload/facility_image';
+const FAC_IMG_DIR = getApiAssetUrl('/upload/facility_image');
 
 export default function FacilityDetail({
   facilityNo,

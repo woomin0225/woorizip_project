@@ -2,6 +2,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { getApiAssetUrl } from '../../../../app/config/env';
 import { useNoticeWrite } from '../../hooks/useNoticeWrite';
 import PostEditor from '../../components/PostEditor';
 
@@ -28,7 +29,7 @@ export default function NoticeWrite() {
       setNewFiles={setNewFiles}
       filePreviewUrls={filePreviewUrls}
       getFileUrl={(f) =>
-        `http://localhost:8080/upload/notice/${f.updatedFileName}`
+        getApiAssetUrl(`/upload/notice/${f.updatedFileName}`)
       }
       submitting={submitting}
       onSubmit={handleSubmit}
