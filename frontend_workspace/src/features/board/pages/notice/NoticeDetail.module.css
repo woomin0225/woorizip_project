@@ -152,6 +152,7 @@
   align-items: center;
   justify-content: center;
   height: 36px;
+  min-height: 36px;
   padding: 0 14px;
   border: 1px solid #c9713f;
   border-radius: 10px;
@@ -159,6 +160,9 @@
   color: #fff;
   font-size: 14px;
   font-weight: 800;
+  line-height: 1.35;
+  font-family: inherit;
+  appearance: none;
   cursor: pointer;
   text-decoration: none;
 }
