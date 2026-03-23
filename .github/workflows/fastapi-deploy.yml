@@ -1,4 +1,4 @@
-name: Deploy FastAPI
+name: Deploy  FastAPI
 
 on:
   workflow_dispatch:
