@@ -1,6 +1,20 @@
 import { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
+import defaultMarkerIcon from '../../../../assets/images/map/marker-default.svg';
+import activeMarkerIcon from '../../../../assets/images/map/marker-active.svg';
 import styles from './MapPanel.module.css';
+
+function createMarkerImage(kakao, src, size) {
+  const width = size;
+  const height = Math.round(size * 1.4);
+  return new kakao.maps.MarkerImage(
+    src,
+    new kakao.maps.Size(width, height),
+    {
+      offset: new kakao.maps.Point(Math.round(width / 2), height),
+    }
+  );
+}
 
 function formatMoneyKRW(value) {
   if (value === null || value === undefined) return '';
@@ -143,6 +157,7 @@ export default function MapPanel({
   onMarkerClick,
   popup,
   onClosePopup,
+  hoveredHouseNo,
 }) {
   const onChangeBboxRef = useRef(onChangeBbox);
   const onMarkerClickRef = useRef(onMarkerClick);
@@ -260,6 +275,8 @@ export default function MapPanel({
     if (!map || !window.kakao?.maps) return;
 
     const kakao = window.kakao;
+    const defaultMarkerImage = createMarkerImage(kakao, defaultMarkerIcon, 32);
+    const activeMarkerImage = createMarkerImage(kakao, activeMarkerIcon, 40);
     markerObjsRef.current.forEach((m) => m.setMap(null));
     markerObjsRef.current = [];
 
@@ -267,11 +284,14 @@ export default function MapPanel({
       const lat = mk.houseLat;
       const lng = mk.houseLng;
       if (lat == null || lng == null) return;
+      const isHovered = hoveredHouseNo && String(mk.houseNo) === String(hoveredHouseNo);
 
       const marker = new kakao.maps.Marker({
         position: new kakao.maps.LatLng(lat, lng),
         title: mk.houseName,
+        image: isHovered ? activeMarkerImage : defaultMarkerImage,
       });
+      marker.setZIndex(isHovered ? 10 : 1);
 
       kakao.maps.event.addListener(marker, 'click', () => {
         onMarkerClickRef.current?.({
@@ -287,7 +307,7 @@ export default function MapPanel({
       marker.setMap(map);
       markerObjsRef.current.push(marker);
     });
-  }, [markers]);
+  }, [hoveredHouseNo, markers]);
 
   return (
     <div className={styles.mapWrap} id="map">
