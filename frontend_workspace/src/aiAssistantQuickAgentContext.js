@@ -1,5 +1,5 @@
-export const SETTINGS_GUIDE =
-  '접근성 설정에서는 음성 모드, 페이지 진입 시 자동 요약 읽기, 현재 포커스 요소 읽기, 우리봇 답변 자동 읽기, 음성 명령 사용, 글자 크기, 페이지 배율, 버튼 크기를 조정할 수 있습니다.';
+﻿export const SETTINGS_GUIDE =
+  '접근성 설정에서는 음성 모드, 페이지 진입 시 자동 요약 읽기, 우리봇 답변 자동 읽기, 글자 크기를 조정할 수 있습니다.';
 
 export const normalizeHouseContextItem = (house) => {
   const houseNo = String(house?.houseNo || '').trim();

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+﻿import React, { useEffect } from 'react';
 import { useVoiceMode } from '../../context/VoiceModeContext';
 import styles from './AccessibilitySettingsModal.module.css';
 
@@ -6,21 +6,11 @@ const FONT_OPTIONS = [
   { value: 1, label: '기본' },
   { value: 1.08, label: '조금 크게' },
   { value: 1.16, label: '크게' },
+  { value: 1.24, label: '매우 크게' },
 ];
 
-const ZOOM_OPTIONS = [
-  { value: 1, label: '100%' },
-  { value: 1.1, label: '110%' },
-  { value: 1.25, label: '125%' },
-];
-
-const BUTTON_OPTIONS = [
-  { value: 1, label: '기본' },
-  { value: 1.12, label: '조금 크게' },
-  { value: 1.24, label: '크게' },
-];
-
-const SETTINGS_SUMMARY = '접근성 설정에서는 음성 모드, 페이지 진입 시 자동 요약 읽기, 현재 포커스 요소 읽기, 우리봇 답변 자동 읽기, 음성 명령 사용, 글자 크기, 페이지 배율, 버튼 크기를 조정할 수 있습니다.';
+const SETTINGS_SUMMARY =
+  '접근성 설정에서는 음성 모드, 페이지 진입 시 자동 요약 읽기, 우리봇 답변 자동 읽기, 글자 크기를 조정할 수 있습니다.';
 
 export default function AccessibilitySettingsModal({ open, onClose }) {
   const {
@@ -64,7 +54,7 @@ export default function AccessibilitySettingsModal({ open, onClose }) {
             <div>
               <h2 className={styles.title}>접근성 설정</h2>
               <p className={styles.description}>
-                편의성을 위한 음성 지원과 화면 보기 설정입니다.
+                편의성을 위한 음성 지원과 글자 크기 설정입니다.
               </p>
             </div>
             <button
@@ -86,7 +76,9 @@ export default function AccessibilitySettingsModal({ open, onClose }) {
               </div>
               <button
                 type="button"
-                className={`${styles.toggleBtn} ${voiceModeEnabled ? styles.toggleOn : ''}`}
+                className={`${styles.toggleBtn} ${
+                  voiceModeEnabled ? styles.toggleOn : ''
+                }`}
                 onClick={
                   voiceModeEnabled ? disableVoiceMode : () => enableVoiceMode()
                 }
@@ -107,32 +99,12 @@ export default function AccessibilitySettingsModal({ open, onClose }) {
             <label className={styles.checkboxRow}>
               <input
                 type="checkbox"
-                checked={settings.readFocusedElement}
-                onChange={(e) =>
-                  updateSetting('readFocusedElement', e.target.checked)
-                }
-              />
-              현재 포커스 요소 읽기
-            </label>
-            <label className={styles.checkboxRow}>
-              <input
-                type="checkbox"
                 checked={settings.autoReadBotReplies}
                 onChange={(e) =>
                   updateSetting('autoReadBotReplies', e.target.checked)
                 }
               />
               우리봇 답변 자동 읽기
-            </label>
-            <label className={styles.checkboxRow}>
-              <input
-                type="checkbox"
-                checked={settings.voiceCommandEnabled}
-                onChange={(e) =>
-                  updateSetting('voiceCommandEnabled', e.target.checked)
-                }
-              />
-              음성 명령 사용
             </label>
           </section>
 
@@ -145,38 +117,12 @@ export default function AccessibilitySettingsModal({ open, onClose }) {
                   <button
                     key={`font-${option.value}`}
                     type="button"
-                    className={`${styles.choiceBtn} ${settings.fontScale === option.value ? styles.choiceActive : ''}`}
+                    className={`${styles.choiceBtn} ${
+                      settings.fontScale === option.value
+                        ? styles.choiceActive
+                        : ''
+                    }`}
                     onClick={() => updateSetting('fontScale', option.value)}
-                  >
-                    {option.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className={styles.controlBlock}>
-              <span className={styles.controlLabel}>페이지 배율</span>
-              <div className={styles.choiceRow}>
-                {ZOOM_OPTIONS.map((option) => (
-                  <button
-                    key={`zoom-${option.value}`}
-                    type="button"
-                    className={`${styles.choiceBtn} ${settings.pageZoom === option.value ? styles.choiceActive : ''}`}
-                    onClick={() => updateSetting('pageZoom', option.value)}
-                  >
-                    {option.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className={styles.controlBlock}>
-              <span className={styles.controlLabel}>버튼 크기</span>
-              <div className={styles.choiceRow}>
-                {BUTTON_OPTIONS.map((option) => (
-                  <button
-                    key={`button-${option.value}`}
-                    type="button"
-                    className={`${styles.choiceBtn} ${settings.buttonScale === option.value ? styles.choiceActive : ''}`}
-                    onClick={() => updateSetting('buttonScale', option.value)}
                   >
                     {option.label}
                   </button>

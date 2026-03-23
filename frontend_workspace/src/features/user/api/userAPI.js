@@ -1,4 +1,4 @@
-import { getApiBaseUrl } from '../../../app/config/env';
+﻿import { getApiBaseUrl } from '../../../app/config/env';
 import { tokenStore } from '../../../app/http/tokenStore';
 import { parseJwt } from '../../../app/providers/utils/jwt';
 import { apiJson } from '../../../app/http/request';
@@ -52,7 +52,6 @@ function getEmailFromAccessToken() {
 }
 
 function getCurrentUserEmail() {
-  // 우선순위: JWT > 로컬 캐시
   return (
     getEmailFromAccessToken() ||
     localStorage.getItem('emailId') ||
@@ -83,6 +82,12 @@ export async function getMyInfo() {
 export async function getUserByUserNo(userNo) {
   if (!userNo) throw new Error('사용자 번호가 없습니다.');
   return request(`/api/user/no/${encodeURIComponent(userNo)}`);
+}
+
+export async function getAdminUserListPage(page = 1, size = 100) {
+  return request(
+    `/api/user/list?page=${encodeURIComponent(page)}&size=${encodeURIComponent(size)}&sort=createdAt&direct=DESC`
+  );
 }
 
 export function isLessorType(type) {

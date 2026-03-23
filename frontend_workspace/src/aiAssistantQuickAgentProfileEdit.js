@@ -1,4 +1,4 @@
-import { normalizeText } from './aiAssistantQuickAgentActions';
+﻿import { normalizeText } from './aiAssistantQuickAgentActions';
 
 export const PROFILE_EDITABLE_FIELDS = [
   {
@@ -13,68 +13,61 @@ export const PROFILE_EDITABLE_FIELDS = [
   },
   {
     key: 'phone',
-    label: '전화번호',
+    label: '휴대번호',
     aliases: ['전화번호', '휴대폰', '핸드폰', '휴대번호', '연락처', '폰번호'],
     normalizeValue: (value) => String(value || '').replace(/\D/g, ''),
     validate: (value) =>
       /^01\d{8,9}$/.test(value)
         ? ''
-        : '전화번호는 숫자 10~11자리로 입력해 주세요. 예: 01012341234',
+        : '휴대번호는 숫자 10~11자리로 입력해 주세요. 예: 01012341234',
   },
   {
-    key: 'birthDate',
-    label: '생년월일',
-    aliases: ['생년월일', '생일', '출생일'],
-    normalizeValue: (value) => {
-      const source = String(value || '').trim();
-      const match = source.match(/(\d{4})[.\-/년\s]+(\d{1,2})[.\-/월\s]+(\d{1,2})/);
-      if (!match) return source;
-      const year = match[1];
-      const month = match[2].padStart(2, '0');
-      const day = match[3].padStart(2, '0');
-      return `${year}-${month}-${day}`;
-    },
+    key: 'address',
+    label: '주소',
+    aliases: ['주소', '집주소', '거주지'],
+    normalizeValue: (value) => String(value || '').trim(),
     validate: (value) =>
-      /^\d{4}-\d{2}-\d{2}$/.test(value)
+      value.length >= 5
         ? ''
-        : '생년월일은 1999-01-31 형식으로 입력해 주세요.',
+        : '주소는 다섯 글자 이상으로 입력해 주세요.',
   },
   {
-    key: 'gender',
-    label: '성별',
-    aliases: ['성별'],
+    key: 'type',
+    label: '회원유형',
+    aliases: ['회원유형', '유형', '타입', '임대인', '임차인', '사용자유형'],
     normalizeValue: (value) => {
       const normalized = normalizeText(value);
       if (
-        normalized.includes('남') ||
-        normalized.includes('남성') ||
-        normalized === 'm' ||
-        normalized === 'male'
+        normalized.includes('임대인') ||
+        normalized.includes('집주인') ||
+        normalized === 'lessor' ||
+        normalized === 'landlord'
       ) {
-        return 'M';
+        return 'LESSOR';
       }
       if (
-        normalized.includes('여') ||
-        normalized.includes('여성') ||
-        normalized === 'f' ||
-        normalized === 'female'
+        normalized.includes('임차인') ||
+        normalized.includes('사용자') ||
+        normalized.includes('일반회원') ||
+        normalized === 'user' ||
+        normalized === 'tenant'
       ) {
-        return 'F';
+        return 'USER';
       }
       return String(value || '').trim().toUpperCase();
     },
     validate: (value) =>
-      value === 'M' || value === 'F'
+      value === 'USER' || value === 'LESSOR'
         ? ''
-        : '성별은 남성 또는 여성으로 입력해 주세요.',
+        : '회원유형은 사용자 또는 임대인으로 입력해 주세요.',
   },
 ];
 
 export const PROFILE_UNSUPPORTED_FIELDS = [
   { label: '닉네임', aliases: ['닉네임', '별명', '닉'] },
-  { label: '주소', aliases: ['주소', '집주소', '거주지'] },
   { label: '이메일', aliases: ['이메일', '메일', 'email'] },
-  { label: '회원유형', aliases: ['회원유형', '유형', '타입', '임대인', '사용자유형'] },
+  { label: '생년월일', aliases: ['생년월일', '생일', '출생일'] },
+  { label: '성별', aliases: ['성별'] },
 ];
 
 const VALUE_SEPARATORS = ['으로', '로', '바꿔', '변경', '수정', '해줘', '해주세요'];
@@ -117,7 +110,7 @@ const stripTrailingCommand = (messageText) => {
 };
 
 export const getProfileEditSupportMessage = () =>
-  '현재 챗봇으로 수정할 수 있는 항목은 이름, 전화번호, 생년월일, 성별입니다.';
+  '현재 챗봇으로 수정할 수 있는 항목은 이름, 휴대번호, 주소, 회원유형입니다.';
 
 export const isProfileEditPage = (pathname) => pathname === '/mypage/edit';
 
@@ -160,7 +153,14 @@ export const normalizeProfileEditValue = (field, rawValue) => {
 
   return {
     value,
-    displayValue: field?.key === 'gender' ? (value === 'M' ? '남성' : value === 'F' ? '여성' : value) : value,
+    displayValue:
+      field?.key === 'type'
+        ? value === 'LESSOR'
+          ? '임대인'
+          : value === 'USER'
+            ? '사용자'
+            : value
+        : value,
     error,
   };
 };

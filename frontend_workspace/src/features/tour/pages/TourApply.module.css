@@ -67,8 +67,8 @@
   border-radius: 999px;
   padding: 4px 10px;
   font-size: 0.85rem;
-  color: #344767;
-  background: #eaf2ff;
+  color: #4a3b31;
+  background: #f4ece4;
 }
 
 .label {
@@ -112,8 +112,8 @@
 }
 
 .timeBtnActive {
-  border-color: #11cdef;
-  background: #11cdef;
+  border-color: #c9713f;
+  background: #c9713f;
   color: #fff;
 }
 
@@ -137,11 +137,12 @@
 .btn {
   margin-top: 14px;
   border: 0;
-  border-radius: 8px;
-  background: #11cdef;
+  border-radius: 10px;
+  background: #c9713f;
   color: #fff;
   font-weight: 700;
   padding: 10px 14px;
+  box-shadow: 0 8px 20px rgba(201, 113, 63, 0.18);
 }
 
 .btn:disabled {

@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { createBrowserRouter } from 'react-router-dom';
 
 import MainLayout from '../layouts/MainLayout';
@@ -35,11 +35,10 @@ import InformationDetail from '../../features/board/pages/information/Informatio
 import InformationWrite from '../../features/board/pages/information/InformationWrite';
 import InformationUpdate from '../../features/board/pages/information/InformationUpdate';
 
-import MemberList from '../../features/member/pages/MemberList';
-
 import MyInfo from '../../features/user/pages/MyInfo';
 import MyInfoModify from '../../features/user/pages/MyInfoModify';
 import Withdraw from '../../features/user/pages/withdraw';
+import UserManagement from '../../features/user/pages/UserManagement';
 
 import WishlistPage from '../../features/wishlist/pages/WishlistPage';
 import TourApply from '../../features/tour/pages/TourApply';
@@ -186,6 +185,7 @@ export const router = createBrowserRouter([
 
           { path: '/event/new', element: <EventWrite /> },
           { path: '/event/:postNo/edit', element: <EventUpdate /> },
+          { path: '/mypage/users', element: <UserManagement /> },
 
           {
             path: ROUTES.ADMIN.CATEGORY,
@@ -204,3 +204,6 @@ export const router = createBrowserRouter([
     ],
   },
 ]);
+
+
+
