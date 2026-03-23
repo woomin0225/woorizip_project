@@ -1,0 +1,67 @@
+name: Deploy Spring
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "backend_workspace/**"
+      - ".github/workflows/spring-deploy.yml"
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend_workspace
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Make gradlew executable
+        run: chmod +x gradlew
+
+      - name: Build jar
+        run: ./gradlew clean bootJar
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          aws-region: ${{ secrets.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+
+      - name: Upload jar to artifact bucket
+        run: >
+          aws s3 cp build/libs/*.jar
+          s3://${{ secrets.ARTIFACT_BUCKET }}/spring/${{ github.sha }}/app.jar
+
+      - name: Deploy with SSM
+        run: >
+          aws ssm send-command
+          --instance-ids "${{ secrets.SPRING_INSTANCE_ID }}"
+          --document-name "AWS-RunShellScript"
+          --comment "Deploy Spring Boot"
+          --parameters '{
+            "commands":[
+              "set -e",
+              "mkdir -p /opt/myapp/spring",
+              "mkdir -p /opt/myapp/storage/upload_files",
+              "mkdir -p /opt/myapp/storage/contract_docs",
+              "aws s3 cp s3://${{ secrets.ARTIFACT_BUCKET }}/spring/${{ github.sha }}/app.jar /opt/myapp/spring/app.jar",
+              "/opt/myapp/spring/write-env.sh",
+              "chown -R ubuntu:ubuntu /opt/myapp",
+              "sudo systemctl restart spring-app",
+              "sleep 5",
+              "sudo systemctl --no-pager --full status spring-app"
+            ]
+          }'
