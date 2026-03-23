@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+﻿import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Container, Row, Col, Card, CardBody } from 'reactstrap';
 import {
@@ -707,23 +707,27 @@ export default function ContractCreate() {
                           disabled
                         />
                         <span className={styles.checkText}>
-                          개인정보 수집 및 이용/제3자 제공에 동의합니다.
-                          {CONSENT_DOCS.personal.links.map((link) => (
-                            <button
-                              key={link.url}
-                              type="button"
-                              className={styles.linkBtn}
-                              onClick={() =>
-                                openDocModal(
-                                  'personal',
-                                  CONSENT_DOCS.personal.title,
-                                  [link.url, ...(CONSENT_DOCS.personal.extraUrls || [])]
-                                )
-                              }
-                            >
-                              {link.label}
-                            </button>
-                          ))}
+                          <span className={styles.checkLabelText}>
+                            개인정보 수집 및 이용/제3자 제공에 동의합니다.
+                          </span>
+                          <span className={styles.checkLinkRow}>
+                            {CONSENT_DOCS.personal.links.map((link) => (
+                              <button
+                                key={link.url}
+                                type="button"
+                                className={styles.linkBtn}
+                                onClick={() =>
+                                  openDocModal(
+                                    'personal',
+                                    CONSENT_DOCS.personal.title,
+                                    [link.url, ...(CONSENT_DOCS.personal.extraUrls || [])]
+                                  )
+                                }
+                              >
+                                {link.label}
+                              </button>
+                            ))}
+                          </span>
                         </span>
                       </label>
                       <label className={styles.checkRow}>
@@ -734,19 +738,23 @@ export default function ContractCreate() {
                           disabled
                         />
                         <span className={styles.checkText}>
-                          전자계약서 내용 확인 및 계약 진행에 동의합니다.
-                          {CONSENT_DOCS.contract.links.map((link) => (
-                            <button
-                              key={link.url}
-                              type="button"
-                              className={styles.linkBtn}
-                              onClick={() =>
-                                openDocModal('contract', CONSENT_DOCS.contract.title, [buildLeasePreviewDataUrl()])
-                              }
-                            >
-                              {link.label}
-                            </button>
-                          ))}
+                          <span className={styles.checkLabelText}>
+                            전자계약서 내용 확인 및 계약 진행에 동의합니다.
+                          </span>
+                          <span className={styles.checkLinkRow}>
+                            {CONSENT_DOCS.contract.links.map((link) => (
+                              <button
+                                key={link.url}
+                                type="button"
+                                className={styles.linkBtn}
+                                onClick={() =>
+                                  openDocModal('contract', CONSENT_DOCS.contract.title, [buildLeasePreviewDataUrl()])
+                                }
+                              >
+                                {link.label}
+                              </button>
+                            ))}
+                          </span>
                         </span>
                       </label>
                       <label className={styles.checkRow}>
@@ -757,17 +765,21 @@ export default function ContractCreate() {
                           disabled
                         />
                         <span className={styles.checkText}>
-                          전자문서 및 전자서명 이용에 동의합니다.
-                          {CONSENT_DOCS.sign.links.map((link) => (
-                            <button
-                              key={link.url}
-                              type="button"
-                              className={styles.linkBtn}
-                              onClick={() => openDocModal('sign', CONSENT_DOCS.sign.title, [link.url])}
-                            >
-                              {link.label}
-                            </button>
-                          ))}
+                          <span className={styles.checkLabelText}>
+                            전자문서 및 전자서명 이용에 동의합니다.
+                          </span>
+                          <span className={styles.checkLinkRow}>
+                            {CONSENT_DOCS.sign.links.map((link) => (
+                              <button
+                                key={link.url}
+                                type="button"
+                                className={styles.linkBtn}
+                                onClick={() => openDocModal('sign', CONSENT_DOCS.sign.title, [link.url])}
+                              >
+                                {link.label}
+                              </button>
+                            ))}
+                          </span>
                         </span>
                       </label>
                     </div>

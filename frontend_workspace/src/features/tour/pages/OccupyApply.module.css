@@ -72,13 +72,13 @@
 
 .smallBtn {
   width: 100%;
-  border: 1px solid #11cdef;
+  border: 1px solid #c9713f;
   border-radius: 6px;
   padding: 3px 0;
   font-size: 0.74rem;
   line-height: 1.2;
   font-weight: 700;
-  color: #11cdef;
+  color: #c9713f;
   background: #fff;
 }
 

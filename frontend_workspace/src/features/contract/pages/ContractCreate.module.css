@@ -1,4 +1,4 @@
-.page {
+﻿.page {
   padding: 140px 0 60px;
 }
 
@@ -27,9 +27,9 @@
 }
 
 .stepBadgeActive {
-  border-color: #11cdef;
-  background: #ebfafd;
-  color: #0d8ea7;
+  border-color: #c9713f;
+  background: #f4ece4;
+  color: #9b5a34;
 }
 
 .stepArrow {
@@ -228,31 +228,33 @@
 }
 
 .presetBtn {
-  border: 1px solid #11cdef;
+  border: 1px solid #c9713f;
   border-radius: 999px;
   background: #fff;
-  color: #11cdef;
+  color: #c9713f;
   font-weight: 700;
   font-size: 0.82rem;
   padding: 7px 12px;
 }
 
 .presetBtnActive {
-  background: #11cdef;
+  background: #c9713f;
   color: #fff;
 }
 
 .checkRow {
   display: flex;
-  align-items: flex-start;
-  gap: 8px;
+  align-items: center;
+  gap: 10px;
   margin: 8px 0 0;
   color: #525f7f;
   font-size: 0.88rem;
 }
 
 .checkRow input[type='checkbox'] {
-  accent-color: #11cdef;
+  flex: 0 0 auto;
+  accent-color: #c9713f;
+  margin: 0;
 }
 
 .checkRow input[type='checkbox']:disabled {
@@ -262,11 +264,24 @@
 
 .checkText {
   display: inline-flex;
-  gap: 6px;
-  flex-wrap: wrap;
   align-items: center;
+  gap: 8px;
+  min-width: 0;
+  line-height: 1.5;
+  flex-wrap: nowrap;
 }
 
+.checkLabelText {
+  display: inline;
+  white-space: nowrap;
+}
+
+.checkLinkRow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap;
+}
 .linkBtn {
   border: 0;
   background: transparent;
@@ -275,6 +290,7 @@
   font-size: 0.82rem;
   padding: 0;
   cursor: pointer;
+  white-space: nowrap;
 }
 
 .signatureWrap {
@@ -316,7 +332,7 @@
 
 .primaryBtn {
   border: 1px solid transparent;
-  background: #11cdef;
+  background: #c9713f;
   color: #fff;
 }
 
@@ -412,3 +428,4 @@
     flex-direction: column;
   }
 }
+

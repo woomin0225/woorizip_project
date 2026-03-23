@@ -1,10 +1,10 @@
-import React from 'react';
+﻿import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import styles from '../../../app/layouts/MyPageLayout.module.css';
 import { getIsLessorHint, getMyInfo, isLessorType } from '../api/userAPI';
+import { useAuth } from '../../../app/providers/AuthProvider';
 
 const BASE_MENUS = [
-  { label: '마이페이지', to: '/mypage' },
   { label: '내정보 보기', to: '/mypage/info' },
   { label: '내정보 수정', to: '/mypage/edit' },
   { label: '찜목록', to: '/wishlist' },
@@ -13,24 +13,26 @@ const BASE_MENUS = [
 ];
 
 const WITHDRAW_MENU = { label: '회원탈퇴', to: '/mypage/withdraw' };
+const ADMIN_MENU = { label: '유저관리', to: '/mypage/users' };
 
 export default function MyPageSideNav() {
   const location = useLocation();
+  const { isAdmin } = useAuth();
   const [isLessor, setIsLessor] = React.useState(() => getIsLessorHint());
   const withdrawActive = location.pathname === WITHDRAW_MENU.to;
-  const menus = React.useMemo(
-    () =>
-      BASE_MENUS.map((menu) => ({
-        ...menu,
-        label:
-          menu.lessorLabel && isLessor === null
-            ? '신청/승인현황'
-            : isLessor && menu.lessorLabel
-              ? menu.lessorLabel
-              : menu.label,
-      })),
-    [isLessor]
-  );
+  const menus = React.useMemo(() => {
+    const baseMenus = BASE_MENUS.map((menu) => ({
+      ...menu,
+      label:
+        menu.lessorLabel && isLessor === null
+          ? '신청/승인현황'
+          : isLessor && menu.lessorLabel
+            ? menu.lessorLabel
+            : menu.label,
+    }));
+
+    return isAdmin ? [...baseMenus, ADMIN_MENU] : baseMenus;
+  }, [isAdmin, isLessor]);
 
   React.useEffect(() => {
     let mounted = true;
@@ -55,15 +57,12 @@ export default function MyPageSideNav() {
 
   return (
     <div className={styles.sideNavWrap}>
-      <nav className={styles.menuList}>
+      <div className={styles.sideNavHeader}>
+        <p className={styles.menuTitle}>마이페이지</p>
+        <div className={styles.menuDivider} aria-hidden="true" />
+      </div>
+      <nav className={styles.menuList} aria-label="마이페이지 메뉴">
         {menus.map((item) => {
-          if (item.to === '/mypage') {
-            return (
-              <div key={item.to} className={styles.menuLabelOnly}>
-                {item.label}
-              </div>
-            );
-          }
           const active = location.pathname === item.to;
           return (
             <Link

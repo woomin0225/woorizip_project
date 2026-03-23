@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import Headroom from 'headroom.js';
 import { ROUTES } from './../../../shared/constants/routes';
@@ -81,7 +81,7 @@ export default function Header() {
           decodedToken.auth === 'ADMIN' ||
           decodedToken.auth === 'ROLE_ADMIN';
 
-        setMyPageRoute(isAdmin ? ROUTES.ADMIN.MEMBERS : ROUTES.MEMBER.MYPAGE);
+        setMyPageRoute(ROUTES.MEMBER.MYPAGE);
 
         const latestName =
           decodedToken.name ||
@@ -241,3 +241,4 @@ export default function Header() {
     </>
   );
 }
+
