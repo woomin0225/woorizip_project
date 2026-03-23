@@ -1,17 +1,12 @@
 import { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
+import defaultMarkerIcon from '../../../../assets/images/map/marker-default.svg';
+import activeMarkerIcon from '../../../../assets/images/map/marker-active.svg';
 import styles from './MapPanel.module.css';
 
-function createMarkerImage(kakao, { fill, stroke, size }) {
+function createMarkerImage(kakao, src, size) {
   const width = size;
   const height = Math.round(size * 1.4);
-  const svg = `
-    <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 36 50">
-      <path d="M18 49C18 49 3 29.5 3 18C3 9.716 9.716 3 18 3C26.284 3 33 9.716 33 18C33 29.5 18 49 18 49Z" fill="${fill}" stroke="${stroke}" stroke-width="2"/>
-      <circle cx="18" cy="18" r="6.5" fill="white"/>
-    </svg>
-  `;
-  const src = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
   return new kakao.maps.MarkerImage(
     src,
     new kakao.maps.Size(width, height),
@@ -280,16 +275,8 @@ export default function MapPanel({
     if (!map || !window.kakao?.maps) return;
 
     const kakao = window.kakao;
-    const defaultMarkerImage = createMarkerImage(kakao, {
-      fill: '#3b82f6',
-      stroke: '#1d4ed8',
-      size: 32,
-    });
-    const activeMarkerImage = createMarkerImage(kakao, {
-      fill: '#f97316',
-      stroke: '#c2410c',
-      size: 40,
-    });
+    const defaultMarkerImage = createMarkerImage(kakao, defaultMarkerIcon, 32);
+    const activeMarkerImage = createMarkerImage(kakao, activeMarkerIcon, 40);
     markerObjsRef.current.forEach((m) => m.setMap(null));
     markerObjsRef.current = [];
 
