@@ -336,6 +336,7 @@ export default function Search() {
 
   // 지도 마커를 눌렀을 때 나오는 미니 팝업용 상태입니다.
   const [markerPopup, setMarkerPopup] = useState(null);
+  const [hoveredHouseNo, setHoveredHouseNo] = useState(null);
 
   // 현재 검색이 전세인지 월세인지에 따라 정렬 버튼 UI가 달라지므로 따로 둡니다.
   const [isJeonse, setIsJeonse] = useState(cond.roomType === 'L' || false);
@@ -678,7 +679,8 @@ export default function Search() {
   const showSemanticSection =
     loadingNatural || naturalRooms.length > 0 || naturalQuery.trim();
   const semanticPreviewRooms = naturalRooms.slice(0, SEMANTIC_PREVIEW_LIMIT);
-  const showNormalSection = loadingRooms || rooms.length > 0 || naturalQuery.trim();
+  const showNormalSection =
+    loadingRooms || rooms.length > 0 || naturalQuery.trim() || appliedCond !== null;
 
   return (
     <div className={styles.page}>
@@ -690,7 +692,7 @@ export default function Search() {
             runNaturalSearch();
           }}
         >
-          <label className={styles.naturalLabel}>자연어 검색</label>
+          <label className={styles.naturalLabel}>✨AI 검색</label>
           <div className={styles.naturalRow}>
             <input
               className={styles.naturalInput}
@@ -772,7 +774,7 @@ export default function Search() {
           {showSemanticSection && (
             <section className={styles.semanticSection}>
               <div className={styles.semanticHeader}>
-                <h3 className={styles.semanticTitle}>AI 추천 결과</h3>
+                <h3 className={styles.semanticTitle}>✨AI 추천 결과</h3>
                 {semanticPreviewRooms.length > 0 && (
                   <span className={styles.semanticCount}>
                     AI 추천 {semanticPreviewRooms.length}건
@@ -802,6 +804,7 @@ export default function Search() {
                     roomSearchResponse={room}
                     wished={!!wishMap?.[room.roomNo]}
                     onToggleWish={toggleWish}
+                    onHoverHouseChange={setHoveredHouseNo}
                   />
                 ))}
             </section>
@@ -812,7 +815,7 @@ export default function Search() {
           {showNormalSection && (
             <section className={styles.normalSection}>
               <div className={styles.normalHeader}>
-                <h3 className={styles.normalTitle}>일반 필터 결과</h3>
+                <h3 className={styles.normalTitle}>일반 검색 결과</h3>
                 {!loadingRooms && rooms.length > 0 && (
                   <span className={styles.normalCount}>{rooms.length}건</span>
                 )}
@@ -824,17 +827,20 @@ export default function Search() {
                 </div>
               )}
 
-              <ResultList
-                slice={rooms}
-                criterion={appliedCond?.criterion ?? cond.criterion}
-                onChangeCriterion={changeCriterion}
-                onLoadMore={onLoadMore}
-                hasNext={hasNext}
-                loading={loadingRooms}
-                wishMap={wishMap}
-                onToggleWish={toggleWish}
-                isJeonse={isJeonse}
-              />
+              {rooms.length > 0 && (
+                <ResultList
+                  slice={rooms}
+                  criterion={appliedCond?.criterion ?? cond.criterion}
+                  onChangeCriterion={changeCriterion}
+                  onLoadMore={onLoadMore}
+                  hasNext={hasNext}
+                  loading={loadingRooms}
+                  wishMap={wishMap}
+                  onToggleWish={toggleWish}
+                  isJeonse={isJeonse}
+                  onHoverHouseChange={setHoveredHouseNo}
+                />
+              )}
             </section>
           )}
         </div>
@@ -847,6 +853,7 @@ export default function Search() {
             onMarkerClick={handleMarkerClick}
             popup={markerPopup}
             onClosePopup={closeMarkerPopup}
+            hoveredHouseNo={hoveredHouseNo}
           />
         </div>
       </div>

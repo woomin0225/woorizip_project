@@ -2,6 +2,25 @@ import { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import styles from './MapPanel.module.css';
 
+function createMarkerImage(kakao, { fill, stroke, size }) {
+  const width = size;
+  const height = Math.round(size * 1.4);
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 36 50">
+      <path d="M18 49C18 49 3 29.5 3 18C3 9.716 9.716 3 18 3C26.284 3 33 9.716 33 18C33 29.5 18 49 18 49Z" fill="${fill}" stroke="${stroke}" stroke-width="2"/>
+      <circle cx="18" cy="18" r="6.5" fill="white"/>
+    </svg>
+  `;
+  const src = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+  return new kakao.maps.MarkerImage(
+    src,
+    new kakao.maps.Size(width, height),
+    {
+      offset: new kakao.maps.Point(Math.round(width / 2), height),
+    }
+  );
+}
+
 function formatMoneyKRW(value) {
   if (value === null || value === undefined) return '';
   const n = Number(value);
@@ -143,6 +162,7 @@ export default function MapPanel({
   onMarkerClick,
   popup,
   onClosePopup,
+  hoveredHouseNo,
 }) {
   const onChangeBboxRef = useRef(onChangeBbox);
   const onMarkerClickRef = useRef(onMarkerClick);
@@ -260,6 +280,16 @@ export default function MapPanel({
     if (!map || !window.kakao?.maps) return;
 
     const kakao = window.kakao;
+    const defaultMarkerImage = createMarkerImage(kakao, {
+      fill: '#3b82f6',
+      stroke: '#1d4ed8',
+      size: 32,
+    });
+    const activeMarkerImage = createMarkerImage(kakao, {
+      fill: '#f97316',
+      stroke: '#c2410c',
+      size: 40,
+    });
     markerObjsRef.current.forEach((m) => m.setMap(null));
     markerObjsRef.current = [];
 
@@ -267,11 +297,14 @@ export default function MapPanel({
       const lat = mk.houseLat;
       const lng = mk.houseLng;
       if (lat == null || lng == null) return;
+      const isHovered = hoveredHouseNo && String(mk.houseNo) === String(hoveredHouseNo);
 
       const marker = new kakao.maps.Marker({
         position: new kakao.maps.LatLng(lat, lng),
         title: mk.houseName,
+        image: isHovered ? activeMarkerImage : defaultMarkerImage,
       });
+      marker.setZIndex(isHovered ? 10 : 1);
 
       kakao.maps.event.addListener(marker, 'click', () => {
         onMarkerClickRef.current?.({
@@ -287,7 +320,7 @@ export default function MapPanel({
       marker.setMap(map);
       markerObjsRef.current.push(marker);
     });
-  }, [markers]);
+  }, [hoveredHouseNo, markers]);
 
   return (
     <div className={styles.mapWrap} id="map">

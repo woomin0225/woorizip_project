@@ -51,6 +51,7 @@ export default function ResultItem({
   roomSearchResponse,
   wished = false,
   onToggleWish,
+  onHoverHouseChange,
 }) {
   // ✅ Hook은 항상 호출되어야 함 (early return 금지)
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -104,7 +105,11 @@ export default function ResultItem({
   if (!roomSearchResponse) return null;
 
   return (
-    <div className={styles.card}>
+    <div
+      className={styles.card}
+      onMouseEnter={() => onHoverHouseChange?.(room.houseNo ?? null)}
+      onMouseLeave={() => onHoverHouseChange?.(null)}
+    >
       <button className={styles.wishBtn} onClick={toggleWish} aria-label="찜">
         {isWished ? '★' : '☆'}
       </button>
