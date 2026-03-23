@@ -1,8 +1,9 @@
 name: Deploy Spring
 
 on:
+  workflow_dispatch:
   push:
-    branches: ["main"]
+    branches: ["develop", "main"]
     paths:
       - "backend_workspace/**"
       - ".github/workflows/spring-deploy.yml"

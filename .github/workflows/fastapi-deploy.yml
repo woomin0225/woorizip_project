@@ -1,8 +1,9 @@
 name: Deploy FastAPI
 
 on:
+  workflow_dispatch:
   push:
-    branches: ["main"]
+    branches: ["develop", "main"]
     paths:
       - "ai_server_new/**"
       - ".github/workflows/fastapi-deploy.yml"
