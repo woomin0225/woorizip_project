@@ -1,4 +1,4 @@
-name: Deploy Spring
+name: Deploy  Spring
 
 on:
   workflow_dispatch:
