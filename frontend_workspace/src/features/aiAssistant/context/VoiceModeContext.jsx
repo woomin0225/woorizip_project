@@ -75,6 +75,18 @@ export function VoiceModeProvider({ children }) {
   const speechUtteranceRef = useRef(null);
   const audioRef = useRef(null);
 
+  const stopListeningInternal = useCallback(() => {
+    recognitionHandlerRef.current = {};
+    if (recognitionRef.current) {
+      recognitionRef.current.onresult = null;
+      recognitionRef.current.onerror = null;
+      recognitionRef.current.onend = null;
+      recognitionRef.current.stop();
+      recognitionRef.current = null;
+    }
+    setListening(false);
+  }, []);
+
   useEffect(() => {
     if (typeof window === 'undefined') return;
     setSupported({
@@ -240,6 +252,7 @@ export function VoiceModeProvider({ children }) {
     async (text, options = {}) => {
       if (!text) return false;
 
+      stopListeningInternal();
       stopSpeaking();
 
       if (options.preferBrowser !== true) {
@@ -253,23 +266,23 @@ export function VoiceModeProvider({ children }) {
 
       return playBrowserSpeech(text, options);
     },
-    [playBrowserSpeech, playServerSpeech, stopSpeaking]
+    [playBrowserSpeech, playServerSpeech, stopListeningInternal, stopSpeaking]
   );
 
   const stopListening = useCallback(() => {
-    recognitionHandlerRef.current = {};
-    if (recognitionRef.current) {
-      recognitionRef.current.onresult = null;
-      recognitionRef.current.onerror = null;
-      recognitionRef.current.onend = null;
-      recognitionRef.current.stop();
-      recognitionRef.current = null;
-    }
-    setListening(false);
-  }, []);
+    stopListeningInternal();
+  }, [stopListeningInternal]);
 
   const startListening = useCallback(
-    ({ onResult, onError, onEnd } = {}) => {
+    ({
+      onResult,
+      onError,
+      onEnd,
+      lang = 'ko-KR',
+      interimResults = false,
+      continuous = false,
+      maxAlternatives = 1,
+    } = {}) => {
       const RecognitionCtor = getSpeechRecognitionCtor();
       if (!RecognitionCtor) {
         onError?.(new Error('이 브라우저는 음성 인식을 지원하지 않습니다.'));
@@ -277,13 +290,12 @@ export function VoiceModeProvider({ children }) {
       }
 
       stopListening();
-      stopSpeaking();
 
       const recognition = new RecognitionCtor();
-      recognition.lang = 'ko-KR';
-      recognition.interimResults = false;
-      recognition.maxAlternatives = 1;
-      recognition.continuous = false;
+      recognition.lang = lang;
+      recognition.interimResults = interimResults;
+      recognition.maxAlternatives = maxAlternatives;
+      recognition.continuous = continuous;
       recognitionHandlerRef.current = { onResult, onError, onEnd };
 
       recognition.onresult = (event) => {
@@ -309,7 +321,7 @@ export function VoiceModeProvider({ children }) {
       recognition.start();
       return true;
     },
-    [stopListening, stopSpeaking]
+    [stopListening]
   );
 
   const enableVoiceMode = useCallback(
@@ -319,7 +331,7 @@ export function VoiceModeProvider({ children }) {
       if (speakWelcome) {
         window.setTimeout(() => {
           speak(
-            '음성 모드가 켜졌습니다. 약 2초 정도 멈추면 자동으로 듣기를 마치고 안내를 이어갑니다.'
+            '음성 모드가 켜졌습니다. 우리봇이라고 부르면 제가 네 말씀하세요라고 답한 뒤 명령을 듣겠습니다.'
           );
         }, 150);
       }
