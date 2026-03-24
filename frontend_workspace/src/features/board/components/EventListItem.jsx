@@ -1,6 +1,6 @@
 // src/features/board/components/EventListItem.jsx
 import React from 'react';
-import { getApiAssetUrl } from '../../../app/config/env';
+import { buildUploadUrl } from '../../../app/config/env';
 
 export default function EventListItem({
   post,
@@ -13,7 +13,7 @@ export default function EventListItem({
   const isVisible = post?.postVisibleYn !== false;
 
   const imageUrl = banner
-    ? getApiAssetUrl(`/upload/event/banner/${banner.updatedFileName}`)
+    ? buildUploadUrl('upload/event/banner', banner.updatedFileName)
     : null;
 
   const handleToggleClick = (event) => {

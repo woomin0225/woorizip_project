@@ -2,7 +2,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { getApiAssetUrl } from '../../../../app/config/env';
+import { buildUploadUrl } from '../../../../app/config/env';
 import { useInformationWrite } from '../../hooks/useInformationWrite';
 import PostEditor from '../../components/PostEditor';
 
@@ -29,7 +29,7 @@ export default function InformationWrite() {
       setNewFiles={setNewFiles}
       filePreviewUrls={filePreviewUrls}
       getFileUrl={(f) =>
-        getApiAssetUrl(`/upload_files/information/${f.updatedFileName}`)
+        buildUploadUrl('upload/information', f.updatedFileName)
       }
       submitting={submitting}
       onSubmit={handleSubmit}

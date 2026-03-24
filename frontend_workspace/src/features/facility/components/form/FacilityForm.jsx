@@ -1,12 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { getApiAssetUrl } from '../../../../app/config/env';
+import { buildUploadUrl } from '../../../../app/config/env';
 import { useFacilityForm } from '../../hooks/facility/useFacilityForm';
 import styles from './Form.module.css';
 
 export default function FacilityForm() {
-  const FAC_IMG_DIR = getApiAssetUrl('/upload/facility_image');
-
   const { houseNo, facilityNo } = useParams();
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
@@ -42,7 +40,10 @@ export default function FacilityForm() {
         preview:
           img.imageUrl ||
           (img.facilityStoredImageName
-            ? `${FAC_IMG_DIR}/${img.facilityStoredImageName}`
+            ? buildUploadUrl(
+                'upload/facility_image',
+                img.facilityStoredImageName
+              )
             : ''),
         isExisting: true,
       }));

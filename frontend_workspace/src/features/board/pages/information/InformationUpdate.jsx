@@ -1,7 +1,7 @@
 // src/features/board/pages/Information/informationUpdate.jsx
 import React from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { getApiAssetUrl } from '../../../../app/config/env';
+import { buildUploadUrl } from '../../../../app/config/env';
 import PostEditor from '../../components/PostEditor';
 import { useInformationUpdate } from '../../hooks/useInformationUpdate';
 
@@ -44,7 +44,7 @@ export default function InformationUpdate() {
       submitting={submitting}
       onSubmit={onSubmit}
       getFileUrl={(f) =>
-        getApiAssetUrl(`/upload_files/information/${f.updatedFileName}`)
+        buildUploadUrl('upload/information', f.updatedFileName)
       }
       onCancel={() => nav(`/information/${postNo}`)}
     />

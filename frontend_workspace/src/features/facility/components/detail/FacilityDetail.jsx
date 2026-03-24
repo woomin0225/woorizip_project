@@ -1,11 +1,9 @@
 // src/features/facility/components/detail/FacilityDetail.jsx
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getApiAssetUrl } from '../../../../app/config/env';
+import { buildUploadUrl } from '../../../../app/config/env';
 import { useFacilityDetail } from '../../hooks/facility/useFacilityDetail';
 import styles from './Detail.module.css';
-
-const FAC_IMG_DIR = getApiAssetUrl('/upload/facility_image');
 
 export default function FacilityDetail({
   facilityNo,
@@ -68,7 +66,10 @@ export default function FacilityDetail({
               {images.map((img) => (
                 <img
                   key={img.facilityImageNo}
-                  src={`${FAC_IMG_DIR}/${img?.facilityStoredImageName}`}
+                  src={buildUploadUrl(
+                    'upload/facility_image',
+                    img?.facilityStoredImageName
+                  )}
                   alt={facilityName}
                   className={styles.facilityImg}
                 />

@@ -1,4 +1,4 @@
-import { getApiAssetUrl } from '../../../app/config/env';
+import { buildUploadUrl } from '../../../app/config/env';
 
 export function pickRepresentativeRoomImageName(source) {
   if (!source) return null;
@@ -19,5 +19,5 @@ export function pickRepresentativeRoomImageName(source) {
 export function toRoomImageUrl(imageName) {
   if (!imageName) return null;
   if (String(imageName).startsWith('http')) return imageName;
-  return getApiAssetUrl(`/upload/room_image/${imageName}`);
+  return buildUploadUrl('upload/room_image', imageName);
 }

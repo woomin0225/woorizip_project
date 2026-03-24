@@ -2,7 +2,7 @@
 import React from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
-import { getApiAssetUrl } from '../../../../app/config/env';
+import { buildUploadUrl } from '../../../../app/config/env';
 import styles from '../notice/NoticeDetail.module.css';
 import FileDownloadButton from '../../components/FileDownloadButton';
 import { useEventDetail } from '../../hooks/useEventDetail';
@@ -32,7 +32,7 @@ export default function EventDetail() {
   const isVisible = event.postVisibleYn !== false;
 
   const bannerUrl = banner?.updatedFileName
-    ? getApiAssetUrl(`/upload/event/banner/${banner.updatedFileName}`)
+    ? buildUploadUrl('upload/event/banner', banner.updatedFileName)
     : null;
 
   const isImageFile = (f) => {
@@ -52,7 +52,7 @@ export default function EventDetail() {
   };
 
   const getEventFileUrl = (f) => {
-    return getApiAssetUrl(`/upload/event/${f.updatedFileName}`);
+    return buildUploadUrl('upload/event', f.updatedFileName);
   };
 
   const imageFiles = files.filter(isImageFile);

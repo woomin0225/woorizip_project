@@ -8,6 +8,10 @@ on:
       - "frontend_workspace/**"
       - ".github/workflows/frontend-deploy.yml"
 
+concurrency:
+  group: frontend-deploy
+  cancel-in-progress: true
+
 permissions:
   id-token: write
   contents: read
@@ -31,7 +35,7 @@ jobs:
           cache-dependency-path: frontend_workspace/package-lock.json
 
       - name: Install deps
-        run: npm install
+        run: npm ci
 
       - name: Build
         run: npm run build
@@ -40,6 +44,7 @@ jobs:
           REACT_APP_API_BASE_URL: ${{ secrets.REACT_APP_API_BASE_URL }}
           REACT_APP_AI_BASE_URL: ${{ secrets.REACT_APP_AI_BASE_URL }}
           REACT_APP_KAKAO_MAP_KEY: ${{ secrets.REACT_APP_KAKAO_MAP_KEY }}
+          REACT_APP_TOSS_CLIENT_KEY: ${{ secrets.REACT_APP_TOSS_CLIENT_KEY }}
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v5
@@ -52,6 +57,6 @@ jobs:
 
       - name: Invalidate CloudFront
         run: >
-          aws cloudfront create-invalidation-for-distribution-tenant
-          --id ${{ secrets.CLOUDFRONT_DISTRIBUTION_TENANT_ID }}
-          --invalidation-batch "{\"Paths\":{\"Quantity\":1,\"Items\":[\"/*\"]},\"CallerReference\":\"frontend-${{ github.sha }}\"}"
+          aws cloudfront create-invalidation
+          --distribution-id "${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}"
+          --paths "/*"

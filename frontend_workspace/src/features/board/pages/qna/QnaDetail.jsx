@@ -2,7 +2,7 @@
 import React from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
-import { getApiAssetUrl } from '../../../../app/config/env';
+import { buildUploadUrl } from '../../../../app/config/env';
 import styles from '../notice/NoticeDetail.module.css';
 import FileDownloadButton from '../../components/FileDownloadButton';
 import CommentBox from '../../components/CommentBox';
@@ -51,7 +51,7 @@ export default function QnaDetail() {
   };
 
   const getQnaFileUrl = (f) => {
-    return getApiAssetUrl(`/upload/qna/${f.updatedFileName}`);
+    return buildUploadUrl('upload/qna', f.updatedFileName);
   };
 
   const imageFiles = files.filter(isImageFile);

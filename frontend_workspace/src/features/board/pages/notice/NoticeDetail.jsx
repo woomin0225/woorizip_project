@@ -2,7 +2,7 @@
 import React from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
-import { getApiAssetUrl } from '../../../../app/config/env';
+import { buildUploadUrl } from '../../../../app/config/env';
 import styles from './NoticeDetail.module.css';
 import FileDownloadButton from '../../components/FileDownloadButton';
 import { useNoticeDetail } from '../../hooks/useNoticeDetail';
@@ -46,7 +46,7 @@ export default function NoticeDetail() {
   };
 
   const getNoticeFileUrl = (f) => {
-    return getApiAssetUrl(`/upload/notice/${f.updatedFileName}`);
+    return buildUploadUrl('upload/notice', f.updatedFileName);
   };
 
   const imageFiles = files.filter(isImageFile);
@@ -143,7 +143,6 @@ export default function NoticeDetail() {
           </div>
         </div>
       </div>
-
     </div>
   );
 }

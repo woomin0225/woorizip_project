@@ -2,7 +2,7 @@
 import React from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
-import { getApiAssetUrl } from '../../../../app/config/env';
+import { buildUploadUrl } from '../../../../app/config/env';
 import styles from '../notice/NoticeDetail.module.css';
 import FileDownloadButton from '../../components/FileDownloadButton';
 import { useInformationDetail } from '../../hooks/useInformationDetail';
@@ -46,7 +46,7 @@ export default function InformationDetail() {
   };
 
   const getInformationFileUrl = (f) => {
-    return getApiAssetUrl(`/upload/information/${f.updatedFileName}`);
+    return buildUploadUrl('upload/information', f.updatedFileName);
   };
 
   const imageFiles = files.filter(isImageFile);

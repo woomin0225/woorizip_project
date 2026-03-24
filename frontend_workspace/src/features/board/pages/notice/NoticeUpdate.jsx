@@ -1,7 +1,7 @@
 // src/features/board/pages/notice/NoticeUpdate.jsx
 import React from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { getApiAssetUrl } from '../../../../app/config/env';
+import { buildUploadUrl } from '../../../../app/config/env';
 import PostEditor from '../../components/PostEditor';
 import { useNoticeUpdate } from '../../hooks/useNoticeUpdate';
 
@@ -43,9 +43,7 @@ export default function NoticeUpdate() {
       newFiles={newFiles}
       setNewFiles={setNewFiles}
       filePreviewUrls={filePreviewUrls}
-      getFileUrl={(f) =>
-        getApiAssetUrl(`/upload/notice/${f.updatedFileName}`)
-      }
+      getFileUrl={(f) => buildUploadUrl('upload/notice', f.updatedFileName)}
       submitting={submitting}
       onSubmit={onSubmit}
       onCancel={() => nav(`/notices/${postNo}`)}

@@ -254,7 +254,9 @@ export const useFindId = () => {
       const name = String(form.name || '').trim();
       const rawPhone = String(form.phone || '').trim();
       const normalizedPhone = rawPhone.replace(/\D/g, '');
-      const phoneCandidates = [...new Set([rawPhone, normalizedPhone].filter(Boolean))];
+      const phoneCandidates = [
+        ...new Set([rawPhone, normalizedPhone].filter(Boolean)),
+      ];
 
       let lastError = null;
       for (const phone of phoneCandidates) {
@@ -266,7 +268,9 @@ export const useFindId = () => {
           lastError = apiError;
           const isNotFound =
             apiError?.status === 404 ||
-            String(apiError?.message || '').includes('일치하는 회원 정보가 없습니다');
+            String(apiError?.message || '').includes(
+              '일치하는 회원 정보가 없습니다'
+            );
 
           if (!isNotFound) {
             throw apiError;

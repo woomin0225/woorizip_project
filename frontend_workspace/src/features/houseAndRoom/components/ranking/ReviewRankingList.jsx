@@ -1,9 +1,9 @@
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import { Card, CardBody, Row, Col } from 'reactstrap';
-import { getApiAssetUrl } from '../../../../app/config/env';
 import styles from './ViewsRankingList.module.css';
 import woorizipLogo from '../../../../assets/images/logo-muted.png';
+import { toRoomImageUrl } from '../../utils/roomImage';
 
 function toStars(rating) {
   const safe = Math.max(0, Math.min(5, Math.round(Number(rating || 0))));
@@ -30,7 +30,7 @@ export default function ReviewRankingList({ list = [] }) {
         ) : (
           list.map((item, index) => {
             const imageSrc = item?.repImageName
-              ? getApiAssetUrl(`/upload/room_image/${item.repImageName}`)
+              ? toRoomImageUrl(item.repImageName)
               : null;
 
             const avgRating = Number(item?.avgRating);
@@ -44,24 +44,43 @@ export default function ReviewRankingList({ list = [] }) {
 
                 <Col className={styles.imageCol}>
                   {imageSrc ? (
-                    <img className={styles.repImage} src={imageSrc} alt={`rank-${index + 1}`} />
+                    <img
+                      className={styles.repImage}
+                      src={imageSrc}
+                      alt={`rank-${index + 1}`}
+                    />
                   ) : (
                     <div className={styles.imagePlaceholder} aria-hidden="true">
-                      <img src={woorizipLogo} alt="" className={styles.placeholderLogo} />
+                      <img
+                        src={woorizipLogo}
+                        alt=""
+                        className={styles.placeholderLogo}
+                      />
                     </div>
                   )}
                 </Col>
 
                 <Col className={styles.infoCol}>
                   {item?.roomNo ? (
-                    <Link to={`/rooms/${item.roomNo}`} className={styles.infoLink}>
-                      <div className={styles.subText}>{item?.houseName || ''}</div>
-                      <div className={styles.mainText}>{item?.roomName || ''}</div>
+                    <Link
+                      to={`/rooms/${item.roomNo}`}
+                      className={styles.infoLink}
+                    >
+                      <div className={styles.subText}>
+                        {item?.houseName || ''}
+                      </div>
+                      <div className={styles.mainText}>
+                        {item?.roomName || ''}
+                      </div>
                     </Link>
                   ) : (
                     <>
-                      <div className={styles.subText}>{item?.houseName || ''}</div>
-                      <div className={styles.mainText}>{item?.roomName || ''}</div>
+                      <div className={styles.subText}>
+                        {item?.houseName || ''}
+                      </div>
+                      <div className={styles.mainText}>
+                        {item?.roomName || ''}
+                      </div>
                     </>
                   )}
                 </Col>
@@ -69,8 +88,12 @@ export default function ReviewRankingList({ list = [] }) {
                 <Col className={styles.sideCol}>
                   {hasRating ? (
                     <>
-                      <div className={styles.mainText}>{toStars(avgRating)}</div>
-                      <div className={styles.subText}>{`${avgRating.toFixed(1)} / 5`}</div>
+                      <div className={styles.mainText}>
+                        {toStars(avgRating)}
+                      </div>
+                      <div
+                        className={styles.subText}
+                      >{`${avgRating.toFixed(1)} / 5`}</div>
                     </>
                   ) : (
                     <div className={styles.sideEmpty}>점수 없음</div>

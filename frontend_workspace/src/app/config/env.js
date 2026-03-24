@@ -54,6 +54,19 @@ export function getAiBaseUrl() {
   return (vite || cra || getApiBaseUrl()).replace(/\/$/, '');
 }
 
+export function getUploadBaseUrl() {
+  return getApiBaseUrl();
+}
+
+export function buildUploadUrl(dir, fileName) {
+  if (!fileName) return null;
+  if (String(fileName).startsWith('http')) return fileName;
+
+  const safeDir = String(dir || '').replace(/^\/+|\/+$/g, '');
+  const safeFileName = String(fileName).replace(/^\/+/, '');
+  return getApiAssetUrl(`${safeDir}/${safeFileName}`);
+}
+
 export function getApiAssetUrl(path = '') {
   const normalizedPath = path.startsWith('/') ? path : `/${path}`;
   return `${getApiBaseUrl()}${normalizedPath}`;

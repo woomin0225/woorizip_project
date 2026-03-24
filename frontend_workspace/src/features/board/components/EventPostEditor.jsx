@@ -1,6 +1,6 @@
 // src/features/board/components/EventPostEditor.jsx
 import React, { useRef } from 'react';
-import { getApiAssetUrl } from '../../../app/config/env';
+import { buildUploadUrl } from '../../../app/config/env';
 import RichTextEditor from './RichTextEditor';
 
 export default function EventPostEditor({
@@ -224,7 +224,7 @@ export default function EventPostEditor({
                 {String(file.fileType || '').startsWith('image/') && (
                   <div style={{ margin: '8px 0 12px 22px' }}>
                     <img
-                      src={getApiAssetUrl(`/upload_files/event/${file.updatedFileName}`)}
+                      src={buildUploadUrl('upload/event', file.updatedFileName)}
                       alt={file.originalFileName}
                       style={{
                         maxWidth: 260,

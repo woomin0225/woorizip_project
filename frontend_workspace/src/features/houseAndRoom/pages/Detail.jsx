@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { getApiAssetUrl } from '../../../app/config/env';
+import { buildUploadUrl } from '../../../app/config/env';
 
 import styles from './Detail.module.css';
 
@@ -42,12 +42,6 @@ function pickImageName(x) {
   return x.roomStoredImageName || x.houseStoredImageName || null;
 }
 
-function toUrl(base, name) {
-  if (!name) return null;
-  if (name.startsWith('http')) return name;
-  return `${base}/${name}`;
-}
-
 function toKrwText(value) {
   const money = formatMoneyKRW(value);
   return money ? `${money} 원` : '-';
@@ -81,12 +75,18 @@ export default function Detail() {
   const activeHouseNo = routeHouseNo || room?.houseNo || '';
   const summaryRequestIdRef = useRef(0);
   const summaryPollTimeoutRef = useRef(null);
-  const currentSummaryState = selectedRoomNo ? roomSummaryMap[selectedRoomNo] ?? null : null;
+  const currentSummaryState = selectedRoomNo
+    ? (roomSummaryMap[selectedRoomNo] ?? null)
+    : null;
   const currentRoomSummary = currentSummaryState?.finalSummary || '';
 
   const refreshReviews = async () => {
     if (!selectedRoomNo) return;
-    const page = await getRoomReviews(selectedRoomNo, reviewPageNo, REVIEW_PAGE_SIZE);
+    const page = await getRoomReviews(
+      selectedRoomNo,
+      reviewPageNo,
+      REVIEW_PAGE_SIZE
+    );
     setReviewPage(page);
   };
 
@@ -129,7 +129,9 @@ export default function Detail() {
           await deleteWishlist(wishNo);
         } else {
           const list = await getWishlistByUser(currentUserNo, 1, 200);
-          const target = list.find((item) => String(item.roomNo) === String(roomNo));
+          const target = list.find(
+            (item) => String(item.roomNo) === String(roomNo)
+          );
           if (target?.wishNo) await deleteWishlist(target.wishNo);
         }
       }
@@ -152,7 +154,10 @@ export default function Detail() {
 
   useEffect(() => {
     if (!selectedRoomNo || !shouldScrollToRoomRef.current) return;
-    roomNameSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    roomNameSectionRef.current?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    });
     shouldScrollToRoomRef.current = false;
   }, [selectedRoomNo]);
 
@@ -201,7 +206,11 @@ export default function Detail() {
     if (!selectedRoomNo) return;
 
     (async () => {
-      const page = await getRoomReviews(selectedRoomNo, reviewPageNo, REVIEW_PAGE_SIZE);
+      const page = await getRoomReviews(
+        selectedRoomNo,
+        reviewPageNo,
+        REVIEW_PAGE_SIZE
+      );
       setReviewPage(page);
     })();
   }, [selectedRoomNo, reviewPageNo]);
@@ -228,7 +237,9 @@ export default function Detail() {
         if (cancelled) return;
         setHouse(houseDto);
         setHouseRooms(roomsInHouse || []);
-        setHouseImageNames((houseImgs || []).map(pickImageName).filter(Boolean));
+        setHouseImageNames(
+          (houseImgs || []).map(pickImageName).filter(Boolean)
+        );
       } catch {
         if (cancelled) return;
       }
@@ -253,7 +264,10 @@ export default function Detail() {
     }, 2000);
   }
 
-  async function loadRoomSummaryStatus(roomNo, requestId = summaryRequestIdRef.current) {
+  async function loadRoomSummaryStatus(
+    roomNo,
+    requestId = summaryRequestIdRef.current
+  ) {
     try {
       const summaryState = await getSummarizedRoom(roomNo);
       if (summaryRequestIdRef.current !== requestId) return;
@@ -272,24 +286,33 @@ export default function Detail() {
       setSummaryLoading(false);
       setSummaryError(
         status === 'FAILED'
-          ? summaryState?.lastErrorMessage || 'AI 방 정보 요약 생성에 실패했습니다.'
+          ? summaryState?.lastErrorMessage ||
+              'AI 방 정보 요약 생성에 실패했습니다.'
           : ''
       );
     } catch (e) {
       if (summaryRequestIdRef.current !== requestId) return;
       clearTimeout(summaryPollTimeoutRef.current);
       setSummaryLoading(false);
-      setSummaryError(e.message || 'AI 방 정보 요약 상태를 불러오지 못했습니다.');
+      setSummaryError(
+        e.message || 'AI 방 정보 요약 상태를 불러오지 못했습니다.'
+      );
     }
   }
 
   // 업로드 경로(UploadProperties 기준)
   const houseImageUrls = useMemo(
-    () => houseImageNames.map((n) => toUrl(getApiAssetUrl('/upload/house_image'), n)).filter(Boolean),
+    () =>
+      houseImageNames
+        .map((n) => buildUploadUrl('upload/house_image', n))
+        .filter(Boolean),
     [houseImageNames]
   );
   const roomImageUrls = useMemo(
-    () => roomImageNames.map((n) => toUrl(getApiAssetUrl('/upload/room_image'), n)).filter(Boolean),
+    () =>
+      roomImageNames
+        .map((n) => buildUploadUrl('upload/room_image', n))
+        .filter(Boolean),
     [roomImageNames]
   );
   const canApplyTour = room?.canTourApply !== false;
@@ -298,7 +321,10 @@ export default function Detail() {
 
   function onSelectRoom(nextRoomNo) {
     if (String(nextRoomNo) === String(selectedRoomNo)) {
-      roomNameSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      roomNameSectionRef.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
       return;
     }
     shouldScrollToRoomRef.current = true;
@@ -338,7 +364,9 @@ export default function Detail() {
 
       if (status === 'FAILED') {
         setSummaryLoading(false);
-        setSummaryError(summary?.lastErrorMessage || 'AI 방 정보 요약 생성에 실패했습니다.');
+        setSummaryError(
+          summary?.lastErrorMessage || 'AI 방 정보 요약 생성에 실패했습니다.'
+        );
         return;
       }
 
@@ -374,30 +402,44 @@ export default function Detail() {
 
           <div className={styles.sideButtons}>
             <TourApplyButton roomNo={selectedRoomNo} disabled={!canApplyTour} />
-            <ContractApplyButton roomNo={selectedRoomNo} disabled={!canApplyContract} />
-            {room?.roomEmptyYn === false && !canApplyTour && occupancyEndDateText && (
-              <div className={styles.applyHint}>
-                현재 거주중인 방입니다. 투어/입주 신청은 계약 종료 1개월 전부터 가능하며, 예상 종료일은 {occupancyEndDateText}입니다.
-              </div>
-            )}
-            {room?.roomEmptyYn === false && canApplyTour && occupancyEndDateText && (
-              <div className={styles.applyHint}>
-                현재 거주중인 방이지만 계약 종료 1개월 전 기간으로, {occupancyEndDateText} 이후 입주 기준으로 투어/입주 신청이 가능합니다.
-              </div>
-            )}
+            <ContractApplyButton
+              roomNo={selectedRoomNo}
+              disabled={!canApplyContract}
+            />
+            {room?.roomEmptyYn === false &&
+              !canApplyTour &&
+              occupancyEndDateText && (
+                <div className={styles.applyHint}>
+                  현재 거주중인 방입니다. 투어/입주 신청은 계약 종료 1개월
+                  전부터 가능하며, 예상 종료일은 {occupancyEndDateText}입니다.
+                </div>
+              )}
+            {room?.roomEmptyYn === false &&
+              canApplyTour &&
+              occupancyEndDateText && (
+                <div className={styles.applyHint}>
+                  현재 거주중인 방이지만 계약 종료 1개월 전 기간으로,{' '}
+                  {occupancyEndDateText} 이후 입주 기준으로 투어/입주 신청이
+                  가능합니다.
+                </div>
+              )}
           </div>
         </div>
       </aside>
 
       {/* 중앙~우측 */}
       <main className={styles.main}>
-        {!activeHouseNo && <div className={styles.empty}>왼쪽 목록에서 방을 선택하세요.</div>}
+        {!activeHouseNo && (
+          <div className={styles.empty}>왼쪽 목록에서 방을 선택하세요.</div>
+        )}
 
         {activeHouseNo && (
           <>
             <div className={styles.headerRow}>
               <div>
-                <h2 className={styles.title}>{house?.houseName ?? '상세보기'}</h2>
+                <h2 className={styles.title}>
+                  {house?.houseName ?? '상세보기'}
+                </h2>
                 <div className={styles.subTitle}>
                   {house?.houseAddress ?? ''} {house?.houseAddressDetail ?? ''}
                 </div>
@@ -429,7 +471,9 @@ export default function Detail() {
               <FacilityList houseNo={house?.houseNo || activeHouseNo} />
             </section>
 
-            {!selectedRoomNo && <div className={styles.empty}>왼쪽 목록에서 방을 선택하세요.</div>}
+            {!selectedRoomNo && (
+              <div className={styles.empty}>왼쪽 목록에서 방을 선택하세요.</div>
+            )}
 
             {selectedRoomNo && (
               <>
@@ -445,7 +489,8 @@ export default function Detail() {
                       <div className={styles.summaryHeadingBlock}>
                         <h4 className={styles.summaryTitle}>AI 방 정보 요약</h4>
                         <p className={styles.summaryHint}>
-                          방 기본 정보, 사진 요약, 리뷰 요약을 묶어서 AI가 한 번에 정리합니다.
+                          방 기본 정보, 사진 요약, 리뷰 요약을 묶어서 AI가 한
+                          번에 정리합니다.
                         </p>
                       </div>
 
@@ -457,7 +502,8 @@ export default function Detail() {
                       >
                         {summaryLoading
                           ? '요약 생성 중...'
-                          : currentSummaryState?.summaryStatus === 'DONE' && currentRoomSummary
+                          : currentSummaryState?.summaryStatus === 'DONE' &&
+                              currentRoomSummary
                             ? 'AI 방 정보 요약 다시 불러오기'
                             : 'AI 방 정보 요약'}
                       </button>
@@ -469,7 +515,10 @@ export default function Detail() {
                         role="status"
                         aria-live="polite"
                       >
-                        <span className={styles.summarySpinner} aria-hidden="true" />
+                        <span
+                          className={styles.summarySpinner}
+                          aria-hidden="true"
+                        />
                         <span>AI가 방 정보를 요약하는 중입니다...</span>
                       </div>
                     )}
@@ -482,16 +531,19 @@ export default function Detail() {
                       !summaryError &&
                       currentSummaryState?.summaryStatus === 'DONE' &&
                       currentRoomSummary && (
-                      <div className={styles.summaryResult}>{currentRoomSummary}</div>
-                    )}
+                        <div className={styles.summaryResult}>
+                          {currentRoomSummary}
+                        </div>
+                      )}
 
                     {!summaryLoading &&
                       !summaryError &&
                       currentSummaryState?.summaryStatus !== 'DONE' && (
-                      <div className={styles.summaryPlaceholder}>
-                        버튼을 누르면 현재 방의 종합 요약 결과를 여기에서 확인할 수 있습니다.
-                      </div>
-                    )}
+                        <div className={styles.summaryPlaceholder}>
+                          버튼을 누르면 현재 방의 종합 요약 결과를 여기에서
+                          확인할 수 있습니다.
+                        </div>
+                      )}
                   </div>
                 </section>
 
@@ -506,8 +558,17 @@ export default function Detail() {
                   {/* <h3 className={styles.sectionTitle}>방 정보</h3> */}
                   <div className={styles.infoGrid}>
                     {/* <div>🛋️ 호실: {room?.roomName ?? '-'}</div> */}
-                    <div>🔑 공실여부: {room?.roomEmptyYn ? '공실' : '거주중'}</div>
-                    <div>✍️ 거래: {room?.roomMethod == 'L' ? '전세' : room?.roomMethod == 'M' ? '월세' : '-'}</div>
+                    <div>
+                      🔑 공실여부: {room?.roomEmptyYn ? '공실' : '거주중'}
+                    </div>
+                    <div>
+                      ✍️ 거래:{' '}
+                      {room?.roomMethod == 'L'
+                        ? '전세'
+                        : room?.roomMethod == 'M'
+                          ? '월세'
+                          : '-'}
+                    </div>
                     <div>💰 보증금: {toKrwText(room?.roomDeposit)}</div>
                     <div>💰 월세: {toKrwText(room?.roomMonthly)}</div>
                     <div>📐 면적: {room?.roomArea ?? '-'}</div>
@@ -517,7 +578,9 @@ export default function Detail() {
                     <div>📆 입주가능일: {room?.roomAvailableDate ?? '-'}</div>
                   </div>
 
-                  <div className={styles.abstractBox}>{room?.roomAbstract || '소개 내용이 없습니다.'}</div>
+                  <div className={styles.abstractBox}>
+                    {room?.roomAbstract || '소개 내용이 없습니다.'}
+                  </div>
                 </section>
 
                 {/* 7) 방옵션 */}
