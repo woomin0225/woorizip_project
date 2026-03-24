@@ -11,4 +11,6 @@ public interface RoomImageSummaryService {
 	String summaryPendingRooms(RoomImageSummaryEntity RoomImageSummaryEntity);
 	// roomNo로 사진분석 요약결과 조회
 	RoomImageSummaryEntity selectSummarizedImageCaption(String roomNo);
+	// roomNo 기준 사진 요약 비동기 시작
+	void startSummarizedImageAsync(String roomNo);
 }
