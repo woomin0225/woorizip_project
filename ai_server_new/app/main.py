@@ -237,28 +237,42 @@ async def groundingdino_detect(req: DetectRequest) -> dict[str, Any]:
 
 @app.post("/ai/summary", dependencies=[Depends(require_internal_api_key)])
 async def summary_unified(req: SummaryReq) -> dict[str, Any]:
-    if req.target_type == "room":
-        return await summary.summarize_room(
-            room_id=req.room_id,
-            room=req.room or {},
-            reviews=req.reviews or [],
-            photos_caption=req.photos_caption,
-            bullets=req.bullets,
-        )
+    try:
+        if req.target_type == "room":
+            return await summary.summarize_room(
+                room_id=req.room_id,
+                room=req.room or {},
+                reviews=req.reviews or [],
+                photos_caption=req.photos_caption,
+                bullets=req.bullets,
+            )
 
-    if req.target_type == "post" or req.attachments:
-        return await summary.summarize_post(
+        if req.target_type == "post" or req.attachments:
+            return await summary.summarize_post(
+                title=req.title,
+                text=req.text or "",
+                attachments=[item.model_dump() for item in req.attachments],
+                bullets=req.bullets,
+            )
+
+        return await summary.summarize_text(
             title=req.title,
             text=req.text or "",
-            attachments=[item.model_dump() for item in req.attachments],
             bullets=req.bullets,
         )
-
-    return await summary.summarize_text(
-        title=req.title,
-        text=req.text or "",
-        bullets=req.bullets,
-    )
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.exception(
+            "Unified summary request failed: target_type=%s, title=%s, attachment_count=%s",
+            req.target_type,
+            req.title,
+            len(req.attachments or []),
+        )
+        raise HTTPException(
+            status_code=500,
+            detail="AI 요약 처리 중 내부 오류가 발생했습니다.",
+        ) from exc
 
 
 @app.post("/ai/vision/analyze", dependencies=[Depends(require_internal_api_key)])
