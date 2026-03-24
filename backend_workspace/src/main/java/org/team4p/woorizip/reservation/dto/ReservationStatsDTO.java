@@ -1,11 +1,9 @@
 package org.team4p.woorizip.reservation.dto;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.List;
-import java.util.stream.Collectors;
 
-import org.team4p.woorizip.facility.dto.FacilityImageDTO;
 import org.team4p.woorizip.reservation.enums.ReservationStatus;
 import org.team4p.woorizip.reservation.jpa.entity.ReservationEntity;
 
@@ -20,26 +18,31 @@ import lombok.Setter;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ReservationDetailResponseDTO {
+public class ReservationStatsDTO {
 	private String reservationNo;
 	private String facilityNo;
-	private String reservationName;
-	private String reservationPhone;
+	private String userName;
 	private LocalDate reservationDate;
 	private LocalTime reservationStartTime;
 	private LocalTime reservationEndTime;
+	private LocalDateTime reservationCreatedAt;
+	private LocalDateTime reservationUpdatedAt;
+	private LocalDateTime reservationCanceledAt;
 	private ReservationStatus reservationStatus;
 	
-	public static ReservationDetailResponseDTO from(ReservationEntity entity) {
-	    return ReservationDetailResponseDTO.builder()
+	public static ReservationStatsDTO from(ReservationEntity entity) {
+	    return ReservationStatsDTO.builder()
 	            .reservationNo(entity.getReservationNo())
 	            .facilityNo(entity.getFacility().getFacilityNo())
-	            .reservationName(entity.getReservationName())
-	            .reservationPhone(entity.getReservationPhone())
+	            .userName(entity.getUser().getName())
 	            .reservationDate(entity.getReservationDate())
 	            .reservationStartTime(entity.getReservationStartTime())
 	            .reservationEndTime(entity.getReservationEndTime())
+	            .reservationCreatedAt(entity.getReservationCreatedAt())
+	            .reservationUpdatedAt(entity.getReservationUpdatedAt())
+	            .reservationCanceledAt(entity.getReservationCanceledAt())
 	            .reservationStatus(entity.getReservationStatus())
 	            .build();
-	}
+	    }
+
 }

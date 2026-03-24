@@ -20,6 +20,7 @@ import org.team4p.woorizip.reservation.dto.ReservationCreateRequestDTO;
 import org.team4p.woorizip.reservation.dto.ReservationDetailResponseDTO;
 import org.team4p.woorizip.reservation.dto.ReservationListResponseDTO;
 import org.team4p.woorizip.reservation.dto.ReservationModifyRequestDTO;
+import org.team4p.woorizip.reservation.dto.ReservationStatsDTO;
 import org.team4p.woorizip.reservation.enums.ReservationStatus;
 import org.team4p.woorizip.reservation.jpa.entity.ReservationEntity;
 import org.team4p.woorizip.reservation.jpa.repository.ReservationRepository;
@@ -292,4 +293,12 @@ public class ReservationServiceImpl implements ReservationService {
 	        throw new ForbiddenException("해당 시간대에 다른 시설 예약 내역이 존재합니다.");
 	    }
 	}
+	
+	// 예약 상세 조회
+    @Override
+    public ReservationStatsDTO analyzeReservation(String facilityNo) {
+        return reservationRepository.findByFacility_FacilityNo(facilityNo)
+        		.stream()
+                .map(ReservationStatsDTO::from);
+    }
 }

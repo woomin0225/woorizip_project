@@ -72,4 +72,7 @@ public interface ReservationRepository extends JpaRepository<ReservationEntity, 
 	void deleteByReservationStatusAndReservationDateAndReservationEndTimeBefore(ReservationStatus status, LocalDate date, LocalTime time);
 	// 예약 방지용 예약이 있는지 확인
 	boolean existsByFacility_FacilityNoAndReservationStatus(String facilityNo, ReservationStatus status);
+	
+	// 이용 통계 분석 데이터 조회용 메서드
+	List<ReservationEntity> findByFacility_FacilityNo(String facilityNo);
 }
