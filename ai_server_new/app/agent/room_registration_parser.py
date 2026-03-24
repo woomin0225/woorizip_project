@@ -38,6 +38,25 @@ KOREAN_SMALL_UNIT_MAP = {
 
 MONEY_SLOTS = {"roomDeposit", "roomMonthly"}
 
+FACING_NORMALIZATION_MAP = {
+    "남": "남향",
+    "북": "북향",
+    "동": "동향",
+    "서": "서향",
+    "남동": "남동향",
+    "남서": "남서향",
+    "북동": "북동향",
+    "북서": "북서향",
+    "남향": "남향",
+    "북향": "북향",
+    "동향": "동향",
+    "서향": "서향",
+    "남동향": "남동향",
+    "남서향": "남서향",
+    "북동향": "북동향",
+    "북서향": "북서향",
+}
+
 
 def _normalize_date(text: str) -> str | None:
     """Normalize date-like expressions into YYYY-MM-DD."""
@@ -220,8 +239,21 @@ def _extract_room_facing(text: str) -> str | None:
     if match:
         return match.group(1)
 
+    compact = re.sub(r"[^가-힣]", "", text)
+    for raw, normalized in sorted(
+        FACING_NORMALIZATION_MAP.items(),
+        key=lambda item: len(item[0]),
+        reverse=True,
+    ):
+        if compact == raw or compact.endswith(raw):
+            return normalized
+
     facing_pattern = re.search(r"방향\s*(?:은|는|이|가|:)?\s*([가-힣]{1,10})", text)
-    return facing_pattern.group(1) if facing_pattern else None
+    if not facing_pattern:
+        return None
+
+    raw_value = facing_pattern.group(1).strip()
+    return FACING_NORMALIZATION_MAP.get(raw_value, raw_value)
 
 
 def _extract_room_name(text: str) -> str | None:
