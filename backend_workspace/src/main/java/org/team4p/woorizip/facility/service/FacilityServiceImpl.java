@@ -64,7 +64,7 @@ public class FacilityServiceImpl implements FacilityService {
 	public List<FacilityListResponseDTO> getFacilityList(String houseNo, String userNo) {
 		// 임차인
 	    if (houseNo == null) {			
-	    	String userHouseNo = lesseeValidator.validLessee(userNo);
+	    	String userHouseNo = lesseeValidator.validFacilityAccessLessee(userNo);
 			return facilityRepository.findByHouseHouseNoAndFacilityDeletedAtIsNull(userHouseNo)
 		    		.stream()
 		            .map(FacilityListResponseDTO::from)
