@@ -532,62 +532,119 @@ export default function OrchestrateQuickAgent() {
     }
 
     if (actionId === 'summary') {
-      const postNo = extractPostNoFromPath();
+      const postNo = extractPostNoFromPath(location.pathname);
+      const roomContext = getRoomContext(location.pathname);
 
-      if (!postNo) {
-        const page = getPageContext();
-        const excerpt = (page.contentExcerpt || '').slice(0, 220);
+      if (postNo) {
+        try {
+          setLoading(true);
+          const response = await fetchBoardSummary(postNo);
+          const result = response?.data?.data ?? response?.data;
+
+          const summaryText = String(result?.summary || '?? ??? ????.').trim();
+          const keyPoints = Array.isArray(result?.keyPoints)
+            ? result.keyPoints
+                .map((item) =>
+                  String(item || '')
+                    .replace(/^[-?\s]+/, '')
+                    .trim()
+                )
+                .filter(Boolean)
+            : [];
+          const conclusion = String(result?.conclusion || '').trim();
+          const warnings = Array.isArray(result?.warnings)
+            ? result.warnings
+                .map((item) =>
+                  String(item || '')
+                    .replace(/^[-?\s]+/, '')
+                    .trim()
+                )
+                .filter(Boolean)
+            : [];
+
+          const sections = ['??? AI ?????.'];
+          if (summaryText) sections.push(`??
+${summaryText}`);
+          if (keyPoints.length > 0)
+            sections.push(`??
+? ${keyPoints.join('
+? ')}`);
+          if (conclusion) sections.push(`??
+${conclusion}`);
+          if (warnings.length > 0) sections.push(`??
+? ${warnings.join('
+? ')}`);
+
+          appendAssistantMessage(sections.join('
+
+'), [
+            'roomRecommend',
+            'notices',
+            'mypage',
+          ]);
+        } catch (error) {
+          const errorBody = error?.response?.data;
+          const apiMessage =
+            errorBody?.data ||
+            errorBody?.message ||
+            errorBody?.error ||
+            error?.message ||
+            '??? ?? ? ??? ??????.';
+
+          appendAssistantMessage(`??: ${apiMessage}`, [
+            'roomRecommend',
+            'notices',
+            'mypage',
+          ]);
+        } finally {
+          setLoading(false);
+        }
+
+        return;
+      }
+
+      if (roomContext.roomNo) {
         appendAssistantMessage(
-          `현재 페이지는 게시글 상세페이지가 아니어서 본문 기준 간단 요약만 제공합니다.\n제목: ${page.title || '-'}\n요약: ${excerpt || '요약할 본문을 찾지 못했습니다.'}`,
-          ['roomRecommend', 'reviews', 'facilityInfo']
+          '? ???????? ??? ?? ? ?? ??? ??????. ?? AI ? ?? ?? ???? ?? ?? ?? ??? ??? ? ????.',
+          ['roomRecommend', 'tour', 'wishlist']
         );
         return;
       }
 
       try {
         setLoading(true);
-        const response = await fetchBoardSummary(postNo);
-        const result = response?.data?.data ?? response?.data;
-
-        const summaryText = String(
-          result?.summary ||
-            '요약 결과가 없습니다.'
-        ).trim();
-        const keyPoints = Array.isArray(result?.keyPoints)
-          ? result.keyPoints
-              .map((item) =>
-                String(item || '')
-                  .replace(/^[-•\s]+/, '')
-                  .trim()
-              )
-              .filter(Boolean)
-          : [];
-        const conclusion = String(result?.conclusion || '').trim();
-        const warnings = Array.isArray(result?.warnings)
-          ? result.warnings
-              .map((item) =>
-                String(item || '')
-                  .replace(/^[-•\s]+/, '')
-                  .trim()
-              )
-              .filter(Boolean)
-          : [];
-
-        const sections = [
-          '게시글 AI 요약입니다.',
-        ];
-        if (summaryText) sections.push(`요약\n${summaryText}`);
-        if (keyPoints.length > 0)
-          sections.push(`핵심\n• ${keyPoints.join('\n• ')}`);
-        if (conclusion) sections.push(`결론\n${conclusion}`);
-        if (warnings.length > 0)
-          sections.push(`참고\n• ${warnings.join('\n• ')}`);
-
-        appendAssistantMessage(sections.join('\n\n'), [
-          'roomRecommend',
-          'reviews',
-          'facilityInfo',
-        ]);
+        const roomCreateContext = getRoomCreateContext(location, managedHouses);
+        const result = await runOrchestrateCommand({
+          text: '?? ???? ????',
+          sessionId,
+          context: {
+            path: window.location.pathname,
+            ...roomContext,
+            ...roomCreateContext,
+            currentRoomResolved: Boolean(roomContext.roomNo),
+            pageSnapshot: getPageContext(),
+            userProfile: {
+              isAdmin,
+              isLessor: resolvedIsLessor,
+              userName: userProfile?.userName || userDisplayName,
+              userPhone: userProfile?.userPhone || '',
+            },
+            siteProfile: {
+              serviceName: '???',
+              channel: 'web',
+              language: 'ko-KR',
+              voiceMode: voiceModeEnabled,
+            },
+          },
+        });
+        const reply =
+          result?.reply ||
+          result?.outputText ||
+          result?.message ||
+          result?.result ||
+          '?? ??? ???? ?????.';
+        const actionIds = extractSuggestedActions(result);
+        appendAssistantMessage(formatAssistantReply(String(reply)), actionIds);
       } catch (error) {
         const errorBody = error?.response?.data;
         const apiMessage =
@@ -595,12 +652,12 @@ export default function OrchestrateQuickAgent() {
           errorBody?.message ||
           errorBody?.error ||
           error?.message ||
-          '게시글 요약 중 오류가 발생했습니다.';
+          '??? ?? ? ??? ??????.';
 
-        appendAssistantMessage(`오류: ${apiMessage}`, [
-          'roomRecommend',
-          'reviews',
-          'facilityInfo',
+        appendAssistantMessage(`??: ${apiMessage}`, [
+          'summary',
+          'notices',
+          'mypage',
         ]);
       } finally {
         setLoading(false);
@@ -630,10 +687,61 @@ export default function OrchestrateQuickAgent() {
     if (actionId === 'reservationStatus') {
       goToPage(
         '/reservation/view',
-        '예약 내역 페이지로 이동했습니다. 현재 예약 상태를 확인해보세요.',
+        '?? ?? ???? ??????. ?? ?? ??? ??????.',
         ['facilityCancel', 'reserve', 'facilityHours']
       );
+      return;
     }
+
+    if (actionId === 'wishlist') {
+      goToPage(
+        '/wishlist',
+        '? ?? ???? ??????. ???? ?? ??? ? ????.',
+        ['roomRecommend', 'tour', 'contract']
+      );
+      return;
+    }
+
+    if (actionId === 'contract') {
+      goToPage(
+        '/mypage/contracts',
+        '?? ???? ??????. ?? ?? ??? ?? ??? ??? ? ????.',
+        ['tour', 'wishlist', 'mypage']
+      );
+      return;
+    }
+
+    if (actionId === 'tour') {
+      goToPage(
+        '/mypage/tour',
+        '?? ???? ??????. ?? ??? ?? ??? ??? ? ????.',
+        ['roomRecommend', 'contract', 'wishlist']
+      );
+      return;
+    }
+
+    if (actionId === 'notices') {
+      goToPage(
+        '/notices',
+        '???? ???? ??????. ?? ??? ?? ??? ??? ? ????.',
+        ['summary', 'mypage', 'roomRecommend']
+      );
+      return;
+    }
+
+    if (actionId === 'mypage') {
+      goToPage(
+        '/mypage',
+        '?????? ??????. ? ??? ?? ??? ??? ? ????.',
+        ['wishlist', 'contract', 'tour']
+      );
+      return;
+    }
+
+    appendAssistantMessage(
+      `${action.label} ??? ?? ?? ????. ?? ??? ?? ??? ?? ??? ???.`,
+      expandRelatedActionIds(action.related || [], 3)
+    );
   };
 
   const handleLocalSystemCommand = async (messageText) => {
@@ -1290,6 +1398,7 @@ export default function OrchestrateQuickAgent() {
     </div>
   );
 }
+
 
 
 
