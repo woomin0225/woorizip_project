@@ -3,7 +3,7 @@ from __future__ import annotations
 """Rule-based slot parser for room registration chat inputs."""
 
 import re
-from datetime import date
+from datetime import date, timedelta
 from typing import Any
 
 
@@ -36,6 +36,28 @@ KOREAN_SMALL_UNIT_MAP = {
     "천": 1000,
 }
 
+KOREAN_COUNT_WORD_MAP = {
+    "하나": 1,
+    "한개": 1,
+    "한칸": 1,
+    "한개요": 1,
+    "둘": 2,
+    "두개": 2,
+    "두칸": 2,
+    "셋": 3,
+    "세개": 3,
+    "세칸": 3,
+    "넷": 4,
+    "네개": 4,
+    "네칸": 4,
+    "다섯": 5,
+    "여섯": 6,
+    "일곱": 7,
+    "여덟": 8,
+    "아홉": 9,
+    "열": 10,
+}
+
 MONEY_SLOTS = {"roomDeposit", "roomMonthly"}
 
 FACING_NORMALIZATION_MAP = {
@@ -66,8 +88,25 @@ def _normalize_date(text: str) -> str | None:
         year, month, day = match.groups()
         return f"{int(year):04d}-{int(month):02d}-{int(day):02d}"
 
-    compact = text.replace(" ", "")
+    compact = re.sub(r"\s+", "", text)
     today = date.today()
+
+    if "오늘" in compact:
+        return today.strftime("%Y-%m-%d")
+    if "내일" in compact:
+        return (today + timedelta(days=1)).strftime("%Y-%m-%d")
+
+    korean_full = re.search(r"\b(20\d{2})\s*년\s*(\d{1,2})\s*월\s*(\d{1,2})\s*일?\b", text)
+    if korean_full:
+        year, month, day = korean_full.groups()
+        return f"{int(year):04d}-{int(month):02d}-{int(day):02d}"
+
+    korean_month_day = re.search(r"\b(\d{1,2})\s*월\s*(\d{1,2})\s*일?\b", text)
+    if korean_month_day:
+        month, day = korean_month_day.groups()
+        return f"{date.today().year:04d}-{int(month):02d}-{int(day):02d}"
+
+    compact = text.replace(" ", "")
     next_month = today.month + 1
     next_year = today.year + (1 if next_month > 12 else 0)
     next_month = 1 if next_month > 12 else next_month
@@ -146,6 +185,33 @@ def _parse_small_korean_number(value: str) -> int | None:
     if pending is not None:
         total += pending
     return total
+
+
+def _parse_count_value(value: str) -> int | None:
+    compact = re.sub(r"\s+", "", str(value or "").strip())
+    if not compact:
+        return None
+
+    if compact.isdigit():
+        return int(compact)
+
+    normalized = compact.replace("개", "").replace("칸", "").replace("개요", "")
+    if normalized in KOREAN_COUNT_WORD_MAP:
+        return KOREAN_COUNT_WORD_MAP[normalized]
+
+    return _parse_small_korean_number(normalized)
+
+
+def _extract_count_after_keywords(text: str, keywords: tuple[str, ...]) -> int | None:
+    for keyword in keywords:
+        pattern = re.compile(re.escape(keyword) + r"\s*(?:은|는|이|가|:)?\s*([0-9가-힣]+)")
+        match = pattern.search(text)
+        if not match:
+            continue
+        count_value = _parse_count_value(match.group(1))
+        if count_value is not None:
+            return count_value
+    return None
 
 
 def _parse_money_amount(value: str) -> int | None:
@@ -321,11 +387,15 @@ def extract_room_slots(text: str, existing_slots: dict[str, Any] | None = None) 
     if available_date:
         slots["roomAvailableDate"] = available_date
 
-    room_count = _extract_number_after_keywords(text, ("방개수", "방 갯수", "침실", "룸수"), int)
+    room_count = _extract_count_after_keywords(text, ("방개수", "방 갯수", "침실", "룸수"))
+    if room_count is None:
+        room_count = _extract_number_after_keywords(text, ("방개수", "방 갯수", "침실", "룸수"), int)
     if room_count is not None:
         slots["roomRoomCount"] = room_count
 
-    bath_count = _extract_number_after_keywords(text, ("욕실", "화장실", "bath"), int)
+    bath_count = _extract_count_after_keywords(text, ("욕실", "화장실", "bath"))
+    if bath_count is None:
+        bath_count = _extract_number_after_keywords(text, ("욕실", "화장실", "bath"), int)
     if bath_count is not None:
         slots["roomBathCount"] = bath_count
 
@@ -359,5 +429,10 @@ def extract_room_slots(text: str, existing_slots: dict[str, Any] | None = None) 
         slots[pending_slot] = (
             float(numeric_value) if pending_slot == "roomArea" else int(float(numeric_value))
         )
+
+    if pending_slot in {"roomRoomCount", "roomBathCount"} and pending_slot not in slots:
+        count_value = _parse_count_value(text)
+        if count_value is not None:
+            slots[pending_slot] = count_value
 
     return slots

@@ -77,7 +77,7 @@ SLOT_DEFINITIONS: "OrderedDict[str, dict[str, Any]]" = OrderedDict(
             "roomAvailableDate",
             {
                 "label": "입주 가능일",
-                "question": "입주 가능일을 YYYY-MM-DD 형식으로 알려주세요.",
+                "question": "입주 가능일을 알려주세요.",
                 "required": True,
             },
         ),
@@ -352,6 +352,7 @@ def build_draft_payload(slots: dict[str, Any]) -> dict[str, Any]:
 
     return {
         "houseNo": slots.get("houseNo"),
+        "houseName": slots.get("houseName"),
         "roomDto": {
             "roomName": slots.get("roomName"),
             "roomDeposit": slots.get("roomDeposit"),
