@@ -98,6 +98,10 @@ typing_extensions==4.15.0
 urllib3==2.3.0
 uuid_utils==0.14.1
 uvicorn[standard]==0.41.0
+
+# Deployment safety: explicit runtime deps used by Google voice auth and parsers.
+google-auth==2.49.1
+dateparser==1.2.0
 watchfiles==1.1.1
 websockets==16.0
 xxhash==3.6.0

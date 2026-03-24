@@ -56,6 +56,15 @@ function newSessionId() {
 const WAKE_WORD_PATTERN =
   /우리\s*봇|우리봇|우리\s*봇아|우리봇아|우릴\s*봇|오리\s*봇|오리봇/;
 
+const VOICE_PERMISSION_ERRORS = new Set(['not-allowed', 'service-not-allowed']);
+const VOICE_DEVICE_ERRORS = new Set(['audio-capture']);
+const VOICE_RECOVERABLE_ERRORS = new Set([
+  'network',
+  'aborted',
+  'no-speech',
+  'InvalidStateError',
+]);
+
 function containsWakeWord(text) {
   return WAKE_WORD_PATTERN.test(String(text || '').replace(/\s+/g, ' ').trim());
 }
@@ -1191,12 +1200,15 @@ export default function OrchestrateQuickAgent() {
       }
     } catch (error) {
       const errorBody = error?.response?.data;
+      const errorCode = error?.code || '';
       const apiMessage =
-        errorBody?.data ||
-        errorBody?.message ||
-        errorBody?.error ||
-        error?.message ||
-        'Agent 호출 중 오류가 발생했습니다.';
+        errorCode === 'ECONNABORTED'
+          ? '응답이 지연되고 있습니다. 잠시 후 다시 시도해 주세요.'
+          : errorBody?.data ||
+            errorBody?.message ||
+            errorBody?.error ||
+            error?.message ||
+            'Agent 호출 중 오류가 발생했습니다.';
       appendAssistantMessage(`오류: ${apiMessage}`, [], { showActions: false });
     } finally {
       setLoading(false);
@@ -1426,11 +1438,31 @@ export default function OrchestrateQuickAgent() {
           return;
         }
         hasVoiceError = true;
+        if (VOICE_PERMISSION_ERRORS.has(errorType)) {
+          appendAssistantMessage(
+            '마이크 권한을 사용할 수 없어 음성 모드를 종료합니다. 브라우저 권한을 확인해 주세요.',
+            []
+          );
+          disableVoiceMode();
+          return;
+        }
+        if (VOICE_DEVICE_ERRORS.has(errorType)) {
+          appendAssistantMessage(
+            '마이크를 사용할 수 없어 음성 모드를 종료합니다. 입력 장치를 확인해 주세요.',
+            []
+          );
+          disableVoiceMode();
+          return;
+        }
         appendAssistantMessage(
-          '음성 입력 중 문제가 발생했습니다. 다시 시도해 주세요. 음성 모드를 종료하고 텍스트 모드로 전환합니다.',
+          '음성 입력 중 문제가 발생했습니다. 다시 호출어 대기 상태로 전환합니다.',
           []
         );
-        disableVoiceMode();
+        setVoicePhase('wake');
+        voiceActivationStateRef.current = {
+          mode: 'wake',
+          commandPending: false,
+        };
       },
       onEnd: () => {
         const current = voiceLoopStateRef.current;
@@ -1498,11 +1530,33 @@ export default function OrchestrateQuickAgent() {
           return;
         }
         hasVoiceError = true;
-        appendAssistantMessage(
-          '호출어 대기 중 문제가 발생했습니다. 음성 모드를 종료하고 텍스트 모드로 전환합니다.',
-          []
-        );
-        disableVoiceMode();
+        if (VOICE_PERMISSION_ERRORS.has(errorType)) {
+          appendAssistantMessage(
+            '마이크 권한을 사용할 수 없어 음성 모드를 종료합니다. 브라우저 권한을 확인해 주세요.',
+            []
+          );
+          disableVoiceMode();
+          return;
+        }
+        if (VOICE_DEVICE_ERRORS.has(errorType)) {
+          appendAssistantMessage(
+            '마이크를 사용할 수 없어 음성 모드를 종료합니다. 입력 장치를 확인해 주세요.',
+            []
+          );
+          disableVoiceMode();
+          return;
+        }
+        if (!VOICE_RECOVERABLE_ERRORS.has(errorType)) {
+          appendAssistantMessage(
+            '호출어 대기 중 문제가 발생했습니다. 잠시 후 다시 대기 상태로 전환합니다.',
+            []
+          );
+        }
+        setVoicePhase('wake');
+        voiceActivationStateRef.current = {
+          mode: 'wake',
+          commandPending: false,
+        };
       },
       onEnd: () => {
         if (hasVoiceError) {
