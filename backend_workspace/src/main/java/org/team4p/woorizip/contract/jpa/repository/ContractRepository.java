@@ -27,6 +27,12 @@ public interface ContractRepository extends JpaRepository<ContractEntity, String
             String userNo
     );
 
+    boolean existsByRoomNoAndUserNoAndStatusIn(
+            String roomNo,
+            String userNo,
+            Collection<String> statuses
+    );
+
     List<ContractEntity> findByRoomNoAndStatusInOrderByMoveInDateAsc(
             String roomNo,
             Collection<String> statuses
