@@ -318,8 +318,16 @@ export function VoiceModeProvider({ children }) {
 
       recognitionRef.current = recognition;
       setListening(true);
-      recognition.start();
-      return true;
+      try {
+        recognition.start();
+        return true;
+      } catch (error) {
+        recognitionRef.current = null;
+        setListening(false);
+        recognitionHandlerRef.current.onError?.(error);
+        recognitionHandlerRef.current.onEnd?.();
+        return false;
+      }
     },
     [stopListening]
   );
