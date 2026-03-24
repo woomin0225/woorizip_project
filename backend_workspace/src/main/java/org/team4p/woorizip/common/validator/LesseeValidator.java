@@ -3,6 +3,7 @@ package org.team4p.woorizip.common.validator;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.stereotype.Service;
 import org.team4p.woorizip.common.exception.NotFoundException;
@@ -17,25 +18,61 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class LesseeValidator {
 
+	private static final Set<String> ACCESSIBLE_CONTRACT_STATUSES =
+			Set.of("APPROVED", "PAID", "ACTIVE");
+
 	private final RoomRepository roomRepository;
 	private final ContractRepository contractRepository;
 
 	public String validLessee(String userNo) {
+		Date today = getToday();
+		List<ContractEntity> contracts = contractRepository.findByUserNo(userNo);
+		ContractEntity validContract = findCurrentAccessibleContract(contracts, today);
+
+		if (validContract == null) {
+			throw new NotFoundException("유효한 계약 정보를 찾을 수 없습니다.");
+		}
+
+		return resolveHouseNo(validContract);
+	}
+
+	public String validFacilityAccessLessee(String userNo) {
+		Date today = getToday();
+		List<ContractEntity> contracts = contractRepository.findByUserNo(userNo);
+
+		ContractEntity currentContract = findCurrentAccessibleContract(contracts, today);
+		if (currentContract != null) {
+			return resolveHouseNo(currentContract);
+		}
+
+		ContractEntity upcomingContract = findNearestUpcomingAccessibleContract(contracts, today);
+		if (upcomingContract != null) {
+			return resolveHouseNo(upcomingContract);
+		}
+
+		throw new NotFoundException("유효한 계약 정보를 찾을 수 없습니다.");
+	}
+
+	private Date getToday() {
 
 		Calendar todayCal = Calendar.getInstance();
 		todayCal.set(Calendar.HOUR_OF_DAY, 0);
 		todayCal.set(Calendar.MINUTE, 0);
 		todayCal.set(Calendar.SECOND, 0);
 		todayCal.set(Calendar.MILLISECOND, 0);
-		Date today = todayCal.getTime();
+		return todayCal.getTime();
+	}
 
-		ContractEntity validContract = null;
-
-		// 해당 사용자의 유효한 임대차 계약 확인
-		List<ContractEntity> contracts = contractRepository.findByUserNo(userNo);
+	private ContractEntity findCurrentAccessibleContract(List<ContractEntity> contracts, Date today) {
+		if (contracts == null) {
+			return null;
+		}
 
 		for (int i = 0; i < contracts.size(); i++) {
 			ContractEntity c = contracts.get(i);
+			if (!isAccessibleStatus(c)) {
+				continue;
+			}
 
 			Date moveInDate = c.getMoveInDate();
 			int termMonths = c.getTermMonths();
@@ -54,22 +91,46 @@ public class LesseeValidator {
 			Date moveOutDate = endCal.getTime();
 
 			if (!today.before(moveInDate) && !today.after(moveOutDate)) {
-				validContract = c;
-				break;
+				return c;
 			}
 		}
+		return null;
+	}
 
-		if (validContract == null) {
-			throw new NotFoundException("유효한 계약 정보를 찾을 수 없습니다.");
+	private ContractEntity findNearestUpcomingAccessibleContract(List<ContractEntity> contracts, Date today) {
+		if (contracts == null) {
+			return null;
 		}
 
-		// 실존하는 방인지 확인
-		RoomEntity room = roomRepository.findById(validContract.getRoomNo())
+		ContractEntity nearestContract = null;
+		for (int i = 0; i < contracts.size(); i++) {
+			ContractEntity c = contracts.get(i);
+			if (!isAccessibleStatus(c)) {
+				continue;
+			}
+
+			Date moveInDate = c.getMoveInDate();
+			if (moveInDate == null || !moveInDate.after(today)) {
+				continue;
+			}
+
+			if (nearestContract == null || moveInDate.before(nearestContract.getMoveInDate())) {
+				nearestContract = c;
+			}
+		}
+		return nearestContract;
+	}
+
+	private boolean isAccessibleStatus(ContractEntity contract) {
+		String status = contract != null ? contract.getStatus() : null;
+		return ACCESSIBLE_CONTRACT_STATUSES.contains(String.valueOf(status).toUpperCase());
+	}
+
+	private String resolveHouseNo(ContractEntity contract) {
+		RoomEntity room = roomRepository.findById(contract.getRoomNo())
 				.orElseThrow(() -> new NotFoundException("방 정보를 찾을 수 없습니다."));
 
-		String houseNo = room.getHouseNo();
-
-		return houseNo;
+		return room.getHouseNo();
 	}
 
 }

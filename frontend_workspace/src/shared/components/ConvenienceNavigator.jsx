@@ -391,6 +391,13 @@ export default function ConvenienceNavigator({
   const [facilityItems, setFacilityItems] = React.useState([]);
   const [facilityLoading, setFacilityLoading] = React.useState(false);
   const [facilityError, setFacilityError] = React.useState('');
+  const detailStepRef = React.useRef(null);
+  const moveStepRef = React.useRef(null);
+  const applicationActionRef = React.useRef(null);
+  const roomFinderRef = React.useRef(null);
+  const roomResultsRef = React.useRef(null);
+  const facilityPickerRef = React.useRef(null);
+  const tourActionListRef = React.useRef(null);
 
   const groups = React.useMemo(() => buildMenuGroups(isLessor), [isLessor]);
   const selectedGroup = React.useMemo(
@@ -418,6 +425,41 @@ export default function ConvenienceNavigator({
     selectedApplicationAction === 'tour-apply'
       ? '투어를 신청할 매물을 골라주세요.'
       : '어떤 매물을 보고 싶으신가요?';
+
+  const scrollToRef = React.useCallback((ref) => {
+    window.setTimeout(() => {
+      const element = ref?.current;
+      if (!element) return;
+
+      const startY = window.scrollY;
+      const targetY = element.getBoundingClientRect().top + window.scrollY - 72;
+      const distance = targetY - startY;
+      const duration = 420;
+
+      if (Math.abs(distance) < 4) return;
+
+      const easeInOutCubic = (t) =>
+        t < 0.5
+          ? 4 * t * t * t
+          : 1 - Math.pow(-2 * t + 2, 3) / 2;
+
+      const startTime = performance.now();
+
+      const animateScroll = (currentTime) => {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const easedProgress = easeInOutCubic(progress);
+
+        window.scrollTo(0, startY + distance * easedProgress);
+
+        if (progress < 1) {
+          window.requestAnimationFrame(animateScroll);
+        }
+      };
+
+      window.requestAnimationFrame(animateScroll);
+    }, 120);
+  }, []);
 
   const toggleGuide = () => {
     setIsOpen((prev) => {
@@ -447,6 +489,7 @@ export default function ConvenienceNavigator({
     setTourActionError('');
     setFacilityItems([]);
     setFacilityError('');
+    scrollToRef(detailStepRef);
   };
 
   const handleReset = () => {
@@ -612,6 +655,58 @@ export default function ConvenienceNavigator({
   }, [isFacilityPickerAction]);
 
   React.useEffect(() => {
+    if (isApplicationMenuAction) {
+      scrollToRef(applicationActionRef);
+    }
+  }, [isApplicationMenuAction, scrollToRef]);
+
+  React.useEffect(() => {
+    if (selectedAction) {
+      scrollToRef(moveStepRef);
+    }
+  }, [selectedAction, scrollToRef]);
+
+  React.useEffect(() => {
+    if (selectedApplicationAction) {
+      scrollToRef(applicationActionRef);
+    }
+  }, [selectedApplicationAction, scrollToRef]);
+
+  React.useEffect(() => {
+    if (shouldShowRoomFinder) {
+      scrollToRef(roomFinderRef);
+    }
+  }, [shouldShowRoomFinder, scrollToRef]);
+
+  React.useEffect(() => {
+    if (isFacilityPickerAction) {
+      scrollToRef(facilityPickerRef);
+    }
+  }, [isFacilityPickerAction, scrollToRef]);
+
+  React.useEffect(() => {
+    if (
+      (selectedApplicationAction === 'tour-edit' ||
+        selectedApplicationAction === 'tour-cancel') &&
+      (tourActionLoading || tourActionItems.length > 0 || tourActionError)
+    ) {
+      scrollToRef(tourActionListRef);
+    }
+  }, [
+    selectedApplicationAction,
+    tourActionLoading,
+    tourActionItems.length,
+    tourActionError,
+    scrollToRef,
+  ]);
+
+  React.useEffect(() => {
+    if (roomSearchLoading || roomResults.length > 0 || roomSearchError) {
+      scrollToRef(roomResultsRef);
+    }
+  }, [roomSearchLoading, roomResults.length, roomSearchError, scrollToRef]);
+
+  React.useEffect(() => {
     if (
       selectedApplicationAction !== 'tour-edit' &&
       selectedApplicationAction !== 'tour-cancel'
@@ -699,7 +794,10 @@ export default function ConvenienceNavigator({
           </div>
 
           {selectedGroup && (
-            <div className={styles.block}>
+            <div
+              ref={detailStepRef}
+              className={`${styles.block} ${styles.scrollAnchor}`}
+            >
               <div className={styles.blockHeader}>
                 <p className={styles.question}>{selectedGroup.question}</p>
                 <button
@@ -751,7 +849,10 @@ export default function ConvenienceNavigator({
           )}
 
           {isApplicationMenuAction && (
-            <div className={styles.finderCard}>
+            <div
+              ref={applicationActionRef}
+              className={`${styles.finderCard} ${styles.scrollAnchor}`}
+            >
               <div className={styles.finderSection}>
                 <p className={styles.question}>어떤 신청 업무를 하시겠어요?</p>
                 <div className={styles.optionGrid}>
@@ -803,7 +904,10 @@ export default function ConvenienceNavigator({
 
               {(selectedApplicationAction === 'tour-edit' ||
                 selectedApplicationAction === 'tour-cancel') && (
-                <div className={styles.finderSection}>
+                <div
+                  ref={tourActionListRef}
+                  className={`${styles.finderSection} ${styles.scrollAnchor}`}
+                >
                   <p className={styles.question}>
                     {selectedApplicationAction === 'tour-edit'
                       ? '변경할 투어 신청을 골라주세요.'
@@ -878,7 +982,10 @@ export default function ConvenienceNavigator({
           )}
 
           {shouldShowRoomFinder && (
-            <div className={styles.finderCard}>
+            <div
+              ref={roomFinderRef}
+              className={`${styles.finderCard} ${styles.scrollAnchor}`}
+            >
               <div className={styles.finderSection}>
                 <p className={styles.question}>{roomFinderTitle}</p>
                 <div className={styles.chipRow}>
@@ -1062,12 +1169,13 @@ export default function ConvenienceNavigator({
                 </button>
               </div>
 
-              {roomSearchError && (
-                <p className={styles.errorText}>{roomSearchError}</p>
-              )}
+              <div ref={roomResultsRef} className={styles.scrollAnchor}>
+                {roomSearchError && (
+                  <p className={styles.errorText}>{roomSearchError}</p>
+                )}
 
-              {roomResults.length > 0 && (
-                <div className={styles.resultSection}>
+                {roomResults.length > 0 && (
+                  <div className={styles.resultSection}>
                   <div className={styles.resultHeader}>
                     <div>
                       <p className={styles.summaryLabel}>찾아본 매물</p>
@@ -1139,36 +1247,40 @@ export default function ConvenienceNavigator({
                       </article>
                     ))}
                   </div>
-                </div>
-              )}
-
-              {!roomSearchLoading &&
-                roomResults.length === 0 &&
-                !roomSearchError &&
-                hasRoomSearchAttempted && (
-                  <div className={styles.emptyResult}>
-                    조건에 맞는 매물을 아직 찾지 못했습니다. 예산이나 지역
-                    조건을 조금 넓혀서 다시 찾아보세요.
                   </div>
                 )}
 
-              {!roomSearchLoading &&
-                roomResults.length === 0 &&
-                !roomSearchError &&
-                !hasRoomSearchAttempted && (
-                  <div className={styles.emptyResult}>
-                    버튼을 고른 뒤{' '}
-                    {selectedApplicationAction === 'tour-apply'
-                      ? '`투어 신청할 매물 찾기`'
-                      : '`추천 매물 보기`'}{' '}
-                    를 누르면 여기에서 바로 매물 후보를 보여드립니다.
+                {!roomSearchLoading &&
+                  roomResults.length === 0 &&
+                  !roomSearchError &&
+                  hasRoomSearchAttempted && (
+                    <div className={styles.emptyResult}>
+                      조건에 맞는 매물을 아직 찾지 못했습니다. 예산이나 지역
+                      조건을 조금 넓혀서 다시 찾아보세요.
+                    </div>
+                  )}
+
+                {!roomSearchLoading &&
+                  roomResults.length === 0 &&
+                  !roomSearchError &&
+                  !hasRoomSearchAttempted && (
+                    <div className={styles.emptyResult}>
+                      버튼을 고른 뒤{' '}
+                      {selectedApplicationAction === 'tour-apply'
+                        ? '`투어 신청할 매물 찾기`'
+                        : '`추천 매물 보기`'}{' '}
+                      를 누르면 여기에서 바로 매물 후보를 보여드립니다.
+                    </div>
+                  )}
                   </div>
-                )}
             </div>
           )}
 
           {isFacilityPickerAction && (
-            <div className={styles.finderCard}>
+            <div
+              ref={facilityPickerRef}
+              className={`${styles.finderCard} ${styles.scrollAnchor}`}
+            >
               <div className={styles.finderSection}>
                 <p className={styles.question}>
                   예약할 수 있는 공용시설을 골라주세요.
@@ -1242,7 +1354,10 @@ export default function ConvenienceNavigator({
             !shouldShowRoomFinder &&
             !isApplicationMenuAction &&
             !isFacilityPickerAction && (
-              <div className={styles.summaryCard}>
+              <div
+                ref={moveStepRef}
+                className={`${styles.summaryCard} ${styles.scrollAnchor}`}
+              >
                 <div>
                   <p className={styles.summaryLabel}>선택한 메뉴</p>
                   <h3 className={styles.summaryTitle}>
