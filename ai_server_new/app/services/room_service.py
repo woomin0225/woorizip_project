@@ -25,11 +25,13 @@ class RoomService:
         )
 
         room_name = str(room_dto.get("roomName") or "새 방").strip() or "새 방"
+        house_name = str(normalized.get("houseName") or "").strip()
         house_no = str(normalized.get("houseNo") or "").strip()
         created_room = self._extract_created_room(spring_response)
         room_no = str(created_room.get("roomNo") or "").strip()
 
-        location_hint = f"건물 {house_no}" if house_no else "선택한 건물"
+        location_label = house_name or house_no
+        location_hint = f"건물 {location_label}" if location_label else "선택한 건물"
         room_hint = f"{room_name} 등록이 완료되었습니다."
         if room_no:
             room_hint = f"{room_name} 등록이 완료되었습니다. 방 번호는 {room_no}입니다."
@@ -40,6 +42,7 @@ class RoomService:
             "intent": "ROOM_CREATE",
             "slots": {
                 "houseNo": house_no,
+                "houseName": house_name,
                 **room_dto,
             },
             "action": {
@@ -119,6 +122,7 @@ class RoomService:
 
         return {
             "houseNo": house_no,
+            "houseName": str(draft_payload.get("houseName") or "").strip(),
             "roomDto": normalized_room_dto,
         }
 

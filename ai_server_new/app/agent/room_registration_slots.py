@@ -35,7 +35,7 @@ SLOT_DEFINITIONS: "OrderedDict[str, dict[str, Any]]" = OrderedDict(
             "roomMethod",
             {
                 "label": "거래 방식",
-                "question": "거래 방식은 월세면 M, 전세면 L입니다. 어떤 방식인가요?",
+                "question": "거래 방식을 말해주세요. 월세 또는 전세 중 어떤 방식인가요?",
                 "required": True,
             },
         ),
@@ -45,7 +45,7 @@ SLOT_DEFINITIONS: "OrderedDict[str, dict[str, Any]]" = OrderedDict(
             "roomDeposit",
             {
                 "label": "보증금",
-                "question": "보증금을 숫자로 알려주세요.",
+                "question": "보증금이 얼마인지 말해주세요",
                 "required": True,
             },
         ),
@@ -53,7 +53,7 @@ SLOT_DEFINITIONS: "OrderedDict[str, dict[str, Any]]" = OrderedDict(
             "roomMonthly",
             {
                 "label": "월세",
-                "question": "월세를 숫자로 알려주세요.",
+                "question": "월세는 얼마인가요?",
                 "required": True,
             },
         ),
