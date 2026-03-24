@@ -7,6 +7,7 @@ import {
   getFacilityDetail,
   getFacilityList,
 } from '../../features/facility/api/facilityApi';
+import { useAuth } from '../../app/providers/AuthProvider';
 import styles from './ConvenienceNavigator.module.css';
 
 const DEFAULT_ROOM_COND = {
@@ -37,7 +38,12 @@ const ROOM_FEATURE_OPTIONS = [
 ];
 
 const JEONSE_BUDGET_OPTIONS = [
-  { id: 'jeonse-under-50m', label: '5천만 원 이하', min: null, max: 50_000_000 },
+  {
+    id: 'jeonse-under-50m',
+    label: '5천만 원 이하',
+    min: null,
+    max: 50_000_000,
+  },
   {
     id: 'jeonse-50m-100m',
     label: '5천만 원 ~ 1억 원',
@@ -67,13 +73,23 @@ const WOLSE_DEPOSIT_OPTIONS = [
     min: 10_000_000,
     max: 30_000_000,
   },
-  { id: 'monthly-over-30m', label: '3천만 원 이상', min: 30_000_000, max: null },
+  {
+    id: 'monthly-over-30m',
+    label: '3천만 원 이상',
+    min: 30_000_000,
+    max: null,
+  },
 ];
 
 const WOLSE_MONTHLY_OPTIONS = [
   { id: 'rent-under-40', label: '40만 원 이하', min: null, max: 400_000 },
   { id: 'rent-40-60', label: '40만 원 ~ 60만 원', min: 400_000, max: 600_000 },
-  { id: 'rent-60-100', label: '60만 원 ~ 100만 원', min: 600_000, max: 1_000_000 },
+  {
+    id: 'rent-60-100',
+    label: '60만 원 ~ 100만 원',
+    min: 600_000,
+    max: 1_000_000,
+  },
   { id: 'rent-over-100', label: '100만 원 이상', min: 1_000_000, max: null },
 ];
 
@@ -356,6 +372,7 @@ export default function ConvenienceNavigator({
   hideToggle = false,
   hideHero = false,
 }) {
+  const { isAdmin } = useAuth();
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = React.useState(defaultOpen);
   const [selectedGroupId, setSelectedGroupId] = React.useState(null);
@@ -364,9 +381,8 @@ export default function ConvenienceNavigator({
   const [roomResults, setRoomResults] = React.useState([]);
   const [roomSearchError, setRoomSearchError] = React.useState('');
   const [roomSearchLoading, setRoomSearchLoading] = React.useState(false);
-  const [hasRoomSearchAttempted, setHasRoomSearchAttempted] = React.useState(
-    false
-  );
+  const [hasRoomSearchAttempted, setHasRoomSearchAttempted] =
+    React.useState(false);
   const [selectedApplicationAction, setSelectedApplicationAction] =
     React.useState('');
   const [tourActionItems, setTourActionItems] = React.useState([]);
@@ -416,6 +432,11 @@ export default function ConvenienceNavigator({
   };
 
   const handleSelectGroup = (groupId) => {
+    if (isAdmin && groupId === 'facility') {
+      navigate('/mypage/users');
+      return;
+    }
+
     setSelectedGroupId(groupId);
     setSelectedActionId(null);
     setRoomResults([]);
@@ -576,7 +597,8 @@ export default function ConvenienceNavigator({
         setFacilityError('');
       } else {
         setFacilityError(
-          error?.message || '공용시설 목록을 불러오지 못했습니다. 다시 시도해 주세요.'
+          error?.message ||
+            '공용시설 목록을 불러오지 못했습니다. 다시 시도해 주세요.'
         );
       }
     } finally {
@@ -631,9 +653,7 @@ export default function ConvenienceNavigator({
       {guideVisible && (
         <div className={styles.guideCard}>
           <div className={styles.stepRow} aria-hidden="true">
-            <span
-              className={`${styles.stepChip} ${styles.stepChipActive}`}
-            >
+            <span className={`${styles.stepChip} ${styles.stepChipActive}`}>
               1 원하는 곳 선택
             </span>
             <span
@@ -666,7 +686,9 @@ export default function ConvenienceNavigator({
                     }`}
                     onClick={() => handleSelectGroup(group.id)}
                   >
-                    <strong className={styles.optionTitle}>{group.label}</strong>
+                    <strong className={styles.optionTitle}>
+                      {group.label}
+                    </strong>
                     <span className={styles.optionDescription}>
                       {group.description}
                     </span>
@@ -737,17 +759,20 @@ export default function ConvenienceNavigator({
                     {
                       id: 'tour-apply',
                       label: '투어 신청',
-                      description: '매물을 고른 뒤 바로 투어 신청으로 이어집니다.',
+                      description:
+                        '매물을 고른 뒤 바로 투어 신청으로 이어집니다.',
                     },
                     {
                       id: 'tour-edit',
                       label: '신청 변경',
-                      description: '현재 대기중인 투어 일정만 골라서 변경합니다.',
+                      description:
+                        '현재 대기중인 투어 일정만 골라서 변경합니다.',
                     },
                     {
                       id: 'tour-cancel',
                       label: '신청 취소',
-                      description: '현재 대기중인 투어 신청만 골라서 취소합니다.',
+                      description:
+                        '현재 대기중인 투어 신청만 골라서 취소합니다.',
                     },
                   ].map((action) => (
                     <button
@@ -765,7 +790,9 @@ export default function ConvenienceNavigator({
                         setHasRoomSearchAttempted(false);
                       }}
                     >
-                      <strong className={styles.optionTitle}>{action.label}</strong>
+                      <strong className={styles.optionTitle}>
+                        {action.label}
+                      </strong>
                       <span className={styles.optionDescription}>
                         {action.description}
                       </span>
@@ -807,7 +834,8 @@ export default function ConvenienceNavigator({
                             </span>
                           </div>
                           <h4 className={styles.resultTitle}>
-                            {item.roomName || `매물 ${item.roomNo || item.tourNo}`}
+                            {item.roomName ||
+                              `매물 ${item.roomNo || item.tourNo}`}
                           </h4>
                           <p className={styles.resultPrice}>
                             투어일 {formatDate(item.visitDate)}
@@ -821,9 +849,12 @@ export default function ConvenienceNavigator({
                               type="button"
                               className={styles.primaryAction}
                               onClick={() =>
-                                navigate(`/mypage/applications/tour/${item.tourNo}`, {
-                                  state: { item },
-                                })
+                                navigate(
+                                  `/mypage/applications/tour/${item.tourNo}`,
+                                  {
+                                    state: { item },
+                                  }
+                                )
                               }
                             >
                               {selectedApplicationAction === 'tour-edit'
@@ -987,7 +1018,9 @@ export default function ConvenienceNavigator({
               </div>
 
               <div className={styles.finderSection}>
-                <p className={styles.question}>원하는 지역이 있으면 적어주세요.</p>
+                <p className={styles.question}>
+                  원하는 지역이 있으면 적어주세요.
+                </p>
                 <p className={styles.helperText}>
                   예: 신촌, 강남역, 마포구. 비워 두면 넓게 찾아드릴게요.
                 </p>
@@ -1052,15 +1085,22 @@ export default function ConvenienceNavigator({
                             {roomMethodLabel(room.roomMethod)}
                           </span>
                           {room.roomEmptyYn && (
-                            <span className={styles.resultBadgeMuted}>공실</span>
+                            <span className={styles.resultBadgeMuted}>
+                              공실
+                            </span>
                           )}
                         </div>
                         <h4 className={styles.resultTitle}>
                           {room.roomName || `매물 ${room.roomNo}`}
                         </h4>
-                        <p className={styles.resultPrice}>{roomPriceText(room)}</p>
+                        <p className={styles.resultPrice}>
+                          {roomPriceText(room)}
+                        </p>
                         <p className={styles.resultInfo}>
-                          {[occupancyLabel(room.roomRoomCount), room.houseAddress]
+                          {[
+                            occupancyLabel(room.roomRoomCount),
+                            room.houseAddress,
+                          ]
                             .filter(Boolean)
                             .join(' · ')}
                         </p>
@@ -1107,8 +1147,8 @@ export default function ConvenienceNavigator({
                 !roomSearchError &&
                 hasRoomSearchAttempted && (
                   <div className={styles.emptyResult}>
-                    조건에 맞는 매물을 아직 찾지 못했습니다. 예산이나 지역 조건을
-                    조금 넓혀서 다시 찾아보세요.
+                    조건에 맞는 매물을 아직 찾지 못했습니다. 예산이나 지역
+                    조건을 조금 넓혀서 다시 찾아보세요.
                   </div>
                 )}
 
@@ -1156,14 +1196,20 @@ export default function ConvenienceNavigator({
                           <span className={styles.resultBadge}>예약 가능</span>
                         </div>
                         <h4 className={styles.resultTitle}>
-                          {facility.facilityName || `시설 ${facility.facilityNo}`}
+                          {facility.facilityName ||
+                            `시설 ${facility.facilityNo}`}
                         </h4>
                         <p className={styles.resultPrice}>
                           {facility.facilityOpenTime?.slice(0, 5) || '-'} ~{' '}
                           {facility.facilityCloseTime?.slice(0, 5) || '-'}
                         </p>
                         <p className={styles.resultInfo}>
-                          {[facility.facilityLocation, facility.facilityCapacity ? `수용 ${facility.facilityCapacity}명` : '']
+                          {[
+                            facility.facilityLocation,
+                            facility.facilityCapacity
+                              ? `수용 ${facility.facilityCapacity}명`
+                              : '',
+                          ]
                             .filter(Boolean)
                             .join(' · ')}
                         </p>
@@ -1172,7 +1218,9 @@ export default function ConvenienceNavigator({
                             type="button"
                             className={styles.primaryAction}
                             onClick={() =>
-                              navigate(`/reservation/form/${facility.facilityNo}`)
+                              navigate(
+                                `/reservation/form/${facility.facilityNo}`
+                              )
                             }
                           >
                             예약하기
@@ -1194,33 +1242,35 @@ export default function ConvenienceNavigator({
             !shouldShowRoomFinder &&
             !isApplicationMenuAction &&
             !isFacilityPickerAction && (
-            <div className={styles.summaryCard}>
-              <div>
-                <p className={styles.summaryLabel}>선택한 메뉴</p>
-                <h3 className={styles.summaryTitle}>{selectedAction.label}</h3>
-                <p className={styles.summaryDescription}>
-                  {selectedAction.description}
-                </p>
-              </div>
+              <div className={styles.summaryCard}>
+                <div>
+                  <p className={styles.summaryLabel}>선택한 메뉴</p>
+                  <h3 className={styles.summaryTitle}>
+                    {selectedAction.label}
+                  </h3>
+                  <p className={styles.summaryDescription}>
+                    {selectedAction.description}
+                  </p>
+                </div>
 
-              <div className={styles.summaryActions}>
-                <button
-                  type="button"
-                  className={styles.primaryAction}
-                  onClick={() => navigate(selectedAction.to)}
-                >
-                  이 페이지로 이동하기
-                </button>
-                <button
-                  type="button"
-                  className={styles.secondaryButton}
-                  onClick={() => setSelectedActionId(null)}
-                >
-                  다른 세부 메뉴 보기
-                </button>
+                <div className={styles.summaryActions}>
+                  <button
+                    type="button"
+                    className={styles.primaryAction}
+                    onClick={() => navigate(selectedAction.to)}
+                  >
+                    이 페이지로 이동하기
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.secondaryButton}
+                    onClick={() => setSelectedActionId(null)}
+                  >
+                    다른 세부 메뉴 보기
+                  </button>
+                </div>
               </div>
-            </div>
-          )}
+            )}
         </div>
       )}
     </section>

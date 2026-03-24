@@ -10,7 +10,7 @@ import org.team4p.woorizip.room.dto.request.RoomSearchCondition;
 public interface HouseService {
 	
 	List<HouseMarkerResponse> selectHouseMarkers(RoomSearchCondition cond);
-	List<HouseDto> selectHousesByOwnerNo(String userNo);
+	List<HouseDto> selectHousesByOwnerNo(String currentUser, String targetUserNo);
 	HouseDto selectHouse(String houseNo);
 	HouseDto selectHouseForEdit(String houseNo);
 	HouseDto insertHouse(HouseDto houseDto, String currentUser);

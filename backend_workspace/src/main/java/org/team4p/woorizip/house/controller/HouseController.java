@@ -52,11 +52,13 @@ public class HouseController {
 	}
 	
 	@GetMapping("/owner")
-	public ResponseEntity<ApiResponse<List<HouseDto>>> getMyHouses(Authentication auth) {
+	public ResponseEntity<ApiResponse<List<HouseDto>>> getMyHouses(
+			@RequestParam(name = "targetUserNo", required = false) String targetUserNo,
+			Authentication auth) {
 		// 임대인 회원 건물 목록 조회
 		
 		String currentUser = auth.getName().toString();
-		List<HouseDto> list = houseService.selectHousesByOwnerNo(currentUser);
+		List<HouseDto> list = houseService.selectHousesByOwnerNo(currentUser, targetUserNo);
 		return ResponseEntity.status(200).body(ApiResponse.ok("회원의 건물 목록 조회 성공", list));
 	}
 	
