@@ -1,6 +1,6 @@
 // src/features/facility/pages/view/FacilityView.jsx
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useLocation, useParams } from 'react-router-dom';
 import FacilityList from '../../components/list/FacilityList';
 import { axiosInstance } from '../../../../app/http/axiosInstance';
 import { tokenStore } from '../../../../app/http/tokenStore';
@@ -8,6 +8,8 @@ import styles from './FacilityPage.module.css';
 
 export default function FacilityViewPage() {
   const { houseNo } = useParams();
+  const location = useLocation();
+  const targetUserNo = location.state?.targetUserNo || null;
   const [userStatus, setUserStatus] = useState({
     isLessor: null,
     isAdmin: null,
@@ -49,6 +51,7 @@ export default function FacilityViewPage() {
         <FacilityList
           isLessor={userStatus.isLessor}
           isAdmin={userStatus.isAdmin}
+          targetUserNo={targetUserNo}
           houseNo={
             userStatus.isLessor || userStatus.isAdmin ? houseNo || null : null
           }

@@ -29,7 +29,7 @@ import AccessibilitySettingsModal from '../../../features/aiAssistant/components
 import styles from './Header.module.css';
 
 export default function Header() {
-  const { clearTokens } = useAuth();
+  const { clearTokens, isAdmin } = useAuth();
   const [isLessor, setIsLessor] = useState(false);
   const [collapseClasses, setCollapseClasses] = useState('');
   const [userName, setUserName] = useState('');
@@ -75,12 +75,6 @@ export default function Header() {
             });
         }
 
-        const isAdmin =
-          decodedToken.role === 'ADMIN' ||
-          decodedToken.role === 'ROLE_ADMIN' ||
-          decodedToken.auth === 'ADMIN' ||
-          decodedToken.auth === 'ROLE_ADMIN';
-
         setMyPageRoute(ROUTES.MEMBER.MYPAGE);
 
         const latestName =
@@ -114,9 +108,15 @@ export default function Header() {
 
   useEffect(() => {
     const openAccessibilitySettings = () => setIsSettingsOpen(true);
-    window.addEventListener('woorizip:open-accessibility-settings', openAccessibilitySettings);
+    window.addEventListener(
+      'woorizip:open-accessibility-settings',
+      openAccessibilitySettings
+    );
     return () => {
-      window.removeEventListener('woorizip:open-accessibility-settings', openAccessibilitySettings);
+      window.removeEventListener(
+        'woorizip:open-accessibility-settings',
+        openAccessibilitySettings
+      );
     };
   }, []);
 
@@ -136,7 +136,11 @@ export default function Header() {
   return (
     <>
       <header className={styles.headerGlobal}>
-        <Navbar className={`navbar-main navbar-light headroom ${styles.navbar}`} expand="lg" id="navbar-main">
+        <Navbar
+          className={`navbar-main navbar-light headroom ${styles.navbar}`}
+          expand="lg"
+          id="navbar-main"
+        >
           <Container fluid className={styles.inner}>
             <NavbarBrand className="mr-lg-5" to="/" tag={Link}>
               <img src={logo} alt="우리집 로고" style={{ height: '40px' }} />
@@ -157,7 +161,9 @@ export default function Header() {
                 <Row>
                   <Col className="collapse-brand" xs="6">
                     <Link to="/">
-                      <span className="font-weight-bold ml-2 text-info">우리집</span>
+                      <span className="font-weight-bold ml-2 text-info">
+                        우리집
+                      </span>
                     </Link>
                   </Col>
                   <Col className="collapse-close" xs="6">
@@ -169,28 +175,52 @@ export default function Header() {
                 </Row>
               </div>
 
-              <Nav className="navbar-nav-hover align-items-lg-center mx-auto" navbar>
+              <Nav
+                className="navbar-nav-hover align-items-lg-center mx-auto"
+                navbar
+              >
                 <NavItem>
-                  <NavLink to="/about" tag={Link}>소개</NavLink>
+                  <NavLink to="/about" tag={Link}>
+                    소개
+                  </NavLink>
                 </NavItem>
                 <UncontrolledDropdown nav inNavbar>
-                  <DropdownToggle nav caret>게시판</DropdownToggle>
+                  <DropdownToggle nav caret>
+                    게시판
+                  </DropdownToggle>
                   <DropdownMenu>
-                    <DropdownItem tag={Link} to="/notices">공지사항</DropdownItem>
-                    <DropdownItem tag={Link} to="/event">이벤트</DropdownItem>
-                    <DropdownItem tag={Link} to="/qna">QnA</DropdownItem>
-                    <DropdownItem tag={Link} to="/information">정책・정보</DropdownItem>
+                    <DropdownItem tag={Link} to="/notices">
+                      공지사항
+                    </DropdownItem>
+                    <DropdownItem tag={Link} to="/event">
+                      이벤트
+                    </DropdownItem>
+                    <DropdownItem tag={Link} to="/qna">
+                      QnA
+                    </DropdownItem>
+                    <DropdownItem tag={Link} to="/information">
+                      정책・정보
+                    </DropdownItem>
                   </DropdownMenu>
                 </UncontrolledDropdown>
                 <NavItem>
-                  <NavLink to="/rooms" tag={Link}>방찾기</NavLink>
+                  <NavLink to="/rooms" tag={Link}>
+                    방찾기
+                  </NavLink>
                 </NavItem>
                 <NavItem>
-                  <NavLink to="/facility/view" tag={Link}>공용시설</NavLink>
+                  <NavLink
+                    to={isAdmin ? '/mypage/users' : '/facility/view'}
+                    tag={Link}
+                  >
+                    공용시설
+                  </NavLink>
                 </NavItem>
                 {isLoggedIn && isLessor && (
                   <NavItem>
-                    <NavLink to="/estate/manage" tag={Link}>매물관리</NavLink>
+                    <NavLink to="/estate/manage" tag={Link}>
+                      매물관리
+                    </NavLink>
                   </NavItem>
                 )}
               </Nav>
@@ -208,25 +238,54 @@ export default function Header() {
                 </NavItem>
 
                 {isLoggedIn ? (
-                  <NavItem className={`d-none d-lg-flex ${styles.authSlot} ${styles.authSlotLoggedIn}`}>
-                    <span className={styles.welcomeText}>{userName}님 환영합니다!</span>
+                  <NavItem
+                    className={`d-none d-lg-flex ${styles.authSlot} ${styles.authSlotLoggedIn}`}
+                  >
+                    <span className={styles.welcomeText}>
+                      {userName}님 환영합니다!
+                    </span>
                     <div className={styles.authButtonsRow}>
-                      <Button className={`btn-icon ${styles.loggedInButton} ${styles.authBtnNeutral}`} color="default" size="sm" to={myPageRoute} tag={Link}>
+                      <Button
+                        className={`btn-icon ${styles.loggedInButton} ${styles.authBtnNeutral}`}
+                        color="default"
+                        size="sm"
+                        to={myPageRoute}
+                        tag={Link}
+                      >
                         <span className="nav-link-inner--text">마이페이지</span>
                       </Button>
 
-                      <Button className={`btn-icon ${styles.loggedInButton} ${styles.authBtnPrimary}`} color="default" size="sm" onClick={handleLogout}>
+                      <Button
+                        className={`btn-icon ${styles.loggedInButton} ${styles.authBtnPrimary}`}
+                        color="default"
+                        size="sm"
+                        onClick={handleLogout}
+                      >
                         <span className="nav-link-inner--text">로그아웃</span>
                       </Button>
                     </div>
                   </NavItem>
                 ) : (
-                  <NavItem className={`d-none d-lg-flex ${styles.authSlot} ${styles.authSlotLoggedOut}`}>
+                  <NavItem
+                    className={`d-none d-lg-flex ${styles.authSlot} ${styles.authSlotLoggedOut}`}
+                  >
                     <div className={styles.authButtonsRow}>
-                      <Button className={`btn-icon ${styles.authBtnNeutral}`} color="default" size="sm" to="/login" tag={Link}>
+                      <Button
+                        className={`btn-icon ${styles.authBtnNeutral}`}
+                        color="default"
+                        size="sm"
+                        to="/login"
+                        tag={Link}
+                      >
                         <span className="nav-link-inner--text">로그인</span>
                       </Button>
-                      <Button className={`btn-icon ${styles.authBtnPrimary}`} color="default" size="sm" to="/signup" tag={Link}>
+                      <Button
+                        className={`btn-icon ${styles.authBtnPrimary}`}
+                        color="default"
+                        size="sm"
+                        to="/signup"
+                        tag={Link}
+                      >
                         <span className="nav-link-inner--text">회원가입</span>
                       </Button>
                     </div>
@@ -237,8 +296,10 @@ export default function Header() {
           </Container>
         </Navbar>
       </header>
-      <AccessibilitySettingsModal open={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+      <AccessibilitySettingsModal
+        open={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+      />
     </>
   );
 }
-

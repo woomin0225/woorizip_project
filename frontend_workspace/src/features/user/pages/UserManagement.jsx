@@ -3,11 +3,16 @@ import { Container, Row, Col, Card, CardBody } from 'reactstrap';
 import MyPageSideNav from '../components/MyPageSideNav';
 import { getAdminUserListPage } from '../api/userAPI';
 import styles from '../../../app/layouts/MyPageLayout.module.css';
+import { useNavigate } from 'react-router-dom';
 
 const PAGE_SIZE = 100;
 
 function pickFirst(...values) {
-  return values.find((value) => value !== undefined && value !== null && value !== '') || '';
+  return (
+    values.find(
+      (value) => value !== undefined && value !== null && value !== ''
+    ) || ''
+  );
 }
 
 function normalizeBirthDate(raw) {
@@ -47,22 +52,42 @@ function userTypeLabel(type) {
 
 function compareValues(a, b, direction = 'asc') {
   if (a === b) return 0;
-  if (a === null || a === undefined || a === '') return direction === 'asc' ? 1 : -1;
-  if (b === null || b === undefined || b === '') return direction === 'asc' ? -1 : 1;
+  if (a === null || a === undefined || a === '')
+    return direction === 'asc' ? 1 : -1;
+  if (b === null || b === undefined || b === '')
+    return direction === 'asc' ? -1 : 1;
 
   if (typeof a === 'number' && typeof b === 'number') {
     return direction === 'asc' ? a - b : b - a;
   }
 
-  const left = String(a).localeCompare(String(b), 'ko', { numeric: true, sensitivity: 'base' });
+  const left = String(a).localeCompare(String(b), 'ko', {
+    numeric: true,
+    sensitivity: 'base',
+  });
   return direction === 'asc' ? left : -left;
 }
 
 export default function UserManagementPage() {
+  const navigate = useNavigate();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [sort, setSort] = useState({ key: 'userNo', direction: 'asc' });
+
+  const handleTypeClick = (user) => {
+    const type = String(user.type || '').toUpperCase();
+    const state = { targetUserNo: user.userNo, targetUserType: type };
+
+    if (type === 'USER' || type === 'TENANT') {
+      navigate('/reservation/view', { state });
+      return;
+    }
+
+    if (type === 'LESSOR' || type === 'LANDLORD') {
+      navigate('/facility/view', { state });
+    }
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -96,7 +121,11 @@ export default function UserManagementPage() {
             gender: user?.gender || '',
             genderLabel: genderLabel(user?.gender),
             age: calculateAge(birthDate),
-            phone: pickFirst(user?.phone, user?.phoneNumber, user?.phone_number),
+            phone: pickFirst(
+              user?.phone,
+              user?.phoneNumber,
+              user?.phone_number
+            ),
             type: user?.type || '',
             typeLabel: userTypeLabel(user?.type),
           };
@@ -173,19 +202,32 @@ export default function UserManagementPage() {
                   <div className={styles.headerRow}>
                     <h2 className={styles.title}>유저관리</h2>
                     <p className={styles.subTitle}>
-                      등록된 전체 사용자 목록을 확인하고, 항목명을 눌러 정렬할 수 있습니다.
+                      등록된 전체 사용자 목록을 확인하고, 항목명을 눌러 정렬할
+                      수 있습니다.
                     </p>
                   </div>
 
-                  <div className={styles.surveyBox} style={{ marginBottom: 18 }}>
-                    <p className={styles.surveyTitle}>전체 사용자 {users.length}명</p>
+                  <div
+                    className={styles.surveyBox}
+                    style={{ marginBottom: 18 }}
+                  >
+                    <p className={styles.surveyTitle}>
+                      전체 사용자 {users.length}명
+                    </p>
                     <p className={styles.desc} style={{ marginBottom: 0 }}>
-                      이름, 나이, 성별, 유저번호 등 주요 정보를 한눈에 확인해보세요.
+                      이름, 나이, 성별, 유저번호 등 주요 정보를 한눈에
+                      확인해보세요.
                     </p>
                   </div>
 
-                  {loading && <p className={styles.desc}>유저 목록을 불러오는 중입니다.</p>}
-                  {!loading && error && <p className={styles.errorText}>{error}</p>}
+                  {loading && (
+                    <p className={styles.desc}>
+                      유저 목록을 불러오는 중입니다.
+                    </p>
+                  )}
+                  {!loading && error && (
+                    <p className={styles.errorText}>{error}</p>
+                  )}
 
                   {!loading && !error && (
                     <div className={styles.adminTableWrap}>
@@ -193,37 +235,65 @@ export default function UserManagementPage() {
                         <thead>
                           <tr>
                             <th>
-                              <button type="button" className={styles.sortBtn} onClick={() => onSort('userNo')}>
+                              <button
+                                type="button"
+                                className={styles.sortBtn}
+                                onClick={() => onSort('userNo')}
+                              >
                                 유저번호 {sortLabel('userNo')}
                               </button>
                             </th>
                             <th>
-                              <button type="button" className={styles.sortBtn} onClick={() => onSort('name')}>
+                              <button
+                                type="button"
+                                className={styles.sortBtn}
+                                onClick={() => onSort('name')}
+                              >
                                 이름 {sortLabel('name')}
                               </button>
                             </th>
                             <th>
-                              <button type="button" className={styles.sortBtn} onClick={() => onSort('age')}>
+                              <button
+                                type="button"
+                                className={styles.sortBtn}
+                                onClick={() => onSort('age')}
+                              >
                                 나이 {sortLabel('age')}
                               </button>
                             </th>
                             <th>
-                              <button type="button" className={styles.sortBtn} onClick={() => onSort('genderLabel')}>
+                              <button
+                                type="button"
+                                className={styles.sortBtn}
+                                onClick={() => onSort('genderLabel')}
+                              >
                                 성별 {sortLabel('genderLabel')}
                               </button>
                             </th>
                             <th>
-                              <button type="button" className={styles.sortBtn} onClick={() => onSort('emailId')}>
+                              <button
+                                type="button"
+                                className={styles.sortBtn}
+                                onClick={() => onSort('emailId')}
+                              >
                                 이메일 {sortLabel('emailId')}
                               </button>
                             </th>
                             <th>
-                              <button type="button" className={styles.sortBtn} onClick={() => onSort('phone')}>
+                              <button
+                                type="button"
+                                className={styles.sortBtn}
+                                onClick={() => onSort('phone')}
+                              >
                                 휴대번호 {sortLabel('phone')}
                               </button>
                             </th>
                             <th>
-                              <button type="button" className={styles.sortBtn} onClick={() => onSort('typeLabel')}>
+                              <button
+                                type="button"
+                                className={styles.sortBtn}
+                                onClick={() => onSort('typeLabel')}
+                              >
                                 회원유형 {sortLabel('typeLabel')}
                               </button>
                             </th>
@@ -239,7 +309,14 @@ export default function UserManagementPage() {
                           ) : (
                             sortedUsers.map((user) => (
                               <tr key={user.userNo || user.emailId}>
-                                <td>{user.userNo ?? '-'}</td>
+                                <td>
+                                  <span
+                                    onClick={() => handleTypeClick(user)}
+                                    style={{ cursor: 'pointer' }}
+                                  >
+                                    {user.userNo ?? '-'}
+                                  </span>
+                                </td>
                                 <td>{user.name || '-'}</td>
                                 <td>{user.age ?? '-'}</td>
                                 <td>{user.genderLabel}</td>

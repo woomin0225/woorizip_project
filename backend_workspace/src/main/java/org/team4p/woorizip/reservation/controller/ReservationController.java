@@ -63,6 +63,7 @@ public class ReservationController {
             @RequestParam(name = "size", defaultValue = "10") int size,
             @RequestParam(name = "sort", defaultValue = "reservationDate,reservationStartTime") String sort,
             @RequestParam(name = "direct", defaultValue = "DESC") String direct,
+            @RequestParam(name = "targetUserNo", required = false) String targetUserNo,
 			@AuthenticationPrincipal CustomUserPrincipal principal,
 			@PathVariable(value = "facilityNo", required = false) String facilityNo) {
 		String currentUserNo = (principal != null) ? principal.getUserNo() : null;
@@ -74,10 +75,11 @@ public class ReservationController {
         String[] sortFields = sort.split(",");
         Pageable pageable = PageRequest.of(page - 1, size, direction, sortFields);
 
-        long totalElements = reservationService.selectListCount(currentUserNo, facilityNo);
+        long totalElements = reservationService.selectListCount(currentUserNo, facilityNo, targetUserNo);
         int totalPages = (totalElements == 0) ? 0 : (int) Math.ceil((double) totalElements / size);
 
-        List<ReservationListResponseDTO> list = reservationService.selectList(pageable, currentUserNo, facilityNo);
+        List<ReservationListResponseDTO> list = 
+        		reservationService.selectList(pageable, currentUserNo, facilityNo, targetUserNo);
 
         PageResponse<ReservationListResponseDTO> body = new PageResponse<>(list, page, size, totalElements, totalPages);
         return ResponseEntity.ok(ApiResponse.ok("예약 목록 조회 성공", body));

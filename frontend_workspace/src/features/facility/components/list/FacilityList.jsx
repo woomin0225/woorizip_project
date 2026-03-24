@@ -7,7 +7,12 @@ import Modal from '../../../../shared/components/Modal/Modal';
 import FacilityDetail from '../detail/FacilityDetail';
 import styles from './List.module.css';
 
-export default function FacilityList({ isLessor, isAdmin, houseNo: propsHouseNo }) {
+export default function FacilityList({
+  isLessor,
+  isAdmin,
+  targetUserNo,
+  houseNo: propsHouseNo,
+}) {
   const nav = useNavigate();
   const { houseNo: urlHouseNo } = useParams();
   const currentHouseNo = propsHouseNo || urlHouseNo;
@@ -15,7 +20,10 @@ export default function FacilityList({ isLessor, isAdmin, houseNo: propsHouseNo 
 
   const showHouseSelection = (isLessor || isAdmin) && !currentHouseNo;
 
-  const { houses, loading: hLoading } = useHouseList(showHouseSelection);
+  const { houses, loading: hLoading } = useHouseList(
+    showHouseSelection,
+    targetUserNo
+  );
   const { facilities, loading: fLoading } = useFacilityList(currentHouseNo, isLessor || isAdmin);
 
   if (hLoading || fLoading)

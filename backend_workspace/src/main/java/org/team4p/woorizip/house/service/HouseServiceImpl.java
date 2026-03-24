@@ -86,13 +86,30 @@ public class HouseServiceImpl implements HouseService {
 	}
 
 	@Override
-	public List<HouseDto> selectHousesByOwnerNo(String currentUser) {
+	public List<HouseDto> selectHousesByOwnerNo(String currentUser, String targetUserNo) {
 		// 임대인 회원 건물 목록 조회
-		String userNo = userRepository.findUserNoByEmailId(currentUser);
+		String userNo = resolveHouseOwnerUserNo(currentUser, targetUserNo);
 		List<HouseEntity> rows = houseRepository.findAllByUserNoAndDeletedFalseOrderByHouseName(userNo);
 		List<HouseDto> list = new ArrayList<>();
 		rows.forEach(entity->list.add(entity.toDto()));
 		return list;
+	}
+
+	private String resolveHouseOwnerUserNo(String currentUser, String targetUserNo) {
+		String currentUserNo = userRepository.findUserNoByEmailId(currentUser);
+		if (currentUserNo == null || currentUserNo.isBlank()) {
+			throw new NotFoundException("사용자 정보를 찾을 수 없습니다.");
+		}
+
+		if (targetUserNo == null || targetUserNo.isBlank()) {
+			return currentUserNo;
+		}
+
+		String currentRole = userRepository.findById(currentUserNo)
+				.map(user -> user.getRole())
+				.orElse(null);
+
+		return "ADMIN".equalsIgnoreCase(currentRole) ? targetUserNo : currentUserNo;
 	}
 
 	private HouseDto selectHouseCore(String houseNo) {

@@ -26,6 +26,10 @@
     COMPLETION: '/contract/completion',
   },
 
+  CONVENIENCE: {
+    HOME: '/convenience',
+  },
+
   ADMIN: {
     MEMBERS: '/admin/members',
     CATEGORY: '/admin/category',

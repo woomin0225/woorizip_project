@@ -1,0 +1,486 @@
+.section {
+  margin-top: -56px;
+  position: relative;
+  z-index: 3;
+}
+
+.sectionStandalone {
+  position: relative;
+  z-index: 3;
+}
+
+.heroCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 28px 32px;
+  border-radius: 28px;
+  background:
+    radial-gradient(circle at top left, rgba(255, 249, 240, 0.92), transparent 42%),
+    linear-gradient(135deg, #fffaf4 0%, #fff3e5 100%);
+  border: 1px solid #f2d8bb;
+  box-shadow: 0 24px 48px rgba(128, 86, 49, 0.14);
+}
+
+.heroTextBlock {
+  flex: 1;
+  min-width: 0;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: #f7dfc4;
+  color: #8d4d23;
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
+.title {
+  margin: 14px 0 10px;
+  color: #442615;
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.description {
+  margin: 0;
+  color: #6d5241;
+  font-size: 1.05rem;
+  line-height: 1.7;
+}
+
+.quickActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.primaryAction,
+.secondaryButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 56px;
+  padding: 0 22px;
+  border-radius: 18px;
+  font-size: 1rem;
+  font-weight: 800;
+  text-decoration: none;
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    background-color 0.18s ease,
+    color 0.18s ease;
+}
+
+.primaryAction {
+  border: none;
+  background: linear-gradient(135deg, #cd6f31 0%, #e4954d 100%);
+  color: #fff;
+  box-shadow: 0 16px 26px rgba(205, 111, 49, 0.22);
+}
+
+.primaryAction:disabled {
+  opacity: 0.7;
+  cursor: default;
+  transform: none;
+}
+
+.secondaryButton {
+  border: 1px solid #e4c2a2;
+  background: #fff;
+  color: #8f5732;
+}
+
+.primaryAction:hover,
+.secondaryButton:hover,
+.textButton:hover,
+.optionButton:hover {
+  transform: translateY(-1px);
+  text-decoration: none;
+}
+
+.guideCard {
+  margin-top: 18px;
+  padding: 28px;
+  border-radius: 26px;
+  background: #fffdfa;
+  border: 1px solid #f0dfcf;
+  box-shadow: 0 18px 42px rgba(111, 77, 50, 0.1);
+}
+
+.stepRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 22px;
+}
+
+.stepChip {
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: #f5ebe1;
+  color: #8a6550;
+  font-size: 0.96rem;
+  font-weight: 700;
+}
+
+.stepChipActive {
+  background: #fde5d3;
+  color: #a6531e;
+}
+
+.block {
+  margin-bottom: 22px;
+}
+
+.blockHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.question {
+  margin: 0 0 14px;
+  color: #442615;
+  font-size: 1.35rem;
+  font-weight: 800;
+  line-height: 1.5;
+}
+
+.blockHeader .question {
+  margin-bottom: 0;
+}
+
+.textButton {
+  border: none;
+  background: transparent;
+  color: #a35d2d;
+  font-size: 0.98rem;
+  font-weight: 800;
+}
+
+.optionGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.optionButton {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+  min-height: 124px;
+  padding: 20px;
+  border: 2px solid #efdcc9;
+  border-radius: 22px;
+  background: #fff;
+  text-align: left;
+  box-shadow: 0 10px 20px rgba(98, 69, 47, 0.05);
+}
+
+.optionButtonSelected {
+  border-color: #d97d39;
+  background: linear-gradient(180deg, #fff7ef 0%, #fff1e3 100%);
+  box-shadow: 0 14px 24px rgba(205, 111, 49, 0.12);
+}
+
+.optionTitle {
+  color: #4a2a17;
+  font-size: 1.15rem;
+  font-weight: 800;
+}
+
+.optionDescription {
+  color: #6d5241;
+  font-size: 0.98rem;
+  line-height: 1.6;
+}
+
+.finderCard {
+  margin-top: 8px;
+  padding: 24px;
+  border-radius: 24px;
+  background: linear-gradient(180deg, #fffaf5 0%, #fffdfb 100%);
+  border: 1px solid #f0decf;
+}
+
+.finderSection + .finderSection {
+  margin-top: 24px;
+}
+
+.helperText {
+  margin: -2px 0 12px;
+  color: #7a5d4c;
+  font-size: 0.96rem;
+  line-height: 1.6;
+}
+
+.chipRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.filterChip {
+  min-height: 52px;
+  padding: 0 18px;
+  border: 2px solid #e8d4c0;
+  border-radius: 16px;
+  background: #fff;
+  color: #6e4c37;
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.filterChipActive {
+  border-color: #d97d39;
+  background: #fff1e3;
+  color: #9c4f21;
+  box-shadow: 0 10px 18px rgba(205, 111, 49, 0.1);
+}
+
+.keywordInput {
+  width: 100%;
+  min-height: 56px;
+  padding: 0 18px;
+  border: 2px solid #ead8c8;
+  border-radius: 18px;
+  background: #fff;
+  color: #452616;
+  font-size: 1rem;
+}
+
+.keywordInput:focus {
+  outline: none;
+  border-color: #d97d39;
+  box-shadow: 0 0 0 4px rgba(217, 125, 57, 0.12);
+}
+
+.finderActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.errorText {
+  margin: 14px 0 0;
+  color: #b53f2f;
+  font-size: 0.97rem;
+  font-weight: 700;
+}
+
+.emptyResult {
+  margin-top: 18px;
+  padding: 18px 20px;
+  border-radius: 18px;
+  background: #fff;
+  border: 1px dashed #dfc2a7;
+  color: #7a5d4c;
+  font-size: 0.98rem;
+  line-height: 1.6;
+}
+
+.resultSection {
+  margin-top: 28px;
+}
+
+.resultHeader {
+  margin-bottom: 14px;
+}
+
+.resultGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.resultCard {
+  padding: 20px;
+  border-radius: 22px;
+  background: #fff;
+  border: 1px solid #ecd6c2;
+  box-shadow: 0 12px 22px rgba(95, 66, 46, 0.06);
+}
+
+.resultMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.resultBadge,
+.resultBadgeMuted {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 0.86rem;
+  font-weight: 800;
+}
+
+.resultBadge {
+  background: #fce4d3;
+  color: #a6531e;
+}
+
+.resultBadgeMuted {
+  background: #f3ede7;
+  color: #7f6656;
+}
+
+.resultTitle {
+  margin: 0 0 8px;
+  color: #452616;
+  font-size: 1.2rem;
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+.resultPrice {
+  margin: 0 0 10px;
+  color: #9a4d1f;
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.resultInfo {
+  margin: 0;
+  color: #725847;
+  font-size: 0.96rem;
+  line-height: 1.6;
+}
+
+.resultActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.resultActions .primaryAction,
+.resultActions .secondaryButton {
+  min-height: 48px;
+  padding: 0 16px;
+}
+
+.summaryCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 22px;
+  border-radius: 22px;
+  background: linear-gradient(135deg, #fff5ea 0%, #fffaf6 100%);
+  border: 1px solid #ebcfb4;
+}
+
+.summaryLabel {
+  margin: 0 0 8px;
+  color: #a35d2d;
+  font-size: 0.92rem;
+  font-weight: 800;
+}
+
+.summaryTitle {
+  margin: 0 0 8px;
+  color: #452616;
+  font-size: 1.4rem;
+  font-weight: 800;
+}
+
+.summaryDescription {
+  margin: 0;
+  color: #6d5241;
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.summaryActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+@media (max-width: 991px) {
+  .section {
+    margin-top: 24px;
+  }
+
+  .heroCard,
+  .summaryCard {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .quickActions,
+  .summaryActions,
+  .finderActions,
+  .resultActions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 768px) {
+  .heroCard,
+  .guideCard {
+    padding: 22px;
+    border-radius: 22px;
+  }
+
+  .title {
+    font-size: 1.55rem;
+  }
+
+  .description,
+  .optionDescription,
+  .summaryDescription,
+  .helperText,
+  .resultInfo {
+    font-size: 0.96rem;
+  }
+
+  .question {
+    font-size: 1.15rem;
+  }
+
+  .blockHeader {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .optionGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .resultGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .primaryAction,
+  .secondaryButton,
+  .filterChip {
+    width: 100%;
+  }
+
+  .finderActions,
+  .resultActions {
+    flex-direction: column;
+  }
+}
