@@ -133,15 +133,26 @@ class RoomRegistrationAgent:
             )
         except Exception as exc:
             session_state["completed"] = False
-            session_state["pending_slot"] = None
-            self.store.set(state.get("session_id") or "", session_state)
-            return self.service.build_failure_response(
+            failure_payload, retry_slot = self.service.build_failure_response(
                 schema_version=payload.get("schemaVersion") or "v1",
                 session_id=payload.get("sessionId"),
                 client_request_id=payload.get("clientRequestId"),
                 draft_payload=draft_payload,
                 error_message=str(exc),
             )
+            if retry_slot:
+                slots = deepcopy(session_state.get("slots", {}))
+                if retry_slot == "houseNo":
+                    slots.pop("houseNo", None)
+                    slots.pop("houseName", None)
+                else:
+                    slots.pop(retry_slot, None)
+                session_state["slots"] = slots
+                session_state["pending_slot"] = retry_slot
+            else:
+                session_state["pending_slot"] = None
+            self.store.set(state.get("session_id") or "", session_state)
+            return failure_payload
 
         self.store.delete(state.get("session_id") or "")
         return result
