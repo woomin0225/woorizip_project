@@ -173,7 +173,6 @@ class VoiceTranscribeReq(BaseModel):
     audio_base64: str
     mime_type: str = "audio/webm"
     language: str = "ko"
-    mock_text: str | None = None
 
 
 class VoiceSpeakReq(BaseModel):

@@ -14,13 +14,11 @@ class VoiceService:
         *,
         mime_type: str | None = None,
         language: str | None = None,
-        mock_text: str | None = None,
     ) -> dict:
         return await self.stt_client.transcribe(
             audio_base64,
             mime_type=mime_type,
             language=language,
-            mock_text=mock_text,
         )
 
     async def speak(

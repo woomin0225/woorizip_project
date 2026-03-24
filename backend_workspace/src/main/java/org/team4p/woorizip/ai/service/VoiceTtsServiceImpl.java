@@ -13,7 +13,7 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-public class AzureTtsServiceImpl implements AzureTtsService {
+public class VoiceTtsServiceImpl implements VoiceTtsService {
 
     private final AiServerClient aiServerClient;
 

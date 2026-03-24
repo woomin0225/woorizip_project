@@ -20,13 +20,11 @@ class VoicePipelineService:
             request.audio_base64,
             request.mime_type,
             request.language,
-            request.mock_text,
         )
         raw = await self.voice_service.transcribe(
             payload['audio_base64'],
             mime_type=payload['mime_type'],
             language=payload['language'],
-            mock_text=payload['mock_text'],
         )
         return normalize_transcribe_response(raw, payload)
 
