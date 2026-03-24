@@ -542,6 +542,9 @@ export default function OrchestrateQuickAgent() {
     if (actionId === 'summary') {
       const postNo = extractPostNoFromPath(location.pathname);
       const roomContext = getRoomContext(location.pathname);
+      const isBoardListPage = ['/notices', '/events', '/information', '/qna', '/boards'].includes(
+        location.pathname
+      );
 
       if (postNo) {
         try {
@@ -549,12 +552,12 @@ export default function OrchestrateQuickAgent() {
           const response = await fetchBoardSummary(postNo);
           const result = response?.data?.data ?? response?.data;
 
-          const summaryText = String(result?.summary || '?? ??? ????.').trim();
+          const summaryText = String(result?.summary || '요약 결과가 없습니다.').trim();
           const keyPoints = Array.isArray(result?.keyPoints)
             ? result.keyPoints
                 .map((item) =>
                   String(item || '')
-                    .replace(/^[-?\s]+/, '')
+                    .replace(/^[-\s]+/, '')
                     .trim()
                 )
                 .filter(Boolean)
@@ -564,23 +567,21 @@ export default function OrchestrateQuickAgent() {
             ? result.warnings
                 .map((item) =>
                   String(item || '')
-                    .replace(/^[-?\s]+/, '')
+                    .replace(/^[-\s]+/, '')
                     .trim()
                 )
                 .filter(Boolean)
             : [];
 
-          const sections = ['??? AI ?????.'];
-          if (summaryText) sections.push(`??
-${summaryText}`);
-          if (keyPoints.length > 0)
-            sections.push(`?? ???
-- ${keyPoints.join('\n- ')}`);
-          if (conclusion) sections.push(`??
-${conclusion}`);
-          if (warnings.length > 0)
-            sections.push(`????
-- ${warnings.join('\n- ')}`);
+          const sections = ['게시글 AI 요약입니다.'];
+          if (summaryText) sections.push(`요약\n${summaryText}`);
+          if (keyPoints.length > 0) {
+            sections.push(`핵심 포인트\n- ${keyPoints.join('\n- ')}`);
+          }
+          if (conclusion) sections.push(`결론\n${conclusion}`);
+          if (warnings.length > 0) {
+            sections.push(`유의사항\n- ${warnings.join('\n- ')}`);
+          }
 
           appendAssistantMessage(sections.join('\n\n'), [
             'roomRecommend',
@@ -594,9 +595,9 @@ ${conclusion}`);
             errorBody?.message ||
             errorBody?.error ||
             error?.message ||
-            '??? ?? ? ??? ??????.';
+            '게시글 요약 중 오류가 발생했습니다.';
 
-          appendAssistantMessage(`??: ${apiMessage}`, [
+          appendAssistantMessage(`오류: ${apiMessage}`, [
             'roomRecommend',
             'notices',
             'mypage',
@@ -608,9 +609,17 @@ ${conclusion}`);
         return;
       }
 
+      if (isBoardListPage) {
+        appendAssistantMessage(
+          '게시글 목록에서는 요약할 수 없습니다. 읽고 싶은 게시글 상세로 들어간 뒤 요약을 눌러주세요.',
+          ['notices', 'summary', 'mypage']
+        );
+        return;
+      }
+
       if (roomContext.roomNo) {
         appendAssistantMessage(
-          '??? ?? ? ?? ??? ??????.',
+          '페이지 내의 방 정보 요약을 참고해주세요.',
           ['roomRecommend', 'tour', 'wishlist']
         );
         return;
@@ -620,7 +629,7 @@ ${conclusion}`);
         setLoading(true);
         const roomCreateContext = getRoomCreateContext(location, managedHouses);
         const result = await runOrchestrateCommand({
-          text: '?? ???? ????',
+          text: '현재 보고 있는 웹페이지의 내용을 한국어로 간단히 요약해줘. 페이지에 없는 내용은 추측하지 마.',
           sessionId,
           context: {
             path: window.location.pathname,
@@ -635,7 +644,7 @@ ${conclusion}`);
               userPhone: userProfile?.userPhone || '',
             },
             siteProfile: {
-              serviceName: '???',
+              serviceName: '우리집',
               channel: 'web',
               language: 'ko-KR',
               voiceMode: voiceModeEnabled,
@@ -647,7 +656,7 @@ ${conclusion}`);
           result?.outputText ||
           result?.message ||
           result?.result ||
-          '?? ??? ???? ?????.';
+          '요약 결과를 불러오지 못했습니다.';
         const actionIds = extractSuggestedActions(result);
         appendAssistantMessage(formatAssistantReply(String(reply)), actionIds);
       } catch (error) {
@@ -657,9 +666,9 @@ ${conclusion}`);
           errorBody?.message ||
           errorBody?.error ||
           error?.message ||
-          '??? ?? ? ??? ??????.';
+          '페이지 요약 중 오류가 발생했습니다.';
 
-        appendAssistantMessage(`??: ${apiMessage}`, [
+        appendAssistantMessage(`오류: ${apiMessage}`, [
           'summary',
           'notices',
           'mypage',
@@ -692,7 +701,7 @@ ${conclusion}`);
     if (actionId === 'reservationStatus') {
       goToPage(
         '/reservation/view',
-        '?? ?? ???? ??????. ?? ?? ??? ??????.',
+        '예약 내역 페이지로 이동했습니다. 현재 예약 상태를 확인할 수 있습니다.',
         ['facilityCancel', 'reserve', 'facilityHours']
       );
       return;
@@ -701,7 +710,7 @@ ${conclusion}`);
     if (actionId === 'wishlist') {
       goToPage(
         '/wishlist',
-        '? ?? ???? ??????. ???? ?? ??? ? ????.',
+        '찜 목록 페이지로 이동했습니다. 저장해둔 방을 확인할 수 있습니다.',
         ['roomRecommend', 'tour', 'contract']
       );
       return;
@@ -710,7 +719,7 @@ ${conclusion}`);
     if (actionId === 'contract') {
       goToPage(
         '/mypage/contracts',
-        '?? ???? ??????. ?? ?? ??? ?? ??? ??? ? ????.',
+        '계약 페이지로 이동했습니다. 계약 내역과 진행 상태를 확인할 수 있습니다.',
         ['tour', 'wishlist', 'mypage']
       );
       return;
@@ -719,7 +728,7 @@ ${conclusion}`);
     if (actionId === 'tour') {
       goToPage(
         '/mypage/tour',
-        '?? ???? ??????. ?? ??? ?? ??? ??? ? ????.',
+        '투어 페이지로 이동했습니다. 투어 신청과 진행 내역을 확인할 수 있습니다.',
         ['roomRecommend', 'contract', 'wishlist']
       );
       return;
@@ -728,7 +737,7 @@ ${conclusion}`);
     if (actionId === 'notices') {
       goToPage(
         '/notices',
-        '???? ???? ??????. ?? ??? ?? ??? ??? ? ????.',
+        '공지사항 페이지로 이동했습니다. 최신 공지와 운영 안내를 확인할 수 있습니다.',
         ['summary', 'mypage', 'roomRecommend']
       );
       return;
@@ -737,14 +746,14 @@ ${conclusion}`);
     if (actionId === 'mypage') {
       goToPage(
         '/mypage',
-        '?????? ??????. ? ??? ?? ??? ??? ? ????.',
+        '마이페이지로 이동했습니다. 내 정보와 개인 설정을 확인할 수 있습니다.',
         ['wishlist', 'contract', 'tour']
       );
       return;
     }
 
     appendAssistantMessage(
-      `${action.label} ??? ?? ?? ????. ?? ??? ?? ??? ?? ??? ???.`,
+      `${action.label} 기능은 아직 준비 중입니다. 다른 명령을 말씀해 주시면 바로 도와드릴게요.`,
       expandRelatedActionIds(action.related || [], 3)
     );
   };
