@@ -15,6 +15,7 @@ class FacilityAgent:
         if session_id in self.sessions:
             return True
         text = str(payload.get("text") or "").replace(" ", "")
+        print(f">>> [DEBUG] Payload Text: {text}")
         return any(kw in text for kw in ("예약", "시설", "현황", "분석"))
 
     async def run(self, payload: dict[str, Any]) -> dict[str, Any]:

@@ -49,12 +49,11 @@ export default function SearchFilterPanel({
     if (next.has(opt)) next.delete(opt);
     else next.add(opt);
 
-    const nextArr = Array.from(next);
-    const nextValue = nextArr.length ? nextArr.join(",") : null;
-
     handleOptionsChange({
-      ...cond,
-      options: nextValue,
+      target: {
+        value: opt,
+        checked: next.has(opt),
+      },
     });
   }
   

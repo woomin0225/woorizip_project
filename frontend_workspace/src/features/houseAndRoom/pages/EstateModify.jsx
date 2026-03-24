@@ -1,17 +1,25 @@
-import { useEffect, useRef, useState } from "react";
-import styles from "./EstateModify.module.css";
+import { useEffect, useRef, useState } from 'react';
+import styles from './EstateModify.module.css';
 
-import { getMyHouses, getHouse, getHouseImages, modifyHouse, getRoomByHouseNo } from "../api/houseApi";
-import { getRoom, getRoomImages, modifyRoom } from "../api/roomApi";
+import {
+  getMyHouses,
+  getHouse,
+  getHouseImages,
+  modifyHouse,
+  getRoomByHouseNo,
+} from '../api/houseApi';
+import { getRoom, getRoomImages, modifyRoom } from '../api/roomApi';
 
-import HouseForm from "../components/HouseForm";
-import RoomForm from "../components/RoomForm";
-import ExistingImagePicker from "../components/ExistingImagePicker";
-import ScrollToTopButton from "../../../shared/components/ScrollToTopButton";
+import HouseForm from '../components/HouseForm';
+import RoomForm from '../components/RoomForm';
+import ExistingImagePicker from '../components/ExistingImagePicker';
+import ScrollToTopButton from '../../../shared/components/ScrollToTopButton';
+
+import { getUploadBaseUrl } from '../../../app/config/env';
 
 export default function EstateModify() {
   const [houses, setHouses] = useState([]);
-  const [selectedHouseNo, setSelectedHouseNo] = useState("");
+  const [selectedHouseNo, setSelectedHouseNo] = useState('');
 
   // house modify
   const [house, setHouse] = useState(null);
@@ -21,17 +29,19 @@ export default function EstateModify() {
 
   // room list & room modify
   const [rooms, setRooms] = useState([]);
-  const [selectedRoomNo, setSelectedRoomNo] = useState("");
+  const [selectedRoomNo, setSelectedRoomNo] = useState('');
 
   const [room, setRoom] = useState(null);
   const [roomImages, setRoomImages] = useState([]);
   const [deleteRoomImageNos, setDeleteRoomImageNos] = useState([]);
   const [newRoomImages, setNewRoomImages] = useState([]);
 
-  const [tab, setTab] = useState("HOUSE"); // HOUSE | ROOM
+  const [tab, setTab] = useState('HOUSE'); // HOUSE | ROOM
   const [saving, setSaving] = useState(false);
   const roomPanelRef = useRef(null);
   const pendingScrollToRoomListRef = useRef(false);
+
+  const UPLOAD_BASE_URL = getUploadBaseUrl();
 
   // 1) 내 건물 목록 로드
   useEffect(() => {
@@ -40,10 +50,10 @@ export default function EstateModify() {
         const list = await getMyHouses();
         setHouses(list || []);
       } catch (err) {
-        console.error("getMyHouses failed status:", err?.response?.status);
-        console.error("getMyHouses response data:", err?.response?.data); // ✅ 이게 핵심
+        console.error('getMyHouses failed status:', err?.response?.status);
+        console.error('getMyHouses response data:', err?.response?.data); // ✅ 이게 핵심
         console.error(err);
-        alert("내 건물 목록 조회 실패(콘솔의 response data 확인)");
+        alert('내 건물 목록 조회 실패(콘솔의 response data 확인)');
       }
     })();
   }, []);
@@ -53,7 +63,7 @@ export default function EstateModify() {
     if (!selectedHouseNo) return;
 
     (async () => {
-      setSelectedRoomNo("");
+      setSelectedRoomNo('');
       setRoom(null);
       setRoomImages([]);
       setDeleteRoomImageNos([]);
@@ -78,7 +88,7 @@ export default function EstateModify() {
     if (!pendingScrollToRoomListRef.current) return;
 
     requestAnimationFrame(() => {
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       pendingScrollToRoomListRef.current = false;
     });
   }, [rooms]);
@@ -102,15 +112,15 @@ export default function EstateModify() {
 
   // ---- handlers ----
   function toggleDeleteHouseImage(id, checked) {
-    setDeleteHouseImageNos((prev)=>{
-      if(!checked) return prev.filter((x)=>x !== id);
-      return prev.includes(id) ? prev : [...prev, id]
-    })
+    setDeleteHouseImageNos((prev) => {
+      if (!checked) return prev.filter((x) => x !== id);
+      return prev.includes(id) ? prev : [...prev, id];
+    });
   }
   function toggleDeleteRoomImage(id, checked) {
-    setDeleteRoomImageNos((prev)=>{
-      if(!checked) return prev.filter((x)=> x !== id);
-      return prev.includes(id) ? prev : [...prev, id]
+    setDeleteRoomImageNos((prev) => {
+      if (!checked) return prev.filter((x) => x !== id);
+      return prev.includes(id) ? prev : [...prev, id];
     });
   }
 
@@ -120,11 +130,21 @@ export default function EstateModify() {
     setHouse((cur) => {
       if (!cur) return cur;
 
-      const numberFields = new Set(["houseCompletionYear","houseFloors","houseHouseHolds","houseParkingMax"]);
-      if (numberFields.has(name)) return { ...cur, [name]: value === "" ? null : Number(value) };
+      const numberFields = new Set([
+        'houseCompletionYear',
+        'houseFloors',
+        'houseHouseHolds',
+        'houseParkingMax',
+      ]);
+      if (numberFields.has(name))
+        return { ...cur, [name]: value === '' ? null : Number(value) };
 
-      const boolFields = new Set(["houseElevatorYn","housePetYn","houseFemaleLimit"]);
-      if (boolFields.has(name)) return { ...cur, [name]: value === "true" };
+      const boolFields = new Set([
+        'houseElevatorYn',
+        'housePetYn',
+        'houseFemaleLimit',
+      ]);
+      if (boolFields.has(name)) return { ...cur, [name]: value === 'true' };
 
       return { ...cur, [name]: value };
     });
@@ -135,13 +155,21 @@ export default function EstateModify() {
     setRoom((cur) => {
       if (!cur) return cur;
 
-      const numFields = new Set(["roomDeposit","roomMonthly","roomArea","roomRoomCount","roomBathCount"]);
-      if (numFields.has(name)) return { ...cur, [name]: value === "" ? null : Number(value) };
+      const numFields = new Set([
+        'roomDeposit',
+        'roomMonthly',
+        'roomArea',
+        'roomRoomCount',
+        'roomBathCount',
+      ]);
+      if (numFields.has(name))
+        return { ...cur, [name]: value === '' ? null : Number(value) };
 
-      const boolFields = new Set(["roomEmptyYn"]);
-      if (boolFields.has(name)) return { ...cur, [name]: value === "true" };
+      const boolFields = new Set(['roomEmptyYn']);
+      if (boolFields.has(name)) return { ...cur, [name]: value === 'true' };
 
-      if (name == 'roomMethod' && value == 'L') return { ...cur, [name]: value, roomMonthly: 0};
+      if (name == 'roomMethod' && value == 'L')
+        return { ...cur, [name]: value, roomMonthly: 0 };
 
       return { ...cur, [name]: value };
     });
@@ -172,18 +200,26 @@ export default function EstateModify() {
 
     setSaving(true);
     try {
-      await modifyHouse(selectedHouseNo, Object.entries(payload), deleteHouseImageNos, newHouseImages);
-      alert("건물 수정 성공");
+      await modifyHouse(
+        selectedHouseNo,
+        Object.entries(payload),
+        deleteHouseImageNos,
+        newHouseImages
+      );
+      alert('건물 수정 성공');
 
       // 리프레시: 변경 후 재조회
-      const [h, imgs] = await Promise.all([getHouse(selectedHouseNo), getHouseImages(selectedHouseNo)]);
+      const [h, imgs] = await Promise.all([
+        getHouse(selectedHouseNo),
+        getHouseImages(selectedHouseNo),
+      ]);
       setHouse(h);
       setHouseImages(imgs || []);
       setDeleteHouseImageNos([]);
       setNewHouseImages([]);
     } catch (err) {
       console.error(err);
-      alert("건물 수정 실패");
+      alert('건물 수정 실패');
     } finally {
       setSaving(false);
     }
@@ -196,27 +232,35 @@ export default function EstateModify() {
 
     const payload = {
       ...room,
-        userNo: null,
-        roomCreatedAt: null,
-        roomUpdatedAt: null,
-        roomImageCount: null,
-        deleted: null,
-        deletedAt: null,
+      userNo: null,
+      roomCreatedAt: null,
+      roomUpdatedAt: null,
+      roomImageCount: null,
+      deleted: null,
+      deletedAt: null,
     };
 
     setSaving(true);
     try {
-      await modifyRoom(selectedRoomNo, Object.entries(payload), deleteRoomImageNos, newRoomImages);
-      alert("방 수정 성공");
+      await modifyRoom(
+        selectedRoomNo,
+        Object.entries(payload),
+        deleteRoomImageNos,
+        newRoomImages
+      );
+      alert('방 수정 성공');
 
-      const [r, imgs] = await Promise.all([getRoom(selectedRoomNo), getRoomImages(selectedRoomNo)]);
+      const [r, imgs] = await Promise.all([
+        getRoom(selectedRoomNo),
+        getRoomImages(selectedRoomNo),
+      ]);
       setRoom(r);
       setRoomImages(imgs || []);
       setDeleteRoomImageNos([]);
       setNewRoomImages([]);
     } catch (err) {
       console.error(err);
-      alert("방 수정 실패(콘솔 확인)");
+      alert('방 수정 실패(콘솔 확인)');
     } finally {
       setSaving(false);
     }
@@ -234,7 +278,11 @@ export default function EstateModify() {
             {houses.map((h) => (
               <button
                 key={h.houseNo}
-                className={h.houseNo === selectedHouseNo ? styles.selectedBtn : styles.btn}
+                className={
+                  h.houseNo === selectedHouseNo
+                    ? styles.selectedBtn
+                    : styles.btn
+                }
                 onClick={() => handleSelectHouse(h.houseNo)}
               >
                 {h.houseName ?? h.houseNo}
@@ -258,83 +306,119 @@ export default function EstateModify() {
                 {rooms.map((r) => (
                   <button
                     key={r.roomNo}
-                    className={r.roomNo === selectedRoomNo ? styles.selectedBtn : styles.btn}
+                    className={
+                      r.roomNo === selectedRoomNo
+                        ? styles.selectedBtn
+                        : styles.btn
+                    }
                     onClick={() => {
-                      setTab("ROOM");
+                      setTab('ROOM');
                       setSelectedRoomNo(r.roomNo);
                     }}
                   >
-                    {r.roomName ?? r.roomNo} {r.roomEmptyYn === false ? "(거주중)" : ""}
+                    {r.roomName ?? r.roomNo}{' '}
+                    {r.roomEmptyYn === false ? '(거주중)' : ''}
                   </button>
                 ))}
               </div>
             )}
           </div>
           <div className={styles.tabs}>
-            <button className={tab === "HOUSE" ? styles.tabActive : styles.tab} onClick={() => setTab("HOUSE")}>
+            <button
+              className={tab === 'HOUSE' ? styles.tabActive : styles.tab}
+              onClick={() => setTab('HOUSE')}
+            >
               건물 수정
             </button>
-            <button className={tab === "ROOM" ? styles.tabActive : styles.tab} onClick={() => setTab("ROOM")} disabled={!selectedHouseNo}>
+            <button
+              className={tab === 'ROOM' ? styles.tabActive : styles.tab}
+              onClick={() => setTab('ROOM')}
+              disabled={!selectedHouseNo}
+            >
               방 수정
             </button>
           </div>
 
-          {tab === "HOUSE" && (
+          {tab === 'HOUSE' && (
             <>
-              {!selectedHouseNo && <div className={styles.empty}>왼쪽에서 건물을 선택하세요.</div>}
+              {!selectedHouseNo && (
+                <div className={styles.empty}>왼쪽에서 건물을 선택하세요.</div>
+              )}
               {selectedHouseNo && house && (
                 <>
-                  <div className={styles.sectionTitle}>기존 건물 사진 삭제 선택</div>
+                  <div className={styles.sectionTitle}>
+                    기존 건물 사진 삭제 선택
+                  </div>
                   <ExistingImagePicker
                     items={houseImages}
-                    baseUrl="http://localhost:8080/upload/house_image"
+                    baseUrl={`${UPLOAD_BASE_URL}/upload/house_image`}
                     selectedIds={deleteHouseImageNos}
                     onToggle={toggleDeleteHouseImage}
                   />
 
-                  <div className={styles.sectionTitle}>건물 정보 수정 / 새 사진 추가</div>
+                  <div className={styles.sectionTitle}>
+                    건물 정보 수정 / 새 사진 추가
+                  </div>
                   <HouseForm
                     house={house}
                     images={newHouseImages}
                     onChange={handleHouseChange}
-                    onAddImages={(files) => setNewHouseImages((p) => [...p, ...files])}
-                    onRemoveImage={(idx) => setNewHouseImages((p) => p.filter((_, i) => i !== idx))}
+                    onAddImages={(files) =>
+                      setNewHouseImages((p) => [...p, ...files])
+                    }
+                    onRemoveImage={(idx) =>
+                      setNewHouseImages((p) => p.filter((_, i) => i !== idx))
+                    }
                     onSubmit={submitHouse}
-                    onSearchAddress={() => alert("주소검색은 추후")}
+                    onSearchAddress={() => alert('주소검색은 추후')}
                   />
                 </>
               )}
             </>
           )}
 
-          {tab === "ROOM" && (
+          {tab === 'ROOM' && (
             <>
-              {!selectedRoomNo && <div className={styles.empty}>위에서 방을 선택하세요.</div>}
+              {!selectedRoomNo && (
+                <div className={styles.empty}>위에서 방을 선택하세요.</div>
+              )}
               {selectedRoomNo && room && (
                 <>
-                  <div className={styles.sectionTitle}>기존 방 사진 삭제 선택</div>
+                  <div className={styles.sectionTitle}>
+                    기존 방 사진 삭제 선택
+                  </div>
                   <ExistingImagePicker
                     items={roomImages}
-                    baseUrl="http://localhost:8080/upload/room_image"
+                    baseUrl={`${UPLOAD_BASE_URL}/upload/room_image`}
                     selectedIds={deleteRoomImageNos}
                     onToggle={toggleDeleteRoomImage}
                   />
 
-                  <div className={styles.sectionTitle}>방 정보 수정 / 새 사진 추가</div>
+                  <div className={styles.sectionTitle}>
+                    방 정보 수정 / 새 사진 추가
+                  </div>
                   <RoomForm
                     room={room}
                     images={newRoomImages}
                     onChange={handleRoomChange}
                     onToggleOption={(opt, checked) => {
                       setRoom((cur) => {
-                        let arr = String(cur.roomOptions || "").split(",").map(v=>v.trim()).filter(Boolean);
-                        if (checked) { if (!arr.includes(opt)) arr.push(opt); }
-                        else arr = arr.filter(v => v !== opt);
-                        return { ...cur, roomOptions: arr.join(",") };
+                        let arr = String(cur.roomOptions || '')
+                          .split(',')
+                          .map((v) => v.trim())
+                          .filter(Boolean);
+                        if (checked) {
+                          if (!arr.includes(opt)) arr.push(opt);
+                        } else arr = arr.filter((v) => v !== opt);
+                        return { ...cur, roomOptions: arr.join(',') };
                       });
                     }}
-                    onAddImages={(files) => setNewRoomImages((p) => [...p, ...files])}
-                    onRemoveImage={(idx) => setNewRoomImages((p) => p.filter((_, i) => i !== idx))}
+                    onAddImages={(files) =>
+                      setNewRoomImages((p) => [...p, ...files])
+                    }
+                    onRemoveImage={(idx) =>
+                      setNewRoomImages((p) => p.filter((_, i) => i !== idx))
+                    }
                     onSubmit={submitRoom}
                   />
                 </>

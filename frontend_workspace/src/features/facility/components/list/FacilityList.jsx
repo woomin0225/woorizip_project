@@ -10,6 +10,7 @@ import styles from './List.module.css';
 export default function FacilityList({
   isLessor,
   isAdmin,
+  targetUserNo,
   houseNo: propsHouseNo,
 }) {
   const nav = useNavigate();
@@ -19,11 +20,11 @@ export default function FacilityList({
 
   const showHouseSelection = (isLessor || isAdmin) && !currentHouseNo;
 
-  const { houses, loading: hLoading } = useHouseList(showHouseSelection);
-  const { facilities, loading: fLoading } = useFacilityList(
-    currentHouseNo,
-    isLessor || isAdmin
+  const { houses, loading: hLoading } = useHouseList(
+    showHouseSelection,
+    targetUserNo
   );
+  const { facilities, loading: fLoading } = useFacilityList(currentHouseNo, isLessor || isAdmin);
 
   if (hLoading || fLoading)
     return <div className={styles.facilityEmpty}>로딩 중...</div>;

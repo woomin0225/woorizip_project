@@ -43,9 +43,7 @@ import org.team4p.woorizip.user.jpa.entity.UserEntity;
 import org.team4p.woorizip.user.jpa.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class FacilityServiceImpl implements FacilityService {
@@ -65,10 +63,8 @@ public class FacilityServiceImpl implements FacilityService {
 	@Transactional(readOnly = true)
 	public List<FacilityListResponseDTO> getFacilityList(String houseNo, String userNo) {
 		// 임차인
-	    if (houseNo == null) {			
+	    if (houseNo == null) {
 	    	String userHouseNo = lesseeValidator.validLessee(userNo);
-	    	log.info("1. 넘어온 유저번호: {}", userNo);
-	    	log.info("2. 찾아낸 하우스번호: {}", userHouseNo);
 			return facilityRepository.findByHouseHouseNoAndFacilityDeletedAtIsNull(userHouseNo)
 		    		.stream()
 		            .map(FacilityListResponseDTO::from)

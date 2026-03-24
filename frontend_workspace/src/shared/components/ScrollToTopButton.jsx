@@ -1,7 +1,7 @@
 const scrollTopButtonStyle = {
   position: "fixed",
-  right: "16px",
-  bottom: "16px",
+  right: "24px",
+  bottom: "104px",
   zIndex: 1200,
   padding: "10px 14px",
   border: "1px solid #ddd",

@@ -305,24 +305,3 @@ async def room_vision_analyze(
         source_prefix=source_prefix,
         save_embedding=save_embedding,
     )
-
-
-@app.post("/ai/facility/assist", dependencies=[Depends(require_internal_api_key)])
-async def reservation_assist(
-    req: ReservationAssistReq, ctx: dict = Depends(get_user_context)
-):
-    result = await reservation.analyze_reservation(req.message, ctx)
-    return result
-
-
-@app.post("/ai/facility/reservation", dependencies=[Depends(require_internal_api_key)])
-async def reservation_confirm(
-    req: ReservationAnalyzeReq, ctx: dict = Depends(get_user_context)
-):
-    save_result = await reservation.save_reservation(req)
-
-    if save_result["status"] == "success":
-        user_id = ctx.get("user_id")
-        return {"status": "success", "data": req}
-    else:
-        return {"status": "error", "message": "저장 중 오류가 발생했습니다."}

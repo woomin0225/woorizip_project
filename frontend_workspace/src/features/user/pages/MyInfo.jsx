@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Container, Row, Col, Card, CardBody } from 'reactstrap';
 import MyPageSideNav from '../components/MyPageSideNav';
@@ -122,10 +122,6 @@ export default function MyInfo() {
                             info.addr,
                             info.roadAddress
                           ) || '-'}
-                        </dd>
-                        <dt>닉네임</dt>
-                        <dd>
-                          {pickFirst(info.nickname, info.nickName) || '-'}
                         </dd>
                         <dt>나이</dt>
                         <dd>{calculateAge(birthDate)}</dd>

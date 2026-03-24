@@ -9,21 +9,28 @@ const schema = {
   direct: 'DESC',
 };
 
-export const useReservationList = (facilityNo) => {
+export const useReservationList = (facilityNo, targetUserNo) => {
   const { query, setQuery } = useQueryState(schema);
   const [response, setResponse] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const setPage = useCallback((pageNumber) => {
-    setQuery({ page: pageNumber });
-  }, [setQuery]);
+  const setPage = useCallback(
+    (pageNumber) => {
+      setQuery({ page: pageNumber });
+    },
+    [setQuery]
+  );
 
   useEffect(() => {
     const fetchReservations = async () => {
       setLoading(true);
       try {
-        const res = await getReservationList({ ...query, facilityNo });
+        const res = await getReservationList({
+          ...query,
+          facilityNo,
+          targetUserNo,
+        });
         const pageData = res?.data || res;
         setResponse(pageData);
       } catch (err) {
@@ -34,7 +41,7 @@ export const useReservationList = (facilityNo) => {
       }
     };
     fetchReservations();
-  }, [query, facilityNo]);
+  }, [query, facilityNo, targetUserNo]);
 
   const pageResponse = useMemo(() => {
     if (!response) return null;
@@ -53,6 +60,6 @@ export const useReservationList = (facilityNo) => {
     setPage,
     pageResponse,
     reservationList,
-    setResponse
+    setResponse,
   };
 };

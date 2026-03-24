@@ -91,11 +91,12 @@ public class ReservationServiceImpl implements ReservationService {
 	}
 	
 	// 예약 목록 페이지 조회
-    @Override
-    public int selectListCount(String userNo, String facilityNo) {
+	@Override
+	public int selectListCount(String userNo, String facilityNo, String targetUserNo) {
     	// 임차인 (본인 예약)
         if (facilityNo == null || facilityNo.isEmpty()) {
-            return (int) reservationRepository.countByUser_UserNo(userNo);
+        	String finalUserNo = resolveReservationOwnerUserNo(userNo, targetUserNo);
+            return (int) reservationRepository.countByUser_UserNo(finalUserNo);
         }
         
         // 임대인/관리자 (특정 시설의 전체 예약)
@@ -103,11 +104,13 @@ public class ReservationServiceImpl implements ReservationService {
     }
 
     // 예약 목록 조회
-    @Override
-    public List<ReservationListResponseDTO> selectList(Pageable pageable, String userNo, String facilityNo) {
+	@Override
+	public List<ReservationListResponseDTO> selectList(Pageable pageable, String userNo, String facilityNo, String targetUserNo) {
     	// 임차인 (시설 번호가 없으면 본인 예약만 조회)
         if (facilityNo == null || facilityNo.isEmpty()) {
-            return reservationRepository.findByUser_UserNo(userNo, pageable)
+        	String finalUserNo = resolveReservationOwnerUserNo(userNo, targetUserNo);
+        	
+            return reservationRepository.findByUser_UserNo(finalUserNo, pageable)
                     .stream()
                     .map(ReservationListResponseDTO::from)
                     .collect(Collectors.toList());
@@ -169,6 +172,18 @@ public class ReservationServiceImpl implements ReservationService {
 	    
 		// dto 업데이트
 		entity.updateReservation(dto);
+	}
+
+	private String resolveReservationOwnerUserNo(String userNo, String targetUserNo) {
+		if (targetUserNo == null || targetUserNo.isBlank()) {
+			return userNo;
+		}
+
+		UserEntity currentUser = userRepository.findById(userNo)
+				.orElseThrow(() -> new NotFoundException("사용자 정보를 찾을 수 없습니다."));
+
+		boolean isAdmin = "ADMIN".equalsIgnoreCase(currentUser.getRole());
+		return isAdmin ? targetUserNo : userNo;
 	}
 
 	// FacilityStatus.UNAVAILABLE 처리
@@ -294,11 +309,12 @@ public class ReservationServiceImpl implements ReservationService {
 	    }
 	}
 	
-	// 예약 상세 조회
+	// 시설 사용 분석용 데이터 조회
     @Override
-    public ReservationStatsDTO analyzeReservation(String facilityNo) {
+    public List<ReservationStatsDTO> analyzeReservation(String facilityNo) {
         return reservationRepository.findByFacility_FacilityNo(facilityNo)
         		.stream()
-                .map(ReservationStatsDTO::from);
+                .map(ReservationStatsDTO::from)
+                .collect(Collectors.toList());
     }
 }

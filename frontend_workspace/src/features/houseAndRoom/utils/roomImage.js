@@ -1,3 +1,5 @@
+import { buildUploadUrl } from '../../../app/config/env';
+
 export function pickRepresentativeRoomImageName(source) {
   if (!source) return null;
   if (typeof source === 'string') return source;
@@ -17,5 +19,5 @@ export function pickRepresentativeRoomImageName(source) {
 export function toRoomImageUrl(imageName) {
   if (!imageName) return null;
   if (String(imageName).startsWith('http')) return imageName;
-  return `http://localhost:8080/upload/room_image/${imageName}`;
+  return buildUploadUrl('upload/room_image', imageName);
 }

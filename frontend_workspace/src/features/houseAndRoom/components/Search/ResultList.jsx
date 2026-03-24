@@ -11,6 +11,7 @@ export default function ResultList({
   wishMap,
   onToggleWish,
   isJeonse,
+  onHoverHouseChange,
 }) {
   function searchLatest() {
     onChangeCriterion("LATEST");
@@ -47,6 +48,7 @@ export default function ResultList({
           roomSearchResponse={room}
           wished={!!wishMap?.[room.roomNo]}
           onToggleWish={onToggleWish}
+          onHoverHouseChange={onHoverHouseChange}
         />
       ))}
 

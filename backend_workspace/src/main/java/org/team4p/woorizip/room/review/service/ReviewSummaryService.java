@@ -11,4 +11,6 @@ public interface ReviewSummaryService {
 	String summaryPendingRooms(ReviewSummaryEntity reviewSummaryEntity);
 	// roomNo로 리뷰 요약 조회
 	ReviewSummaryEntity selectSummarizedReview(String roomNo);
+	// roomNo 기준 리뷰 요약 비동기 시작
+	void startSummarizedReviewAsync(String roomNo);
 }

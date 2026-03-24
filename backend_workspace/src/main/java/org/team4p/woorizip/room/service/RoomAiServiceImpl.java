@@ -302,9 +302,6 @@ public class RoomAiServiceImpl implements RoomAiService {
 		if(entity == null) {
 			return;
 		}
-		if(!isReadyForFinalSummary(roomNo)) {
-			return;
-		}
 		if(STATUS_PROCESSING.equals(entity.getSummaryStatus())) {
 			return;
 		}
@@ -313,8 +310,19 @@ public class RoomAiServiceImpl implements RoomAiService {
 		}
 
 		try {
-			// Reuse the same claim path as the scheduler so both entry points follow identical rules.
-			summaryPendingRooms(roomNo);
+			reviewSummaryService.startSummarizedReviewAsync(roomNo);
+			roomImageSummaryService.startSummarizedImageAsync(roomNo);
+
+			for(int attempt = 0; attempt < 30; attempt++) {
+				if(isReadyForFinalSummary(roomNo)) {
+					// Reuse the same claim path as the scheduler so both entry points follow identical rules.
+					summaryPendingRooms(roomNo);
+					return;
+				}
+				Thread.sleep(2000);
+			}
+
+			log.info("방 종합 요약 비동기 처리 대기 시간 초과. roomNo={}", roomNo);
 		} catch (Exception e) {
 			log.info("방 종합 요약 비동기 처리중 에러 발생 {}: {}", roomNo, e.getMessage());
 		}
@@ -405,7 +413,7 @@ public class RoomAiServiceImpl implements RoomAiService {
 		List<String> reviews = reviewRepository.findAllReviewContentsByRoomNo(roomNo);
 		List<String> imageCaptions = roomImageAnalysisRepository.findAllImageCaptionsByRoomNo(roomNo);
 
-		if(reviewSummary == null || imageSummary == null) {
+		if(imageSummary == null) {
 			throw new IllegalStateException("Embedding prerequisites are missing. roomNo=" + roomNo);
 		}
 
@@ -439,7 +447,7 @@ public class RoomAiServiceImpl implements RoomAiService {
 				.roomOptions(defaultString(room.getRoomOptions()))
 				.imageSummary(defaultString(imageSummary.getImageSummary()))
 				.imageCaptions(defaultList(imageCaptions))
-				.reviewSummary(defaultString(reviewSummary.getReviewSummary()))
+				.reviewSummary(reviewSummary == null ? "" : defaultString(reviewSummary.getReviewSummary()))
 				.reviews(defaultList(reviews))
 				.build();
 //		log.info("Prepared embedding payload. roomNo={}", roomNo);
@@ -476,7 +484,10 @@ public class RoomAiServiceImpl implements RoomAiService {
 
 	private boolean isReadyForFinalSummary(String roomNo) {
 		ReviewSummaryEntity reviewSummary = reviewSummaryService.selectSummarizedReview(roomNo);
-		if(reviewSummary == null || !STATUS_DONE.equals(reviewSummary.getSummaryStatus())) {
+		List<String> reviews = reviewRepository.findAllReviewContentsByRoomNo(roomNo);
+		boolean reviewReady = (reviews == null || reviews.isEmpty())
+				|| (reviewSummary != null && STATUS_DONE.equals(reviewSummary.getSummaryStatus()));
+		if(!reviewReady) {
 			return false;
 		}
 
@@ -497,18 +508,23 @@ public class RoomAiServiceImpl implements RoomAiService {
 
 		RoomEntity room = roomRepository.findById(roomNo).orElse(null);
 		ReviewSummaryEntity reviewSummary = reviewSummaryService.selectSummarizedReview(roomNo);
+		List<String> reviews = reviewRepository.findAllReviewContentsByRoomNo(roomNo);
 		RoomImageSummaryEntity imageSummary = roomImageSummaryService.selectSummarizedImageCaption(roomNo);
-		if(room == null || reviewSummary == null || imageSummary == null) {
+		if(room == null || imageSummary == null) {
 			return false;
 		}
-		if(!STATUS_DONE.equals(reviewSummary.getSummaryStatus()) || !STATUS_DONE.equals(imageSummary.getSummaryStatus())) {
+		boolean reviewReady = (reviews == null || reviews.isEmpty())
+				|| (reviewSummary != null && STATUS_DONE.equals(reviewSummary.getSummaryStatus()));
+		if(!reviewReady || !STATUS_DONE.equals(imageSummary.getSummaryStatus())) {
 			return false;
 		}
 
 		LocalDateTime latestSourceUpdatedAt = entity.getUpdatedAt();
 		latestSourceUpdatedAt = maxDateTime(latestSourceUpdatedAt, room.getRoomUpdatedAt());
 		latestSourceUpdatedAt = maxDateTime(latestSourceUpdatedAt, room.getRoomCreatedAt());
-		latestSourceUpdatedAt = maxDateTime(latestSourceUpdatedAt, reviewSummary.getUpdatedAt());
+		if(reviewSummary != null) {
+			latestSourceUpdatedAt = maxDateTime(latestSourceUpdatedAt, reviewSummary.getUpdatedAt());
+		}
 		latestSourceUpdatedAt = maxDateTime(latestSourceUpdatedAt, imageSummary.getUpdatedAt());
 		return !entity.getUpdatedAt().isBefore(latestSourceUpdatedAt);
 	}

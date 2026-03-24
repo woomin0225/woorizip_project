@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Container, Row, Col, Card, CardBody, CardHeader } from 'reactstrap';
 import ViewsRankingFrame from '../../features/houseAndRoom/components/ranking/ViewsRankingFrame';
@@ -8,6 +8,7 @@ import WishRankingFrame from '../../features/houseAndRoom/components/ranking/Wis
 import { fetchNoticeTop5 } from '../../features/board/api/NoticeApi';
 import { fetchInformationTop5 } from '../../features/board/api/InformationApi';
 import { fetchEventTop5 } from '../../features/board/api/EventApi';
+import ConvenienceEntryCard from '../components/ConvenienceEntryCard';
 
 import banner1 from '../../assets/images/banner/banner1.png';
 import banner2 from '../../assets/images/banner/banner2.png';
@@ -93,7 +94,6 @@ export default function Home() {
   return (
     <>
       <main>
-        {/* 1. 슬라이드 배너 영역 */}
         <section
           className={`section-profile-cover section-shaped my-0 ${styles.heroSection}`}
           style={{ height: '500px', overflow: 'hidden' }}
@@ -156,7 +156,12 @@ export default function Home() {
           </Container>
         </section>
 
-        {/* 조회순 기반 매물 랭킹 */}
+        <section className="section pt-0">
+          <Container>
+            <ConvenienceEntryCard />
+          </Container>
+        </section>
+
         <section className="section pt-4">
           <Container>
             <Row>
@@ -165,7 +170,7 @@ export default function Home() {
                   type="room"
                   period={1}
                   rankingTitle="일간 방 조회랭킹"
-                  limit={10}
+                  limit={3}
                 />
               </Col>
               <Col md="6" className="mb-4">
@@ -173,7 +178,7 @@ export default function Home() {
                   type="room"
                   period={30}
                   rankingTitle="월간 방 조회랭킹"
-                  limit={10}
+                  limit={3}
                 />
               </Col>
               <Col md="6" className="mb-4">
@@ -181,7 +186,7 @@ export default function Home() {
                   type="house"
                   period={1}
                   rankingTitle="일간 건물 조회랭킹"
-                  limit={10}
+                  limit={3}
                 />
               </Col>
               <Col md="6" className="mb-4">
@@ -189,7 +194,7 @@ export default function Home() {
                   type="house"
                   period={7}
                   rankingTitle="주간 건물 조회랭킹"
-                  limit={10}
+                  limit={3}
                 />
               </Col>
             </Row>
@@ -201,13 +206,13 @@ export default function Home() {
                 <ReviewRankingFrame
                   period={30}
                   rankingTitle="월간 리뷰평균 랭킹"
-                  limit={10}
+                  limit={3}
                 />
               </Col>
               <Col md="6" className="mb-4">
                 <WishRankingFrame
                   rankingTitle="관심목록 랭킹"
-                  limit={10}
+                  limit={3}
                   subTitle="Total Wish"
                 />
               </Col>
@@ -215,27 +220,21 @@ export default function Home() {
           </Container>
         </section>
 
-        {/* 3. 게시판 프리뷰 영역 */}
         <section className="section bg-secondary mt-4">
           <Container>
             <Row>
               <Col md="4" className="mb-4">
-                <Card className="shadow border-0 h-100">
-                  <CardHeader className="bg-white border-0 pb-0">
-                    <h6 className="mb-0 text-info font-weight-bold">
-                      공지사항 (인기글)
-                    </h6>
+                <Card className={`shadow border-0 h-100 ${styles.boardCard}`}>
+                  <CardHeader className={styles.boardCardHeader}>
+                    <h6 className={styles.noticeTitle}>공지사항 (인기글)</h6>
                   </CardHeader>
                   <CardBody>
-                    <ul className="list-unstyled mb-0">
+                    <ul className={styles.boardList}>
                       {topNotices.map((notice) => (
-                        <li
-                          key={notice.postNo}
-                          className="mb-2 text-sm text-truncate"
-                        >
+                        <li key={notice.postNo} className={styles.boardItem}>
                           <Link
                             to={`/notices/${notice.postNo}`}
-                            className="text-muted"
+                            className={styles.boardLink}
                           >
                             - {notice.postTitle}
                           </Link>
@@ -247,22 +246,17 @@ export default function Home() {
               </Col>
 
               <Col md="4" className="mb-4">
-                <Card className="shadow border-0 h-100">
-                  <CardHeader className="bg-white border-0 pb-0">
-                    <h6 className="mb-0 text-info font-weight-bold">
-                      진행중인 이벤트
-                    </h6>
+                <Card className={`shadow border-0 h-100 ${styles.boardCard}`}>
+                  <CardHeader className={styles.boardCardHeader}>
+                    <h6 className={styles.eventTitle}>진행중인 이벤트</h6>
                   </CardHeader>
                   <CardBody>
-                    <ul className="list-unstyled mb-0">
+                    <ul className={styles.boardList}>
                       {topEvents.map((event) => (
-                        <li
-                          key={event.postNo}
-                          className="mb-2 text-sm text-truncate"
-                        >
+                        <li key={event.postNo} className={styles.boardItem}>
                           <Link
                             to={`/event/${event.postNo}`}
-                            className="text-muted"
+                            className={styles.boardLink}
                           >
                             - {event.postTitle}
                           </Link>
@@ -274,22 +268,17 @@ export default function Home() {
               </Col>
 
               <Col md="4" className="mb-4">
-                <Card className="shadow border-0 h-100">
-                  <CardHeader className="bg-white border-0 pb-0">
-                    <h6 className="mb-0 text-info font-weight-bold">
-                      정책 및 정보 제공
-                    </h6>
+                <Card className={`shadow border-0 h-100 ${styles.boardCard}`}>
+                  <CardHeader className={styles.boardCardHeader}>
+                    <h6 className={styles.infoTitle}>정책 및 정보 제공</h6>
                   </CardHeader>
                   <CardBody>
-                    <ul className="list-unstyled mb-0">
+                    <ul className={styles.boardList}>
                       {topInformations.map((info) => (
-                        <li
-                          key={info.postNo}
-                          className="mb-2 text-sm text-truncate"
-                        >
+                        <li key={info.postNo} className={styles.boardItem}>
                           <Link
                             to={`/information/${info.postNo}`}
-                            className="text-muted"
+                            className={styles.boardLink}
                           >
                             - {info.postTitle}
                           </Link>

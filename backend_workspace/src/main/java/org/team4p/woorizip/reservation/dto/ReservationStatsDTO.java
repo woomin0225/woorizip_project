@@ -26,7 +26,6 @@ public class ReservationStatsDTO {
 	private LocalTime reservationStartTime;
 	private LocalTime reservationEndTime;
 	private LocalDateTime reservationCreatedAt;
-	private LocalDateTime reservationUpdatedAt;
 	private LocalDateTime reservationCanceledAt;
 	private ReservationStatus reservationStatus;
 	
@@ -39,7 +38,6 @@ public class ReservationStatsDTO {
 	            .reservationStartTime(entity.getReservationStartTime())
 	            .reservationEndTime(entity.getReservationEndTime())
 	            .reservationCreatedAt(entity.getReservationCreatedAt())
-	            .reservationUpdatedAt(entity.getReservationUpdatedAt())
 	            .reservationCanceledAt(entity.getReservationCanceledAt())
 	            .reservationStatus(entity.getReservationStatus())
 	            .build();

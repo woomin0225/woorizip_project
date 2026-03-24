@@ -127,7 +127,36 @@ export default function About() {
                   >
                     분산된 코리빙 하우스 정보를 통합 조회하고, 입주 및 공용시설
                     예약까지 한 공간에서 수행하는 단일 포털을 목표로 합니다.
+                    또한 AI 추천, AI 요약, AI 챗봇을 도입해 사용자가 필요한
+                    정보를 더 빠르게 이해하고 원하는 매물을 더 편하게 찾을 수
+                    있도록 사용자 편의성을 높였습니다.
                   </p>
+
+                  <div
+                    style={{
+                      display: 'flex',
+                      gap: 10,
+                      flexWrap: 'wrap',
+                      marginTop: 16,
+                    }}
+                  >
+                    {['AI 추천 검색', 'AI 방 정보 요약', '게시글 AI 요약', '우리봇 안내']
+                      .map((label) => (
+                        <Badge
+                          key={label}
+                          pill
+                          style={{
+                            background: 'rgba(255, 122, 0, 0.10)',
+                            color: brand.text,
+                            border: '1px solid rgba(255, 122, 0, 0.18)',
+                            padding: '8px 12px',
+                            fontWeight: 800,
+                          }}
+                        >
+                          {label}
+                        </Badge>
+                      ))}
+                  </div>
 
                   <div
                     style={{
@@ -258,10 +287,10 @@ export default function About() {
                           marginBottom: 6,
                         }}
                       >
-                        확장 방향
+                        사용자 편의성
                       </div>
                       <div style={{ fontWeight: 900, color: brand.text }}>
-                        커뮤니티·개인화
+                        AI·개인화 강화
                       </div>
                     </div>
                   </Col>
@@ -293,7 +322,7 @@ export default function About() {
                     '분산된 코리빙 정보를 한곳에서 통합 조회',
                     '매물 간 비교 기능 제공',
                     '입주/투어/공용시설 예약까지 한 흐름으로',
-                    '커뮤니티 기능으로 체류시간/재방문 강화',
+                    'AI 추천·요약·챗봇으로 탐색 피로도 완화',
                   ]}
                 />
               </Col>
@@ -326,8 +355,8 @@ export default function About() {
                   주요 기능
                 </h2>
                 <p style={{ margin: 0, color: brand.sub }}>
-                  사용자가 실제로 “찾고 → 비교하고 → 신청/예약”까지 이어지는
-                  흐름을 중심으로 구성했습니다.
+                  사용자가 실제로 “찾고 → 비교하고 → 이해하고 → 신청/예약”까지
+                  이어지는 흐름을 중심으로 구성했습니다.
                 </p>
               </div>
               <Badge
@@ -339,7 +368,7 @@ export default function About() {
                   padding: '8px 12px',
                 }}
               >
-                통합 조회 · 비교 · 예약 · 커뮤니티
+                통합 조회 · 비교 · AI 추천 · AI 요약 · 예약
               </Badge>
             </div>
           </Col>
@@ -371,6 +400,13 @@ export default function About() {
               </Col>
               <Col md="4">
                 <FeatureCard
+                  icon="✨"
+                  title="AI 추천 검색"
+                  desc="자연어 검색과 의미 기반 추천으로 조건에 맞는 방을 더 빠르게 찾습니다."
+                />
+              </Col>
+              <Col md="4">
+                <FeatureCard
                   icon="🧑‍💼"
                   title="투어/입주 신청"
                   desc="관심 매물에 대해 투어 신청 및 입주 절차를 연결합니다."
@@ -388,6 +424,13 @@ export default function About() {
                   icon="💬"
                   title="커뮤니티(게시판)"
                   desc="공지/이벤트/정책/정보/QnA 등으로 정보 공유와 소통을 강화합니다."
+                />
+              </Col>
+              <Col md="4">
+                <FeatureCard
+                  icon="🤖"
+                  title="AI 요약·우리봇"
+                  desc="방 정보와 게시글 핵심 내용을 AI가 요약하고, 우리봇이 빠른 탐색과 안내를 돕습니다."
                 />
               </Col>
             </Row>
@@ -507,6 +550,32 @@ export default function About() {
                     </div>
                   </Col>
                 </Row>
+
+                <div
+                  style={{
+                    marginTop: 16,
+                    borderRadius: 18,
+                    padding: 18,
+                    background:
+                      'linear-gradient(135deg, rgba(255, 122, 0, 0.10) 0%, rgba(255, 248, 242, 1) 100%)',
+                    border: `1px solid ${brand.line}`,
+                  }}
+                >
+                  <div
+                    style={{
+                      fontWeight: 900,
+                      marginBottom: 8,
+                      color: brand.text,
+                    }}
+                  >
+                    ✅ AI 기능 도입으로 사용자 편의성 강화
+                  </div>
+                  <div style={{ color: brand.sub, lineHeight: 1.7 }}>
+                    AI 추천 검색, 방 정보 종합 요약, 게시글 요약, 우리봇 안내
+                    기능을 통해 사용자가 긴 정보를 일일이 읽지 않아도 핵심을
+                    빠르게 파악하고 더 쉽게 의사결정할 수 있도록 돕습니다.
+                  </div>
+                </div>
               </CardBody>
             </Card>
           </Col>

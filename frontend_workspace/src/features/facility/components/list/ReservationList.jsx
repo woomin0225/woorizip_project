@@ -1,14 +1,12 @@
 import React, { useState } from 'react';
-import { useParams } from 'react-router-dom';
 import { useReservationList } from '../../hooks/reservation/useReservationList';
 import Modal from '../../../../shared/components/Modal/Modal';
 import ReservationDetail from '../detail/ReservationDetail';
 import styles from './List.module.css';
 
-export default function ReservationList() {
-  const { facilityNo } = useParams();
+export default function ReservationList({ facilityNo, targetUserNo }) {
   const { reservationList, loading, error, setPage, query, pageResponse } =
-    useReservationList(facilityNo || '');
+    useReservationList(facilityNo || '', targetUserNo || '');
 
   const [selectedResNo, setSelectedResNo] = useState(null);
   const isOwner = !!facilityNo;

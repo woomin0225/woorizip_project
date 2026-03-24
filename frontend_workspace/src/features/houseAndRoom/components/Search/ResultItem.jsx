@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { buildUploadUrl } from '../../../../app/config/env';
 import styles from './ResultItem.module.css';
 
 // ===== 표시용 포맷 함수들 =====
@@ -51,6 +52,7 @@ export default function ResultItem({
   roomSearchResponse,
   wished = false,
   onToggleWish,
+  onHoverHouseChange,
 }) {
   // ✅ Hook은 항상 호출되어야 함 (early return 금지)
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -97,14 +99,18 @@ export default function ResultItem({
   function imgUrl(imageName) {
     if (!imageName) return '#';
     if (imageName.startsWith('http')) return imageName;
-    return `http://localhost:8080/upload/room_image/${imageName}`;
+    return buildUploadUrl('upload/room_image', imageName);
   }
 
   // ✅ roomSearchResponse가 진짜 없으면 렌더만 비워주기
   if (!roomSearchResponse) return null;
 
   return (
-    <div className={styles.card}>
+    <div
+      className={styles.card}
+      onMouseEnter={() => onHoverHouseChange?.(room.houseNo ?? null)}
+      onMouseLeave={() => onHoverHouseChange?.(null)}
+    >
       <button className={styles.wishBtn} onClick={toggleWish} aria-label="찜">
         {isWished ? '★' : '☆'}
       </button>

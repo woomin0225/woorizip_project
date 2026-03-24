@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { Container, Row, Col, Card, CardBody } from 'reactstrap';
 import MyPageSideNav from '../../user/components/MyPageSideNav';
 import { getWishlistPageByUser, deleteWishlist } from '../api/wishlistAPI';
@@ -8,6 +8,7 @@ import { tokenStore } from '../../../app/http/tokenStore';
 import { parseJwt } from '../../../app/providers/utils/jwt';
 import WishlistTable from '../components/WishlistTable';
 import styles from '../../../app/layouts/MyPageLayout.module.css';
+import pageStyles from './WishlistPage.module.css';
 
 function getCurrentUserNo() {
   const storedUserNo =
@@ -162,27 +163,43 @@ export default function WishlistPage() {
             <Col lg="9">
               <Card className={`shadow border-0 ${styles.mainCard}`}>
                 <CardBody>
-                  <div className={styles.headerRow}>
+                  <div className={pageStyles.wishlistHeader}>
                     <div>
                       <h2 className={styles.title}>찜목록</h2>
-                      <p className={styles.subTitle}>내가 저장한 매물 목록</p>
+                      <p className={styles.subTitle}>
+                        관심 있는 방을 모아보고 한눈에 비교해보세요.
+                      </p>
                     </div>
                     <button
                       type="button"
-                      className={styles.dangerBtn}
+                      className={pageStyles.deleteAllBtn}
                       onClick={handleDeleteAll}
                       disabled={isDeletingAll || items.length === 0}
                     >
-                      {isDeletingAll ? '전체 삭제 중...' : '찜목록 전체삭제'}
+                      {isDeletingAll ? '전체 삭제 중...' : '전체삭제'}
                     </button>
                   </div>
 
                   {error && <p className={styles.desc}>{error}</p>}
+
                   {!error && items.length === 0 && (
-                    <p className={styles.desc}>찜목록이 없습니다.</p>
+                    <div className={styles.warningBox}>
+                      <p className={styles.warningTitle}>아직 찜한 방이 없어요.</p>
+                      <p className={styles.desc} style={{ marginBottom: 0 }}>
+                        방 상세페이지에서 관심 매물을 찜해두면 여기서 모아보고 비교할 수 있습니다.
+                      </p>
+                    </div>
                   )}
+
                   {!error && items.length > 0 && (
                     <>
+                      <div className={styles.surveyBox} style={{ marginBottom: 18 }}>
+                        <p className={styles.surveyTitle}>저장된 매물 {items.length}건</p>
+                        <p className={styles.desc} style={{ marginBottom: 0 }}>
+                          가격, 면적, 입주 가능 상태를 비교하면서 원하는 방을 빠르게 확인해보세요.
+                        </p>
+                      </div>
+
                       <WishlistTable
                         items={items}
                         onDelete={async (wishNo) => {
@@ -219,7 +236,9 @@ export default function WishlistPage() {
                             <button
                               key={p}
                               type="button"
-                              className={`${styles.inlineBtn} ${p === page ? styles.inlineBtnActive : ''}`}
+                              className={`${styles.inlineBtn} ${
+                                p === page ? styles.inlineBtnActive : ''
+                              }`}
                               onClick={() => clickPage(p)}
                             >
                               {p}

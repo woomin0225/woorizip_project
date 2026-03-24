@@ -2,10 +2,12 @@ from __future__ import annotations
 
 from app.agent import RoomRegistrationAgent, TourApplyAgent, FacilityAgent
 from app.clients.openai_agent_client import OpenAIAgentClient
+from app.clients.spring_room_client import SpringRoomClient
 from app.clients.spring_tour_client import SpringTourClient
 from app.clients.spring_facility_client import SpringFacilityClient
 from app.core.config import settings
 from app.schemas import AssistantRunReq
+from app.services.room_service import RoomService
 from app.services.tour_service import TourService
 from app.services.reservation_service import ReservationService
 from app.utils.assistant_normalizer import (
@@ -21,9 +23,11 @@ class AssistantService:
         # 방 등록 에이전트는 여러 턴에 걸쳐 슬롯을 모으기 때문에,
         # 요청마다 새로 만들기보다 서비스 인스턴스가 살아 있는 동안 함께 유지하는 편이 이해하기 쉽다.
         # 이렇게 해 두면 에이전트 내부의 세션 저장소도 같은 객체를 계속 사용하게 된다.
-        self.room_registration_agent = RoomRegistrationAgent()
+        self.room_registration_agent = RoomRegistrationAgent(
+            RoomService(SpringRoomClient())
+        )
         self.tour_apply_agent = TourApplyAgent(TourService(SpringTourClient()))
-        self.facility_agent = FacilityAgent(ReservationService(SpringFacilityClient))
+        self.facility_agent = FacilityAgent(ReservationService(SpringFacilityClient()))
 
     async def run(
         self,

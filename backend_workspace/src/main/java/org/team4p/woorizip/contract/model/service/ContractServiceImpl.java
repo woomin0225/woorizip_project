@@ -67,6 +67,9 @@ public class ContractServiceImpl implements ContractService {
     @Value("${app.contract-doc-url-prefix:/contract-docs}")
     private String contractDocUrlPrefix;
 
+    @Value("${app.contract-pdf-font-path:}")
+    private String contractPdfFontPath;
+
     @Override
     public ContractDto selectContract(String contractNo) {
         ContractEntity entity = contractRepository.findByContractNo(contractNo);
@@ -126,6 +129,15 @@ public class ContractServiceImpl implements ContractService {
                 );
         if (existingMine.isPresent()) {
             return ContractDto.fromEntity(existingMine.get());
+        }
+
+        boolean alreadyAppliedBySameUser = contractRepository.existsByRoomNoAndUserNoAndStatusIn(
+                entity.getRoomNo(),
+                entity.getUserNo(),
+                ACTIVE_CONTRACT_STATUSES
+        );
+        if (alreadyAppliedBySameUser) {
+            throw new IllegalStateException("이미 해당 방에 진행 중인 계약이 있습니다.");
         }
 
         boolean alreadyReserved = contractRepository.existsByRoomNoAndMoveInDateAndStatusIn(
@@ -581,15 +593,43 @@ public class ContractServiceImpl implements ContractService {
             builder.useFastMode();
             builder.withHtmlContent(normalizeHtmlForPdf(html), null);
 
-            Path malgunPath = FileSystems.getDefault().getPath("C:", "Windows", "Fonts", "malgun.ttf");
-            if (useWindowsFont && Files.exists(malgunPath)) {
-                builder.useFont(malgunPath.toFile(), "Malgun Gothic");
+            Optional<Path> fontPath = resolvePdfFontPath(useWindowsFont);
+            if (fontPath.isPresent()) {
+                builder.useFont(fontPath.get().toFile(), "Malgun Gothic");
+                log.info("계약서 PDF 폰트 사용: {}", fontPath.get());
+            } else {
+                log.warn("계약서 PDF용 한글 폰트를 찾지 못했습니다. 기본 폰트로 렌더링합니다.");
             }
 
             builder.toStream(outputStream);
             builder.run();
             return outputStream.toByteArray();
         }
+    }
+
+    private Optional<Path> resolvePdfFontPath(boolean includeWindowsFont) {
+        if (contractPdfFontPath != null && !contractPdfFontPath.isBlank()) {
+            Path configuredPath = Path.of(contractPdfFontPath.trim()).toAbsolutePath().normalize();
+            if (Files.exists(configuredPath)) {
+                return Optional.of(configuredPath);
+            }
+            log.warn("설정된 계약서 PDF 폰트 경로가 존재하지 않습니다: {}", configuredPath);
+        }
+
+        List<Path> candidates = new ArrayList<>();
+        if (includeWindowsFont) {
+            candidates.add(FileSystems.getDefault().getPath("C:", "Windows", "Fonts", "malgun.ttf"));
+        }
+        candidates.add(Path.of("/usr/share/fonts/truetype/nanum/NanumGothic.ttf"));
+        candidates.add(Path.of("/usr/share/fonts/truetype/nanum/NanumBarunGothic.ttf"));
+        candidates.add(Path.of("/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc"));
+        candidates.add(Path.of("/usr/share/fonts/opentype/noto/NotoSansKR-Regular.otf"));
+        candidates.add(Path.of("/usr/share/fonts/truetype/noto/NotoSansKR-Regular.ttf"));
+
+        return candidates.stream()
+                .map(path -> path.toAbsolutePath().normalize())
+                .filter(Files::exists)
+                .findFirst();
     }
 
     private String normalizeHtmlForPdf(String html) {

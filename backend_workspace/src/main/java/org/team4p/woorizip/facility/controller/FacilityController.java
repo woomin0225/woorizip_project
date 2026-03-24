@@ -30,6 +30,8 @@ import org.team4p.woorizip.facility.dto.FacilityImageDTO;
 import org.team4p.woorizip.facility.dto.FacilityListResponseDTO;
 import org.team4p.woorizip.facility.dto.FacilityModifyRequestDTO;
 import org.team4p.woorizip.facility.service.FacilityService;
+import org.team4p.woorizip.house.dto.HouseDto;
+import org.team4p.woorizip.house.service.HouseService;
 import org.team4p.woorizip.user.model.dto.UserDto;
 import org.team4p.woorizip.user.model.service.UserService;
 
@@ -45,7 +47,20 @@ public class FacilityController {
 
 	private final FacilityService facilityService;
 	private final UserService userService;
+	private final HouseService houseService;
 	
+	// 모니터링 데이터 조회를 위한 건물 목록 조회 for ai_server
+	@GetMapping("/aiHouse")
+	public ResponseEntity<ApiResponse<List<HouseDto>>> getHousesForAi(
+		   @RequestParam("userId") String userId
+	) {
+		UserDto params = UserDto.builder().emailId(userId).build();
+	    UserDto user = userService.selectUser(params);
+	    String userNo = user.getUserNo();
+		List<HouseDto> body = houseService.selectHousesByOwnerNo(userNo, userNo);
+		return ResponseEntity.ok(ApiResponse.ok("AI용 건물 목록 조회 성공", body));
+	}
+		
 	// 시설 목록 조회
 	@GetMapping({"", "/{houseNo}"})
 	public ResponseEntity<ApiResponse<List<FacilityListResponseDTO>>> getFacilityList(
@@ -56,24 +71,32 @@ public class FacilityController {
 		return ResponseEntity.ok(ApiResponse.ok("시설 목록 조회 성공", body));
 	}
 	
-	// 예약 정보 생성을 위한 시설 목록과 유저 정보 조회 for ai_server
+	// 시설 목록과 유저 정보 조회 for ai_server
 	@GetMapping("/ailist")
 	public ResponseEntity<ApiResponse<Map<String, Object>>> getFacilityListForAi(
-	        @RequestParam(value = "userId") String userId) {
-		// 유저 정보 조회
-		UserDto params = UserDto.builder().emailId(userId).build();
-        UserDto user = userService.selectUser(params);
-        
-	    // 시설 목록 조회
-	    List<FacilityListResponseDTO> facilityList = facilityService.getFacilityList(null, String.valueOf(user.getUserNo()));
+	        @RequestParam(value = "userId") String userId,
+	        @RequestParam(value = "houseNo", required = false) String houseNo) {
+	    // 유저 정보 먼저 조회
+	    UserDto params = UserDto.builder().emailId(userId).build();
+	    UserDto user = userService.selectUser(params);
 
-	    // 데이터 매칭
+	    // 응답 데이터 생성
 	    Map<String, Object> responseData = new HashMap<>();
 	    responseData.put("userName", user.getName());
 	    responseData.put("userPhone", user.getPhone());
+	    responseData.put("userType", user.getType());
+
+	    // 임대인인데 건물 번호가 없는 경우
+	    if ("LESSOR".equals(user.getType()) && (houseNo == null || houseNo.isEmpty())) {
+	        responseData.put("facilities", new ArrayList<>()); // 빈 리스트
+	        return ResponseEntity.ok(ApiResponse.ok("임대인: 건물 선택이 필요합니다.", responseData));
+	    }
+
+	    // 시설 목록 조회 (임차인이거나 건물 번호가 있는 임대인)
+	    List<FacilityListResponseDTO> facilityList = facilityService.getFacilityList(houseNo, String.valueOf(user.getUserNo()));
 	    responseData.put("facilities", facilityList);
 
-	    return ResponseEntity.ok(ApiResponse.ok("AI용 데이터 로드 성공", responseData));
+	    return ResponseEntity.ok(ApiResponse.ok("AI용 시설 목록 조회 성공", responseData));
 	}
 	
 	// 시설 신규 등록

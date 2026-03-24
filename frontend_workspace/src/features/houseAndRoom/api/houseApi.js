@@ -12,8 +12,10 @@ export async function getHouseMarkers(cond) {
 }
 
 // 임대인용 건물 목록 조회 GET
-export async function getMyHouses() {
-  const { data } = await apiJson().get('/api/houses/owner');
+export async function getMyHouses(targetUserNo = '') {
+  const { data } = await apiJson().get('/api/houses/owner', {
+    params: { targetUserNo },
+  });
   return unwrap(data); // ApiResponse<List<HouseDto>>
 }
 

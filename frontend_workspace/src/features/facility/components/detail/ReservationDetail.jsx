@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useReservationDetail } from '../../hooks/reservation/useReservationDetail';
 import styles from './Detail.module.css';
 
@@ -10,6 +10,7 @@ export default function ReservationDetail({
   isOwner,
 }) {
   const nav = useNavigate();
+  const location = useLocation();
   const { reservationDetails, loading, error } =
     useReservationDetail(reservationNo);
 
@@ -57,7 +58,8 @@ export default function ReservationDetail({
               className={styles.primaryBtn}
               onClick={() =>
                 nav(
-                  `/reservation/form/${reservationDetails.facilityNo}/${reservationNo}`
+                  `/reservation/form/${reservationDetails.facilityNo}/${reservationNo}`,
+                  { state: location.state }
                 )
               }
             >
