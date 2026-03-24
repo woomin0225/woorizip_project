@@ -261,7 +261,6 @@ class ReviewSummaryReq(BaseModel):
 
 class ReservationAssistReq(BaseModel):
     message: str
-    userId: str | None = None
 
 
 class ReservationAnalyzeReq(BaseModel):

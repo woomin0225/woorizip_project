@@ -28,7 +28,6 @@ export default function ReservationList({ facilityNo, targetUserNo }) {
       <div className={styles.facilityContainer}>
         <div className={styles.facilityHeader}>
           <span>{isOwner ? '예약 정보' : '시설 및 일정'}</span>
-          <span className={styles.textMuted}>상세보기</span>
         </div>
 
         {reservationList.length > 0 ? (
