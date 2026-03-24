@@ -522,72 +522,143 @@ export default function OrchestrateQuickAgent() {
       return;
     }
 
+    if (actionId === 'roomRegister') {
+      await sendMessage('방 등록', {
+        skipQuickAction: true,
+        displayText: '방 등록',
+      });
+      return;
+    }
+
     if (actionId === 'roomRecommend') {
       goToPage(
         '/rooms',
-        '방 추천을 확인할 수 있도록 방 목록 페이지로 이동했습니다.',
-        ['tour', 'wishlist', 'summary']
+        '방을 찾을 수 있도록 방 목록 페이지로 이동했습니다. 원하는 조건을 말씀해 주시면 이어서 도와드릴게요.',
+        ['roomRegister', 'tour', 'wishlist']
       );
       return;
     }
 
     if (actionId === 'summary') {
-      const postNo = extractPostNoFromPath();
+      const postNo = extractPostNoFromPath(location.pathname);
+      const roomContext = getRoomContext(location.pathname);
+      const isBoardListPage = ['/notices', '/events', '/information', '/qna', '/boards'].includes(
+        location.pathname
+      );
 
-      if (!postNo) {
-        const page = getPageContext();
-        const excerpt = (page.contentExcerpt || '').slice(0, 220);
+      if (postNo) {
+        try {
+          setLoading(true);
+          const response = await fetchBoardSummary(postNo);
+          const result = response?.data?.data ?? response?.data;
+
+          const summaryText = String(result?.summary || '요약 결과가 없습니다.').trim();
+          const keyPoints = Array.isArray(result?.keyPoints)
+            ? result.keyPoints
+                .map((item) =>
+                  String(item || '')
+                    .replace(/^[-\s]+/, '')
+                    .trim()
+                )
+                .filter(Boolean)
+            : [];
+          const conclusion = String(result?.conclusion || '').trim();
+          const warnings = Array.isArray(result?.warnings)
+            ? result.warnings
+                .map((item) =>
+                  String(item || '')
+                    .replace(/^[-\s]+/, '')
+                    .trim()
+                )
+                .filter(Boolean)
+            : [];
+
+          const sections = ['게시글 AI 요약입니다.'];
+          if (summaryText) sections.push(`요약\n${summaryText}`);
+          if (keyPoints.length > 0) {
+            sections.push(`핵심 포인트\n- ${keyPoints.join('\n- ')}`);
+          }
+          if (conclusion) sections.push(`결론\n${conclusion}`);
+          if (warnings.length > 0) {
+            sections.push(`유의사항\n- ${warnings.join('\n- ')}`);
+          }
+
+          appendAssistantMessage(sections.join('\n\n'), [
+            'roomRecommend',
+            'notices',
+            'mypage',
+          ]);
+        } catch (error) {
+          const errorBody = error?.response?.data;
+          const apiMessage =
+            errorBody?.data ||
+            errorBody?.message ||
+            errorBody?.error ||
+            error?.message ||
+            '게시글 요약 중 오류가 발생했습니다.';
+
+          appendAssistantMessage(`오류: ${apiMessage}`, [
+            'roomRecommend',
+            'notices',
+            'mypage',
+          ]);
+        } finally {
+          setLoading(false);
+        }
+
+        return;
+      }
+
+      if (isBoardListPage) {
         appendAssistantMessage(
-          `현재 페이지는 게시글 상세페이지가 아니어서 본문 기준 간단 요약만 제공합니다.\n제목: ${page.title || '-'}\n요약: ${excerpt || '요약할 본문을 찾지 못했습니다.'}`,
-          ['roomRecommend', 'reviews', 'facilityInfo']
+          '게시글 목록에서는 요약할 수 없습니다. 읽고 싶은 게시글 상세로 들어간 뒤 요약을 눌러주세요.',
+          ['notices', 'summary', 'mypage']
+        );
+        return;
+      }
+
+      if (roomContext.roomNo) {
+        appendAssistantMessage(
+          '페이지 내의 방 정보 요약을 참고해주세요.',
+          ['roomRecommend', 'tour', 'wishlist']
         );
         return;
       }
 
       try {
         setLoading(true);
-        const response = await fetchBoardSummary(postNo);
-        const result = response?.data?.data ?? response?.data;
-
-        const summaryText = String(
-          result?.summary ||
-            '요약 결과가 없습니다.'
-        ).trim();
-        const keyPoints = Array.isArray(result?.keyPoints)
-          ? result.keyPoints
-              .map((item) =>
-                String(item || '')
-                  .replace(/^[-•\s]+/, '')
-                  .trim()
-              )
-              .filter(Boolean)
-          : [];
-        const conclusion = String(result?.conclusion || '').trim();
-        const warnings = Array.isArray(result?.warnings)
-          ? result.warnings
-              .map((item) =>
-                String(item || '')
-                  .replace(/^[-•\s]+/, '')
-                  .trim()
-              )
-              .filter(Boolean)
-          : [];
-
-        const sections = [
-          '게시글 AI 요약입니다.',
-        ];
-        if (summaryText) sections.push(`요약\n${summaryText}`);
-        if (keyPoints.length > 0)
-          sections.push(`핵심\n• ${keyPoints.join('\n• ')}`);
-        if (conclusion) sections.push(`결론\n${conclusion}`);
-        if (warnings.length > 0)
-          sections.push(`참고\n• ${warnings.join('\n• ')}`);
-
-        appendAssistantMessage(sections.join('\n\n'), [
-          'roomRecommend',
-          'reviews',
-          'facilityInfo',
-        ]);
+        const roomCreateContext = getRoomCreateContext(location, managedHouses);
+        const result = await runOrchestrateCommand({
+          text: '현재 보고 있는 웹페이지의 내용을 한국어로 간단히 요약해줘. 페이지에 없는 내용은 추측하지 마.',
+          sessionId,
+          context: {
+            path: window.location.pathname,
+            ...roomContext,
+            ...roomCreateContext,
+            currentRoomResolved: Boolean(roomContext.roomNo),
+            pageSnapshot: getPageContext(),
+            userProfile: {
+              isAdmin,
+              isLessor: resolvedIsLessor,
+              userName: userProfile?.userName || userDisplayName,
+              userPhone: userProfile?.userPhone || '',
+            },
+            siteProfile: {
+              serviceName: '우리집',
+              channel: 'web',
+              language: 'ko-KR',
+              voiceMode: voiceModeEnabled,
+            },
+          },
+        });
+        const reply =
+          result?.reply ||
+          result?.outputText ||
+          result?.message ||
+          result?.result ||
+          '요약 결과를 불러오지 못했습니다.';
+        const actionIds = extractSuggestedActions(result);
+        appendAssistantMessage(formatAssistantReply(String(reply)), actionIds);
       } catch (error) {
         const errorBody = error?.response?.data;
         const apiMessage =
@@ -595,12 +666,12 @@ export default function OrchestrateQuickAgent() {
           errorBody?.message ||
           errorBody?.error ||
           error?.message ||
-          '게시글 요약 중 오류가 발생했습니다.';
+          '페이지 요약 중 오류가 발생했습니다.';
 
         appendAssistantMessage(`오류: ${apiMessage}`, [
-          'roomRecommend',
-          'reviews',
-          'facilityInfo',
+          'summary',
+          'notices',
+          'mypage',
         ]);
       } finally {
         setLoading(false);
@@ -630,10 +701,61 @@ export default function OrchestrateQuickAgent() {
     if (actionId === 'reservationStatus') {
       goToPage(
         '/reservation/view',
-        '예약 내역 페이지로 이동했습니다. 현재 예약 상태를 확인해보세요.',
+        '예약 내역 페이지로 이동했습니다. 현재 예약 상태를 확인할 수 있습니다.',
         ['facilityCancel', 'reserve', 'facilityHours']
       );
+      return;
     }
+
+    if (actionId === 'wishlist') {
+      goToPage(
+        '/wishlist',
+        '찜 목록 페이지로 이동했습니다. 저장해둔 방을 확인할 수 있습니다.',
+        ['roomRecommend', 'tour', 'contract']
+      );
+      return;
+    }
+
+    if (actionId === 'contract') {
+      goToPage(
+        '/mypage/contracts',
+        '계약 페이지로 이동했습니다. 계약 내역과 진행 상태를 확인할 수 있습니다.',
+        ['tour', 'wishlist', 'mypage']
+      );
+      return;
+    }
+
+    if (actionId === 'tour') {
+      goToPage(
+        '/mypage/tour',
+        '투어 페이지로 이동했습니다. 투어 신청과 진행 내역을 확인할 수 있습니다.',
+        ['roomRecommend', 'contract', 'wishlist']
+      );
+      return;
+    }
+
+    if (actionId === 'notices') {
+      goToPage(
+        '/notices',
+        '공지사항 페이지로 이동했습니다. 최신 공지와 운영 안내를 확인할 수 있습니다.',
+        ['summary', 'mypage', 'roomRecommend']
+      );
+      return;
+    }
+
+    if (actionId === 'mypage') {
+      goToPage(
+        '/mypage',
+        '마이페이지로 이동했습니다. 내 정보와 개인 설정을 확인할 수 있습니다.',
+        ['wishlist', 'contract', 'tour']
+      );
+      return;
+    }
+
+    appendAssistantMessage(
+      `${action.label} 기능은 아직 준비 중입니다. 다른 명령을 말씀해 주시면 바로 도와드릴게요.`,
+      expandRelatedActionIds(action.related || [], 3)
+    );
   };
 
   const handleLocalSystemCommand = async (messageText) => {
@@ -1039,6 +1161,10 @@ export default function OrchestrateQuickAgent() {
   const onQuickActionClick = (actionId) => {
     const action = ACTION_MAP[actionId];
     if (!action || loading) return;
+    if (actionId === 'roomRegister') {
+      void runQuickAction(actionId);
+      return;
+    }
     setMessages((prev) => [...prev, { role: 'user', text: action.label }]);
     void runQuickAction(actionId);
   };
@@ -1290,6 +1416,7 @@ export default function OrchestrateQuickAgent() {
     </div>
   );
 }
+
 
 
 

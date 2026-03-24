@@ -170,7 +170,7 @@ export default function Home() {
                   type="room"
                   period={1}
                   rankingTitle="일간 방 조회랭킹"
-                  limit={10}
+                  limit={3}
                 />
               </Col>
               <Col md="6" className="mb-4">
@@ -178,7 +178,7 @@ export default function Home() {
                   type="room"
                   period={30}
                   rankingTitle="월간 방 조회랭킹"
-                  limit={10}
+                  limit={3}
                 />
               </Col>
               <Col md="6" className="mb-4">
@@ -186,7 +186,7 @@ export default function Home() {
                   type="house"
                   period={1}
                   rankingTitle="일간 건물 조회랭킹"
-                  limit={10}
+                  limit={3}
                 />
               </Col>
               <Col md="6" className="mb-4">
@@ -194,7 +194,7 @@ export default function Home() {
                   type="house"
                   period={7}
                   rankingTitle="주간 건물 조회랭킹"
-                  limit={10}
+                  limit={3}
                 />
               </Col>
             </Row>
@@ -206,13 +206,13 @@ export default function Home() {
                 <ReviewRankingFrame
                   period={30}
                   rankingTitle="월간 리뷰평균 랭킹"
-                  limit={10}
+                  limit={3}
                 />
               </Col>
               <Col md="6" className="mb-4">
                 <WishRankingFrame
                   rankingTitle="관심목록 랭킹"
-                  limit={10}
+                  limit={3}
                   subTitle="Total Wish"
                 />
               </Col>
