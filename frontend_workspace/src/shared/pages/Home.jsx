@@ -8,6 +8,7 @@ import WishRankingFrame from '../../features/houseAndRoom/components/ranking/Wis
 import { fetchNoticeTop5 } from '../../features/board/api/NoticeApi';
 import { fetchInformationTop5 } from '../../features/board/api/InformationApi';
 import { fetchEventTop5 } from '../../features/board/api/EventApi';
+import ConvenienceEntryCard from '../components/ConvenienceEntryCard';
 
 import banner1 from '../../assets/images/banner/banner1.png';
 import banner2 from '../../assets/images/banner/banner2.png';
@@ -152,6 +153,12 @@ export default function Home() {
                 </>
               )}
             </div>
+          </Container>
+        </section>
+
+        <section className="section pt-0">
+          <Container>
+            <ConvenienceEntryCard />
           </Container>
         </section>
 

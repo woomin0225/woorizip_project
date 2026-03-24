@@ -9,6 +9,7 @@ import { ROUTES } from '../../shared/constants/routes';
 
 import Home from '../../shared/pages/Home';
 import About from '../../shared/pages/About';
+import ConveniencePage from '../../shared/pages/ConveniencePage';
 import Login from '../../features/member/pages/Login';
 import Signup from '../../features/member/pages/Signup';
 import FindId from '../../features/member/pages/FindId';
@@ -89,6 +90,7 @@ export const router = createBrowserRouter([
       {
         element: <RequireAuth />,
         children: [
+          { path: ROUTES.CONVENIENCE.HOME, element: <ConveniencePage /> },
           { path: ROUTES.MEMBER.MYPAGE, element: <MyInfo /> },
           { path: ROUTES.MEMBER.MY_INFO, element: <MyInfo /> },
           { path: ROUTES.MEMBER.MY_INFO_EDIT, element: <MyInfoModify /> },
@@ -204,6 +206,5 @@ export const router = createBrowserRouter([
     ],
   },
 ]);
-
 
 
