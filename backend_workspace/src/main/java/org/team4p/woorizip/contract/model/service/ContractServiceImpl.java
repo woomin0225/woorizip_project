@@ -131,6 +131,15 @@ public class ContractServiceImpl implements ContractService {
             return ContractDto.fromEntity(existingMine.get());
         }
 
+        boolean alreadyAppliedBySameUser = contractRepository.existsByRoomNoAndUserNoAndStatusIn(
+                entity.getRoomNo(),
+                entity.getUserNo(),
+                ACTIVE_CONTRACT_STATUSES
+        );
+        if (alreadyAppliedBySameUser) {
+            throw new IllegalStateException("이미 해당 방에 진행 중인 계약이 있습니다.");
+        }
+
         boolean alreadyReserved = contractRepository.existsByRoomNoAndMoveInDateAndStatusIn(
                 entity.getRoomNo(),
                 entity.getMoveInDate(),
