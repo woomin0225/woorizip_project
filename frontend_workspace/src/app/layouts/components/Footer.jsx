@@ -22,10 +22,22 @@ export default function Footer() {
                 <NavLink href="/about">About Us</NavLink>
               </NavItem>
               <NavItem>
-                <NavLink href="/blog">Blog</NavLink>
+                <NavLink
+                  href="https://github.com/woomin0225/woorizip_project"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  GitHub
+                </NavLink>
               </NavItem>
               <NavItem>
-                <NavLink href="/license">MIT License</NavLink>
+                <NavLink
+                  href="https://www.instagram.com/woorizip.official/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Instagram
+                </NavLink>
               </NavItem>
             </Nav>
           </Col>

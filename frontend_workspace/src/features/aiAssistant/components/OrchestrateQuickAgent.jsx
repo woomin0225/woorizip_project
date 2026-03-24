@@ -522,11 +522,19 @@ export default function OrchestrateQuickAgent() {
       return;
     }
 
+    if (actionId === 'roomRegister') {
+      await sendMessage('방 등록', {
+        skipQuickAction: true,
+        displayText: '방 등록',
+      });
+      return;
+    }
+
     if (actionId === 'roomRecommend') {
       goToPage(
         '/rooms',
-        '방 추천을 확인할 수 있도록 방 목록 페이지로 이동했습니다.',
-        ['tour', 'wishlist', 'summary']
+        '방을 찾을 수 있도록 방 목록 페이지로 이동했습니다. 원하는 조건을 말씀해 주시면 이어서 도와드릴게요.',
+        ['roomRegister', 'tour', 'wishlist']
       );
       return;
     }
@@ -1147,6 +1155,10 @@ ${conclusion}`);
   const onQuickActionClick = (actionId) => {
     const action = ACTION_MAP[actionId];
     if (!action || loading) return;
+    if (actionId === 'roomRegister') {
+      void runQuickAction(actionId);
+      return;
+    }
     setMessages((prev) => [...prev, { role: 'user', text: action.label }]);
     void runQuickAction(actionId);
   };
