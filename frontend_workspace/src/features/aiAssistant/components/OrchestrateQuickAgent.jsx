@@ -574,18 +574,15 @@ export default function OrchestrateQuickAgent() {
           if (summaryText) sections.push(`??
 ${summaryText}`);
           if (keyPoints.length > 0)
-            sections.push(`??
-? ${keyPoints.join('
-? ')}`);
+            sections.push(`?? ???
+- ${keyPoints.join('\n- ')}`);
           if (conclusion) sections.push(`??
 ${conclusion}`);
-          if (warnings.length > 0) sections.push(`??
-? ${warnings.join('
-? ')}`);
+          if (warnings.length > 0)
+            sections.push(`????
+- ${warnings.join('\n- ')}`);
 
-          appendAssistantMessage(sections.join('
-
-'), [
+          appendAssistantMessage(sections.join('\n\n'), [
             'roomRecommend',
             'notices',
             'mypage',
@@ -613,7 +610,7 @@ ${conclusion}`);
 
       if (roomContext.roomNo) {
         appendAssistantMessage(
-          '? ???????? ??? ?? ? ?? ??? ??????. ?? AI ? ?? ?? ???? ?? ?? ?? ??? ??? ? ????.',
+          '??? ?? ? ?? ??? ??????.',
           ['roomRecommend', 'tour', 'wishlist']
         );
         return;
