@@ -1,6 +1,7 @@
 // src/features/aiAssistant/api/orchestrateApi.js
 import { apiJson } from '../../../app/http/request';
 import { getAiBaseUrl } from '../../../app/config/env';
+import { tokenStore } from '../../../app/http/tokenStore';
 
 const ORCHESTRATE_TIMEOUT_MS = 60000;
 
@@ -36,7 +37,15 @@ async function postWithPathFallback(payload, paths) {
  * @param {{ schemaVersion?: string, text: string, sessionId?: string, clientRequestId?: string, systemPrompt?: string, context?: Record<string, unknown> }} payload
  */
 export async function runOrchestrateCommand(payload) {
-  const data = await postWithPathFallback(payload, ['/api/agent/command']);
+  const nextPayload = {
+    ...payload,
+    accessToken:
+      payload?.accessToken ||
+      tokenStore.getAccess?.() ||
+      null,
+  };
+
+  const data = await postWithPathFallback(nextPayload, ['/api/agent/command']);
 
   if (data && typeof data.success === 'boolean') {
     if (!data.success) {

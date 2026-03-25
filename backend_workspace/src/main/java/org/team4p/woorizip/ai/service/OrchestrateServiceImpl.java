@@ -36,6 +36,12 @@ public class OrchestrateServiceImpl implements OrchestrateService {
         Map<String, String> extraHeaders = new HashMap<>();
         if (StringUtils.hasText(authorization)) {
             extraHeaders.put("Authorization", authorization);
+        } else if (StringUtils.hasText(request.accessToken())) {
+            String token = request.accessToken().trim();
+            if (!token.toLowerCase().startsWith("bearer ")) {
+                token = "Bearer " + token;
+            }
+            extraHeaders.put("Authorization", token);
         }
 
         Map<String, Object> raw = aiServerClient.post("/ai/assistant/run", payload, extraHeaders);
