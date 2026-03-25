@@ -260,20 +260,38 @@ class TourService:
         visit_date = ''
         visit_time = ''
 
-        date_match = re.search(r'(?P<year>\d{4})[-./](?P<month>\d{1,2})[-./](?P<day>\d{1,2})', text)
+        date_match = re.search(
+            r'(?:(?P<year>\d{4})\s*년\s*)?'
+            r'(?P<month>\d{1,2})\s*(?:월|/|\.)\s*'
+            r'(?P<day>\d{1,2})\s*(?:일)?',
+            text,
+        )
         if date_match:
+            year = date_match.group('year') or str(datetime.now().year)
             visit_date = self._normalize_visit_date(
-                f"{date_match.group('year')}-{date_match.group('month')}-{date_match.group('day')}"
+                f"{year}-{date_match.group('month')}-{date_match.group('day')}"
             )
 
+        # Only parse time when the input includes an actual time marker.
+        # This prevents date-only inputs like '3월 28일' from becoming '15:00'.
         time_match = re.search(
-            r'(?:(?P<ampm>오전|오후|am|pm)\s*)?(?P<hour>\d{1,2})(?:\s*:\s*(?P<minute>\d{1,2}))?',
+            r'(?:(?P<ampm>오전|오후|am|pm)\s*)?'
+            r'(?P<hour>\d{1,2})'
+            r'(?:'
+            r'\s*:\s*(?P<minute_colon>\d{1,2})'
+            r'|'
+            r'\s*시(?:\s*(?P<minute_korean>\d{1,2})\s*분?)?'
+            r')',
             text,
             re.IGNORECASE,
         )
         if time_match:
             raw_hour = int(time_match.group('hour'))
-            raw_minute = int(time_match.group('minute') or 0)
+            raw_minute = int(
+                time_match.group('minute_colon')
+                or time_match.group('minute_korean')
+                or 0
+            )
             ampm = (time_match.group('ampm') or '').lower()
 
             if raw_hour <= 23 and raw_minute <= 59:
