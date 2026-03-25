@@ -424,6 +424,9 @@ public class RoomAiServiceImpl implements RoomAiService {
 		List<String> imageCaptions = includeSourceLists
 				? roomImageAnalysisRepository.findAllImageCaptionsByRoomNo(roomNo)
 				: Collections.emptyList();
+		List<String> facilityNames = includeSourceLists
+				? roomRepository.findFacilityNamesByRoomNo(roomNo)
+				: Collections.emptyList();
 
 		if(imageSummary == null) {
 			throw new IllegalStateException("Embedding prerequisites are missing. roomNo=" + roomNo);
@@ -461,6 +464,7 @@ public class RoomAiServiceImpl implements RoomAiService {
 				.imageCaptions(defaultList(imageCaptions))
 				.reviewSummary(reviewSummary == null ? "" : defaultString(reviewSummary.getReviewSummary()))
 				.reviews(defaultList(reviews))
+				.facilityNames(defaultList(facilityNames))
 				.build();
 //		log.info("Prepared embedding payload. roomNo={}", roomNo);
 		return request;
