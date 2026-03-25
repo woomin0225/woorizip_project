@@ -19,6 +19,7 @@ export default function ReservationForm({
     loading: resLoading,
     submitting,
     onSubmit,
+    phoneError,
   } = useReservationForm(facilityNo, reservationNo);
   const { facilityDetails, loading: facLoading } =
     useFacilityDetail(facilityNo);
@@ -199,8 +200,19 @@ export default function ReservationForm({
                         className={styles.input}
                         value={values.reservationPhone || ''}
                         onChange={handleChange}
+                        inputMode="numeric"
+                        placeholder="01011111111"
+                        aria-invalid={!!phoneError}
                         required
                       />
+                      <small className={styles.fieldHelp}>
+                        ※ 연락처는 숫자만 입력해주세요
+                      </small>
+                      {phoneError && (
+                        <small className={styles.fieldError}>
+                          {phoneError}
+                        </small>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -280,10 +292,15 @@ export default function ReservationForm({
                     className={styles.secondaryBtn}
                     onClick={async () => {
                       if (window.confirm('해당 예약을 취소하시겠습니까?')) {
-                        await onSubmit(null, navigate, {
-                          ...values,
-                          reservationStatus: 'CANCELED',
-                        }, location.state);
+                        await onSubmit(
+                          null,
+                          navigate,
+                          {
+                            ...values,
+                            reservationStatus: 'CANCELED',
+                          },
+                          location.state
+                        );
                       }
                     }}
                   >
