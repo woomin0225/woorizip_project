@@ -463,40 +463,43 @@ class RoomSummaryService:
         if not room_reviews:
             raise ValueError("요약할 리뷰 텍스트가 비어있습니다.")
         review_values = [r for r in room_reviews if r]
-        prompt = f"""Give me a summary about following room's reviews in korean. '{review_values}'"""
+        prompt = f"""다음에 오는 방의 리뷰들을 읽고 요약문을 생성해라. '{review_values}'"""
         messages = [
-            {"role": "system", "content": f"You are real estate summary master. You have to summarize about room's reviews and return the summary text."},
+            {"role": "system", "content": f"너는 부동산 정보 요약 장인이다. 방에 대한 리뷰들을 읽고 요약문을 반환하여라."},
+            {"role": "system", "content": f"반드시 한국어만 사용하고 일본어/한자 표기는 사용하지 마세요. 문장은 반드시 마침표로 끝나야한다."},
             {"role": "user", "content": prompt},
             {"role": "assistant", "content": ""}
         ]
-        result = await asyncio.to_thread(self.client.generate_from_messages, messages, 180)
+        result = await asyncio.to_thread(self.client.generate_from_messages, messages, 128)
         return result.strip()
     
     async def summary_room_image_captions(self, room_image_captions: list):
         if not room_image_captions:
-            raise ValueError("요약할 리뷰 텍스트가 비어있습니다.")
+            raise ValueError("요약할 사진캡션 텍스트가 비어있습니다.")
         caption_values = [c for c in room_image_captions if c]
-        prompt = f"""Give me a summary about following room's reviews in korean. '{caption_values}'"""
+        prompt = f"""다음에 오는 방 사진의 자막들을 읽고 요약문을 생성해라. '{caption_values}'"""
         messages = [
-            {"role": "system", "content": f"You are real estate summary master. You have to summarize about room's image captions and return the summary text."},
+            {"role": "system", "content": f"너는 부동산 정보 요약 장인이다. 방 사진의 자막들을 읽고 요약문을 반환하여라."},
+            {"role": "system", "content": f"반드시 한국어만 사용하고 일본어/한자 표기는 사용하지 마세요. 문장은 반드시 마침표로 끝나야한다."},
             {"role": "user", "content": prompt},
             {"role": "assistant", "content": ""}
         ]
-        result = await asyncio.to_thread(self.client.generate_from_messages, messages, 180)
+        result = await asyncio.to_thread(self.client.generate_from_messages, messages, 128)
         return result.strip()
     
     async def summary_room_total(self, room: RoomTotalRequest):
         if not room:
             raise ValueError("요약할 방 정보 텍스트가 비어있습니다.")
-        prompt = f"""Give me a summary about following room's basic information, image summary and review summary in korean. '{room}'"""
+        prompt = f"""다음 방 정보, 이미지 캡션요약문, 리뷰 요약문을 참고하여 한국어로 요약문을 제공하여라. 장점, 단점을 포함하고 어떤 유형의 사람에게 추천하는지 간단하게 언급해라. '{room}'"""
         category = """
         채광, 치안, 소음, 주변시설, 공용시설, 관리, 관리비, 주차, 학교, 마트, 배달, 이웃, 풍경, 냄새, 위치
         """
         messages = [
-            {"role": "system", "content": f"You are real estate agent. You have to summarize about room information and return the summary. You can use following category keywords on summarize work. Connect the descriptions for each category into neat sentences. category: {category}"},
-            {"role": "system", "content": f"refer to next definition. definition: {RoomTotalRequest}"},
+            {"role": "system", "content": f"너는 부동산 에이전트이다. 방에 대한 정보를 보고 그 요약문을 반환하여라. 요약과정 중 다음의 카테고리 키워드들을 사용하여 문장을 만들 수 있다. 카테고리에 대해 생성한 문장들을 하나의 온전한 문단글로 연결해라. 카테고리: {category}"},
+            {"role": "system", "content": f"다음 정의를 참고해라. 정의: {RoomTotalRequest}"},
+            {"role": "system", "content": f"반드시 한국어만 사용하고 일본어/한자 표기는 사용하지 마세요. 문장은 반드시 마침표로 끝나야한다."},
             {"role": "user", "content": prompt},
             {"role": "assistant", "content": ""}
         ]
-        result = await asyncio.to_thread(self.client.generate_from_messages, messages, 256)
+        result = await asyncio.to_thread(self.client.generate_from_messages, messages, 128)
         return result.strip()
