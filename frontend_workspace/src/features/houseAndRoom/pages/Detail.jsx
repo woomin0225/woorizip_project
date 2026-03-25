@@ -64,7 +64,7 @@ export default function Detail() {
   const [roomImageNames, setRoomImageNames] = useState([]);
   const [houseImageNames, setHouseImageNames] = useState([]);
 
-  // 由щ럭??Page濡??ㅺ퀬, ?レ옄 ?섏씠吏?ㅼ씠??
+  // 리뷰 페이지 번호와 페이지 데이터를 관리합니다.
   const [reviewPageNo, setReviewPageNo] = useState(0);
   const [reviewPage, setReviewPage] = useState(null);
   const [roomSummaryMap, setRoomSummaryMap] = useState({});
@@ -115,7 +115,7 @@ export default function Detail() {
 
   async function toggleWish(roomNo, nextWished) {
     if (!currentUserNo) {
-      alert('李?湲곕뒫? 濡쒓렇?????ъ슜?????덉뒿?덈떎.');
+      alert('찜 기능은 로그인 후에만 사용할 수 있습니다.');
       navigate(ROUTES.AUTH.LOGIN, { replace: true });
       return false;
     }
@@ -138,7 +138,7 @@ export default function Detail() {
       await loadWishlistMap();
       return true;
     } catch (e) {
-      alert(e.message || '李?泥섎━???ㅽ뙣?덉뒿?덈떎.');
+      alert(e.message || '찜 처리에 실패했습니다.');
       return false;
     }
   }
@@ -174,7 +174,7 @@ export default function Detail() {
 
   useEffect(() => () => clearTimeout(summaryPollTimeoutRef.current), []);
 
-  // 諛??좏깮 -> 諛?諛⑹씠誘몄? 濡쒕뱶 + 由щ럭 0?섏씠吏
+  // 방 선택 시 방 정보, 이미지, 리뷰 첫 페이지를 다시 불러옵니다.
   useEffect(() => {
     if (!selectedRoomNo) {
       setRoom(null);
@@ -201,7 +201,7 @@ export default function Detail() {
     })();
   }, [selectedRoomNo]);
 
-  // 由щ럭 ?섏씠吏 蹂寃?-> ?ъ“??
+  // 리뷰 페이지가 바뀌면 해당 페이지를 다시 조회합니다.
   useEffect(() => {
     if (!selectedRoomNo) return;
 
@@ -215,7 +215,7 @@ export default function Detail() {
     })();
   }, [selectedRoomNo, reviewPageNo]);
 
-  // houseNo媛 以鍮꾨릺硫?嫄대Ъ 愿??濡쒕뱶
+  // houseNo가 준비되면 건물 정보와 방 목록을 불러옵니다.
   useEffect(() => {
     if (!activeHouseNo) {
       setHouse(null);
@@ -287,7 +287,7 @@ export default function Detail() {
       setSummaryError(
         status === 'FAILED'
           ? summaryState?.lastErrorMessage ||
-              'AI 諛??뺣낫 ?붿빟 ?앹꽦???ㅽ뙣?덉뒿?덈떎.'
+              'AI 방 정보 요약 생성에 실패했습니다.'
           : ''
       );
     } catch (e) {
@@ -295,12 +295,12 @@ export default function Detail() {
       clearTimeout(summaryPollTimeoutRef.current);
       setSummaryLoading(false);
       setSummaryError(
-        e.message || 'AI 諛??뺣낫 ?붿빟 ?곹깭瑜?遺덈윭?ㅼ? 紐삵뻽?듬땲??'
+        e.message || 'AI 방 정보 요약 상태를 불러오지 못했습니다.'
       );
     }
   }
 
-  // ?낅줈??寃쎈줈(UploadProperties 湲곗?)
+  // 업로드 경로 기준으로 이미지 URL을 구성합니다.
   const houseImageUrls = useMemo(
     () =>
       houseImageNames
@@ -329,11 +329,11 @@ export default function Detail() {
     }
     shouldScrollToRoomRef.current = true;
     setSelectedRoomNo(nextRoomNo);
-    // ?쇱슦???묒뾽 ?댄썑: navigate(`/rooms/${nextRoomNo}`)
+    // 필요하면 추후 라우팅도 함께 갱신할 수 있습니다.
   }
 
   function handleRequireLoginForWish() {
-    alert('李?湲곕뒫? 濡쒓렇?????ъ슜?????덉뒿?덈떎.');
+    alert('찜 기능은 로그인 후에만 사용할 수 있습니다.');
     navigate(ROUTES.AUTH.LOGIN, { replace: true });
   }
 
@@ -365,7 +365,7 @@ export default function Detail() {
       if (status === 'FAILED') {
         setSummaryLoading(false);
         setSummaryError(
-          summary?.lastErrorMessage || 'AI 諛??뺣낫 ?붿빟 ?앹꽦???ㅽ뙣?덉뒿?덈떎.'
+          summary?.lastErrorMessage || 'AI 방 정보 요약 생성에 실패했습니다.'
         );
         return;
       }
@@ -375,7 +375,7 @@ export default function Detail() {
     } catch (e) {
       if (summaryRequestIdRef.current !== requestId) return;
       clearTimeout(summaryPollTimeoutRef.current);
-      setSummaryError(e.message || 'AI 諛??뺣낫 ?붿빟 ?앹꽦 ?붿껌???ㅽ뙣?덉뒿?덈떎.');
+      setSummaryError(e.message || 'AI 방 정보 요약 요청에 실패했습니다.');
     } finally {
       if (summaryRequestIdRef.current === requestId && !shouldKeepPolling) {
         setSummaryLoading(false);
@@ -385,7 +385,7 @@ export default function Detail() {
 
   return (
     <div className={styles.wrap}>
-      {/* 醫뚯륫 */}
+      {/* 좌측 사이드바 */}
       <aside className={styles.sidebar}>
         <div className={styles.sidebarSticky}>
           <div className={styles.roomListWrap}>
@@ -410,19 +410,19 @@ export default function Detail() {
               canApplyTour &&
               occupancyEndDateText && (
                 <div className={styles.applyHint}>
-                  ?꾩옱 嫄곗＜以묒씤 諛⑹씠吏留?怨꾩빟 醫낅즺 1媛쒖썡 ??湲곌컙?쇰줈,{' '}
-                  {occupancyEndDateText} ?댄썑 ?낆＜ 湲곗??쇰줈 ?ъ뼱/?낆＜ ?좎껌??
-                  媛?ν빀?덈떎.
+                  현재 거주중인 방이지만 계약 종료 1개월 전 기간으로,{' '}
+                  {occupancyEndDateText} 이후 입주 기준으로 투어/입주 신청이
+                  가능합니다.
                 </div>
               )}
           </div>
         </div>
       </aside>
 
-      {/* 以묒븰~?곗륫 */}
+      {/* 메인 콘텐츠 */}
       <main className={styles.main}>
         {!activeHouseNo && (
-          <div className={styles.empty}>?쇱そ 紐⑸줉?먯꽌 諛⑹쓣 ?좏깮?섏꽭??</div>
+          <div className={styles.empty}>좌측 목록에서 방을 선택하세요.</div>
         )}
 
         {activeHouseNo && (
@@ -430,7 +430,7 @@ export default function Detail() {
             <div className={styles.headerRow}>
               <div>
                 <h2 className={styles.title}>
-                  {house?.houseName ?? '?곸꽭蹂닿린'}
+                  {house?.houseName ?? '상세보기'}
                 </h2>
                 <div className={styles.subTitle}>
                   {house?.houseAddress ?? ''} {house?.houseAddressDetail ?? ''}
@@ -439,32 +439,32 @@ export default function Detail() {
               {loading && <div className={styles.loading}>불러오는 중...</div>}
             </div>
 
-            {/* 1) 嫄대Ъ?대?吏 */}
+            {/* 1) 건물 이미지 */}
             <section className={styles.section}>
-              {/* <h3 className={styles.sectionTitle}>嫄대Ъ ?ъ쭊</h3> */}
+              {/* <h3 className={styles.sectionTitle}>건물 사진</h3> */}
               <ImageGallery images={houseImageUrls} />
             </section>
 
-            {/* 2) 嫄대Ъ?뺣낫 */}
+            {/* 2) 건물 정보 */}
             <section className={styles.section}>
               {/* <h3 className={styles.sectionTitle}>{house?.houseName}</h3> */}
               <HouseInfoCard house={house} />
             </section>
 
-            {/* 3) ?묒?吏??二쇰? ?꾩씠肄섏? ?④?) */}
+            {/* 3) 방 위치 */}
             <section className={styles.section}>
-              <h3 className={styles.sectionTitle}>?뱧 ?꾩튂</h3>
+              <h3 className={styles.sectionTitle}>방 위치</h3>
               <HouseMiniMap lat={house?.houseLat} lng={house?.houseLng} />
             </section>
 
-            {/* 4) 怨듭슜?쒖꽕 */}
+            {/* 4) 공용시설 */}
             <section className={styles.section}>
-              <h3 className={styles.sectionTitle}>怨듭슜?쒖꽕</h3>
+              <h3 className={styles.sectionTitle}>공용시설</h3>
               <FacilityList houseNo={house?.houseNo || activeHouseNo} />
             </section>
 
             {!selectedRoomNo && (
-              <div className={styles.empty}>?쇱そ 紐⑸줉?먯꽌 諛⑹쓣 ?좏깮?섏꽭??</div>
+              <div className={styles.empty}>좌측 목록에서 방을 선택하세요.</div>
             )}
 
             {selectedRoomNo && (
@@ -472,17 +472,17 @@ export default function Detail() {
                 <section className={styles.section} ref={roomNameSectionRef}>
                   <br />
                   <br />
-                  <h3 className={styles.sectionTitle}>?썘截?{room?.roomName}</h3>
+                  <h3 className={styles.sectionTitle}>{room?.roomName}호</h3>
                 </section>
 
                 <section className={styles.section}>
                   <div className={styles.summaryCard}>
                     <div className={styles.summaryHeader}>
                       <div className={styles.summaryHeadingBlock}>
-                        <h4 className={styles.summaryTitle}>AI 諛??뺣낫 ?붿빟</h4>
+                        <h4 className={styles.summaryTitle}>AI 방 정보 요약</h4>
                         <p className={styles.summaryHint}>
-                          諛?湲곕낯 ?뺣낫, ?ъ쭊 ?붿빟, 由щ럭 ?붿빟??臾띠뼱??AI媛 ??
-                          踰덉뿉 ?뺣━?⑸땲??
+                          방 기본 정보, 사진 요약, 리뷰 요약을 묶어서 AI가 한
+                          번에 정리해드립니다.
                         </p>
                       </div>
 
@@ -493,11 +493,11 @@ export default function Detail() {
                         disabled={!selectedRoomNo || summaryLoading}
                       >
                         {summaryLoading
-                          ? '?붿빟 ?앹꽦 以?..'
+                          ? '요약 생성 중...'
                           : currentSummaryState?.summaryStatus === 'DONE' &&
                               currentRoomSummary
-                            ? 'AI 諛??뺣낫 ?붿빟 ?ㅼ떆 遺덈윭?ㅺ린'
-                            : 'AI 諛??뺣낫 ?붿빟'}
+                            ? 'AI 방 정보 요약 다시 불러오기'
+                            : 'AI 방 정보 요약'}
                       </button>
                     </div>
 
@@ -511,7 +511,7 @@ export default function Detail() {
                           className={styles.summarySpinner}
                           aria-hidden="true"
                         />
-                        <span>AI媛 諛??뺣낫瑜??붿빟?섎뒗 以묒엯?덈떎...</span>
+                        <span>AI가 방 정보를 요약하는 중입니다...</span>
                       </div>
                     )}
 
@@ -532,60 +532,60 @@ export default function Detail() {
                       !summaryError &&
                       currentSummaryState?.summaryStatus !== 'DONE' && (
                         <div className={styles.summaryPlaceholder}>
-                          踰꾪듉???꾨Ⅴ硫??꾩옱 諛⑹쓽 醫낇빀 ?붿빟 寃곌낵瑜??ш린?먯꽌
-                          ?뺤씤?????덉뒿?덈떎.
+                          버튼을 누르면 현재 방의 종합 요약 결과를 여기에서
+                          확인할 수 있습니다.
                         </div>
                       )}
                   </div>
                 </section>
 
-                {/* 5) 諛⑹씠誘몄? */}
+                {/* 5) 방 이미지 */}
                 <section className={styles.section}>
-                  {/* <h3 className={styles.sectionTitle}>諛??ъ쭊</h3> */}
+                  {/* <h3 className={styles.sectionTitle}>방 사진</h3> */}
                   <ImageGallery images={roomImageUrls} />
                 </section>
 
-                {/* 6) 諛⑹젙蹂?(怨듭떎?щ? ?ы븿) */}
+                {/* 6) 방 정보 */}
                 <section className={styles.section}>
-                  {/* <h3 className={styles.sectionTitle}>諛??뺣낫</h3> */}
+                  {/* <h3 className={styles.sectionTitle}>방 정보</h3> */}
                   <div className={styles.infoGrid}>
-                    {/* <div>?썘截??몄떎: {room?.roomName ?? '-'}</div> */}
+                    {/* <div>호수: {room?.roomName ?? '-'}</div> */}
                     <div>
                       상태: {room?.roomEmptyYn ? '공실' : '거주중'}
                     </div>
                     <div>
-                      ?랃툘 嫄곕옒:{' '}
+                      거래 종류:{' '}
                       {room?.roomMethod == 'L'
-                        ? '?꾩꽭'
+                        ? '전세'
                         : room?.roomMethod == 'M'
-                          ? '?붿꽭'
+                          ? '월세'
                           : '-'}
                     </div>
-                    <div>?뮥 蹂댁쬆湲? {toKrwText(room?.roomDeposit)}</div>
-                    <div>?뮥 ?붿꽭: {toKrwText(room?.roomMonthly)}</div>
-                    <div>?뱪 硫댁쟻: {room?.roomArea ?? '-'}</div>
-                    <div>?㎛ 諛⑺뼢: {room?.roomFacing ?? '-'}</div>
-                    <div>?썜截?諛??? {room?.roomRoomCount ?? '-'}</div>
-                    <div>?슺 ?뺤떎 ?? {room?.roomBathCount ?? '-'}</div>
-                    <div>?뱠 ?낆＜媛?μ씪: {room?.roomAvailableDate ?? '-'}</div>
+                    <div>보증금: {toKrwText(room?.roomDeposit)}</div>
+                    <div>월세: {toKrwText(room?.roomMonthly)}</div>
+                    <div>면적: {room?.roomArea ?? '-'}</div>
+                    <div>방향: {room?.roomFacing ?? '-'}</div>
+                    <div>방 개수: {room?.roomRoomCount ?? '-'}</div>
+                    <div>욕실 수: {room?.roomBathCount ?? '-'}</div>
+                    <div>입주가능일: {room?.roomAvailableDate ?? '-'}</div>
                   </div>
 
                   <div className={styles.abstractBox}>
-                    {room?.roomAbstract || '?뚭컻 ?댁슜???놁뒿?덈떎.'}
+                    {room?.roomAbstract || '공개 내용이 없습니다.'}
                   </div>
                 </section>
 
-                {/* 7) 諛⑹샃??*/}
+                {/* 7) 방 옵션 */}
                 <section className={styles.section}>
-                  <h3 className={styles.sectionTitle}>諛??듭뀡</h3>
+                  <h3 className={styles.sectionTitle}>방 옵션</h3>
                   <RoomOptionList options={room?.roomOptions} />
                 </section>
 
-                {/* 8) 由щ럭(Page + ?レ옄 ?섏씠吏?ㅼ씠?? */}
+                {/* 8) 리뷰 */}
                 <section className={styles.section}>
                   <br />
                   <br />
-                  {/* <h3 className={styles.sectionTitle}>由щ럭</h3> */}
+                  {/* <h3 className={styles.sectionTitle}>리뷰</h3> */}
                   <ReviewList
                     page={reviewPage}
                     currentUserNo={currentUserNo}
