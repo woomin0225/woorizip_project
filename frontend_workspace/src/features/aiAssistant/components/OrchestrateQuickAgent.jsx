@@ -1115,6 +1115,7 @@ export default function OrchestrateQuickAgent() {
     try {
       let lessorForRequest = resolvedIsLessor;
       let requestSessionId = sessionId;
+      let nextUserProfile = userProfile;
 
       if (isRoomCreateMessage(messageText)) {
         // 사용자가 다시 "방 등록"을 보냈다면 이전 draft 수집을 이어가기보다
@@ -1147,6 +1148,26 @@ export default function OrchestrateQuickAgent() {
         }
       }
 
+      if (
+        accessToken &&
+        (!String(nextUserProfile?.userName || '').trim() ||
+          !String(nextUserProfile?.userPhone || '').trim())
+      ) {
+        try {
+          const info = await getMyInfo();
+          nextUserProfile = {
+            userName: String(
+              info?.name || info?.userName || info?.nickname || ''
+            ).trim(),
+            userPhone: String(
+              info?.phone || info?.phoneNumber || info?.userPhone || ''
+            ).trim(),
+          };
+        } catch {
+          nextUserProfile = userProfile;
+        }
+      }
+
       const roomContext = getRoomContext(location.pathname);
       const roomCreateContext = getRoomCreateContext(location, managedHouses);
       const navigationContext = getCurrentPageNavigationContext(
@@ -1167,8 +1188,8 @@ export default function OrchestrateQuickAgent() {
           userProfile: {
             isAdmin,
             isLessor: lessorForRequest,
-            userName: userProfile?.userName || userDisplayName,
-            userPhone: userProfile?.userPhone || '',
+            userName: nextUserProfile?.userName || userDisplayName,
+            userPhone: nextUserProfile?.userPhone || '',
           },
           siteProfile: {
             serviceName: '우리집',
