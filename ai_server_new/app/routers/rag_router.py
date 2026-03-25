@@ -2,7 +2,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Body, Depends
 
-from app.dependencies import get_rag_service, get_tokenizer
+from app.dependencies import get_rag_service
 from app.services.rag_service import RagService
 
 # /ai/rag 아래에 RAG 관련 API를 모아 두기 위한 라우터입니다.
@@ -22,11 +22,10 @@ async def room_search(
     # Depends를 사용하면 라우터가 서비스 객체를 직접 생성하지 않고
     # FastAPI의 의존성 주입 시스템에서 받아 쓸 수 있습니다.
     rag_service: Annotated[RagService, Depends(get_rag_service)],
-    tokenizer=Depends(get_tokenizer),
 ):
     # 실제 의미 검색은 RagService가 담당합니다.
     # 라우터는 "요청을 받고", "응답 형태를 정리해서 돌려주는" 역할만 합니다.
-    room_list = await rag_service.room_rag(text, tokenizer)
+    room_list = await rag_service.room_rag(text)
 
     # 스프링 쪽 기존 DTO가 room 번호 리스트만 기대하고 있어서
     # 호환성을 위해 roomNo만 따로 뽑은 배열도 함께 내려줍니다.
