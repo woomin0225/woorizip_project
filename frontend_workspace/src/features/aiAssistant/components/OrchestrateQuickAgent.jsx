@@ -53,6 +53,11 @@ import botIcon from '../../../assets/images/ai_bot.png';
 import { useAuth } from '../../../app/providers/AuthProvider';
 import { parseJwt } from '../../../app/providers/utils/jwt';
 import { useVoiceMode } from '../context/VoiceModeContext';
+import {
+  getCurrentPageNavigationContext,
+  PAGE_NAVIGATION_TARGETS,
+  resolvePageNavigation,
+} from '../navigation/pageNavigation';
 import styles from './OrchestrateQuickAgent.module.css';
 import {
   getFacilityList,
@@ -251,6 +256,25 @@ export default function OrchestrateQuickAgent() {
   const goToPage = (pathName, messageText, actionIds = []) => {
     navigate(pathName);
     appendAssistantMessage(messageText, actionIds);
+  };
+
+  const handleAssistantNavigateAction = (result, fallbackActionIds = []) => {
+    const actionName = String(result?.action?.name || '').toUpperCase();
+    const actionPath = String(result?.action?.path || '').trim();
+    if (result?.requiresConfirm || actionName !== 'NAVIGATE' || !actionPath) {
+      return false;
+    }
+    navigate(actionPath);
+    if (fallbackActionIds.length > 0) {
+      setMessages((prev) =>
+        prev.map((message, index) =>
+          index === prev.length - 1 && message.role === 'assistant'
+            ? { ...message, actionIds: uniqActionIds(fallbackActionIds) }
+            : message
+        )
+      );
+    }
+    return true;
   };
 
   const moveToRecommendedRoomDetail = (room) => {
@@ -1345,6 +1369,10 @@ export default function OrchestrateQuickAgent() {
       try {
         setLoading(true);
         const roomCreateContext = getRoomCreateContext(location, managedHouses);
+        const navigationContext = getCurrentPageNavigationContext(
+          window.location.pathname,
+          roomContext
+        );
         const result = await runOrchestrateCommand({
           text: '현재 보고 있는 웹페이지의 내용을 한국어로 간단히 요약해줘. 페이지에 없는 내용은 추측하지 마.',
           sessionId,
@@ -1353,6 +1381,8 @@ export default function OrchestrateQuickAgent() {
             ...roomContext,
             ...roomCreateContext,
             currentRoomResolved: Boolean(roomContext.roomNo),
+            availablePageTargets: PAGE_NAVIGATION_TARGETS,
+            navigationContext,
             pageSnapshot: getPageContext(),
             userProfile: {
               isAdmin,
@@ -1479,6 +1509,31 @@ export default function OrchestrateQuickAgent() {
     }
 
     if (await handleRoomRecommendationFlow(messageText)) {
+      return true;
+    }
+
+    const roomContext = getRoomContext(location.pathname);
+    const navigationContext = getCurrentPageNavigationContext(
+      location.pathname,
+      roomContext
+    );
+    const resolvedNavigation = resolvePageNavigation(
+      messageText,
+      navigationContext
+    );
+    if (resolvedNavigation?.type === 'navigate') {
+      goToPage(
+        resolvedNavigation.path,
+        resolvedNavigation.message,
+        resolvedNavigation.actionIds || []
+      );
+      return true;
+    }
+    if (resolvedNavigation?.type === 'unavailable') {
+      appendAssistantMessage(
+        resolvedNavigation.message,
+        resolvedNavigation.actionIds || []
+      );
       return true;
     }
 
@@ -1765,6 +1820,7 @@ export default function OrchestrateQuickAgent() {
     try {
       let lessorForRequest = resolvedIsLessor;
       let requestSessionId = sessionId;
+      let nextUserProfile = userProfile;
 
       if (isRoomCreateMessage(messageText)) {
         // 사용자가 다시 "방 등록"을 보냈다면 이전 draft 수집을 이어가기보다
@@ -1797,8 +1853,32 @@ export default function OrchestrateQuickAgent() {
         }
       }
 
+      if (
+        accessToken &&
+        (!String(nextUserProfile?.userName || '').trim() ||
+          !String(nextUserProfile?.userPhone || '').trim())
+      ) {
+        try {
+          const info = await getMyInfo();
+          nextUserProfile = {
+            userName: String(
+              info?.name || info?.userName || info?.nickname || ''
+            ).trim(),
+            userPhone: String(
+              info?.phone || info?.phoneNumber || info?.userPhone || ''
+            ).trim(),
+          };
+        } catch {
+          nextUserProfile = userProfile;
+        }
+      }
+
       const roomContext = getRoomContext(location.pathname);
       const roomCreateContext = getRoomCreateContext(location, managedHouses);
+      const navigationContext = getCurrentPageNavigationContext(
+        window.location.pathname,
+        roomContext
+      );
       const result = await runOrchestrateCommand({
         text: messageText,
         sessionId: requestSessionId,
@@ -1807,12 +1887,14 @@ export default function OrchestrateQuickAgent() {
           ...roomContext,
           ...roomCreateContext,
           currentRoomResolved: Boolean(roomContext.roomNo),
+          availablePageTargets: PAGE_NAVIGATION_TARGETS,
+          navigationContext,
           pageSnapshot: getPageContext(),
           userProfile: {
             isAdmin,
             isLessor: lessorForRequest,
-            userName: userProfile?.userName || userDisplayName,
-            userPhone: userProfile?.userPhone || '',
+            userName: nextUserProfile?.userName || userDisplayName,
+            userPhone: nextUserProfile?.userPhone || '',
           },
           siteProfile: {
             serviceName: '우리집',
@@ -1839,6 +1921,7 @@ export default function OrchestrateQuickAgent() {
       const actionIds = extractSuggestedActions(result);
       const formattedReply = formatAssistantReply(String(reply));
       appendAssistantMessage(formattedReply, actionIds);
+      handleAssistantNavigateAction(result, actionIds);
 
       if (voiceModeEnabled && result?.requiresConfirm && actionIds.length > 0) {
         setPendingConfirmation({
@@ -2017,6 +2100,15 @@ export default function OrchestrateQuickAgent() {
                 }
               >
                 {voiceModeEnabled ? '음성 끄기' : '음성 켜기'}
+              </button>
+              <button
+                type="button"
+                className={styles.closeBtn}
+                onClick={closePanel}
+                aria-label="우리봇 채팅창 닫기"
+                title="닫기"
+              >
+                X
               </button>
               <button
                 type="button"

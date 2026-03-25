@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useFindPassword } from '../hooks/useUserHooks';
 import {
   Button,
@@ -17,6 +18,7 @@ import styles from './FindPassword.module.css';
 
 export default function FindPassword() {
   const mainRef = useRef(null);
+  const navigate = useNavigate();
   const {
     form,
     loading,
@@ -35,6 +37,15 @@ export default function FindPassword() {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
+
+  const onSubmit = async (e) => {
+    const changed = await handleRequestNewPassword(e);
+    if (changed) {
+      window.setTimeout(() => {
+        navigate('/login', { replace: true });
+      }, 1200);
+    }
+  };
 
   return (
     <>
@@ -58,9 +69,9 @@ export default function FindPassword() {
                 <Card className="bg-secondary shadow border-0">
                   <CardBody className="px-lg-5 py-lg-5">
                     <div className="text-center text-muted mb-4">
-                      <small>비밀번호 찾기</small>
+                      <small>이름, 아이디, 휴대폰 번호를 확인한 뒤 새 비밀번호를 설정해 주세요.</small>
                     </div>
-                    <Form onSubmit={handleRequestNewPassword}>
+                    <Form onSubmit={onSubmit}>
                       <FormGroup className="mb-3">
                         <InputGroup className="input-group-alternative">
                           <InputGroupText>
@@ -71,6 +82,22 @@ export default function FindPassword() {
                             type="text"
                             placeholder="이름 입력"
                             value={form.name}
+                            onChange={handleChange}
+                            disabled={isVerified}
+                            required
+                          />
+                        </InputGroup>
+                      </FormGroup>
+                      <FormGroup className="mb-3">
+                        <InputGroup className="input-group-alternative">
+                          <InputGroupText>
+                            <i className="fa fa-envelope" />
+                          </InputGroupText>
+                          <Input
+                            name="emailId"
+                            type="email"
+                            placeholder="가입한 아이디 입력"
+                            value={form.emailId}
                             onChange={handleChange}
                             disabled={isVerified}
                             required
@@ -104,28 +131,26 @@ export default function FindPassword() {
                               ? '인증 중...'
                               : isVerified
                                 ? '인증완료'
-                                : '본인 인증'}
+                                : '휴대폰 확인'}
                           </Button>
                         </InputGroup>
                       </FormGroup>
                       {isVerified && (
                         <>
-                          <div className="text-success text-center mb-3">
-                            <small>
-                              휴대폰 PASS 인증이 완료되었습니다.
-                              {verifiedPhone ? ` (${verifiedPhone})` : ''}
-                            </small>
-                            <div className="mt-2">
-                              <Button
-                                color="secondary"
-                                size="sm"
-                                type="button"
-                                className={`${styles.inlineActionBtn} ${styles.softActionBtn}`}
-                                onClick={handleResetVerification}
-                              >
-                                인증 초기화
-                              </Button>
-                            </div>
+                          <div className={styles.verifiedSummary}>
+                            <div className={styles.verifiedTitle}>휴대폰 확인이 완료되었습니다.</div>
+                            {verifiedPhone && (
+                              <div className={styles.verifiedPhone}>{verifiedPhone}</div>
+                            )}
+                            <Button
+                              color="secondary"
+                              size="sm"
+                              type="button"
+                              className={styles.softActionBtn}
+                              onClick={handleResetVerification}
+                            >
+                              다시 확인하기
+                            </Button>
                           </div>
                           <FormGroup className="mb-3">
                             <InputGroup className="input-group-alternative">
@@ -135,7 +160,7 @@ export default function FindPassword() {
                               <Input
                                 name="newPassword"
                                 type="password"
-                                placeholder="새 비밀번호 (8~16자 영문/숫자/특수문자)"
+                                placeholder="새 비밀번호 입력"
                                 value={form.newPassword}
                                 onChange={handleChange}
                                 required

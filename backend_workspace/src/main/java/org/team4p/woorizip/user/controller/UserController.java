@@ -62,8 +62,8 @@ public class UserController {
     public ResponseEntity<ApiResponse<Void>> sendPasswordResetCode(
             @RequestBody @Valid PasswordResetCodeSendRequest request
     ) {
-        userService.sendPasswordResetCode(request.getName(), request.getPhone());
-        return ResponseEntity.ok(ApiResponse.ok("인증번호가 발송되었습니다.", null));
+        userService.sendPasswordResetCode(request.getName(), request.getEmailId(), request.getPhone());
+        return ResponseEntity.ok(ApiResponse.ok("본인 확인이 완료되었습니다.", null));
     }
 
     /**
@@ -76,12 +76,13 @@ public class UserController {
     ) {
         String verificationToken = userService.verifyPasswordResetCode(
                 request.getName(),
+                request.getEmailId(),
                 request.getPhone(),
                 request.getCode()
         );
 
         return ResponseEntity.ok(
-                ApiResponse.ok("휴대폰 본인인증이 완료되었습니다.", Map.of("verificationToken", verificationToken))
+                ApiResponse.ok("본인 확인이 완료되었습니다.", Map.of("verificationToken", verificationToken))
         );
     }
 
@@ -95,6 +96,7 @@ public class UserController {
     ) {
         userService.resetPasswordByPhoneVerification(
                 request.getName(),
+                request.getEmailId(),
                 request.getPhone(),
                 request.getVerificationToken(),
                 request.getNewPassword()

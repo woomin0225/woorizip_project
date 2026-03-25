@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+import json
 import re
 
 from app.clients.spring_tour_client import SpringTourClient
@@ -72,6 +73,37 @@ class TourService:
             resolved_user_phone = self._resolve_optional_user_phone(
                 request.userPhone or default_user_phone
             )
+            if not resolved_user_name or not resolved_user_phone:
+                return {
+                    'schemaVersion': request.schemaVersion,
+                    'reply': (
+                        "투어 신청을 계속하려면 신청자 정보 확인이 필요합니다.\n"
+                        "로그인 상태를 확인한 뒤 다시 시도해 주세요."
+                    ),
+                    'intent': 'TOUR_APPLY',
+                    'slots': {
+                        'roomNo': (request.roomNo or '').strip(),
+                        'roomName': (request.roomName or '').strip(),
+                        'visitDate': visit_date,
+                        'visitTime': visit_time,
+                        'preferredVisitAt': (request.preferredVisitAt or '').strip(),
+                        'userName': resolved_user_name,
+                        'userPhone': resolved_user_phone,
+                        'inquiry': self._normalize_inquiry(request.inquiry),
+                    },
+                    'action': {
+                        'name': 'TOUR_APPLY',
+                        'path': '/ai/tour/workflow/apply',
+                        'target': 'spring_tour_api',
+                        'status': 'missing_user_profile',
+                    },
+                    'result': {},
+                    'errorCode': 'TOUR_APPLY_MISSING_USER_PROFILE',
+                    'requiresConfirm': False,
+                    'sessionId': request.sessionId,
+                    'clientRequestId': request.clientRequestId,
+                    'raw': {'error': '사용자 이름 또는 전화번호가 필요합니다.'},
+                }
             apply_result = await self.apply(
                 TourApplyReq(
                     roomNo=request.roomNo,
@@ -144,9 +176,99 @@ class TourService:
                     'clientRequestId': request.clientRequestId,
                     'raw': {'error': error_message},
                 }
+            if self._is_schedule_error(error_message):
+                return {
+                    'schemaVersion': request.schemaVersion,
+                    'reply': (
+                        "방문 날짜와 시간을 다시 확인해 주세요.\n"
+                        "투어 가능 시간은 14시 ~ 19시 사이 정각입니다.\n"
+                        "예: 5월 13일 오후 5시"
+                    ),
+                    'intent': 'TOUR_APPLY',
+                    'slots': {
+                        'roomNo': (request.roomNo or '').strip(),
+                        'roomName': (request.roomName or '').strip(),
+                        'visitDate': (request.visitDate or '').strip(),
+                        'visitTime': (request.visitTime or '').strip(),
+                        'preferredVisitAt': (request.preferredVisitAt or '').strip(),
+                    },
+                    'action': {
+                        'name': 'TOUR_APPLY',
+                        'path': '/ai/tour/workflow/apply',
+                        'target': 'spring_tour_api',
+                        'status': 'retry',
+                    },
+                    'result': {},
+                    'errorCode': 'TOUR_APPLY_INVALID_SCHEDULE',
+                    'requiresConfirm': False,
+                    'sessionId': request.sessionId,
+                    'clientRequestId': request.clientRequestId,
+                    'raw': {'error': error_message},
+                }
+            if self._is_auth_error(error_message):
+                return {
+                    'schemaVersion': request.schemaVersion,
+                    'reply': (
+                        "투어 신청을 진행하려면 로그인 상태를 먼저 확인해 주세요.\n"
+                        "로그인 후 같은 방에서 다시 신청해 주시면 바로 도와드릴게요."
+                    ),
+                    'intent': 'TOUR_APPLY',
+                    'slots': {
+                        'roomNo': (request.roomNo or '').strip(),
+                        'roomName': (request.roomName or '').strip(),
+                        'visitDate': (request.visitDate or '').strip(),
+                        'visitTime': (request.visitTime or '').strip(),
+                        'preferredVisitAt': (request.preferredVisitAt or '').strip(),
+                    },
+                    'action': {
+                        'name': 'TOUR_APPLY',
+                        'path': '/ai/tour/workflow/apply',
+                        'target': 'spring_tour_api',
+                        'status': 'rejected',
+                    },
+                    'result': {},
+                    'errorCode': 'TOUR_APPLY_AUTH_REQUIRED',
+                    'requiresConfirm': False,
+                    'sessionId': request.sessionId,
+                    'clientRequestId': request.clientRequestId,
+                    'raw': {'error': error_message},
+                }
+            spring_message = self._extract_spring_error_message(error_message)
+            if spring_message:
+                return {
+                    'schemaVersion': request.schemaVersion,
+                    'reply': (
+                        f"투어 신청을 완료하지 못했어요.\n"
+                        f"{spring_message}"
+                    ),
+                    'intent': 'TOUR_APPLY',
+                    'slots': {
+                        'roomNo': (request.roomNo or '').strip(),
+                        'roomName': (request.roomName or '').strip(),
+                        'visitDate': (request.visitDate or '').strip(),
+                        'visitTime': (request.visitTime or '').strip(),
+                        'preferredVisitAt': (request.preferredVisitAt or '').strip(),
+                    },
+                    'action': {
+                        'name': 'TOUR_APPLY',
+                        'path': '/ai/tour/workflow/apply',
+                        'target': 'spring_tour_api',
+                        'status': 'failed',
+                    },
+                    'result': {},
+                    'errorCode': 'TOUR_APPLY_REJECTED',
+                    'requiresConfirm': False,
+                    'sessionId': request.sessionId,
+                    'clientRequestId': request.clientRequestId,
+                    'raw': {'error': error_message},
+                }
             return {
                 'schemaVersion': request.schemaVersion,
-                'reply': f"투어 신청 처리 중 문제가 발생했습니다. {error_message}",
+                'reply': (
+                    "투어 신청 처리 중 문제가 발생했습니다.\n"
+                    "입력하신 일정은 확인했지만 신청을 완료하지 못했어요.\n"
+                    "잠시 후 다시 시도해 주세요."
+                ),
                 'intent': 'TOUR_APPLY',
                 'slots': {
                     'roomNo': (request.roomNo or '').strip(),
@@ -174,6 +296,44 @@ class TourService:
                 'clientRequestId': request.clientRequestId,
                 'raw': {'error': str(exc)},
             }
+
+    def _is_schedule_error(self, error_message: str) -> bool:
+        lowered = (error_message or '').lower()
+        schedule_keywords = (
+            '날짜와 시간 형식이 올바르지 않습니다',
+            '방문시간 형식이 올바르지 않습니다',
+            '방문시간 값이 필요합니다',
+            '방문일자 값이 필요합니다',
+            '방문일자 형식이 올바르지 않습니다',
+            'tour_unavailable_time',
+        )
+        return any(keyword in lowered for keyword in map(str.lower, schedule_keywords))
+
+    def _is_auth_error(self, error_message: str) -> bool:
+        lowered = (error_message or '').lower()
+        return 'status=401' in lowered or 'status=403' in lowered
+
+    def _extract_spring_error_message(self, error_message: str) -> str:
+        compact = (error_message or '').strip()
+        if not compact:
+            return ''
+        body_marker = 'body='
+        marker_index = compact.find(body_marker)
+        if marker_index < 0:
+            return ''
+        body_text = compact[marker_index + len(body_marker):].strip()
+        if not body_text:
+            return ''
+        try:
+            parsed = json.loads(body_text)
+        except json.JSONDecodeError:
+            return ''
+        if not isinstance(parsed, dict):
+            return ''
+        message = parsed.get('message')
+        if isinstance(message, str) and message.strip():
+            return message.strip()
+        return ''
 
     def _resolve_visit_schedule(
         self,
@@ -218,6 +378,29 @@ class TourService:
             re.search(r'\d{4}[-./]\d{1,2}[-./]\d{1,2}\s+\d{1,2}:\d{2}', text)
         )
 
+    def looks_like_partial_schedule_input(self, value: str | None) -> bool:
+        text = (value or '').strip()
+        if not text:
+            return False
+        parts = self.extract_schedule_parts(text)
+        has_date = bool(parts["visitDate"])
+        has_time = bool(parts["visitTime"])
+        return has_date ^ has_time
+
+    def looks_like_date_only_input(self, value: str | None) -> bool:
+        text = (value or '').strip()
+        if not text:
+            return False
+        parts = self.extract_schedule_parts(text)
+        return bool(parts["visitDate"]) and not bool(parts["visitTime"])
+
+    def looks_like_time_only_input(self, value: str | None) -> bool:
+        text = (value or '').strip()
+        if not text:
+            return False
+        parts = self.extract_schedule_parts(text)
+        return bool(parts["visitTime"]) and not bool(parts["visitDate"])
+
     def merge_schedule_input(
         self,
         *,
@@ -260,20 +443,38 @@ class TourService:
         visit_date = ''
         visit_time = ''
 
-        date_match = re.search(r'(?P<year>\d{4})[-./](?P<month>\d{1,2})[-./](?P<day>\d{1,2})', text)
+        date_match = re.search(
+            r'(?:(?P<year>\d{4})\s*년\s*)?'
+            r'(?P<month>\d{1,2})\s*(?:월|/|\.)\s*'
+            r'(?P<day>\d{1,2})\s*(?:일)?',
+            text,
+        )
         if date_match:
+            year = date_match.group('year') or str(datetime.now().year)
             visit_date = self._normalize_visit_date(
-                f"{date_match.group('year')}-{date_match.group('month')}-{date_match.group('day')}"
+                f"{year}-{date_match.group('month')}-{date_match.group('day')}"
             )
 
+        # Only parse time when the input includes an actual time marker.
+        # This prevents date-only inputs like '3월 28일' from becoming '15:00'.
         time_match = re.search(
-            r'(?:(?P<ampm>오전|오후|am|pm)\s*)?(?P<hour>\d{1,2})(?:\s*:\s*(?P<minute>\d{1,2}))?',
+            r'(?:(?P<ampm>오전|오후|am|pm)\s*)?'
+            r'(?P<hour>\d{1,2})'
+            r'(?:'
+            r'\s*:\s*(?P<minute_colon>\d{1,2})'
+            r'|'
+            r'\s*시(?:\s*(?P<minute_korean>\d{1,2})\s*분?)?'
+            r')',
             text,
             re.IGNORECASE,
         )
         if time_match:
             raw_hour = int(time_match.group('hour'))
-            raw_minute = int(time_match.group('minute') or 0)
+            raw_minute = int(
+                time_match.group('minute_colon')
+                or time_match.group('minute_korean')
+                or 0
+            )
             ampm = (time_match.group('ampm') or '').lower()
 
             if raw_hour <= 23 and raw_minute <= 59:

@@ -20,6 +20,10 @@ GENERAL_CHAT_KEYWORDS = (
     '뭐할수있어', '뭐 할 수 있어', '무엇을할수있어', '무엇을 할 수 있어', '자기소개',
     '소개해줘', '고마워', '감사', '잘가', '이야기하자'
 )
+PAGE_NAVIGATION_KEYWORDS = (
+    '이동', '가줘', '가고싶', '가고싶어', '들어가', '열어', '보여줘',
+    '페이지', '화면', '목록', '바로가기', '안내'
+)
 TOUR_APPLY_KEYWORDS = (
     '투어신청', '투어 신청', '방보러', '방 보러', '방보고싶', '방 보고 싶',
     '방보러가', '방 보러 가', '내방문', '내 방문', '방문예약', '방문 예약',
@@ -136,6 +140,56 @@ def normalize_context(context: dict[str, Any] | None) -> dict[str, Any]:
         # 방 등록처럼 권한이 필요한 작업은 이 userProfile을 기준으로 1차 차단한다.
         normalized['userProfile'] = user_profile
 
+    available_page_targets = context.get('availablePageTargets')
+    if isinstance(available_page_targets, list):
+        normalized_targets: list[dict[str, Any]] = []
+        for raw in available_page_targets[:40]:
+            if not isinstance(raw, dict):
+                continue
+            target = {
+                'id': compact_text(raw.get('id'), 80),
+                'label': compact_text(raw.get('label'), 80),
+                'path': compact_text(raw.get('path'), 200),
+            }
+            aliases = raw.get('aliases')
+            if isinstance(aliases, list):
+                target['aliases'] = [
+                    compact_text(item, 40)
+                    for item in aliases[:8]
+                    if compact_text(item, 40)
+                ]
+            cleaned = {key: value for key, value in target.items() if value}
+            if cleaned:
+                normalized_targets.append(cleaned)
+        if normalized_targets:
+            normalized['availablePageTargets'] = normalized_targets
+
+    navigation_context = context.get('navigationContext')
+    if isinstance(navigation_context, dict):
+        normalized_navigation = {
+            'pathname': compact_text(navigation_context.get('pathname'), 200),
+            'roomNo': compact_text(navigation_context.get('roomNo'), 120),
+            'roomName': compact_text(navigation_context.get('roomName'), 120),
+            'houseNo': compact_text(navigation_context.get('houseNo'), 120),
+            'currentHouseNo': compact_text(navigation_context.get('currentHouseNo'), 120),
+            'facilityNo': compact_text(navigation_context.get('facilityNo'), 120),
+            'reservationNo': compact_text(navigation_context.get('reservationNo'), 120),
+        }
+        post_context = navigation_context.get('postContext')
+        if isinstance(post_context, dict):
+            normalized_post = {
+                'type': compact_text(post_context.get('type'), 40),
+                'postNo': compact_text(post_context.get('postNo'), 40),
+            }
+            normalized_navigation['postContext'] = {
+                key: value for key, value in normalized_post.items() if value
+            }
+        cleaned_navigation = {
+            key: value for key, value in normalized_navigation.items() if value
+        }
+        if cleaned_navigation:
+            normalized['navigationContext'] = cleaned_navigation
+
     return normalized
 
 
@@ -149,6 +203,13 @@ def should_include_page_context(text: str) -> bool:
             return False
 
     return any(keyword.replace(' ', '') in compact for keyword in PAGE_CONTEXT_KEYWORDS)
+
+
+def should_include_navigation_context(text: str) -> bool:
+    compact = compact_text(text, MAX_TEXT_LENGTH).lower().replace(' ', '')
+    if not compact:
+        return False
+    return any(keyword.replace(' ', '') in compact for keyword in PAGE_NAVIGATION_KEYWORDS)
 
 
 def build_instruction(text: str, context: dict[str, Any]) -> str:
@@ -196,6 +257,42 @@ def build_instruction(text: str, context: dict[str, Any]) -> str:
         if page_snapshot.get('contentExcerpt'):
             lines.append(f"content_excerpt: {page_snapshot['contentExcerpt']}")
         lines.append('[/CURRENT_PAGE_CONTEXT]')
+        parts.append('\n'.join(lines))
+
+    available_page_targets = context.get('availablePageTargets') or []
+    navigation_context = context.get('navigationContext') or {}
+    if available_page_targets and should_include_navigation_context(user_text):
+        lines = ['[PAGE_NAVIGATION_HINT]']
+        lines.append('intent: NAVIGATE')
+        lines.append('route: azure_workflow')
+        lines.append(
+            'instruction: 사용자가 페이지 이동을 원하면 가장 알맞은 path 하나를 골라 action.name을 NAVIGATE, action.path를 해당 경로로 채운 JSON 형태로 응답하세요. 설명만 필요한 질문이면 NAVIGATE를 사용하지 마세요.'
+        )
+        lines.append(
+            'response_example: {"reply":"방찾기 페이지로 이동할게요.","intent":"NAVIGATE","action":{"name":"NAVIGATE","path":"/rooms","target":"web_router"}}'
+        )
+        if navigation_context:
+            lines.append(
+                'current_navigation_context: '
+                + _stringify(navigation_context, MAX_SECTION_LENGTH)
+            )
+        for item in available_page_targets[:25]:
+            if not isinstance(item, dict):
+                continue
+            label = compact_text(item.get('label'), 80)
+            path = compact_text(item.get('path'), 200)
+            aliases = item.get('aliases')
+            alias_text = ''
+            if isinstance(aliases, list) and aliases:
+                alias_text = ', '.join(
+                    compact_text(alias, 40) for alias in aliases[:5] if compact_text(alias, 40)
+                )
+            target_line = f"- {label} => {path}" if label or path else ''
+            if alias_text:
+                target_line += f" (aliases: {alias_text})"
+            if target_line:
+                lines.append(target_line)
+        lines.append('[/PAGE_NAVIGATION_HINT]')
         parts.append('\n'.join(lines))
 
     return '\n\n'.join(part for part in parts if part)

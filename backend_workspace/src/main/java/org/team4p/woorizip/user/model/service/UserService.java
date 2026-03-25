@@ -13,9 +13,9 @@ public interface UserService {
     String selectFindId(UserDto userDto);
     
     // 비밀번호 재설정(휴대폰 인증)
-    void sendPasswordResetCode(String name, String phone);
-    String verifyPasswordResetCode(String name, String phone, String code);
-    void resetPasswordByPhoneVerification(String name, String phone, String verificationToken, String newPassword);
+    void sendPasswordResetCode(String name, String emailId, String phone);
+    String verifyPasswordResetCode(String name, String emailId, String phone, String code);
+    void resetPasswordByPhoneVerification(String name, String emailId, String phone, String verificationToken, String newPassword);
 
     // 회원 정보 조회
     UserDto selectUser(UserDto userDto);

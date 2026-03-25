@@ -8,6 +8,8 @@ import org.springframework.validation.FieldError;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
+import org.team4p.woorizip.auth.dto.response.ErrorResponse;
+import org.team4p.woorizip.auth.exception.AuthException;
 import org.team4p.woorizip.common.exception.ForbiddenException;
 import org.team4p.woorizip.common.exception.NotFoundException;
 
@@ -64,6 +66,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ApiResponse<Void>> handleIllegalArgument(IllegalArgumentException e) {
         return ResponseEntity.badRequest().body(ApiResponse.fail(e.getMessage(), null));
+    }
+
+    @ExceptionHandler(AuthException.class)
+    public ResponseEntity<ErrorResponse> handleAuthException(AuthException e) {
+        return ResponseEntity.status(e.getStatus())
+                .body(ErrorResponse.of(e.getCode(), e.getMessage(), ""));
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
