@@ -117,6 +117,8 @@ class TourApplyAgent:
             if not self.service.looks_like_schedule_input(user_text):
                 session_state["stage"] = "awaiting_visit_at"
                 self.store.set(session_id, session_state)
+                if self.service.looks_like_partial_schedule_input(user_text):
+                    return self._build_partial_schedule_response(payload, session_state, user_text)
                 return self._build_collecting_response(payload, session_state)
 
             session_state["preferredVisitAt"] = user_text
@@ -209,7 +211,8 @@ class TourApplyAgent:
             "schemaVersion": payload.get("schemaVersion") or "v1",
             "reply": (
                 f"{room_label} 투어 신청을 도와드리겠습니다.\n"
-                "방문을 희망하시는 날짜와 시간을 함께 알려주세요.\n"
+                "방문을 희망하시는 날짜와 시간을 한 번에 함께 알려주세요.\n"
+                "예: 5월 13일 오후 5시\n"
             ),
             "intent": TOUR_APPLY_INTENT,
             "slots": {
@@ -233,6 +236,44 @@ class TourApplyAgent:
             "raw": {"agent": "tour_apply_agent"},
         }
 
+    def _build_partial_schedule_response(
+        self,
+        payload: dict[str, Any],
+        session_state: dict[str, Any],
+        user_text: str,
+    ) -> dict[str, Any]:
+        room_label = session_state.get("roomName") or "현재 보고 계신 방"
+        partial_kind = "시간만" if self.service.looks_like_time_only_input(user_text) else "날짜만"
+        return {
+            "schemaVersion": payload.get("schemaVersion") or "v1",
+            "reply": (
+                f"{room_label} 투어 신청을 이어서 도와드리겠습니다.\n"
+                f"지금은 {partial_kind} 확인되었어요.\n"
+                "방문 희망 날짜와 시간을 한 번에 함께 다시 알려주세요.\n"
+                "예: 5월 13일 오후 5시"
+            ),
+            "intent": TOUR_APPLY_INTENT,
+            "slots": {
+                "roomNo": session_state.get("roomNo", ""),
+                "roomName": session_state.get("roomName", ""),
+                "preferredVisitAt": session_state.get("preferredVisitAt", ""),
+            },
+            "action": {
+                "name": TOUR_APPLY_INTENT,
+                "target": "tour_apply_agent",
+                "status": "collecting",
+            },
+            "result": {
+                "stage": "awaiting_visit_at",
+                "missingSlots": ["preferredVisitAt"],
+            },
+            "errorCode": "TOUR_APPLY_NEEDS_DATE_AND_TIME",
+            "requiresConfirm": False,
+            "sessionId": payload.get("sessionId"),
+            "clientRequestId": payload.get("clientRequestId"),
+            "raw": {"agent": "tour_apply_agent"},
+        }
+
     def _build_retry_response(
         self,
         payload: dict[str, Any],
@@ -245,6 +286,7 @@ class TourApplyAgent:
             "reply": (
                 f"{room_label} 투어 신청을 이어서 도와드리겠습니다.\n"
                 "방문 희망 날짜와 시간을 한 번에 다시 알려주세요.\n"
+                "예: 5월 13일 오후 5시\n"
             ),
             "intent": TOUR_APPLY_INTENT,
             "slots": {

@@ -115,7 +115,7 @@ export function useSignup() {
     }
     const ok = await startPhoneVerification({ phone, purpose: 'SIGNUP' });
     if (!ok) {
-      alert('PASS 본인인증에 실패했습니다. 다시 시도해주세요.');
+      alert('휴대폰 확인에 실패했습니다. 다시 시도해주세요.');
       return;
     }
     alert('휴대폰 인증이 완료되었습니다.');
@@ -142,7 +142,7 @@ export function useSignup() {
   const handleSubmit = async (e, navigate) => {
     e.preventDefault();
     if (!isIdChecked) return alert('아이디 중복 확인을 진행해주세요.');
-    if (!isPhoneVerified) return alert('휴대폰 본인인증을 완료해주세요.');
+    if (!isPhoneVerified) return alert('휴대폰 인증을 완료해주세요.');
 
     const derived = deriveBirthAndGender();
     if (!derived) {
@@ -234,10 +234,10 @@ export const useFindId = () => {
     const phone = String(form.phone || '').replace(/\D/g, '');
     const ok = await startVerification({ phone, purpose: 'FIND_ID' });
     if (!ok) {
-      alert('PASS 본인인증에 실패했습니다. 다시 시도해주세요.');
+      alert('휴대폰 확인에 실패했습니다. 다시 시도해주세요.');
       return;
     }
-    alert('휴대폰 본인인증이 완료되었습니다.');
+    alert('휴대폰 인증이 완료되었습니다.');
   };
 
   const handleFindId = async (e) => {
@@ -505,6 +505,7 @@ export function useAdminUserList() {
 export function useFindPassword() {
   const [form, setForm] = useState({
     name: '',
+    emailId: '',
     phone: '',
     newPassword: '',
     newPasswordConfirm: '',
@@ -539,11 +540,12 @@ export function useFindPassword() {
 
   const handleSendCode = async () => {
     const name = String(form.name || '').trim();
+    const emailId = String(form.emailId || '').trim();
     const rawPhone = String(form.phone || '').trim();
     const phone = rawPhone.replace(/\D/g, '');
 
-    if (!name) {
-      setError('이름을 입력해주세요.');
+    if (!name || !emailId) {
+      setError('이름과 아이디를 입력해주세요.');
       return;
     }
 
@@ -561,13 +563,13 @@ export function useFindPassword() {
         phone,
         purpose: 'FIND_PASSWORD',
       });
-      if (!verifyResult) throw new Error('PASS 본인인증에 실패했습니다.');
+      if (!verifyResult) throw new Error('휴대폰 확인에 실패했습니다.');
       const token =
         verifyResult?.txId || verifyResult?.ci || verifyResult?.di || '';
       setVerificationToken(token || `PASS-${Date.now()}`);
-      setMessage('휴대폰 PASS 본인인증이 완료되었습니다.');
+      setMessage('');
     } catch (err) {
-      setError(err?.message || '휴대폰 본인인증에 실패했습니다.');
+      setError(err?.message || '휴대폰 인증에 실패했습니다.');
     } finally {
       setLoading(false);
     }
@@ -579,7 +581,7 @@ export function useFindPassword() {
     setMessage('');
 
     if (!isVerified) {
-      setError('휴대폰 본인인증을 먼저 완료해주세요.');
+      setError('휴대폰 인증을 먼저 완료해주세요.');
       return;
     }
 
@@ -600,10 +602,12 @@ export function useFindPassword() {
 
     try {
       const name = String(form.name || '').trim();
+      const emailId = String(form.emailId || '').trim();
       const phone = String(form.phone || '').replace(/\D/g, '');
 
       await findPasswordApi({
         name,
+        emailId,
         phone,
         verificationToken,
         newPassword: form.newPassword,
@@ -620,7 +624,7 @@ export function useFindPassword() {
       if (isTemporaryExpiryCase) {
         // Temporary workaround: treat backend expiry errors as success for UI flow.
         setError('');
-        setMessage('비밀번호 변경이 완료되었습니다. 다시 로그인해주세요.');
+        setMessage('비밀번호가 변경되었습니다. 새 비밀번호로 다시 로그인해주세요.');
       } else {
         setError(msg || '비밀번호 변경에 실패했습니다.');
       }

@@ -3,9 +3,9 @@ package org.team4p.woorizip.auth.service;
 import java.time.LocalDateTime;
 
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Service;
 import org.team4p.woorizip.auth.dto.request.LoginRequest;
 import org.team4p.woorizip.auth.dto.response.TokenResponse;
@@ -51,8 +51,10 @@ public class AuthService {
             refreshTokenService.upsert(emailId, refresh, now, now.plusDays(1));
 
             return new TokenResponse(access, refresh, jwtProperties.accessExp(), jwtProperties.refreshExp());
-        } catch (BadCredentialsException e) {
+        } catch (AuthenticationException e) {
             throw AuthException.unauthorized("LOGIN_FAILED", "아이디 또는 비밀번호가 일치하지 않습니다.");
+        } catch (AuthException e) {
+            throw e;
         } catch (Exception e) {
             throw new RuntimeException("SYSTEM_ERROR");
         }

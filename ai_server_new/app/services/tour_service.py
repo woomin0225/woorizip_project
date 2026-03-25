@@ -216,6 +216,39 @@ class TourService:
             re.search(r'\d{4}[-./]\d{1,2}[-./]\d{1,2}\s+\d{1,2}:\d{2}', text)
         )
 
+    def looks_like_partial_schedule_input(self, value: str | None) -> bool:
+        text = (value or '').strip()
+        if not text or self.looks_like_schedule_input(text):
+            return False
+        return self.looks_like_date_only_input(text) or self.looks_like_time_only_input(text)
+
+    def looks_like_date_only_input(self, value: str | None) -> bool:
+        text = (value or '').strip()
+        if not text:
+            return False
+        has_date = bool(
+            re.search(r'(?:(?:20)?\d{2}\s*년\s*)?\d{1,2}\s*(?:월|/|\.)\s*\d{1,2}\s*(?:일)?', text)
+            or re.search(r'\d{4}[-./]\d{1,2}[-./]\d{1,2}', text)
+        )
+        has_time = bool(
+            re.search(r'(?:(?:오전|오후|am|pm)\s*)?\d{1,2}\s*(?:시|:)', text, re.IGNORECASE)
+        )
+        return has_date and not has_time
+
+    def looks_like_time_only_input(self, value: str | None) -> bool:
+        text = (value or '').strip()
+        if not text:
+            return False
+        has_time = bool(
+            re.search(r'(?:(?:오전|오후|am|pm)\s*)?\d{1,2}\s*(?:시|:)\s*(?:\d{1,2}\s*분?)?', text, re.IGNORECASE)
+            or re.fullmatch(r'\d{1,2}', text)
+        )
+        has_date = bool(
+            re.search(r'(?:(?:20)?\d{2}\s*년\s*)?\d{1,2}\s*(?:월|/|\.)\s*\d{1,2}\s*(?:일)?', text)
+            or re.search(r'\d{4}[-./]\d{1,2}[-./]\d{1,2}', text)
+        )
+        return has_time and not has_date
+
     def looks_like_phone_input(self, value: str | None) -> bool:
         compact = re.sub(r'[^0-9]', '', value or '')
         return len(compact) in (10, 11)

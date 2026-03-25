@@ -10,6 +10,8 @@ public interface UserRepositoryCustom {
     
     UserEntity findByNameAndPhone(String name, String phone);
 
+    UserEntity findByNameAndEmailIdAndPhone(String name, String emailId, String phone);
+
     long countSearchList(UserDto userdto);
 
     List<UserEntity> findBySearchList(UserDto userdto, Pageable pageable);
