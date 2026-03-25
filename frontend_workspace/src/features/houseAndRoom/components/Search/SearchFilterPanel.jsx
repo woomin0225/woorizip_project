@@ -107,9 +107,9 @@ export default function SearchFilterPanel({
           </select>
         </div>
 
-        {/* 전세금 */}
+        {/* 보증금 */}
         <div className={styles.group}>
-          <label className={styles.label}>전세금</label>
+          <label className={styles.label}>보증금</label>
           <div className={styles.range}>
             <input
               className={styles.number}
@@ -131,31 +131,30 @@ export default function SearchFilterPanel({
           </div>
         </div>
 
-        {/* 월세 */}
-        <div className={styles.group}>
-          <label className={styles.label}>월세</label>
-          <div className={styles.range}>
-            <input
-              className={styles.number}
-              type="number"
-              name="minTax"
-              disabled={isJeonse}
-              value={cond.minTax ?? ""}
-              onChange={handleCondChange}
-              placeholder="최소"
-            />
-            <span className={styles.tilde}>~</span>
-            <input
-              className={styles.number}
-              type="number"
-              name="maxTax"
-              disabled={isJeonse}
-              value={cond.maxTax ?? ""}
-              onChange={handleCondChange}
-              placeholder="최대"
-            />
+        {!isJeonse && (
+          <div className={styles.group}>
+            <label className={styles.label}>월세</label>
+            <div className={styles.range}>
+              <input
+                className={styles.number}
+                type="number"
+                name="minTax"
+                value={cond.minTax ?? ""}
+                onChange={handleCondChange}
+                placeholder="최소"
+              />
+              <span className={styles.tilde}>~</span>
+              <input
+                className={styles.number}
+                type="number"
+                name="maxTax"
+                value={cond.maxTax ?? ""}
+                onChange={handleCondChange}
+                placeholder="최대"
+              />
+            </div>
           </div>
-        </div>
+        )}
 
         {/* 상세필터 토글 버튼 */}
         <button
