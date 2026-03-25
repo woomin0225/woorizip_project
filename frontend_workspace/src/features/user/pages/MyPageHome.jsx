@@ -4,6 +4,7 @@ import { Container, Row, Col, Card, CardBody } from 'reactstrap';
 import MyPageSideNav from '../components/MyPageSideNav';
 import { getIsLessorHint, getMyInfo, isLessorType } from '../api/userAPI';
 import styles from '../../../app/layouts/MyPageLayout.module.css';
+import { useAuth } from '../../../app/providers/AuthProvider';
 
 const BASE_QUICK_MENUS = [
   {
@@ -35,10 +36,14 @@ const BASE_QUICK_MENUS = [
 ];
 
 export default function MyPageHome() {
+  const { isAdmin } = useAuth();
   const [isLessor, setIsLessor] = React.useState(() => getIsLessorHint());
   const quickMenus = React.useMemo(
     () =>
-      BASE_QUICK_MENUS.map((menu) => ({
+      BASE_QUICK_MENUS.filter((menu) => {
+        if (!isAdmin) return true;
+        return menu.to !== '/wishlist' && menu.to !== '/tour/list';
+      }).map((menu) => ({
         ...menu,
         title:
           menu.lessorTitle && isLessor === null
@@ -53,7 +58,7 @@ export default function MyPageHome() {
               ? menu.lessorDescription
               : menu.description,
       })),
-    [isLessor]
+    [isAdmin, isLessor]
   );
 
   React.useEffect(() => {

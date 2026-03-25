@@ -5,8 +5,7 @@ import { getIsLessorHint, getMyInfo, isLessorType } from '../api/userAPI';
 import { useAuth } from '../../../app/providers/AuthProvider';
 
 const BASE_MENUS = [
-  { label: '내정보 보기', to: '/mypage/info' },
-  { label: '내정보 수정', to: '/mypage/edit' },
+  { label: '내정보', to: '/mypage/info' },
   { label: '찜목록', to: '/wishlist' },
   { label: '신청현황', to: '/tour/list', lessorLabel: '승인현황' },
   { label: '계약현황', to: '/contract/list' },
@@ -21,7 +20,10 @@ export default function MyPageSideNav() {
   const [isLessor, setIsLessor] = React.useState(() => getIsLessorHint());
   const withdrawActive = location.pathname === WITHDRAW_MENU.to;
   const menus = React.useMemo(() => {
-    const baseMenus = BASE_MENUS.map((menu) => ({
+    const baseMenus = BASE_MENUS.filter((menu) => {
+      if (!isAdmin) return true;
+      return menu.to !== '/wishlist' && menu.to !== '/tour/list';
+    }).map((menu) => ({
       ...menu,
       label:
         menu.lessorLabel && isLessor === null
