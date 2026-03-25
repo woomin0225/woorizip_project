@@ -35,6 +35,7 @@ import org.team4p.woorizip.house.jpa.repository.HouseRepository;
 import org.team4p.woorizip.room.jpa.entity.RoomEntity;
 import org.team4p.woorizip.room.jpa.repository.RoomRepository;
 import org.team4p.woorizip.room.service.RoomAvailabilityPolicyService;
+import org.team4p.woorizip.tour.model.service.TourService;
 import org.team4p.woorizip.user.jpa.entity.UserEntity;
 import org.team4p.woorizip.user.jpa.repository.UserRepository;
 
@@ -63,6 +64,7 @@ public class ContractServiceImpl implements ContractService {
     private final HouseRepository houseRepository;
     private final ObjectMapper objectMapper;
     private final RoomAvailabilityPolicyService roomAvailabilityPolicyService;
+    private final TourService tourService;
 
     @Value("${app.contract-doc-url-prefix:/contract-docs}")
     private String contractDocUrlPrefix;
@@ -336,6 +338,13 @@ public class ContractServiceImpl implements ContractService {
                 }
                 updateLessorSignatureMeta(contractNo, signerName, signatureDataUrl, signedAt);
                 target.setContractUrl(writeContractPdf(target, null));
+                tourService.cancelToursForApprovedContract(
+                        target.getRoomNo(),
+                        target.getMoveInDate() == null
+                                ? null
+                                : target.getMoveInDate().toInstant().atZone(ZoneId.of("Asia/Seoul")).toLocalDate(),
+                        target.getTermMonths()
+                );
             }
         }
         return 1;
