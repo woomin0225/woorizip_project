@@ -1289,69 +1289,86 @@ export default function ConvenienceNavigator({
                     </div>
 
                     <div className={styles.resultGrid}>
-                      {roomResults.map((room) => (
-                        <article
-                          key={room.roomNo}
-                          className={styles.resultCard}
-                        >
-                          <div className={styles.resultMeta}>
-                            <span className={styles.resultBadge}>
-                              {roomMethodLabel(room.roomMethod)}
-                            </span>
-                            {room.roomEmptyYn && (
-                              <span className={styles.resultBadgeMuted}>
-                                공실
+                      {roomResults.map((room) => {
+                        const isOccupied = room.roomEmptyYn === false;
+                        const isDirectTourApply =
+                          selectedApplicationAction === 'tour-apply';
+
+                        return (
+                          <article
+                            key={room.roomNo}
+                            className={styles.resultCard}
+                          >
+                            <div className={styles.resultMeta}>
+                              <span className={styles.resultBadge}>
+                                {roomMethodLabel(room.roomMethod)}
                               </span>
-                            )}
-                          </div>
-                          <h4 className={styles.resultTitle}>
-                            {room.roomName || `매물 ${room.roomNo}`}
-                          </h4>
-                          <p className={styles.resultPrice}>
-                            {roomPriceText(room)}
-                          </p>
-                          <p className={styles.resultInfo}>
-                            {[
-                              occupancyLabel(room.roomRoomCount),
-                              room.houseAddress,
-                            ]
-                              .filter(Boolean)
-                              .join(' · ')}
-                          </p>
-                          <div className={styles.resultActions}>
-                            <button
-                              type="button"
-                              className={styles.primaryAction}
-                              onClick={() =>
-                                navigate(
-                                  selectedApplicationAction === 'tour-apply'
-                                    ? `/rooms/${room.roomNo}/tour`
-                                    : `/rooms/${room.roomNo}`
-                                )
-                              }
-                            >
-                              {selectedApplicationAction === 'tour-apply'
-                                ? '투어 신청'
-                                : '상세보기'}
-                            </button>
-                            <button
-                              type="button"
-                              className={styles.secondaryButton}
-                              onClick={() =>
-                                navigate(
-                                  selectedApplicationAction === 'tour-apply'
-                                    ? `/rooms/${room.roomNo}`
-                                    : `/rooms/${room.roomNo}/tour`
-                                )
-                              }
-                            >
-                              {selectedApplicationAction === 'tour-apply'
-                                ? '상세보기'
-                                : '투어 신청'}
-                            </button>
-                          </div>
-                        </article>
-                      ))}
+                              {room.roomEmptyYn === true && (
+                                <span className={styles.resultBadgeMuted}>
+                                  공실
+                                </span>
+                              )}
+                              {isOccupied && (
+                                <span className={styles.resultBadgeOccupied}>
+                                  거주중
+                                </span>
+                              )}
+                            </div>
+                            <h4 className={styles.resultTitle}>
+                              {room.roomName || `매물 ${room.roomNo}`}
+                            </h4>
+                            <p className={styles.resultPrice}>
+                              {roomPriceText(room)}
+                            </p>
+                            <p className={styles.resultInfo}>
+                              {[
+                                occupancyLabel(room.roomRoomCount),
+                                room.houseAddress,
+                              ]
+                                .filter(Boolean)
+                                .join(' · ')}
+                            </p>
+                            <div className={styles.resultActions}>
+                              <button
+                                type="button"
+                                className={styles.primaryAction}
+                                onClick={() =>
+                                  navigate(
+                                    isDirectTourApply
+                                      ? `/rooms/${room.roomNo}/tour`
+                                      : `/rooms/${room.roomNo}`
+                                  )
+                                }
+                                disabled={isDirectTourApply && isOccupied}
+                              >
+                                {isDirectTourApply
+                                  ? isOccupied
+                                    ? '투어 신청 불가'
+                                    : '투어 신청'
+                                  : '상세보기'}
+                              </button>
+                              <button
+                                type="button"
+                                className={styles.secondaryButton}
+                                onClick={() =>
+                                  navigate(
+                                    isDirectTourApply
+                                      ? `/rooms/${room.roomNo}`
+                                      : `/rooms/${room.roomNo}/tour`
+                                  )
+                                }
+                                disabled={!isDirectTourApply && isOccupied}
+                              >
+                                {isDirectTourApply
+                                  ? '상세보기'
+                                  : isOccupied
+                                    ? '투어 신청 불가'
+                                    : '투어 신청'}
+                              </button>
+                            </div>
+                          </article>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
