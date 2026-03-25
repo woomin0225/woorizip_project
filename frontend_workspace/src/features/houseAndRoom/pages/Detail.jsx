@@ -44,7 +44,7 @@ function pickImageName(x) {
 
 function toKrwText(value) {
   const money = formatMoneyKRW(value);
-  return money ? `${money} ?? : '-';
+  return money ? `${money} 원` : '-';
 }
 
 export default function Detail() {
@@ -436,7 +436,7 @@ export default function Detail() {
                   {house?.houseAddress ?? ''} {house?.houseAddressDetail ?? ''}
                 </div>
               </div>
-              {loading && <div className={styles.loading}>遺덈윭?ㅻ뒗 以묅?/div>}
+              {loading && <div className={styles.loading}>불러오는 중...</div>}
             </div>
 
             {/* 1) 嫄대Ъ?대?吏 */}
@@ -551,7 +551,7 @@ export default function Detail() {
                   <div className={styles.infoGrid}>
                     {/* <div>?썘截??몄떎: {room?.roomName ?? '-'}</div> */}
                     <div>
-                      ?뵎 怨듭떎?щ?: {room?.roomEmptyYn ? '怨듭떎' : '嫄곗＜以?}
+                      상태: {room?.roomEmptyYn ? '공실' : '거주중'}
                     </div>
                     <div>
                       ?랃툘 嫄곕옒:{' '}
