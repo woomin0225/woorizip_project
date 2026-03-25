@@ -51,4 +51,5 @@ public class RoomTotalRequest {
 	private List<String> imageCaptions;
 	private String reviewSummary;
 	private List<String> reviews;
+	private List<String> facilityNames;
 }

@@ -463,40 +463,106 @@ class RoomSummaryService:
         if not room_reviews:
             raise ValueError("요약할 리뷰 텍스트가 비어있습니다.")
         review_values = [r for r in room_reviews if r]
-        prompt = f"""Give me a summary about following room's reviews in korean. '{review_values}'"""
+        prompt = f"""다음에 오는 방의 리뷰들을 읽고 요약문을 생성해라. '{review_values}'"""
+        location_guardrail = (
+            "Important: The input does not include verified nearby facility data. "
+            "Treat houseAddress as a plain address string only. "
+            "Do not infer or add nearby subway stations, landmarks, office districts, universities, hospitals, marts, cafes, parks, or commercial areas from the address. "
+            "Do not write phrases such as '삼성 근처', '선릉역 인근', '코엑스 접근성', or similar unless that exact place name appears in the input fields. "
+            "If surrounding facilities are not explicitly provided in the input, omit them."
+        )
         messages = [
-            {"role": "system", "content": f"You are real estate summary master. You have to summarize about room's reviews and return the summary text."},
+            {"role": "system", "content": f"너는 부동산 정보 요약 장인이다. 방에 대한 리뷰들을 읽고 요약문을 반환하여라."},
+            {"role": "system", "content": f"반드시 한국어만 사용하고 일본어/한자 표기는 사용하지 마세요. 문장은 반드시 마침표로 끝나야한다."},
             {"role": "user", "content": prompt},
             {"role": "assistant", "content": ""}
         ]
-        result = await asyncio.to_thread(self.client.generate_from_messages, messages, 180)
+        result = await asyncio.to_thread(self.client.generate_from_messages, messages, 128)
         return result.strip()
     
     async def summary_room_image_captions(self, room_image_captions: list):
         if not room_image_captions:
-            raise ValueError("요약할 리뷰 텍스트가 비어있습니다.")
+            raise ValueError("요약할 사진캡션 텍스트가 비어있습니다.")
         caption_values = [c for c in room_image_captions if c]
-        prompt = f"""Give me a summary about following room's reviews in korean. '{caption_values}'"""
+        prompt = f"""다음에 오는 방 사진의 자막들을 읽고 요약문을 생성해라. '{caption_values}'"""
         messages = [
-            {"role": "system", "content": f"You are real estate summary master. You have to summarize about room's image captions and return the summary text."},
+            {"role": "system", "content": f"너는 부동산 정보 요약 장인이다. 방 사진의 자막들을 읽고 요약문을 반환하여라."},
+            {"role": "system", "content": f"반드시 한국어만 사용하고 일본어/한자 표기는 사용하지 마세요. 문장은 반드시 마침표로 끝나야한다."},
             {"role": "user", "content": prompt},
             {"role": "assistant", "content": ""}
         ]
-        result = await asyncio.to_thread(self.client.generate_from_messages, messages, 180)
+        result = await asyncio.to_thread(self.client.generate_from_messages, messages, 128)
         return result.strip()
     
     async def summary_room_total(self, room: RoomTotalRequest):
         if not room:
             raise ValueError("요약할 방 정보 텍스트가 비어있습니다.")
-        prompt = f"""Give me a summary about following room's basic information, image summary and review summary in korean. '{room}'"""
+        prompt = f"""다음 방 정보, 이미지 캡션요약문, 리뷰 요약문을 참고하여 한국어로 요약문을 제공하여라. 장점, 단점을 포함하고 어떤 유형의 사람에게 추천하는지 간단하게 언급해라. '{room}'"""
         category = """
         채광, 치안, 소음, 주변시설, 공용시설, 관리, 관리비, 주차, 학교, 마트, 배달, 이웃, 풍경, 냄새, 위치
         """
         messages = [
-            {"role": "system", "content": f"You are real estate agent. You have to summarize about room information and return the summary. You can use following category keywords on summarize work. Connect the descriptions for each category into neat sentences. category: {category}"},
-            {"role": "system", "content": f"refer to next definition. definition: {RoomTotalRequest}"},
+            {"role": "system", "content": f"너는 부동산 에이전트이다. 방에 대한 정보를 보고 그 요약문을 반환하여라. 요약과정 중 다음의 카테고리 키워드들을 사용하여 문장을 만들 수 있다. 카테고리에 대해 생성한 문장들을 하나의 온전한 문단글로 연결해라. 카테고리: {category}"},
+            {"role": "system", "content": f"다음 정의를 참고해라. 정의: {RoomTotalRequest}"},
+            {"role": "system", "content": f"반드시 한국어만 사용하고 일본어/한자 표기는 사용하지 마세요. 문장은 반드시 마침표로 끝나야한다."},
             {"role": "user", "content": prompt},
             {"role": "assistant", "content": ""}
         ]
-        result = await asyncio.to_thread(self.client.generate_from_messages, messages, 256)
+        result = await asyncio.to_thread(self.client.generate_from_messages, messages, 128)
         return result.strip()
+async def _guarded_summary_room_total(self, room: RoomTotalRequest):
+    if not room:
+        raise ValueError("요약할 방 정보 텍스트가 비어있습니다.")
+
+    payload_text = json.dumps(
+        room.model_dump(mode="json"),
+        ensure_ascii=False,
+        default=str,
+    )
+    category = (
+        "채광, 치안, 소음, 주변시설, 공용시설, 관리, 관리비, 주차, 학교, 마트, "
+        "배달, 이웃, 환경, 옵션, 위치"
+    )
+    messages = [
+        {
+            "role": "system",
+            "content": (
+                "너는 부동산 에이전트다. 방 정보를 보고 한국어 요약문만 반환하라. "
+                f"다음 카테고리를 참고할 수 있다: {category}"
+            ),
+        },
+        {
+            "role": "system",
+            "content": (
+                "주변시설 정보는 입력으로 제공되지 않을 수 있다. "
+                "houseAddress는 단순 주소 문자열로만 취급하라. "
+                "주소만 보고 주변 지하철역, 랜드마크, 업무지구, 대학, 병원, 마트, "
+                "카페, 공원, 상권을 추정하거나 추가하지 마라. "
+                "입력에 없는 고유명사나 '삼성 근처', '선릉역 인근', "
+                "'코엑스 접근성' 같은 표현을 만들지 마라. "
+                "주변 시설 정보가 명시적으로 없으면 그 내용은 생략하라."
+            ),
+        },
+        {
+            "role": "system",
+            "content": (
+                "반드시 한국어만 사용하고, 한자나 일본어 표기는 사용하지 마라. "
+                "장점, 단점, 추천할 사용자 유형을 포함하되 입력에 없는 사실은 추가하지 마라. "
+                "출력은 자연스러운 한 문단으로 작성하라."
+            ),
+        },
+        {
+            "role": "user",
+            "content": (
+                "다음 방 정보, 이미지 캡션 요약문, 리뷰 요약문을 참고하여 요약문을 작성하라.\n"
+                f"INPUT_JSON:\n{payload_text}"
+            ),
+        },
+        {"role": "assistant", "content": ""},
+    ]
+    result = await asyncio.to_thread(self.client.generate_from_messages, messages, 192)
+    return result.strip()
+
+
+RoomSummaryService.summary_room_total = _guarded_summary_room_total
+# RoomSummaryService.summary_room_total을 덮어써서 적용되며, houseAddress를 단순 주소 문자열로만 취급하고 입력에 없는 역명·랜드마크·상권·주변시설 표현을 생성하지 않도록 명시했습니다.

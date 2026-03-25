@@ -213,7 +213,7 @@ const PAGE_NAVIGATIONS = [
     label: '투어내역',
     path: '/mypage/tour',
     message: '투어 페이지로 이동했습니다. 투어 신청과 진행 내역을 확인할 수 있습니다.',
-    aliases: ['투어페이지', '투어내역', '투어목록'],
+    aliases: ['투어페이지', '투어내역', '투어목록', '신청현황', '신청목록', '승인현황', '승인목록'],
     actionIds: ['tour', 'roomRecommend', 'wishlist'],
   },
   {
@@ -231,7 +231,7 @@ const PAGE_NAVIGATIONS = [
     label: '계약내역',
     path: '/mypage/contracts',
     message: '계약 페이지로 이동했습니다. 계약 진행 상태와 계약 내역을 확인할 수 있습니다.',
-    aliases: ['계약페이지', '계약내역', '계약목록', '전자계약'],
+    aliases: ['계약페이지', '계약내역', '계약목록', '계약현황', '계약상태', '계약진행상황', '전자계약'],
     actionIds: ['contract', 'tour', 'wishlist'],
   },
   {

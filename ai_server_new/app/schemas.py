@@ -51,6 +51,7 @@ class RoomTotalRequest(BaseModel):
     imageCaptions: Optional[list] = Field(description="방의 각 이미지들의 설명")
     reviewSummary: Optional[str] = Field(description="방의 리뷰들을 요약한 글")
     reviews: Optional[list] = Field(description="방의 리뷰들")
+    facilityNames: Optional[list[str]] = Field(description="방 번호 기준 공용시설 이름 목록")
 
 
 # 리뷰나 이미지 캡션들 요약시 사용

@@ -260,7 +260,7 @@ public class RoomAiServiceImpl implements RoomAiService {
 		entity = roomFinalSummaryRepository.findById(roomNo)
 				.orElseThrow(() -> new IllegalArgumentException("Room final summary row not found."));
 		WebClient webClient = webClientBuilder.build();
-		RoomTotalRequest request = buildRoomTotalRequest(roomNo);
+		RoomTotalRequest request = buildSummaryRoomTotalRequest(roomNo);
 
 		try {
 			RoomTotalResponse response = webClient.post()
@@ -373,7 +373,7 @@ public class RoomAiServiceImpl implements RoomAiService {
 				.orElseThrow(() -> new IllegalArgumentException("Embedding status row not found. roomNo=" + roomNo));
 
 		markEmbeddingProcessing(entity);
-		RoomTotalRequest request = buildRoomTotalRequest(roomNo);
+		RoomTotalRequest request = buildEmbeddingRoomTotalRequest(roomNo);
 
 		try {
 			deleteEmbeededRoomVector(roomNo);
@@ -403,15 +403,30 @@ public class RoomAiServiceImpl implements RoomAiService {
 		}
 	}
 
-	private RoomTotalRequest buildRoomTotalRequest(String roomNo) {
+	private RoomTotalRequest buildSummaryRoomTotalRequest(String roomNo) {
+		return buildRoomTotalRequest(roomNo, false);
+	}
+
+	private RoomTotalRequest buildEmbeddingRoomTotalRequest(String roomNo) {
+		return buildRoomTotalRequest(roomNo, true);
+	}
+
+	private RoomTotalRequest buildRoomTotalRequest(String roomNo, boolean includeSourceLists) {
 		RoomEntity room = roomRepository.findById(roomNo)
 				.orElseThrow(() -> new IllegalArgumentException("Room not found. roomNo=" + roomNo));
 		HouseEntity house = houseRepository.findByRoomNo(roomNo)
 				.orElseThrow(() -> new IllegalArgumentException("House not found for room. roomNo=" + roomNo));
 		ReviewSummaryEntity reviewSummary = reviewSummaryService.selectSummarizedReview(roomNo);
 		RoomImageSummaryEntity imageSummary = roomImageSummaryService.selectSummarizedImageCaption(roomNo);
-		List<String> reviews = reviewRepository.findAllReviewContentsByRoomNo(roomNo);
-		List<String> imageCaptions = roomImageAnalysisRepository.findAllImageCaptionsByRoomNo(roomNo);
+		List<String> reviews = includeSourceLists
+				? reviewRepository.findAllReviewContentsByRoomNo(roomNo)
+				: Collections.emptyList();
+		List<String> imageCaptions = includeSourceLists
+				? roomImageAnalysisRepository.findAllImageCaptionsByRoomNo(roomNo)
+				: Collections.emptyList();
+		List<String> facilityNames = includeSourceLists
+				? roomRepository.findFacilityNamesByRoomNo(roomNo)
+				: Collections.emptyList();
 
 		if(imageSummary == null) {
 			throw new IllegalStateException("Embedding prerequisites are missing. roomNo=" + roomNo);
@@ -449,6 +464,7 @@ public class RoomAiServiceImpl implements RoomAiService {
 				.imageCaptions(defaultList(imageCaptions))
 				.reviewSummary(reviewSummary == null ? "" : defaultString(reviewSummary.getReviewSummary()))
 				.reviews(defaultList(reviews))
+				.facilityNames(defaultList(facilityNames))
 				.build();
 //		log.info("Prepared embedding payload. roomNo={}", roomNo);
 		return request;

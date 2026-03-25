@@ -389,6 +389,12 @@ export default function Search() {
     setCond((current) => {
       if (type === 'checkbox') return { ...current, [name]: checked };
 
+      if (name === 'roomType') {
+        return value === 'L'
+          ? { ...current, roomType: value, minTax: null, maxTax: null }
+          : { ...current, roomType: value };
+      }
+
       const numberFields = new Set([
         'minDeposit',
         'maxDeposit',

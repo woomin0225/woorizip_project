@@ -91,12 +91,22 @@
   opacity: 0.7;
   cursor: default;
   transform: none;
+  box-shadow: none;
 }
 
 .secondaryButton {
   border: 1px solid #e4c2a2;
   background: #fff;
   color: #8f5732;
+}
+
+.secondaryButton:disabled {
+  border-color: #e8ddd3;
+  background: #f7f3ef;
+  color: #af9b8c;
+  cursor: default;
+  transform: none;
+  box-shadow: none;
 }
 
 .primaryAction:hover,
@@ -345,6 +355,18 @@
 .resultBadgeMuted {
   background: #f3ede7;
   color: #7f6656;
+}
+
+.resultBadgeOccupied {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: #efe6dd;
+  color: #7f5f49;
+  font-size: 0.86rem;
+  font-weight: 800;
 }
 
 .resultTitle {

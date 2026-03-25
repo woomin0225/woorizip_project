@@ -61,17 +61,21 @@ export default function ConveniencePage() {
     };
   }, []);
 
+  const pageTitle = profile.isLessor
+    ? '관리할 메뉴를 쉽게 찾아보세요.'
+    : '원하는 메뉴를 쉽게 찾아보세요.';
+  const pageDescription = profile.isLessor
+    ? '승인 관리, 매물 관리, 시설 관리처럼 자주 쓰는 업무를 큰 버튼으로 편하게 찾을 수 있습니다.'
+    : '매물 찾기, 신청 현황, 공용시설, 내 정보를 큰 버튼으로 편하게 찾을 수 있습니다.';
+
   return (
     <main className={styles.page}>
       <section className={styles.heroSection}>
         <Container>
           <div className={styles.heroCard}>
             <span className={styles.badge}>편의기능</span>
-            <h1 className={styles.title}>원하는 메뉴를 쉽게 찾아보세요.</h1>
-            <p className={styles.description}>
-              큰 버튼을 순서대로 누르면 필요한 메뉴와 매물을 편하게 찾을 수
-              있습니다.
-            </p>
+            <h1 className={styles.title}>{pageTitle}</h1>
+            <p className={styles.description}>{pageDescription}</p>
             <Link to="/" className={styles.backLink}>
               홈으로 돌아가기
             </Link>

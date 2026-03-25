@@ -1,13 +1,12 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../constants/routes';
-import { searchRooms } from '../../features/houseAndRoom/api/roomApi';
+import { getRoom, searchRooms } from '../../features/houseAndRoom/api/roomApi';
 import { getTourPage } from '../../features/tour/api/tourAPI';
 import {
   getFacilityDetail,
   getFacilityList,
 } from '../../features/facility/api/facilityApi';
-import { useAuth } from '../../app/providers/AuthProvider';
 import styles from './ConvenienceNavigator.module.css';
 
 const DEFAULT_ROOM_COND = {
@@ -160,6 +159,31 @@ function occupancyLabel(roomCount) {
   return `${n}인 이상`;
 }
 
+function formatRoomDisplayName(value) {
+  const raw = String(value || '').trim();
+  if (!raw) return '';
+  if (/^\d+호$/.test(raw)) return raw;
+  if (/^\d+$/.test(raw)) return `${raw}호`;
+
+  const roomMatch = raw.match(/^room\s*(\d+)$/i);
+  if (roomMatch) return `${roomMatch[1]}호`;
+
+  return raw;
+}
+
+function tourRoomTitle(item) {
+  const convenienceRoomName = String(item?.convenienceRoomName || '').trim();
+  if (convenienceRoomName) return convenienceRoomName;
+
+  const roomName = formatRoomDisplayName(item?.roomName);
+  if (roomName) return roomName;
+
+  const roomNo = formatRoomDisplayName(item?.roomNo);
+  if (roomNo) return roomNo;
+
+  return '투어 매물';
+}
+
 function tourStatusLabel(status) {
   switch (String(status || '').toUpperCase()) {
     case 'PENDING':
@@ -214,15 +238,141 @@ function isNotFoundError(error) {
 }
 
 function buildMenuGroups(isLessor) {
-  const statusLabel = isLessor ? '승인 현황' : '신청 현황';
-  const statusDescription = isLessor
-    ? '투어와 입주 요청을 확인합니다.'
-    : '투어와 입주 신청 상태를 확인합니다.';
+  const boardGroup = {
+    id: 'board',
+    label: '게시판',
+    description: '공지와 정책, 이벤트 게시글을 찾습니다.',
+    question: '게시판에서 무엇을 보고 싶으신가요?',
+    actions: [
+      {
+        id: 'notice',
+        label: '공지사항',
+        description: '운영 공지와 중요한 안내를 확인합니다.',
+        to: '/notices',
+      },
+      {
+        id: 'event',
+        label: '이벤트',
+        description: '진행 중인 이벤트를 확인합니다.',
+        to: '/event',
+      },
+      {
+        id: 'information',
+        label: '정책/정보',
+        description: '생활 정보와 정책 글을 봅니다.',
+        to: '/information',
+      },
+      {
+        id: 'qna',
+        label: 'QnA',
+        description: '자주 묻는 질문과 문의 게시판으로 이동합니다.',
+        to: '/qna',
+      },
+    ],
+  };
 
-  const groups = [
+  if (isLessor) {
+    return [
+      {
+        id: 'approval-manage',
+        label: '승인 관리',
+        description: '투어와 입주 승인 대기 내역을 확인합니다.',
+        question: '어떤 승인 업무를 보고 싶으신가요?',
+        actions: [
+          {
+            id: 'tour-status',
+            label: '승인 현황 보기',
+            description: '투어와 입주 승인 대기 내역을 한 번에 확인합니다.',
+            to: ROUTES.TOUR.LIST,
+          },
+          {
+            id: 'contract-list',
+            label: '계약 현황',
+            description: '승인 이후 진행 중인 계약까지 이어서 확인합니다.',
+            to: ROUTES.CONTRACT.LIST,
+          },
+        ],
+      },
+      {
+        id: 'estate-manage',
+        label: '매물 관리',
+        description: '등록한 건물과 방을 관리합니다.',
+        question: '매물 관리에서 무엇을 하고 싶으신가요?',
+        actions: [
+          {
+            id: 'estate-home',
+            label: '관리 화면',
+            description: '건물과 방 관리 메뉴를 한 번에 봅니다.',
+            to: '/estate/manage',
+          },
+          {
+            id: 'house-create',
+            label: '건물 등록',
+            description: '새 건물 정보를 등록합니다.',
+            to: '/estate/houses/new',
+          },
+          {
+            id: 'room-create',
+            label: '방 등록',
+            description: '등록한 건물에 방을 추가합니다.',
+            to: '/estate/houses/select',
+          },
+          {
+            id: 'estate-edit',
+            label: '목록 수정',
+            description: '등록한 건물과 방 정보를 수정합니다.',
+            to: '/estate/modify',
+          },
+        ],
+      },
+      {
+        id: 'facility-manage',
+        label: '시설 관리',
+        description: '시설 정보와 예약 내역을 관리합니다.',
+        question: '시설 관리에서 무엇을 하고 싶으신가요?',
+        actions: [
+          {
+            id: 'facility-view',
+            label: '시설 목록 보기',
+            description: '등록된 공용시설 정보와 상태를 확인합니다.',
+            to: '/facility/view',
+          },
+          {
+            id: 'reservation-view',
+            label: '예약 조회',
+            description: '공용시설 예약 내역을 확인합니다.',
+            to: '/reservation/view',
+          },
+        ],
+      },
+      {
+        id: 'lessor-info',
+        label: '내 관리 정보',
+        description: '내 정보와 관리용 기본 정보를 확인합니다.',
+        question: '내 관리 정보에서 무엇을 하고 싶으신가요?',
+        actions: [
+          {
+            id: 'my-info-view',
+            label: '내정보 보기',
+            description: '회원 정보를 확인합니다.',
+            to: ROUTES.MEMBER.MY_INFO,
+          },
+          {
+            id: 'my-info-edit',
+            label: '내정보 수정',
+            description: '이름, 연락처 등 정보를 수정합니다.',
+            to: ROUTES.MEMBER.MY_INFO_EDIT,
+          },
+        ],
+      },
+      boardGroup,
+    ];
+  }
+
+  return [
     {
       id: 'room',
-      label: '매물',
+      label: '매물 찾기',
       description: '방을 찾거나 관심 매물을 확인합니다.',
       question: '매물에서 무엇을 보고 싶으신가요?',
       actions: [
@@ -238,73 +388,25 @@ function buildMenuGroups(isLessor) {
           description: '저장해 둔 매물을 모아서 확인합니다.',
           to: ROUTES.WISHLIST.LIST,
         },
-        {
-          id: 'tour-status',
-          label: statusLabel,
-          description: isLessor
-            ? statusDescription
-            : '투어 신청, 변경, 취소를 쉽게 진행합니다.',
-          ...(isLessor
-            ? { to: ROUTES.TOUR.LIST }
-            : { type: 'application-menu' }),
-        },
       ],
     },
     {
-      id: 'my-info',
-      label: '내정보',
-      description: '내 정보와 계약 내역을 확인합니다.',
-      question: '내정보에서 무엇을 하고 싶으신가요?',
+      id: 'application-status',
+      label: '신청 현황',
+      description: '투어와 입주 신청 상태를 확인합니다.',
+      question: '신청 현황에서 무엇을 하고 싶으신가요?',
       actions: [
         {
-          id: 'my-info-view',
-          label: '내정보 보기',
-          description: '회원 정보를 확인합니다.',
-          to: ROUTES.MEMBER.MY_INFO,
-        },
-        {
-          id: 'my-info-edit',
-          label: '내정보 수정',
-          description: '이름, 연락처 등 정보를 수정합니다.',
-          to: ROUTES.MEMBER.MY_INFO_EDIT,
+          id: 'tour-status',
+          label: '신청 현황 보기',
+          description: '투어 신청, 변경, 취소를 쉽게 진행합니다.',
+          type: 'application-menu',
         },
         {
           id: 'contract-list',
           label: '계약 현황',
-          description: '계약 진행과 완료 내역을 확인합니다.',
+          description: '입주 신청과 계약 진행 내역을 확인합니다.',
           to: ROUTES.CONTRACT.LIST,
-        },
-      ],
-    },
-    {
-      id: 'board',
-      label: '게시판보기',
-      description: '공지와 정책, 이벤트 게시글을 찾습니다.',
-      question: '게시판에서 무엇을 보고 싶으신가요?',
-      actions: [
-        {
-          id: 'notice',
-          label: '공지사항',
-          description: '운영 공지와 중요한 안내를 확인합니다.',
-          to: '/notices',
-        },
-        {
-          id: 'event',
-          label: '이벤트',
-          description: '진행 중인 이벤트를 확인합니다.',
-          to: '/event',
-        },
-        {
-          id: 'information',
-          label: '정책/정보',
-          description: '생활 정보와 정책 글을 봅니다.',
-          to: '/information',
-        },
-        {
-          id: 'qna',
-          label: 'QnA',
-          description: '자주 묻는 질문과 문의 게시판으로 이동합니다.',
-          to: '/qna',
         },
       ],
     },
@@ -328,44 +430,34 @@ function buildMenuGroups(isLessor) {
         },
       ],
     },
-  ];
-
-  if (isLessor) {
-    groups.push({
-      id: 'estate-manage',
-      label: '매물 관리',
-      description: '등록한 건물과 방을 관리합니다.',
-      question: '매물 관리에서 무엇을 하고 싶으신가요?',
+    {
+      id: 'my-info',
+      label: '내 정보',
+      description: '내 정보와 계약 내역을 확인합니다.',
+      question: '내 정보에서 무엇을 하고 싶으신가요?',
       actions: [
         {
-          id: 'estate-home',
-          label: '관리 화면',
-          description: '건물과 방 관리 메뉴를 한 번에 봅니다.',
-          to: '/estate/manage',
+          id: 'my-info-view',
+          label: '내정보 보기',
+          description: '회원 정보를 확인합니다.',
+          to: ROUTES.MEMBER.MY_INFO,
         },
         {
-          id: 'house-create',
-          label: '건물 등록',
-          description: '새 건물 정보를 등록합니다.',
-          to: '/estate/houses/new',
+          id: 'my-info-edit',
+          label: '내정보 수정',
+          description: '이름, 연락처 등 정보를 수정합니다.',
+          to: ROUTES.MEMBER.MY_INFO_EDIT,
         },
         {
-          id: 'room-create',
-          label: '방 등록',
-          description: '등록한 건물에 방을 추가합니다.',
-          to: '/estate/houses/select',
-        },
-        {
-          id: 'estate-edit',
-          label: '목록 수정',
-          description: '등록한 건물과 방 정보를 수정합니다.',
-          to: '/estate/modify',
+          id: 'contract-list-my-info',
+          label: '계약 현황',
+          description: '계약 진행과 완료 내역을 확인합니다.',
+          to: ROUTES.CONTRACT.LIST,
         },
       ],
-    });
-  }
-
-  return groups;
+    },
+    boardGroup,
+  ];
 }
 
 export default function ConvenienceNavigator({
@@ -375,7 +467,6 @@ export default function ConvenienceNavigator({
   hideToggle = false,
   hideHero = false,
 }) {
-  const { isAdmin } = useAuth();
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = React.useState(defaultOpen);
   const [selectedGroupId, setSelectedGroupId] = React.useState(null);
@@ -428,6 +519,12 @@ export default function ConvenienceNavigator({
     selectedApplicationAction === 'tour-apply'
       ? '투어를 신청할 매물을 골라주세요.'
       : '어떤 매물을 보고 싶으신가요?';
+  const rootQuestion = isLessor
+    ? '어떤 관리 메뉴를 이용하고 싶으신가요?'
+    : '어떤 메뉴를 이용하고 싶으신가요?';
+  const guideDescription = isLessor
+    ? '승인 관리, 매물 관리, 시설 관리, 내 관리 정보를 큰 버튼으로 차례대로 안내해 드립니다.'
+    : '매물 찾기, 신청 현황, 공용시설, 내 정보를 큰 버튼으로 차례대로 안내해 드립니다.';
 
   const scrollToRef = React.useCallback((ref) => {
     window.setTimeout(() => {
@@ -502,8 +599,8 @@ export default function ConvenienceNavigator({
   };
 
   const greeting = userName
-    ? `${userName}님, 찾고 싶은 메뉴를 차례대로 눌러보세요.`
-    : '찾고 싶은 메뉴를 차례대로 눌러보세요.';
+    ? `${userName}님, 필요한 메뉴를 차례대로 눌러보세요.`
+    : '필요한 메뉴를 차례대로 눌러보세요.';
 
   const handleRoomFinderChange = (name, value) => {
     setRoomFinder((prev) => {
@@ -589,7 +686,27 @@ export default function ConvenienceNavigator({
           ? canEditTour(item?.status)
           : canCancelTour(item?.status)
       );
-      setTourActionItems(filtered);
+      const enriched = await Promise.all(
+        filtered.map(async (item) => {
+          const roomNo = String(item?.roomNo || '').trim();
+          if (!roomNo) {
+            return { ...item, convenienceRoomName: tourRoomTitle(item) };
+          }
+
+          try {
+            const room = await getRoom(roomNo);
+            const roomName = String(room?.roomName || room?.room_name || '').trim();
+
+            return {
+              ...item,
+              convenienceRoomName: roomName || tourRoomTitle(item),
+            };
+          } catch {
+            return { ...item, convenienceRoomName: tourRoomTitle(item) };
+          }
+        })
+      );
+      setTourActionItems(enriched);
     } catch (error) {
       setTourActionItems([]);
       setTourActionError(
@@ -611,12 +728,6 @@ export default function ConvenienceNavigator({
       const detailedItems = await Promise.all(
         listItems.map(async (facility) => {
           if (!facility?.facilityNo) return facility;
-
-          const hasReservationInfo =
-            facility.facilityRsvnRequiredYn !== undefined &&
-            facility.facilityStatus !== undefined;
-
-          if (hasReservationInfo) return facility;
 
           try {
             const detailResponse = await getFacilityDetail(facility.facilityNo);
@@ -720,10 +831,7 @@ export default function ConvenienceNavigator({
           <div className={styles.heroTextBlock}>
             <span className={styles.badge}>쉬운 메뉴 안내</span>
             <h2 className={styles.title}>{greeting}</h2>
-            <p className={styles.description}>
-              복잡한 메뉴를 찾지 않아도 됩니다. 큰 버튼을 순서대로 누르면 원하는
-              페이지로 안내해 드립니다.
-            </p>
+            <p className={styles.description}>{guideDescription}</p>
           </div>
 
           {!hideToggle && (
@@ -764,7 +872,7 @@ export default function ConvenienceNavigator({
           </div>
 
           <div className={styles.block}>
-            <p className={styles.question}>어떤 페이지를 보고 싶으신가요?</p>
+            <p className={styles.question}>{rootQuestion}</p>
             <div className={styles.optionGrid}>
               {groups.map((group) => {
                 const isSelected = group.id === selectedGroupId;
@@ -934,14 +1042,13 @@ export default function ConvenienceNavigator({
                             </span>
                           </div>
                           <h4 className={styles.resultTitle}>
-                            {item.roomName ||
-                              `매물 ${item.roomNo || item.tourNo}`}
+                            {tourRoomTitle(item)}
                           </h4>
                           <p className={styles.resultPrice}>
                             투어일 {formatDate(item.visitDate)}
                           </p>
                           <p className={styles.resultInfo}>
-                            신청번호 {item.tourNo} · 방문 시간{' '}
+                            방문 시간{' '}
                             {String(item.visitTime || '').slice(0, 5) || '-'}
                           </p>
                           <div className={styles.resultActions}>
@@ -1182,69 +1289,86 @@ export default function ConvenienceNavigator({
                     </div>
 
                     <div className={styles.resultGrid}>
-                      {roomResults.map((room) => (
-                        <article
-                          key={room.roomNo}
-                          className={styles.resultCard}
-                        >
-                          <div className={styles.resultMeta}>
-                            <span className={styles.resultBadge}>
-                              {roomMethodLabel(room.roomMethod)}
-                            </span>
-                            {room.roomEmptyYn && (
-                              <span className={styles.resultBadgeMuted}>
-                                공실
+                      {roomResults.map((room) => {
+                        const isOccupied = room.roomEmptyYn === false;
+                        const isDirectTourApply =
+                          selectedApplicationAction === 'tour-apply';
+
+                        return (
+                          <article
+                            key={room.roomNo}
+                            className={styles.resultCard}
+                          >
+                            <div className={styles.resultMeta}>
+                              <span className={styles.resultBadge}>
+                                {roomMethodLabel(room.roomMethod)}
                               </span>
-                            )}
-                          </div>
-                          <h4 className={styles.resultTitle}>
-                            {room.roomName || `매물 ${room.roomNo}`}
-                          </h4>
-                          <p className={styles.resultPrice}>
-                            {roomPriceText(room)}
-                          </p>
-                          <p className={styles.resultInfo}>
-                            {[
-                              occupancyLabel(room.roomRoomCount),
-                              room.houseAddress,
-                            ]
-                              .filter(Boolean)
-                              .join(' · ')}
-                          </p>
-                          <div className={styles.resultActions}>
-                            <button
-                              type="button"
-                              className={styles.primaryAction}
-                              onClick={() =>
-                                navigate(
-                                  selectedApplicationAction === 'tour-apply'
-                                    ? `/rooms/${room.roomNo}/tour`
-                                    : `/rooms/${room.roomNo}`
-                                )
-                              }
-                            >
-                              {selectedApplicationAction === 'tour-apply'
-                                ? '투어 신청'
-                                : '상세보기'}
-                            </button>
-                            <button
-                              type="button"
-                              className={styles.secondaryButton}
-                              onClick={() =>
-                                navigate(
-                                  selectedApplicationAction === 'tour-apply'
-                                    ? `/rooms/${room.roomNo}`
-                                    : `/rooms/${room.roomNo}/tour`
-                                )
-                              }
-                            >
-                              {selectedApplicationAction === 'tour-apply'
-                                ? '상세보기'
-                                : '투어 신청'}
-                            </button>
-                          </div>
-                        </article>
-                      ))}
+                              {room.roomEmptyYn === true && (
+                                <span className={styles.resultBadgeMuted}>
+                                  공실
+                                </span>
+                              )}
+                              {isOccupied && (
+                                <span className={styles.resultBadgeOccupied}>
+                                  거주중
+                                </span>
+                              )}
+                            </div>
+                            <h4 className={styles.resultTitle}>
+                              {room.roomName || `매물 ${room.roomNo}`}
+                            </h4>
+                            <p className={styles.resultPrice}>
+                              {roomPriceText(room)}
+                            </p>
+                            <p className={styles.resultInfo}>
+                              {[
+                                occupancyLabel(room.roomRoomCount),
+                                room.houseAddress,
+                              ]
+                                .filter(Boolean)
+                                .join(' · ')}
+                            </p>
+                            <div className={styles.resultActions}>
+                              <button
+                                type="button"
+                                className={styles.primaryAction}
+                                onClick={() =>
+                                  navigate(
+                                    isDirectTourApply
+                                      ? `/rooms/${room.roomNo}/tour`
+                                      : `/rooms/${room.roomNo}`
+                                  )
+                                }
+                                disabled={isDirectTourApply && isOccupied}
+                              >
+                                {isDirectTourApply
+                                  ? isOccupied
+                                    ? '투어 신청 불가'
+                                    : '투어 신청'
+                                  : '상세보기'}
+                              </button>
+                              <button
+                                type="button"
+                                className={styles.secondaryButton}
+                                onClick={() =>
+                                  navigate(
+                                    isDirectTourApply
+                                      ? `/rooms/${room.roomNo}`
+                                      : `/rooms/${room.roomNo}/tour`
+                                  )
+                                }
+                                disabled={!isDirectTourApply && isOccupied}
+                              >
+                                {isDirectTourApply
+                                  ? '상세보기'
+                                  : isOccupied
+                                    ? '투어 신청 불가'
+                                    : '투어 신청'}
+                              </button>
+                            </div>
+                          </article>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
