@@ -13,6 +13,7 @@ public record OrchestrateCommandRequest(
         String sessionId,
         String clientRequestId,
         String systemPrompt,
-        Map<String, Object> context
+        Map<String, Object> context,
+        String accessToken
 ) {
 }

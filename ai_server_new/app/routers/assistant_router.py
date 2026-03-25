@@ -31,6 +31,8 @@ async def run_assistant(
     access_token = None
     if authorization and authorization.lower().startswith('bearer '):
         access_token = authorization[7:].strip()
+    elif req.accessToken:
+        access_token = str(req.accessToken).strip() or None
 
     next_context = dict(req.context or {})
     user_profile = dict(next_context.get('userProfile') or {})
@@ -45,6 +47,7 @@ async def run_assistant(
         update={
             'userId': req.userId or ctx.get('user_id'),
             'context': next_context,
+            'accessToken': access_token,
         }
     )
     return await assistant_service.run(request, access_token=access_token)

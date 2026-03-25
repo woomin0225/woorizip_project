@@ -226,6 +226,7 @@ class AssistantRunReq(BaseModel):
     systemPrompt: str | None = None
     context: dict[str, Any] = Field(default_factory=dict)
     userId: str | None = None
+    accessToken: str | None = None
 
 
 class AssistantRunRes(BaseModel):
