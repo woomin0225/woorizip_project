@@ -9,6 +9,7 @@ export default function ReservationViewPage() {
   const { facilityNo } = useParams();
   const location = useLocation();
   const targetUserNo = location.state?.targetUserNo || null;
+  const refreshKey = location.state?.refreshKey || null;
 
   const [isLessor, setIsLessor] = useState(null);
   const token = tokenStore.getAccess();
@@ -47,6 +48,7 @@ export default function ReservationViewPage() {
         <ReservationList
           facilityNo={isLessor ? facilityNo || null : null}
           targetUserNo={!isLessor ? targetUserNo || null : null}
+          refreshKey={refreshKey}
         />
       </div>
     </div>

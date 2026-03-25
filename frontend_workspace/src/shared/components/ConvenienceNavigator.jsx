@@ -439,9 +439,7 @@ export default function ConvenienceNavigator({
       if (Math.abs(distance) < 4) return;
 
       const easeInOutCubic = (t) =>
-        t < 0.5
-          ? 4 * t * t * t
-          : 1 - Math.pow(-2 * t + 2, 3) / 2;
+        t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 
       const startTime = performance.now();
 
@@ -474,11 +472,6 @@ export default function ConvenienceNavigator({
   };
 
   const handleSelectGroup = (groupId) => {
-    if (isAdmin && groupId === 'facility') {
-      navigate('/mypage/users');
-      return;
-    }
-
     setSelectedGroupId(groupId);
     setSelectedActionId(null);
     setRoomResults([]);
@@ -1176,77 +1169,80 @@ export default function ConvenienceNavigator({
 
                 {roomResults.length > 0 && (
                   <div className={styles.resultSection}>
-                  <div className={styles.resultHeader}>
-                    <div>
-                      <p className={styles.summaryLabel}>찾아본 매물</p>
-                      <h3 className={styles.summaryTitle}>
-                        조건에 맞는 매물을 바로 확인해 보세요.
-                      </h3>
+                    <div className={styles.resultHeader}>
+                      <div>
+                        <p className={styles.summaryLabel}>찾아본 매물</p>
+                        <h3 className={styles.summaryTitle}>
+                          조건에 맞는 매물을 바로 확인해 보세요.
+                        </h3>
+                      </div>
                     </div>
-                  </div>
 
-                  <div className={styles.resultGrid}>
-                    {roomResults.map((room) => (
-                      <article key={room.roomNo} className={styles.resultCard}>
-                        <div className={styles.resultMeta}>
-                          <span className={styles.resultBadge}>
-                            {roomMethodLabel(room.roomMethod)}
-                          </span>
-                          {room.roomEmptyYn && (
-                            <span className={styles.resultBadgeMuted}>
-                              공실
+                    <div className={styles.resultGrid}>
+                      {roomResults.map((room) => (
+                        <article
+                          key={room.roomNo}
+                          className={styles.resultCard}
+                        >
+                          <div className={styles.resultMeta}>
+                            <span className={styles.resultBadge}>
+                              {roomMethodLabel(room.roomMethod)}
                             </span>
-                          )}
-                        </div>
-                        <h4 className={styles.resultTitle}>
-                          {room.roomName || `매물 ${room.roomNo}`}
-                        </h4>
-                        <p className={styles.resultPrice}>
-                          {roomPriceText(room)}
-                        </p>
-                        <p className={styles.resultInfo}>
-                          {[
-                            occupancyLabel(room.roomRoomCount),
-                            room.houseAddress,
-                          ]
-                            .filter(Boolean)
-                            .join(' · ')}
-                        </p>
-                        <div className={styles.resultActions}>
-                          <button
-                            type="button"
-                            className={styles.primaryAction}
-                            onClick={() =>
-                              navigate(
-                                selectedApplicationAction === 'tour-apply'
-                                  ? `/rooms/${room.roomNo}/tour`
-                                  : `/rooms/${room.roomNo}`
-                              )
-                            }
-                          >
-                            {selectedApplicationAction === 'tour-apply'
-                              ? '투어 신청'
-                              : '상세보기'}
-                          </button>
-                          <button
-                            type="button"
-                            className={styles.secondaryButton}
-                            onClick={() =>
-                              navigate(
-                                selectedApplicationAction === 'tour-apply'
-                                  ? `/rooms/${room.roomNo}`
-                                  : `/rooms/${room.roomNo}/tour`
-                              )
-                            }
-                          >
-                            {selectedApplicationAction === 'tour-apply'
-                              ? '상세보기'
-                              : '투어 신청'}
-                          </button>
-                        </div>
-                      </article>
-                    ))}
-                  </div>
+                            {room.roomEmptyYn && (
+                              <span className={styles.resultBadgeMuted}>
+                                공실
+                              </span>
+                            )}
+                          </div>
+                          <h4 className={styles.resultTitle}>
+                            {room.roomName || `매물 ${room.roomNo}`}
+                          </h4>
+                          <p className={styles.resultPrice}>
+                            {roomPriceText(room)}
+                          </p>
+                          <p className={styles.resultInfo}>
+                            {[
+                              occupancyLabel(room.roomRoomCount),
+                              room.houseAddress,
+                            ]
+                              .filter(Boolean)
+                              .join(' · ')}
+                          </p>
+                          <div className={styles.resultActions}>
+                            <button
+                              type="button"
+                              className={styles.primaryAction}
+                              onClick={() =>
+                                navigate(
+                                  selectedApplicationAction === 'tour-apply'
+                                    ? `/rooms/${room.roomNo}/tour`
+                                    : `/rooms/${room.roomNo}`
+                                )
+                              }
+                            >
+                              {selectedApplicationAction === 'tour-apply'
+                                ? '투어 신청'
+                                : '상세보기'}
+                            </button>
+                            <button
+                              type="button"
+                              className={styles.secondaryButton}
+                              onClick={() =>
+                                navigate(
+                                  selectedApplicationAction === 'tour-apply'
+                                    ? `/rooms/${room.roomNo}`
+                                    : `/rooms/${room.roomNo}/tour`
+                                )
+                              }
+                            >
+                              {selectedApplicationAction === 'tour-apply'
+                                ? '상세보기'
+                                : '투어 신청'}
+                            </button>
+                          </div>
+                        </article>
+                      ))}
+                    </div>
                   </div>
                 )}
 
@@ -1272,7 +1268,7 @@ export default function ConvenienceNavigator({
                       를 누르면 여기에서 바로 매물 후보를 보여드립니다.
                     </div>
                   )}
-                  </div>
+              </div>
             </div>
           )}
 

@@ -4,9 +4,13 @@ import Modal from '../../../../shared/components/Modal/Modal';
 import ReservationDetail from '../detail/ReservationDetail';
 import styles from './List.module.css';
 
-export default function ReservationList({ facilityNo, targetUserNo }) {
+export default function ReservationList({
+  facilityNo,
+  targetUserNo,
+  refreshKey,
+}) {
   const { reservationList, loading, error, setPage, query, pageResponse } =
-    useReservationList(facilityNo || '', targetUserNo || '');
+    useReservationList(facilityNo || '', targetUserNo || '', refreshKey);
 
   const [selectedResNo, setSelectedResNo] = useState(null);
   const isOwner = !!facilityNo;

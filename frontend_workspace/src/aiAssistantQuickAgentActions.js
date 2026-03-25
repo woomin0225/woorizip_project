@@ -1,6 +1,7 @@
 ﻿export const ACTIONS = [
   { id: 'roomRecommend', label: '방 찾기', prompt: '방 찾기', aliases: ['방추천', '방추천해줘', '방찾기', '추천방', '인기방', '인기있는방보기'], related: ['roomRegister', 'tour', 'wishlist'], mode: 'direct' },
   { id: 'roomRegister', label: '방 등록', prompt: '방 등록', aliases: ['방등록', '매물등록', '등록하기'], related: ['roomRecommend', 'tour', 'contract'], mode: 'direct' },
+  { id: 'facilityMenu', label: '공용시설', prompt: '공용시설 메뉴', aliases: ['공용시설', '시설', '공용시설메뉴', '시설메뉴'], related: ['reserve', 'reservationStatus', 'facilityCancel'], mode: 'direct' },
   { id: 'reserve', label: '예약', prompt: '공용시설 예약', aliases: ['시설예약', '공용시설예약', '예약하기'], related: ['facilityHours', 'reservationStatus', 'facilityCancel'], mode: 'direct' },
   { id: 'summary', label: '요약', prompt: '현재 페이지 요약', aliases: ['페이지요약', '내용요약', '설명요약'], related: ['notices', 'roomRecommend', 'wishlist'], mode: 'direct' },
   { id: 'facilityHours', label: '이용시간', prompt: '공용시설 이용시간', aliases: ['운영시간', '몇시까지', '시설시간'], related: ['reserve', 'reservationStatus', 'facilityCancel'], mode: 'direct' },
@@ -13,8 +14,8 @@
   { id: 'mypage', label: '마이페이지', prompt: '마이페이지 이동', aliases: ['내정보', '회원정보', '프로필', '마이'], related: ['wishlist', 'contract', 'tour'], mode: 'direct' },
 ];
 
-export const STARTER_ACTION_IDS = ['roomRecommend', 'roomRegister', 'reserve', 'summary'];
-export const VOICE_CONFIRM_ACTIONS = new Set(['reserve', 'facilityCancel']);
+export const STARTER_ACTION_IDS = ['roomRecommend', 'roomRegister', 'facilityMenu', 'summary'];
+export const VOICE_CONFIRM_ACTIONS = new Set(['reserve']);
 const YES_TOKENS = ['예', '네', '응', '맞아', '좋아', '확인', '진행'];
 const NO_TOKENS = ['아니오', '아니', '취소', '중지', '그만', '싫어'];
 

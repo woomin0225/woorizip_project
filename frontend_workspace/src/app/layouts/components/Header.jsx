@@ -209,10 +209,7 @@ export default function Header() {
                   </NavLink>
                 </NavItem>
                 <NavItem>
-                  <NavLink
-                    to={isAdmin ? '/mypage/users' : '/facility/view'}
-                    tag={Link}
-                  >
+                  <NavLink to={'/facility/view'} tag={Link}>
                     공용시설
                   </NavLink>
                 </NavItem>

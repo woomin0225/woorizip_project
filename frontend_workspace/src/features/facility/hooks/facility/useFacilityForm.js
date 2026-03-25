@@ -5,6 +5,7 @@ import {
   getFacilityDetail,
   getFacilityCategories,
 } from '../../api/facilityApi';
+import { normalizeApiError } from '../../../../app/http/errorMapper';
 
 const schema = {
   houseNo: '',
@@ -43,8 +44,9 @@ export function useFacilityForm(houseNo, facilityNo = null) {
         const data = response?.data || response || [];
         setCategories(data);
       } catch (err) {
-        setError(err);
-        console.error('카테고리 로드 실패:', err.message);
+        const apiError = normalizeApiError(err);
+        setError(apiError);
+        console.error('카테고리 로드 실패:', apiError.message);
       }
     };
     fetchCategories();
@@ -76,8 +78,9 @@ export function useFacilityForm(houseNo, facilityNo = null) {
           setExistingImages(data.images || data.facilityImages || []);
           setDeleteImageNos([]);
         } catch (err) {
-          setError(err);
-          console.error('상세 정보 로드 실패:', err.message);
+          const apiError = normalizeApiError(err);
+          setError(apiError);
+          console.error('상세 정보 로드 실패:', apiError.message);
         } finally {
           setLoading(false);
         }
@@ -147,7 +150,7 @@ export function useFacilityForm(houseNo, facilityNo = null) {
     }));
   }, []);
 
-const onSubmit = async (e, navigate, manualValues = null) => {
+  const onSubmit = async (e, navigate, manualValues = null) => {
     if (e) e.preventDefault();
     setSubmitting(true);
 
@@ -219,9 +222,10 @@ const onSubmit = async (e, navigate, manualValues = null) => {
       alert('성공적으로 저장되었습니다.');
       navigate(`/facility/view/${houseNo}`);
     } catch (err) {
-      setError(err);
-      console.error('제출 에러:', err.message);
-      alert(`저장 실패: ${err.message}`);
+      const apiError = normalizeApiError(err);
+      setError(apiError);
+      console.error('제출 에러:', apiError.message);
+      alert(apiError.message || '저장에 실패했습니다.');
     } finally {
       setSubmitting(false);
     }
