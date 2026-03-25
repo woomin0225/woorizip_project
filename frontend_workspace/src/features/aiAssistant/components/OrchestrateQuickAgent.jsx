@@ -208,12 +208,12 @@ export default function OrchestrateQuickAgent() {
   const voiceStatusText = pendingConfirmation
     ? `${pendingConfirmation.label} 진행 전 재확인 대기 중입니다. 예 또는 아니오로 말씀해 주세요.`
     : speaking
-      ? '답변을 읽는 중입니다.'
+      ? '답변을 읽는 중입니다. '
       : loading
         ? '요청을 처리하고 있습니다.'
         : listening
           ? '말씀을 듣는 중입니다.'
-          : '대기 중입니다. 음성 버튼을 누른 뒤 말씀해 주세요.';
+          : '대기 중입니다.';
 
   useEffect(() => {
     if (!open) return;
@@ -225,7 +225,7 @@ export default function OrchestrateQuickAgent() {
       setOpen(true);
       lastSpokenMessageRef.current = greetingText.replace(/\n/g, ' ').trim();
       appendAssistantMessage(
-        '음성 모드가 켜졌습니다. 음성 버튼을 누른 뒤 말씀해 주세요. 말씀하시는 동안에는 답하지 않고, 답변을 읽는 동안에는 마이크를 듣지 않습니다.',
+        '음성 모드가 켜졌습니다. 음성 버튼을 누른 뒤 말씀해 주세요. 답변을 읽는 중에도 음성 버튼을 누르면 읽기를 멈추고 다시 말씀하실 수 있습니다.',
         [],
         { suppressAutoRead: true }
       );
@@ -1005,7 +1005,7 @@ export default function OrchestrateQuickAgent() {
     navigate('/mypage/edit');
     setProfileEditFlow({ step: 'field' });
     appendAssistantMessage(
-      `내정보 수정 페이지로 이동했습니다. 수정할 항목을 말씀해 주세요.\n${getProfileEditSupportMessage()} 예: 이름을 강우민으로 바꿔줘`,
+      `내정보 수정 페이지로 이동했습니다. 수정할 항목을 말씀해 주세요.\n${getProfileEditSupportMessage()}`,
       []
     );
   };
@@ -1287,11 +1287,10 @@ export default function OrchestrateQuickAgent() {
 
     if (actionId === 'facilityMenu') {
       if (agentRole === 'lessor') {
-        goToPage(
-          '/facility/view',
-          '공용시설 관리 페이지로 이동합니다.',
-          ['roomRegister', 'summary']
-        );
+        goToPage('/facility/view', '공용시설 관리 페이지로 이동합니다.', [
+          'roomRegister',
+          'summary',
+        ]);
         return;
       }
       openFacilityMenu();
@@ -2039,15 +2038,15 @@ export default function OrchestrateQuickAgent() {
       }
 
       if (speaking) {
+        stopSpeaking();
         if (!quiet) {
           appendAssistantMessage(
-            '답변을 읽는 중에는 마이크를 켤 수 없습니다. 읽기가 끝난 뒤 다시 시도해 주세요.'
+            '읽기를 멈추고 다시 듣고 있습니다. 말씀을 마치면 답변을 준비할게요.',
+            [],
+            { suppressAutoRead: true }
           );
         }
-        return;
-      }
-
-      if (!quiet) {
+      } else if (!quiet) {
         appendAssistantMessage(
           '듣고 있습니다. 말씀을 마치면 답변을 준비할게요.',
           [],
@@ -2104,6 +2103,7 @@ export default function OrchestrateQuickAgent() {
       isSpeechRecognitionSupported,
       speaking,
       startListening,
+      stopSpeaking,
       sendMessage,
       disableVoiceMode,
     ]
