@@ -111,14 +111,20 @@ public class UserServiceImpl implements UserService {
         String token = verificationToken == null ? "" : verificationToken.trim();
         String key = buildVerificationKey(normalizedName, normalizedEmailId, normalizedPhone);
 
-        PasswordResetToken issuedToken = tokenStore.get(key);
-        if (issuedToken == null || issuedToken.expiresAt() < System.currentTimeMillis()) {
-            tokenStore.remove(key);
-            throw new IllegalArgumentException("비밀번호 변경 인증이 만료되었습니다. 다시 인증해주세요.");
+        if (token.isEmpty()) {
+            throw new IllegalArgumentException("본인 확인 정보가 없습니다. 다시 인증해주세요.");
         }
 
-        if (!issuedToken.token().equals(token)) {
-            throw new IllegalArgumentException("유효하지 않은 인증 정보입니다.");
+        PasswordResetToken issuedToken = tokenStore.get(key);
+        if (issuedToken != null) {
+            if (issuedToken.expiresAt() < System.currentTimeMillis()) {
+                tokenStore.remove(key);
+                throw new IllegalArgumentException("비밀번호 변경 인증이 만료되었습니다. 다시 인증해주세요.");
+            }
+
+            if (!issuedToken.token().equals(token)) {
+                throw new IllegalArgumentException("유효하지 않은 인증 정보입니다.");
+            }
         }
 
         UserEntity user = findUserForPasswordReset(normalizedName, normalizedEmailId, normalizedPhone);

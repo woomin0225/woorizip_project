@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useFindPassword } from '../hooks/useUserHooks';
 import {
   Button,
@@ -17,6 +18,7 @@ import styles from './FindPassword.module.css';
 
 export default function FindPassword() {
   const mainRef = useRef(null);
+  const navigate = useNavigate();
   const {
     form,
     loading,
@@ -35,6 +37,15 @@ export default function FindPassword() {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
+
+  const onSubmit = async (e) => {
+    const changed = await handleRequestNewPassword(e);
+    if (changed) {
+      window.setTimeout(() => {
+        navigate('/login', { replace: true });
+      }, 1200);
+    }
+  };
 
   return (
     <>
@@ -60,7 +71,7 @@ export default function FindPassword() {
                     <div className="text-center text-muted mb-4">
                       <small>이름, 아이디, 휴대폰 번호를 확인한 뒤 새 비밀번호를 설정해 주세요.</small>
                     </div>
-                    <Form onSubmit={handleRequestNewPassword}>
+                    <Form onSubmit={onSubmit}>
                       <FormGroup className="mb-3">
                         <InputGroup className="input-group-alternative">
                           <InputGroupText>

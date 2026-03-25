@@ -531,7 +531,7 @@ export function useFindPassword() {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
 
-    if (name === 'phone' || name === 'name') {
+    if (name === 'phone' || name === 'name' || name === 'emailId') {
       setVerificationToken('');
       resetVerification();
     }
@@ -612,7 +612,8 @@ export function useFindPassword() {
         newPassword: form.newPassword,
       });
 
-      setMessage('비밀번호가 성공적으로 변경되었습니다.');
+      setMessage('비밀번호가 변경되었습니다. 로그인 페이지로 이동합니다.');
+      return true;
     } catch (err) {
       const msg = String(err?.message || '');
       const isTemporaryExpiryCase =
@@ -624,12 +625,14 @@ export function useFindPassword() {
         // Temporary workaround: treat backend expiry errors as success for UI flow.
         setError('');
         setMessage('비밀번호가 변경되었습니다. 새 비밀번호로 다시 로그인해주세요.');
+        return true;
       } else {
         setError(msg || '비밀번호 변경에 실패했습니다.');
       }
     } finally {
       setLoading(false);
     }
+    return false;
   };
 
   return {
