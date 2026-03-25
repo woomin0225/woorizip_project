@@ -8,15 +8,16 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   ACTION_MAP,
-  STARTER_ACTION_IDS,
   VOICE_CONFIRM_ACTIONS,
   detectQuickAction,
   expandRelatedActionIds,
+  filterActionIdsForRole,
+  getStarterActionIds,
+  isActionAvailableForRole,
   isNo,
   isYes,
   normalizeText,
   suggestActionsFromText,
-  uniqActionIds,
 } from '../../../aiAssistantQuickAgentActions';
 import {
   extractPostNoFromPath,
@@ -124,9 +125,18 @@ export default function OrchestrateQuickAgent() {
   const [loading, setLoading] = useState(false);
   const { managedHouses, resolvedIsLessor, setResolvedIsLessor, userProfile } =
     useAiAssistantAgentUserContext({ accessToken, isAdmin, open });
+  const agentRole = useMemo(() => {
+    if (isAdmin) return 'admin';
+    if (resolvedIsLessor) return 'lessor';
+    return 'user';
+  }, [isAdmin, resolvedIsLessor]);
+  const starterActionIds = useMemo(
+    () => getStarterActionIds(agentRole),
+    [agentRole]
+  );
   const [pendingConfirmation, setPendingConfirmation] = useState(null);
   const [messages, setMessages] = useState([
-    { role: 'assistant', text: greetingText, actionIds: STARTER_ACTION_IDS },
+    { role: 'assistant', text: greetingText, actionIds: starterActionIds },
   ]);
   // 같은 패널 안에서는 기본적으로 같은 세션을 쓰되,
   // 사용자가 다시 "방 등록"을 시작하면 새 세션으로 바꿔 오래된 상태를 끊는다.
@@ -150,10 +160,24 @@ export default function OrchestrateQuickAgent() {
     setSessionId(newSessionId());
     lastSpokenMessageRef.current = '';
     setMessages([
-      { role: 'assistant', text: greetingText, actionIds: STARTER_ACTION_IDS },
+      { role: 'assistant', text: greetingText, actionIds: starterActionIds },
     ]);
     setReservationFlow(null);
-  }, [greetingText]);
+  }, [greetingText, starterActionIds]);
+
+  useEffect(() => {
+    setMessages((prev) =>
+      prev.map((message, index) => ({
+        ...message,
+        actionIds:
+          index === 0 &&
+          message.role === 'assistant' &&
+          message.text === greetingText
+            ? starterActionIds
+            : filterActionIdsForRole(message.actionIds || [], agentRole),
+      }))
+    );
+  }, [agentRole, greetingText, starterActionIds]);
 
   const closePanel = useCallback(() => {
     stopListening();
@@ -243,7 +267,7 @@ export default function OrchestrateQuickAgent() {
       {
         role: 'assistant',
         text: messageText,
-        actionIds: uniqActionIds(actionIds),
+        actionIds: filterActionIdsForRole(actionIds, agentRole),
         suppressAutoRead: Boolean(options.suppressAutoRead),
       },
     ]);
@@ -269,7 +293,10 @@ export default function OrchestrateQuickAgent() {
       setMessages((prev) =>
         prev.map((message, index) =>
           index === prev.length - 1 && message.role === 'assistant'
-            ? { ...message, actionIds: uniqActionIds(fallbackActionIds) }
+            ? {
+                ...message,
+                actionIds: filterActionIdsForRole(fallbackActionIds, agentRole),
+              }
             : message
         )
       );
@@ -1237,6 +1264,13 @@ export default function OrchestrateQuickAgent() {
   const runQuickAction = async (actionId, options = {}) => {
     const action = ACTION_MAP[actionId];
     if (!action) return;
+    if (!isActionAvailableForRole(actionId, agentRole)) {
+      appendAssistantMessage(
+        '현재 계정에서는 이 기능을 사용할 수 없습니다.',
+        starterActionIds
+      );
+      return;
+    }
 
     if (
       voiceModeEnabled &&
@@ -1246,13 +1280,26 @@ export default function OrchestrateQuickAgent() {
       setPendingConfirmation({ actionId, label: action.label });
       appendAssistantMessage(
         `${action.label}을 진행할까요? 예 또는 아니오로 말씀해 주세요.`,
-        expandRelatedActionIds(action.related || [], 3)
+        expandRelatedActionIds(action.related || [], 3, { role: agentRole })
       );
       return;
     }
 
     if (actionId === 'facilityMenu') {
+      if (agentRole === 'lessor') {
+        goToPage(
+          '/facility/view',
+          '공용시설 관리 페이지로 이동합니다.',
+          ['roomRegister', 'summary']
+        );
+        return;
+      }
       openFacilityMenu();
+      return;
+    }
+
+    if (actionId === 'userManage') {
+      goToPage('/mypage/users', '유저관리 페이지로 이동합니다.');
       return;
     }
 
@@ -1501,7 +1548,7 @@ export default function OrchestrateQuickAgent() {
 
     appendAssistantMessage(
       `${action.label} 기능은 아직 준비 중입니다. 다른 명령을 말씀해 주시면 바로 도와드릴게요.`,
-      expandRelatedActionIds(action.related || [], 3)
+      expandRelatedActionIds(action.related || [], 3, { role: agentRole })
     );
   };
 
@@ -1706,7 +1753,7 @@ export default function OrchestrateQuickAgent() {
       normalized.includes('시설페이지') ||
       normalized === '시설안내'
     ) {
-      openFacilityMenu();
+      await runQuickAction('facilityMenu', { skipConfirm: true });
       return true;
     }
 
@@ -1749,7 +1796,7 @@ export default function OrchestrateQuickAgent() {
       if (ACTION_MAP[id] && !picked.includes(id)) picked.push(id);
     };
     const addMatches = (value) => {
-      suggestActionsFromText(value).forEach(add);
+      suggestActionsFromText(value, { role: agentRole }).forEach(add);
     };
 
     const fromResponse = result?.suggestedActions;
@@ -1762,7 +1809,7 @@ export default function OrchestrateQuickAgent() {
     addMatches(result?.intent || '');
     addMatches(result?.action?.name || '');
 
-    return expandRelatedActionIds(picked, 3);
+    return expandRelatedActionIds(picked, 3, { role: agentRole });
   };
 
   const resolveConfirmation = async (messageText) => {
@@ -1773,7 +1820,7 @@ export default function OrchestrateQuickAgent() {
       setPendingConfirmation(null);
       appendAssistantMessage(
         `${ACTION_MAP[actionId]?.label || '요청'}을 계속 진행합니다.`,
-        expandRelatedActionIds([actionId], 3)
+        expandRelatedActionIds([actionId], 3, { role: agentRole })
       );
       void runQuickAction(actionId, { skipConfirm: true });
       return true;
@@ -1784,14 +1831,14 @@ export default function OrchestrateQuickAgent() {
       setPendingConfirmation(null);
       appendAssistantMessage(
         `${ACTION_MAP[actionId]?.label || '요청'}을 취소했습니다. 다른 명령을 말씀해 주세요.`,
-        ['summary', 'roomRecommend', 'reserve']
+        starterActionIds
       );
       return true;
     }
 
     appendAssistantMessage(
       '재확인이 필요합니다. 예 또는 아니오로 말씀해 주세요.',
-      ['reserve', 'facilityCancel', 'summary']
+      starterActionIds
     );
     return true;
   };
@@ -1814,7 +1861,7 @@ export default function OrchestrateQuickAgent() {
 
     const quickAction = options.skipQuickAction
       ? null
-      : detectQuickAction(messageText);
+      : detectQuickAction(messageText, { role: agentRole });
     if (quickAction) {
       void runQuickAction(quickAction);
       return;
@@ -1957,7 +2004,9 @@ export default function OrchestrateQuickAgent() {
 
   const onQuickActionClick = (actionId) => {
     const action = ACTION_MAP[actionId];
-    if (!action || loading) return;
+    if (!action || loading || !isActionAvailableForRole(actionId, agentRole)) {
+      return;
+    }
     if (actionId === 'roomRegister') {
       void runQuickAction(actionId);
       return;
