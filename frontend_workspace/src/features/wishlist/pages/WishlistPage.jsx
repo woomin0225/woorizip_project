@@ -29,6 +29,7 @@ export default function WishlistPage() {
   const [error, setError] = useState('');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
+  const [totalItems, setTotalItems] = useState(0);
   const [isDeletingAll, setIsDeletingAll] = useState(false);
   const PAGE_SIZE = 8;
   const BULK_PAGE_SIZE = 100;
@@ -81,8 +82,10 @@ export default function WishlistPage() {
       setItems(enriched);
       setPage(pageRes.page || nextPage);
       setTotalPages(pageRes.totalPages || 0);
+      setTotalItems(pageRes.totalElements || 0);
     } catch (e) {
       setItems([]);
+      setTotalItems(0);
       setError(e.message || '찜목록 조회 실패');
     }
   }
@@ -174,7 +177,7 @@ export default function WishlistPage() {
                       type="button"
                       className={pageStyles.deleteAllBtn}
                       onClick={handleDeleteAll}
-                      disabled={isDeletingAll || items.length === 0}
+                      disabled={isDeletingAll || totalItems === 0}
                     >
                       {isDeletingAll ? '전체 삭제 중...' : '전체삭제'}
                     </button>
@@ -194,7 +197,7 @@ export default function WishlistPage() {
                   {!error && items.length > 0 && (
                     <>
                       <div className={styles.surveyBox} style={{ marginBottom: 18 }}>
-                        <p className={styles.surveyTitle}>저장된 매물 {items.length}건</p>
+                        <p className={styles.surveyTitle}>저장된 매물 {totalItems}건</p>
                         <p className={styles.desc} style={{ marginBottom: 0 }}>
                           가격, 면적, 입주 가능 상태를 비교하면서 원하는 방을 빠르게 확인해보세요.
                         </p>
