@@ -125,8 +125,8 @@ export default function FindId() {
                         {isVerified && (
                           <div className="text-success text-center mb-3">
                             <small>
-                              <i className="fa fa-check-circle" /> 휴대폰 PASS
-                              인증이 완료되었습니다.
+                              <i className="fa fa-check-circle" /> 휴대폰 확인이
+                              완료되었습니다.
                               {verifiedPhone ? ` (${verifiedPhone})` : ''}
                             </small>
                             <div className="mt-2">

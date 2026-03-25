@@ -218,6 +218,29 @@ class TourService:
             re.search(r'\d{4}[-./]\d{1,2}[-./]\d{1,2}\s+\d{1,2}:\d{2}', text)
         )
 
+    def looks_like_partial_schedule_input(self, value: str | None) -> bool:
+        text = (value or '').strip()
+        if not text:
+            return False
+        parts = self.extract_schedule_parts(text)
+        has_date = bool(parts["visitDate"])
+        has_time = bool(parts["visitTime"])
+        return has_date ^ has_time
+
+    def looks_like_date_only_input(self, value: str | None) -> bool:
+        text = (value or '').strip()
+        if not text:
+            return False
+        parts = self.extract_schedule_parts(text)
+        return bool(parts["visitDate"]) and not bool(parts["visitTime"])
+
+    def looks_like_time_only_input(self, value: str | None) -> bool:
+        text = (value or '').strip()
+        if not text:
+            return False
+        parts = self.extract_schedule_parts(text)
+        return bool(parts["visitTime"]) and not bool(parts["visitDate"])
+
     def merge_schedule_input(
         self,
         *,

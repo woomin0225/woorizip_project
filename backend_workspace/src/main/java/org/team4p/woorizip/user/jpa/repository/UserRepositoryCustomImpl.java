@@ -41,6 +41,20 @@ public class UserRepositoryCustomImpl implements UserRepositoryCustom {
     }
 
     @Override
+    public UserEntity findByNameAndEmailIdAndPhone(String name, String emailId, String phone) {
+        return queryFactory
+                .selectFrom(userEntity)
+                .where(
+                    userEntity.name.eq(name),
+                    userEntity.emailId.eq(emailId),
+                    userEntity.phone.eq(phone),
+                    userEntity.deletedYn.eq("N")
+                )
+                .orderBy(userEntity.createdAt.desc(), userEntity.userNo.desc())
+                .fetchFirst();
+    }
+
+    @Override
     public long countSearchList(UserDto user_dto) {
         return queryFactory
                 .select(Wildcard.count)

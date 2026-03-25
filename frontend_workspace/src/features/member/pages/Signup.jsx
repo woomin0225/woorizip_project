@@ -298,7 +298,7 @@ export default function Signup() {
                               <div className={styles.inlineInputAction}>
                                 <div className="text-success">
                                   <small>
-                                    PASS 본인인증 완료
+                                    휴대폰 확인이 완료되었습니다.
                                     {phoneVerifiedPhone
                                       ? ` (${phoneVerifiedPhone})`
                                       : ''}
