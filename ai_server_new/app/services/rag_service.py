@@ -9,7 +9,7 @@ class RagService:
         self.vectorClient = vectorClient
         self.embeddingClient = embeddingClient
         
-    async def room_rag(self, text: str, tokenizer):
+    async def room_rag(self, text: str):
         # 질문문장은 청킹 안함 (2차원 벡터 검색됨)
         embeded = self.embeddingClient.embed(text)
         

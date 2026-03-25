@@ -18,7 +18,7 @@ from app.routers import (
 from app.clients.qdrant_client import QdrantDbClient
 from app.schemas import RoomSummaryRequest
 from app.services.summary_service import SummaryService
-from fastapi import Requestg
+from fastapi import Request
 
 
 @asynccontextmanager
@@ -93,7 +93,6 @@ from app.schemas import (
     SummaryReq,
     VisionAnalyzeReq,
     RoomVisionAnalyzeRes,
-    ReservationReq,
 )
 from app.services.agent_router import AgentRouter
 from app.services.doc_service import DocService
@@ -107,7 +106,7 @@ from app.services.spring_tools import SpringTools
 from app.services.summary_service import SummaryService
 from app.services.vision_service import VisionService
 from app.services.voice_service import VoiceService
-from app.services.reservation_service import ReservationService
+
 from app.store.vector_store import build_vector_store
 
 
@@ -158,9 +157,7 @@ summary = SummaryService(llm)
 policy = PolicyService(llm=None)
 monitoring = MonitoringService(llm=llm)
 tools = SpringTools()
-reservation = ReservationService(
-    llm=llm, tools=tools, embedder=embedding_client, qdrant_db=store.client
-)
+
 agent = AgentRouter(
     llm, rag, doc, reco, summary, policy, monitoring, tools, reservation
 )
@@ -336,16 +333,4 @@ async def review_analyze(req: ReviewAnalyzeReq):
 async def review_summary(req: ReviewSummaryReq):
     return await review.summarize_room_reviews(
         req.room_id, req.reviews, room_meta=req.room_meta
-    )
-
-
-@app.post("ai/facility/reservation", dependencies=[Depends(require_internal_api_key)])
-async def reservation_analyze(req: ReservationReq):
-    return await reservation.analyze_reservation(
-        req.reservationName,
-        req.reservationPhone,
-        req.reservationDate,
-        req.reservationStartTime,
-        req.reservationEndTime,
-        req.facilityNo,
     )

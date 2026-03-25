@@ -102,6 +102,8 @@ public class LesseeValidator {
 			return null;
 		}
 
+		// 실존하는 방인지 확인
+		@SuppressWarnings("null")
 		ContractEntity nearestContract = null;
 		for (int i = 0; i < contracts.size(); i++) {
 			ContractEntity c = contracts.get(i);

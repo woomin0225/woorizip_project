@@ -20,6 +20,7 @@ import org.team4p.woorizip.reservation.dto.ReservationCreateRequestDTO;
 import org.team4p.woorizip.reservation.dto.ReservationDetailResponseDTO;
 import org.team4p.woorizip.reservation.dto.ReservationListResponseDTO;
 import org.team4p.woorizip.reservation.dto.ReservationModifyRequestDTO;
+import org.team4p.woorizip.reservation.dto.ReservationStatsDTO;
 import org.team4p.woorizip.reservation.enums.ReservationStatus;
 import org.team4p.woorizip.reservation.jpa.entity.ReservationEntity;
 import org.team4p.woorizip.reservation.jpa.repository.ReservationRepository;
@@ -215,7 +216,7 @@ public class ReservationServiceImpl implements ReservationService {
 	                .reservationDate(date)
 	                .reservationStartTime(startTime)
 	                .reservationEndTime(endTime)
-	                .reservationStatus(ReservationStatus.APPROVED)
+	                .reservationStatus(ReservationStatus.BLOCKED)
 	                .build();
 	        reservationRepository.save(blockRsvn);
 	    }
@@ -279,13 +280,14 @@ public class ReservationServiceImpl implements ReservationService {
 	    }
 
 	    // 시설 중복 예약 확인
+	    List<ReservationStatus> unavailableStatuses = List.of(ReservationStatus.APPROVED, ReservationStatus.BLOCKED);
 	    boolean isOverlapped;
 	    if (excludeRsvnNo == null) {
-	        isOverlapped = reservationRepository.existsByFacility_FacilityNoAndReservationDateAndReservationStartTimeBeforeAndReservationEndTimeAfterAndReservationStatus(
-	                facility.getFacilityNo(), date, end, start, ReservationStatus.APPROVED);
+	        isOverlapped = reservationRepository.existsByFacility_FacilityNoAndReservationDateAndReservationStartTimeBeforeAndReservationEndTimeAfterAndReservationStatusIn(
+	                facility.getFacilityNo(), date, end, start, unavailableStatuses);
 	    } else {
-	        isOverlapped = reservationRepository.existsByFacility_FacilityNoAndReservationDateAndReservationStartTimeBeforeAndReservationEndTimeAfterAndReservationNoNotAndReservationStatus(
-	                facility.getFacilityNo(), date, end, start, excludeRsvnNo, ReservationStatus.APPROVED);
+	        isOverlapped = reservationRepository.existsByFacility_FacilityNoAndReservationDateAndReservationStartTimeBeforeAndReservationEndTimeAfterAndReservationNoNotAndReservationStatusIn(
+	                facility.getFacilityNo(), date, end, start, excludeRsvnNo, unavailableStatuses);
 	    }
 
 	    if (isOverlapped) {
@@ -306,4 +308,13 @@ public class ReservationServiceImpl implements ReservationService {
 	        throw new ForbiddenException("해당 시간대에 다른 시설 예약 내역이 존재합니다.");
 	    }
 	}
+	
+	// 시설 사용 분석용 데이터 조회
+    @Override
+    public List<ReservationStatsDTO> analyzeReservation(String facilityNo) {
+        return reservationRepository.findByFacility_FacilityNo(facilityNo)
+        		.stream()
+                .map(ReservationStatsDTO::from)
+                .collect(Collectors.toList());
+    }
 }

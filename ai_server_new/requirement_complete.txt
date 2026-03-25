@@ -46,6 +46,9 @@ chardet<6
 
 PyMuPDF==1.25.3
 python-docx==1.1.2
+openpyxl==3.1.5
+python-pptx==1.0.2
+olefile==0.47
 lxml==6.0.2
 
 emoji==2.15.0
@@ -59,3 +62,6 @@ pycocotools==2.0.11
 supervision==0.27.0.post2
 timm==1.0.25
 yapf==0.43.0
+
+pandas==2.2.3
+dateparser==1.2.0

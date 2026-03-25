@@ -3,19 +3,20 @@
 
 from __future__ import annotations
 
-from datetime import date, datetime
+from datetime import date, time, datetime
 from typing import Any, Literal, Optional
 from pydantic import BaseModel, Field
 
 SummaryTarget = Literal["page", "post", "room", "generic"]
 MonitorKind = Literal["view_abuse", "facility_usage", "generic"]
 
+
 # 방 정보 종합 요약시 사용 (리뷰, 이미지설명 포함)
 class RoomTotalRequest(BaseModel):
     roomNo: str = Field(description="방 번호 (식별자, 사용자는 알 수 없음)")
     roomName: str = Field(description="방 이름")
     houseNo: str = Field(description="건물 번호 (식별자, 사용자는 알 수 없음)")
-    
+
     houseName: str = Field(description="건물 이름")
     houseAddress: str = Field(description="건물 주소")
     houseCompletionYear: int = Field(description="건물 완공년도")
@@ -26,12 +27,16 @@ class RoomTotalRequest(BaseModel):
     houseFemaleLimit: bool = Field(description="여성전용 건물 여부")
     houseParkingMax: int = Field(description="건물 최대 주차 대수")
     houseAbstract: str = Field(description="건물 소개글")
-    
+
     roomCreatedAt: datetime = Field(description="방 정보 등록일")
-    roomUpdatedAt: Optional[datetime] = Field(default=None, description="방 정보 최근 수정일")
+    roomUpdatedAt: Optional[datetime] = Field(
+        default=None, description="방 정보 최근 수정일"
+    )
     roomDeposit: int = Field(description="방 보증금")
     roomMonthly: int = Field(description="방 월세금")
-    roomMethod: str = Field(description="전세인지 월세인지 나타냄. M이면 월세, L이면 월세")
+    roomMethod: str = Field(
+        description="전세인지 월세인지 나타냄. M이면 월세, L이면 월세"
+    )
     roomArea: float = Field(description="방 전용 면적. 미터제곱 단위")
     roomFacing: str = Field(description="방의 방향")
     roomAvailableDate: date = Field(description="방 입주가능 일자")
@@ -41,16 +46,19 @@ class RoomTotalRequest(BaseModel):
     roomEmptyYn: bool = Field(description="방의 공실여부")
     roomStatus: str = Field(description="방의 공개/숨김 상태")
     roomOptions: str = Field(description="방의 가구/옵션들")
+
     imageSummary: Optional[str] = Field(description="방의 이미지 캡션들을 요약한 글")
     imageCaptions: Optional[list] = Field(description="방의 각 이미지들의 설명")
     reviewSummary: Optional[str] = Field(description="방의 리뷰들을 요약한 글")
     reviews: Optional[list] = Field(description="방의 리뷰들")
-    
-    
+
+
 # 리뷰나 이미지 캡션들 요약시 사용
 class RoomSummaryRequest(BaseModel):
     roomNo: str
     texts: list
+
+
 class Envelope(BaseModel):
     ok: bool = True
     intent: str | None = None
@@ -293,3 +301,16 @@ class ReviewSummaryReq(BaseModel):
     room_id: str
     reviews: list[dict[str, Any]]
     room_meta: dict[str, Any] = Field(default_factory=dict)
+
+
+class ReservationAssistReq(BaseModel):
+    message: str
+
+
+class ReservationAnalyzeReq(BaseModel):
+    reservationName: str
+    reservationPhone: str
+    reservationDate: date
+    reservationStartTime: time
+    reservationEndTime: time
+    facilityNo: str

@@ -316,6 +316,9 @@ class SummaryService:
                 parsed_attachments.append(parsed)
             except DocumentParseError as exc:
                 warnings.append(f'{filename}: {str(exc)}')
+            except Exception as exc:
+                logger.exception('Unexpected attachment parsing failure: filename=%s', filename)
+                warnings.append(f'{filename}: 첨부파일 분석 중 오류가 발생하여 요약에서 제외되었습니다.')
 
         body_text = self._clip_text(
             self._normalize_extracted_text(text or ''),

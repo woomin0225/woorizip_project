@@ -63,8 +63,8 @@ public class FacilityServiceImpl implements FacilityService {
 	@Transactional(readOnly = true)
 	public List<FacilityListResponseDTO> getFacilityList(String houseNo, String userNo) {
 		// 임차인
-	    if (houseNo == null) {			
-	    	String userHouseNo = lesseeValidator.validFacilityAccessLessee(userNo);
+	    if (houseNo == null) {
+	    	String userHouseNo = lesseeValidator.validLessee(userNo);
 			return facilityRepository.findByHouseHouseNoAndFacilityDeletedAtIsNull(userHouseNo)
 		    		.stream()
 		            .map(FacilityListResponseDTO::from)
@@ -268,7 +268,8 @@ public class FacilityServiceImpl implements FacilityService {
 				.map(FacilityDetailResponseDTO::from)
 				.orElseThrow(() -> new NotFoundException("해당 시설 정보를 찾을 수 없습니다."));
 	}
-
+	
+	// 시설 정보 수정
 	@Override
 	@Transactional
 	public void modifyFacility(List<MultipartFile> files, String facilityNo, FacilityModifyRequestDTO dto, String currentUserNo) {

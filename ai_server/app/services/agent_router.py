@@ -191,24 +191,23 @@ class AgentRouter:
 
         if intent == "FACILITY_BOOKING":
             if not extra.get("confirm"):
-                draft_obj = await self.reservation.analyze_reservation(
-                    instruction, extra
+                res_data = await self.reservation.analyze_reservation(
+                    instruction, {"user_id": user_id}
                 )
+
                 return {
                     "intent": intent,
                     "stage": "draft",
-                    "draft": draft_obj.model_dump(),
-                    "next": "사용자 확인(confirm=true) 후 실행",
+                    "draft": res_data["analyze_result"].model_dump(),
+                    "message": res_data["message"],
+                    "is_available": res_data["is_available"],
                 }
 
-            return {
-                "intent": intent,
-                "stage": "confirm",
-                "data": await self.tools.call(
-                    "facility_booking_confirm",
-                    {"draft": extra.get("draft"), "confirmed": True},
-                ),
-            }
+            else:
+                booking_result = await self.tools.create_booking(
+                    user_id, extra.get("draft")
+                )
+                return {"intent": intent, "stage": "confirm", "data": booking_result}
 
         if intent == "NAVIGATE_POST":
             candidates = extra.get("candidates", [])

@@ -23,6 +23,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.team4p.woorizip.board.ai.config.AiSummaryProperties;
@@ -250,6 +251,9 @@ public class BoardSummaryServiceImpl implements BoardSummaryService {
         } catch (JsonProcessingException e) {
             log.error("FastAPI summary JSON 처리 실패 url={}", url, e);
             throw new IllegalStateException("AI 요약 응답 처리에 실패했습니다.");
+        } catch (ResourceAccessException e) {
+            log.error("FastAPI summary 연결 실패 url={}", url, e);
+            throw new IllegalStateException("AI 요약 서버 연결이 중간에 끊어졌습니다. AI 서버 상태를 확인해 주세요.");
         } catch (RestClientException e) {
             log.error("FastAPI summary 호출 실패 url={}", url, e);
             throw new IllegalStateException("AI 요약 서버 호출에 실패했습니다.");

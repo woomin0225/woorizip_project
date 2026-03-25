@@ -14,9 +14,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.team4p.woorizip.common.exception.ForbiddenException;
 import org.team4p.woorizip.common.exception.NotFoundException;
 import org.team4p.woorizip.house.jpa.entity.HouseEntity;
@@ -430,13 +433,26 @@ public class RoomServiceImpl implements RoomService {
 		// 그래서 아래에서 Map을 한 번 만든 뒤, roomNoList 순서대로 다시 dtoList를 조립합니다.
 		WebClient webClient = webClientBuilder.build();
 		
-		Mono<RoomRagResponse> monoResponse = webClient.post()
-				.uri(aiServerUri.concat("/ai/rag/room"))
-				.bodyValue(text)
-				.retrieve()
-				.bodyToMono(RoomRagResponse.class)
-				;
-		RoomRagResponse response = monoResponse.block();
+		RoomRagResponse response;
+		try {
+			Mono<RoomRagResponse> monoResponse = webClient.post()
+					.uri(aiServerUri.concat("/ai/rag/room"))
+					.contentType(MediaType.TEXT_PLAIN)
+					.bodyValue(text)
+					.retrieve()
+					.onStatus(HttpStatusCode::isError, clientResponse -> clientResponse.bodyToMono(String.class)
+							.defaultIfEmpty("")
+							.map(body -> new IllegalStateException("AI 방 검색 서버 오류(" + clientResponse.statusCode().value()
+									+ "): " + body)))
+					.bodyToMono(RoomRagResponse.class);
+			response = monoResponse.block();
+		} catch (WebClientResponseException e) {
+			throw new IllegalStateException(
+					"AI 방 검색 서버 호출 실패(" + e.getStatusCode().value() + "): " + e.getResponseBodyAsString(),
+					e);
+		} catch (Exception e) {
+			throw new IllegalStateException("AI 방 검색 서버 호출 중 오류가 발생했습니다: " + e.getMessage(), e);
+		}
 
 		// RAG 서버가 비어 있는 결과를 주면 바로 빈 리스트를 반환합니다.
 		// 프론트는 "추천 결과 없음"으로 자연스럽게 처리할 수 있습니다.
@@ -459,7 +475,7 @@ public class RoomServiceImpl implements RoomService {
 		// dtoList:
 		// 최종적으로 프론트에 내려줄 결과입니다.
 		// roomNoList 순서대로 다시 꺼내기 때문에 RAG 점수 순위가 유지됩니다.
-		List<RoomSearchResponse> dtoList = new ArrayList<>();
+		List<RoomSearchResponse> dtoLists = new ArrayList<>();
 		for (String roomNo : roomNoList) {
 			RoomEntity entity = entityMap.get(roomNo);
 			if (entity != null) {
@@ -493,11 +509,11 @@ public class RoomServiceImpl implements RoomService {
 					item.setImageNames(imageNames);
 				}
 
-				dtoList.add(item);
+				dtoLists.add(item);
 			}
 		}
 		
-		return dtoList;
+		return dtoLists;
 	}
 
 	private void applyAvailability(RoomDto dto, RoomEntity entity) {
@@ -529,11 +545,11 @@ public class RoomServiceImpl implements RoomService {
 		dto.setCanTourApply(policy.canTourApply());
 		dto.setCanContractApply(policy.canContractApply());
 		dto.setOccupancyEndDate(policy.occupancyEndDate());
+
 		if (policy.actualAvailableDate() != null) {
 			dto.setRoomAvailableDate(policy.actualAvailableDate());
 		}
 	}
-
 	private Long normalizeRoomMonthly(String roomMethod, Long roomMonthly) {
 		if ("L".equals(roomMethod) && roomMonthly == null) {
 			return 0L;

@@ -210,6 +210,8 @@ class TourService:
         text = (value or '').strip()
         if not text:
             return False
+        if self.extract_schedule_parts(text)["visitDate"] or self.extract_schedule_parts(text)["visitTime"]:
+            return True
         if self._parse_natural_korean_schedule(text) is not None:
             return True
         return bool(
@@ -218,36 +220,119 @@ class TourService:
 
     def looks_like_partial_schedule_input(self, value: str | None) -> bool:
         text = (value or '').strip()
-        if not text or self.looks_like_schedule_input(text):
+        if not text:
             return False
-        return self.looks_like_date_only_input(text) or self.looks_like_time_only_input(text)
+        parts = self.extract_schedule_parts(text)
+        has_date = bool(parts["visitDate"])
+        has_time = bool(parts["visitTime"])
+        return has_date ^ has_time
 
     def looks_like_date_only_input(self, value: str | None) -> bool:
         text = (value or '').strip()
         if not text:
             return False
-        has_date = bool(
-            re.search(r'(?:(?:20)?\d{2}\s*년\s*)?\d{1,2}\s*(?:월|/|\.)\s*\d{1,2}\s*(?:일)?', text)
-            or re.search(r'\d{4}[-./]\d{1,2}[-./]\d{1,2}', text)
-        )
-        has_time = bool(
-            re.search(r'(?:(?:오전|오후|am|pm)\s*)?\d{1,2}\s*(?:시|:)', text, re.IGNORECASE)
-        )
-        return has_date and not has_time
+        parts = self.extract_schedule_parts(text)
+        return bool(parts["visitDate"]) and not bool(parts["visitTime"])
 
     def looks_like_time_only_input(self, value: str | None) -> bool:
         text = (value or '').strip()
         if not text:
             return False
-        has_time = bool(
-            re.search(r'(?:(?:오전|오후|am|pm)\s*)?\d{1,2}\s*(?:시|:)\s*(?:\d{1,2}\s*분?)?', text, re.IGNORECASE)
-            or re.fullmatch(r'\d{1,2}', text)
+        parts = self.extract_schedule_parts(text)
+        return bool(parts["visitTime"]) and not bool(parts["visitDate"])
+
+    def merge_schedule_input(
+        self,
+        *,
+        existing_visit_date: str | None = None,
+        existing_visit_time: str | None = None,
+        user_input: str | None = None,
+    ) -> dict[str, str]:
+        next_visit_date = (existing_visit_date or '').strip()
+        next_visit_time = (existing_visit_time or '').strip()
+        text = (user_input or '').strip()
+        if not text:
+            return {
+                'visitDate': next_visit_date,
+                'visitTime': next_visit_time,
+                'preferredVisitAt': self._combine_schedule_parts(next_visit_date, next_visit_time),
+            }
+
+        parsed_schedule = self._parse_natural_korean_schedule(text)
+        if parsed_schedule is not None:
+            next_visit_date = parsed_schedule.strftime('%Y-%m-%d')
+            next_visit_time = parsed_schedule.strftime('%H:%M:%S')
+        else:
+            extracted = self.extract_schedule_parts(text)
+            if extracted['visitDate']:
+                next_visit_date = extracted['visitDate']
+            if extracted['visitTime']:
+                next_visit_time = extracted['visitTime']
+
+        return {
+            'visitDate': next_visit_date,
+            'visitTime': next_visit_time,
+            'preferredVisitAt': self._combine_schedule_parts(next_visit_date, next_visit_time),
+        }
+
+    def extract_schedule_parts(self, value: str | None) -> dict[str, str]:
+        text = (value or '').strip()
+        if not text:
+            return {'visitDate': '', 'visitTime': ''}
+
+        visit_date = ''
+        visit_time = ''
+
+        date_match = re.search(
+            r'(?:(?P<year>\d{4})\s*년\s*)?'
+            r'(?P<month>\d{1,2})\s*(?:월|/|\.)\s*'
+            r'(?P<day>\d{1,2})\s*(?:일)?',
+            text,
         )
-        has_date = bool(
-            re.search(r'(?:(?:20)?\d{2}\s*년\s*)?\d{1,2}\s*(?:월|/|\.)\s*\d{1,2}\s*(?:일)?', text)
-            or re.search(r'\d{4}[-./]\d{1,2}[-./]\d{1,2}', text)
+        if date_match:
+            year = date_match.group('year') or str(datetime.now().year)
+            visit_date = self._normalize_visit_date(
+                f"{year}-{date_match.group('month')}-{date_match.group('day')}"
+            )
+
+        # Only parse time when the input includes an actual time marker.
+        # This prevents date-only inputs like '3월 28일' from becoming '15:00'.
+        time_match = re.search(
+            r'(?:(?P<ampm>오전|오후|am|pm)\s*)?'
+            r'(?P<hour>\d{1,2})'
+            r'(?:'
+            r'\s*:\s*(?P<minute_colon>\d{1,2})'
+            r'|'
+            r'\s*시(?:\s*(?P<minute_korean>\d{1,2})\s*분?)?'
+            r')',
+            text,
+            re.IGNORECASE,
         )
-        return has_time and not has_date
+        if time_match:
+            raw_hour = int(time_match.group('hour'))
+            raw_minute = int(
+                time_match.group('minute_colon')
+                or time_match.group('minute_korean')
+                or 0
+            )
+            ampm = (time_match.group('ampm') or '').lower()
+
+            if raw_hour <= 23 and raw_minute <= 59:
+                if ampm in ('오후', 'pm') and raw_hour < 12:
+                    raw_hour += 12
+                elif ampm in ('오전', 'am') and raw_hour == 12:
+                    raw_hour = 0
+                elif not ampm and 1 <= raw_hour <= 7:
+                    raw_hour += 12
+
+                visit_time = self._normalize_visit_time(f'{raw_hour:02d}:{raw_minute:02d}')
+
+        return {'visitDate': visit_date, 'visitTime': visit_time}
+
+    def _combine_schedule_parts(self, visit_date: str, visit_time: str) -> str:
+        if visit_date and visit_time:
+            return f'{visit_date} {visit_time[:5]}'
+        return ''
 
     def looks_like_phone_input(self, value: str | None) -> bool:
         compact = re.sub(r'[^0-9]', '', value or '')

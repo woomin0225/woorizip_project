@@ -2,6 +2,8 @@
 import { apiJson } from '../../../app/http/request';
 import { getAiBaseUrl } from '../../../app/config/env';
 
+const ORCHESTRATE_TIMEOUT_MS = 60000;
+
 function isMissingEndpointError(error) {
   const status = Number(error?.response?.status);
   return status === 404 || status === 405 || status === 501;
@@ -15,6 +17,7 @@ async function postWithPathFallback(payload, paths) {
     try {
       const { data } = await apiJson().post(path, payload, {
         baseURL: getAiBaseUrl(),
+        timeout: ORCHESTRATE_TIMEOUT_MS,
       });
       return data;
     } catch (error) {

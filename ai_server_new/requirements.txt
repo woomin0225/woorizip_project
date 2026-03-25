@@ -1,40 +1,72 @@
+# .\.venv\Scripts\python.exe -m pip install --upgrade pip setuptools wheel
+# .\.venv\Scripts\python.exe -m pip install -r requirements.txt
+# groundingDINO 다운받기: git clone https://github.com/IDEA-Research/GroundingDINO.git
+# .\.venv\Scripts\python.exe -m pip install -e .\GroundingDINO --no-build-isolation
+# 아래는 GroundingDINO 실사용을 위한 가중치 설치
+# GroundingDINO: Download pre-trained model weights.
+# cd .\GroundingDINO
+# mkdir weights
+# cd weights
+# Invoke-WebRequest "https://github.com/IDEA-Research/GroundingDINO/releases/download/v0.1.0-alpha/groundingdino_swint_ogc.pth" -OutFile "groundingdino_swint_ogc.pth"
+# cd ..
+
 --extra-index-url https://download.pytorch.org/whl/cu128
 
-fastapi==0.115.6
-uvicorn[standard]==0.34.0
-pydantic==2.10.6
-pydantic-settings==2.7.1
+fastapi==0.135.1
+uvicorn[standard]==0.41.0
+pydantic==2.12.5
+pydantic-settings==2.13.1
 httpx==0.28.1
 python-dotenv==1.2.2
-python-multipart==0.0.20
-requests==2.32.5
-google-auth==2.49.1
-PyYAML==6.0.2
-Pillow==12.1.0
-transformers==4.46.3
-groq==0.18.0
-qdrant-client==1.13.2
-kiwipiepy==0.22.2
-kiwipiepy_model==0.22.1
-emoji==2.15.0
-langchain-text-splitters==1.1.1
-emoji==2.15.0
-kiwipiepy==0.22.2
-kiwipiepy_model==0.22.1
+python-multipart==0.0.22
+wheel
+gunicorn==23.0.0
 
 
+groq==1.1.1
+qdrant-client==1.17.0
+langgraph>=0.2,<0.7
 
 numpy==2.4.3
-torch==2.10.0
-torchvision==0.25.0
-tokenizers==0.20.3
-sentence-transformers==3.3.1
+pillow==12.1.1
+PyYAML==6.0.2
+requests==2.32.5
+urllib3==2.3.0
+google-auth==2.49.1
+
+# GroundingDINO's vendored BERT wrapper is compatible with transformers 4.x, not 5.x.
+transformers==4.57.1
+tokenizers==0.22.2
+sentence-transformers==5.2.3
 sentencepiece==0.2.0
 
 paddlepaddle==3.3.0
 paddleocr==3.4.0
+PyYAML==6.0.2
+requests==2.32.5
+chardet<6
+
 PyMuPDF==1.25.3
 python-docx==1.1.2
+python-pptx==1.0.2
+openpyxl==3.1.5
+olefile==0.47
 lxml==6.0.2
+dateparser==1.2.0
+
+emoji==2.15.0
+kiwipiepy==0.22.2
+kiwipiepy_model==0.22.1
+langchain-text-splitters==0.2.4
+
+addict==2.4.0
+opencv-python==4.10.0.84
+pycocotools==2.0.11
+supervision==0.27.0.post2
+timm==1.0.25
+yapf==0.43.0
+
 chardet==5.2.0
-urllib3==2.3.0
+
+torch==2.10.0
+torchvision==0.25.0
