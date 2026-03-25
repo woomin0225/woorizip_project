@@ -514,7 +514,10 @@ export default function OrchestrateQuickAgent() {
     if (status !== 'APPROVED') return false;
 
     const date = String(reservation?.reservationDate || '').split('T')[0];
-    const start = String(reservation?.reservationStartTime || '').substring(0, 5);
+    const start = String(reservation?.reservationStartTime || '').substring(
+      0,
+      5
+    );
     if (!date || !start) return false;
 
     const startDateTime = new Date(`${date}T${start}:00`);
@@ -527,7 +530,10 @@ export default function OrchestrateQuickAgent() {
     const facilityName = reservation?.facilityName || '공용시설';
     const dateValue = String(reservation?.reservationDate || '').split('T')[0];
     const dateLabel = dateValue ? dateValue.slice(5) : '-';
-    const start = String(reservation?.reservationStartTime || '').substring(0, 5);
+    const start = String(reservation?.reservationStartTime || '').substring(
+      0,
+      5
+    );
     const end = String(reservation?.reservationEndTime || '').substring(0, 5);
 
     return `[${facilityName}] ${dateLabel} ${start}~${end}`;
@@ -881,10 +887,9 @@ export default function OrchestrateQuickAgent() {
         reservationStartTime: String(
           reservation.reservationStartTime || ''
         ).substring(0, 5),
-        reservationEndTime: String(reservation.reservationEndTime || '').substring(
-          0,
-          5
-        ),
+        reservationEndTime: String(
+          reservation.reservationEndTime || ''
+        ).substring(0, 5),
         reservationStatus: 'CANCELED',
       });
 
@@ -1442,10 +1447,10 @@ export default function OrchestrateQuickAgent() {
     }
 
     if (actionId === 'reservationStatus') {
-      moveToReservationView(
-        '예약 내역 페이지로 이동했습니다.',
-        ['reserve', 'facilityCancel']
-      );
+      moveToReservationView('예약 내역 페이지로 이동했습니다.', [
+        'reserve',
+        'facilityCancel',
+      ]);
       return;
     }
 
@@ -1710,10 +1715,10 @@ export default function OrchestrateQuickAgent() {
       normalized.includes('예약페이지') ||
       normalized.includes('예약확인')
     ) {
-      moveToReservationView(
-        '예약 내역 페이지로 이동했습니다.',
-        ['reserve', 'facilityCancel']
-      );
+      moveToReservationView('예약 내역 페이지로 이동했습니다.', [
+        'reserve',
+        'facilityCancel',
+      ]);
       return true;
     }
 
@@ -2110,15 +2115,6 @@ export default function OrchestrateQuickAgent() {
               >
                 X
               </button>
-              <button
-                type="button"
-                className={styles.closeBtn}
-                onClick={closePanel}
-                aria-label="우리봇 채팅창 닫기"
-                title="닫기"
-              >
-                X
-              </button>
             </div>
           </header>
 
@@ -2201,7 +2197,8 @@ export default function OrchestrateQuickAgent() {
                     예약 날짜를 선택해주세요.
                   </p>
                   <p className={styles.reservationMeta}>
-                    선택한 시설: {reservationFlow.selectedFacility?.facilityName}
+                    선택한 시설:{' '}
+                    {reservationFlow.selectedFacility?.facilityName}
                   </p>
                   <div className={styles.reservationOptionGrid}>
                     {buildDateOptions(7).map((date) => (
@@ -2285,9 +2282,7 @@ export default function OrchestrateQuickAgent() {
                         key={time}
                         type="button"
                         className={styles.reservationOptionBtn}
-                        onClick={() =>
-                          handleSelectReservationStartTime(time)
-                        }
+                        onClick={() => handleSelectReservationStartTime(time)}
                         disabled={loading}
                       >
                         {time}
@@ -2369,7 +2364,9 @@ export default function OrchestrateQuickAgent() {
                     예약 내용을 확인해주세요.
                   </p>
                   <div className={styles.reservationSummary}>
-                    <p>시설: {reservationFlow.selectedFacility?.facilityName}</p>
+                    <p>
+                      시설: {reservationFlow.selectedFacility?.facilityName}
+                    </p>
                     <p>날짜: {reservationFlow.selectedDate}</p>
                     <p>
                       시간: {reservationFlow.selectedStartTime} ~{' '}
@@ -2482,9 +2479,7 @@ export default function OrchestrateQuickAgent() {
                   <p className={styles.reservationTitle}>
                     예약을 처리하고 있습니다.
                   </p>
-                  <p className={styles.reservationMeta}>
-                    잠시만 기다려주세요.
-                  </p>
+                  <p className={styles.reservationMeta}>잠시만 기다려주세요.</p>
                 </div>
               </div>
             )}
