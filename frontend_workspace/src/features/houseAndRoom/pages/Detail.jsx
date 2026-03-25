@@ -47,6 +47,12 @@ function toKrwText(value) {
   return money ? `${money} 원` : '-';
 }
 
+function formatRoomLabel(roomName) {
+  if (!roomName) return '';
+  const text = String(roomName).trim();
+  return text.endsWith('호') ? text : `${text}호`;
+}
+
 export default function Detail() {
   const navigate = useNavigate();
   const { isAuthed, userNo: currentUserNo } = useAuth();
@@ -472,7 +478,9 @@ export default function Detail() {
                 <section className={styles.section} ref={roomNameSectionRef}>
                   <br />
                   <br />
-                  <h3 className={styles.sectionTitle}>{room?.roomName}호</h3>
+                  <h3 className={styles.sectionTitle}>
+                    {formatRoomLabel(room?.roomName)}
+                  </h3>
                 </section>
 
                 <section className={styles.section}>
