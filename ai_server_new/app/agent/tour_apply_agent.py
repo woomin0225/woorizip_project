@@ -91,7 +91,12 @@ class TourApplyAgent:
         session_state["intent"] = TOUR_APPLY_INTENT
 
         if session_state.get("stage") == "awaiting_user_name":
-            if self.service.looks_like_name_input(user_text):
+            name_and_phone = self.service.extract_name_and_phone_input(user_text)
+            if name_and_phone.get("userName") and name_and_phone.get("userPhone"):
+                session_state["userName"] = name_and_phone["userName"]
+                session_state["userPhone"] = name_and_phone["userPhone"]
+                session_state["stage"] = ""
+            elif self.service.looks_like_name_input(user_text):
                 session_state["userName"] = user_text
                 session_state["stage"] = ""
             else:
@@ -103,7 +108,13 @@ class TourApplyAgent:
                 )
 
         if session_state.get("stage") == "awaiting_user_phone":
-            if self.service.looks_like_phone_input(user_text):
+            name_and_phone = self.service.extract_name_and_phone_input(user_text)
+            if name_and_phone.get("userName") and name_and_phone.get("userPhone"):
+                if not session_state.get("userName"):
+                    session_state["userName"] = name_and_phone["userName"]
+                session_state["userPhone"] = name_and_phone["userPhone"]
+                session_state["stage"] = ""
+            elif self.service.looks_like_phone_input(user_text):
                 session_state["userPhone"] = self.service.normalize_phone_input(user_text)
                 session_state["stage"] = ""
             else:
@@ -169,10 +180,7 @@ class TourApplyAgent:
                 default_user_name=session_state.get("userName"),
                 default_user_phone=session_state.get("userPhone"),
             )
-            if result.get("errorCode") in {
-                "TOUR_APPLY_FAILED",
-                "TOUR_APPLY_INVALID_SCHEDULE",
-            }:
+            if result.get("errorCode") == "TOUR_APPLY_INVALID_SCHEDULE":
                 session_state["stage"] = "awaiting_visit_at"
                 self.store.set(session_id, session_state)
                 return self._build_retry_response(

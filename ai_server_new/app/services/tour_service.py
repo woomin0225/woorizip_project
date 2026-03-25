@@ -505,6 +505,22 @@ class TourService:
         compact = (value or '').strip()
         return len(compact) >= 2
 
+    def extract_name_and_phone_input(self, value: str | None) -> dict[str, str]:
+        text = (value or '').strip()
+        if not text:
+            return {'userName': '', 'userPhone': ''}
+        phone_match = re.search(r'(01[016789])[-\s]?(\d{3,4})[-\s]?(\d{4})', text)
+        if not phone_match:
+            return {'userName': '', 'userPhone': ''}
+        raw_phone = ''.join(phone_match.groups())
+        name_candidate = text[: phone_match.start()].strip()
+        if not name_candidate:
+            return {'userName': '', 'userPhone': ''}
+        return {
+            'userName': name_candidate,
+            'userPhone': self._normalize_user_phone(raw_phone),
+        }
+
     def _parse_natural_korean_schedule(self, value: str) -> datetime | None:
         compact = (value or '').strip()
         if not compact:
