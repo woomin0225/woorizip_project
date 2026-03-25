@@ -1,6 +1,5 @@
 ﻿import React, { useEffect, useMemo, useState } from 'react';
 import { Container, Row, Col, Card, CardBody } from 'reactstrap';
-import DaumPostcodeEmbed from 'react-daum-postcode';
 import MyPageSideNav from '../components/MyPageSideNav';
 import { getMyInfo, updateMyInfo } from '../api/userAPI';
 import styles from '../../../app/layouts/MyPageLayout.module.css';
@@ -48,7 +47,6 @@ export default function MyInfoModify() {
     emailId: '',
     name: '',
     phone: '',
-    address: '',
     birthDate: '',
     gender: '',
     type: 'USER',
@@ -58,11 +56,9 @@ export default function MyInfoModify() {
   const [editable, setEditable] = useState({
     name: false,
     phone: false,
-    address: false,
     birthDate: false,
     type: false,
   });
-  const [openPostcode, setOpenPostcode] = useState(false);
   const [message, setMessage] = useState('');
 
   useEffect(() => {
@@ -72,7 +68,6 @@ export default function MyInfoModify() {
           emailId: pickFirst(info?.emailId, info?.email_id, info?.email),
           name: info?.name || '',
           phone: pickFirst(info?.phone, info?.phoneNumber, info?.phone_number),
-          address: pickFirst(info?.address, info?.addr, info?.roadAddress),
           birthDate: normalizeBirthDate(
             pickFirst(info?.birthDate, info?.birth_date)
           ),
@@ -100,27 +95,11 @@ export default function MyInfoModify() {
     setEditable((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
-  const openAddressSearch = () => {
-    if (!editable.address) return;
-    setOpenPostcode(true);
-  };
-
-  const handleCompleteAddress = (data) => {
-    const nextAddress =
-      data?.roadAddress || data?.jibunAddress || data?.address || '';
-
-    if (nextAddress) {
-      setForm((prev) => ({ ...prev, address: nextAddress }));
-    }
-    setOpenPostcode(false);
-  };
-
   const onSave = async () => {
     try {
       const payload = {
         name: form.name?.trim(),
         phone: form.phone?.trim(),
-        address: form.address?.trim(),
         birthDate: isSocialLoginUser ? form.birthDate || undefined : undefined,
         type: form.type || undefined,
       };
@@ -143,7 +122,6 @@ export default function MyInfoModify() {
       setEditable({
         name: false,
         phone: false,
-        address: false,
         birthDate: false,
         type: false,
       });
@@ -243,39 +221,6 @@ export default function MyInfoModify() {
                       >
                         {editable.phone ? '완료' : '수정'}
                       </button>
-                    </div>
-
-                    <div className={styles.fieldRow}>
-                      <p className={styles.fieldLabel}>주소</p>
-                      <div className={styles.fieldControl}>
-                        <input
-                          className={`${styles.input} ${
-                            !editable.address ? styles.readOnlyInput : ''
-                          }`}
-                          value={form.address}
-                          onChange={onChange('address')}
-                          disabled={!editable.address}
-                        />
-                      </div>
-                      <div className={styles.inlineBtnGroup}>
-                        <button
-                          type="button"
-                          className={`${styles.inlineBtn} ${
-                            editable.address ? styles.inlineBtnActive : ''
-                          }`}
-                          onClick={() => toggleEdit('address')}
-                        >
-                          {editable.address ? '완료' : '수정'}
-                        </button>
-                        <button
-                          type="button"
-                          className={styles.inlineBtn}
-                          onClick={openAddressSearch}
-                          disabled={!editable.address}
-                        >
-                          주소검색
-                        </button>
-                      </div>
                     </div>
 
                     <div className={styles.fieldRow}>
@@ -382,37 +327,6 @@ export default function MyInfoModify() {
           </Row>
         </Container>
       </section>
-      {openPostcode && (
-        <div className={styles.backdrop} onClick={() => setOpenPostcode(false)}>
-          <div
-            className={styles.modal}
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className={styles.modalHeader}>
-              <div>주소검색</div>
-              <button
-                type="button"
-                className={styles.closeBtn}
-                onClick={() => setOpenPostcode(false)}
-              >
-                ✕
-              </button>
-            </div>
-
-            <DaumPostcodeEmbed onComplete={handleCompleteAddress} />
-
-            <div className={styles.modalFooter}>
-              <button
-                type="button"
-                className={styles.inlineBtn}
-                onClick={() => setOpenPostcode(false)}
-              >
-                닫기
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 }
