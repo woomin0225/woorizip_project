@@ -6,6 +6,7 @@ import {
   getReservationTime,
 } from '../../api/reservationApi';
 import { getFacilityDetail } from '../../api/facilityApi';
+import { normalizeApiError } from '../../../../app/http/errorMapper';
 
 const schema = {
   reservationName: '',
@@ -154,8 +155,9 @@ export function useReservationForm(
         state: navigationState,
       });
     } catch (err) {
-      setError(err);
-      alert(err.message || '오류가 발생했습니다.');
+      const apiError = normalizeApiError(err);
+      setError(apiError);
+      alert(apiError.message || '오류가 발생했습니다.');
     } finally {
       setSubmitting(false);
     }
