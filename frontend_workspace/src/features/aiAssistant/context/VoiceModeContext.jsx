@@ -19,6 +19,7 @@ const DEFAULT_SETTINGS = {
   voiceCommandEnabled: true,
   fontScale: 1,
 };
+const DEFAULT_SERVER_VOICE_NAME = 'ko-KR-Neural2-A';
 
 const VoiceModeContext = createContext(null);
 
@@ -209,7 +210,7 @@ export function VoiceModeProvider({ children }) {
   const playServerSpeech = useCallback(async (text, options = {}) => {
     const { audioBytes, mimeType } = await synthesizeTts({
       text: String(text),
-      voiceName: options.voiceName,
+      voiceName: options.voiceName || DEFAULT_SERVER_VOICE_NAME,
     });
 
     return new Promise((resolve, reject) => {
@@ -259,8 +260,12 @@ export function VoiceModeProvider({ children }) {
         try {
           await playServerSpeech(text, options);
           return true;
-        } catch {
-          return playBrowserSpeech(text, options);
+        } catch (error) {
+          if (options.allowBrowserFallback === true) {
+            return playBrowserSpeech(text, options);
+          }
+          console.warn('Server TTS playback failed.', error);
+          return false;
         }
       }
 
@@ -333,13 +338,13 @@ export function VoiceModeProvider({ children }) {
   );
 
   const enableVoiceMode = useCallback(
-    ({ speakWelcome = true } = {}) => {
+    ({ speakWelcome = false } = {}) => {
       setVoiceModeEnabled(true);
       setPromptDismissed(true);
       if (speakWelcome) {
         window.setTimeout(() => {
           speak(
-            '음성 모드가 켜졌습니다. 우리봇이라고 부르면 제가 네 말씀하세요라고 답한 뒤 명령을 듣겠습니다.'
+            '음성 모드가 켜졌습니다. 음성 버튼을 누른 뒤 말씀해 주세요. 말씀하시는 동안에는 답하지 않고, 답변을 읽는 동안에는 마이크를 듣지 않습니다.'
           );
         }, 150);
       }

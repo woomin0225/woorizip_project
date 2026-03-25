@@ -111,6 +111,23 @@ public class ContractServiceImpl implements ContractService {
     }
 
     @Override
+    public PageResponse<ContractDto> selectListAllContracts(int page, int size) {
+        int safePage = Math.max(page, 1);
+        int safeSize = Math.max(size, 1);
+        Pageable pageable = PageRequest.of(safePage - 1, safeSize);
+        Page<ContractEntity> resultPage = contractRepository.findAll(pageable);
+
+        List<ContractDto> content = toList(resultPage.getContent());
+        return new PageResponse<>(
+                content,
+                safePage,
+                safeSize,
+                resultPage.getTotalElements(),
+                resultPage.getTotalPages()
+        );
+    }
+
+    @Override
     @Transactional
     public ContractDto insertContract(ContractDto contractDto) {
         contractDto.setStatus("APPLIED");

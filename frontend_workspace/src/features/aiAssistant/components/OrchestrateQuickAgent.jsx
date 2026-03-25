@@ -53,21 +53,8 @@ function newSessionId() {
   return `sess_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
 }
 
-const WAKE_WORD_PATTERN =
-  /우리\s*봇|우리봇|우리\s*봇아|우리봇아|우릴\s*봇|오리\s*봇|오리봇/;
-
 const VOICE_PERMISSION_ERRORS = new Set(['not-allowed', 'service-not-allowed']);
 const VOICE_DEVICE_ERRORS = new Set(['audio-capture']);
-const VOICE_RECOVERABLE_ERRORS = new Set([
-  'network',
-  'aborted',
-  'no-speech',
-  'InvalidStateError',
-]);
-
-function containsWakeWord(text) {
-  return WAKE_WORD_PATTERN.test(String(text || '').replace(/\s+/g, ' ').trim());
-}
 
 export default function OrchestrateQuickAgent() {
   const navigate = useNavigate();
@@ -90,19 +77,7 @@ export default function OrchestrateQuickAgent() {
 
   const bottomRef = useRef(null);
   const lastSpokenMessageRef = useRef('');
-  const voiceGuideShownRef = useRef(false);
   const pendingConfirmationRef = useRef(null);
-  const voiceActivationStateRef = useRef({
-    mode: 'idle',
-    commandPending: false,
-  });
-  const voiceLoopStateRef = useRef({
-    voiceModeEnabled,
-    settings,
-    loading: false,
-    speaking: false,
-    listening: false,
-  });
   const userDisplayName = useMemo(() => {
     const payload = parseJwt(accessToken);
     const rawName =
@@ -137,8 +112,6 @@ export default function OrchestrateQuickAgent() {
   const [awaitingRoomRecommendation, setAwaitingRoomRecommendation] = useState(false);
   const [lastRecommendedRooms, setLastRecommendedRooms] = useState([]);
   const [profileEditFlow, setProfileEditFlow] = useState(null);
-  const [voicePhase, setVoicePhase] = useState('idle');
-
   useEffect(() => {
     pendingConfirmationRef.current = pendingConfirmation;
   }, [pendingConfirmation]);
@@ -162,16 +135,6 @@ export default function OrchestrateQuickAgent() {
     stopSpeaking();
     setOpen(false);
   }, [stopListening, stopSpeaking]);
-
-  useEffect(() => {
-    voiceLoopStateRef.current = {
-      voiceModeEnabled,
-      settings,
-      loading,
-      speaking,
-      listening,
-    };
-  }, [voiceModeEnabled, settings, loading, speaking, listening]);
 
   useEffect(() => {
     if (!location.pathname.startsWith('/rooms')) {
@@ -198,17 +161,9 @@ export default function OrchestrateQuickAgent() {
       ? '답변을 읽는 중입니다.'
       : loading
         ? '요청을 처리하고 있습니다.'
-        : listening && voicePhase === 'command'
-          ? '명령을 듣는 중입니다.'
-          : listening && voicePhase === 'followup'
-            ? '추가 요청을 듣는 중입니다.'
-          : listening
-            ? '"우리봇" 호출어를 기다리는 중입니다.'
-            : voicePhase === 'followup'
-              ? '추가 요청 여부를 기다리는 중입니다.'
-            : voicePhase === 'command'
-              ? '명령 입력을 준비하고 있습니다.'
-              : '대기 중입니다. "우리봇"이라고 부르면 반응합니다.';
+        : listening
+          ? '말씀을 듣는 중입니다.'
+          : '대기 중입니다. 음성 버튼을 누른 뒤 말씀해 주세요.';
 
   useEffect(() => {
     if (!open) return;
@@ -218,29 +173,14 @@ export default function OrchestrateQuickAgent() {
   useEffect(() => {
     if (voiceModeEnabled) {
       setOpen(true);
-      setVoicePhase('wake');
       lastSpokenMessageRef.current = greetingText.replace(/\n/g, ' ').trim();
-      voiceActivationStateRef.current = {
-        mode: 'wake',
-        commandPending: false,
-      };
-      if (!voiceGuideShownRef.current) {
-        appendAssistantMessage(
-          '음성 모드가 켜졌습니다. "우리봇"이라고 부르면 제가 "네 말씀하세요"라고 안내한 뒤 명령을 들을게요.',
-          [],
-          { suppressAutoRead: true }
-        );
-        voiceGuideShownRef.current = true;
-      }
+      appendAssistantMessage(
+        '음성 모드가 켜졌습니다. 음성 버튼을 누른 뒤 말씀해 주세요. 말씀하시는 동안에는 답하지 않고, 답변을 읽는 동안에는 마이크를 듣지 않습니다.',
+        [],
+        { suppressAutoRead: true }
+      );
       return;
     }
-
-    setVoicePhase('idle');
-    voiceActivationStateRef.current = {
-      mode: 'idle',
-      commandPending: false,
-    };
-    voiceGuideShownRef.current = false;
   }, [voiceModeEnabled, greetingText]);
 
   useEffect(() => {
@@ -1233,131 +1173,8 @@ export default function OrchestrateQuickAgent() {
     void runQuickAction(actionId);
   };
 
-  const waitForSpeechPlaybackToFinish = useCallback(async (timeoutMs = 12000) => {
-    const startedAt = Date.now();
-    let detectedSpeech = false;
-
-    while (Date.now() - startedAt < timeoutMs) {
-      const current = voiceLoopStateRef.current;
-      if (current.speaking) {
-        detectedSpeech = true;
-      } else if (detectedSpeech) {
-        return;
-      } else if (!current.loading) {
-        return;
-      }
-      await new Promise((resolve) => window.setTimeout(resolve, 120));
-    }
-  }, []);
-
-  const startVoiceFollowUp = useCallback(async () => {
-    const current = voiceLoopStateRef.current;
-    if (
-      !current.voiceModeEnabled ||
-      !settings.voiceCommandEnabled ||
-      current.loading ||
-      current.speaking
-    ) {
-      return;
-    }
-
-    setVoicePhase('followup');
-    voiceActivationStateRef.current = {
-      mode: 'followup',
-      commandPending: true,
-    };
-
-    await speak(
-      '더 도와드릴 것이 있을까요? 바로 이어서 말씀하시거나, 없으시면 없어요라고 말씀해 주세요.'
-    );
-
-    const refreshed = voiceLoopStateRef.current;
-    if (
-      !refreshed.voiceModeEnabled ||
-      refreshed.loading ||
-      refreshed.speaking
-    ) {
-      setVoicePhase('wake');
-      voiceActivationStateRef.current = {
-        mode: 'wake',
-        commandPending: false,
-      };
-      return;
-    }
-
-    startListening({
-      onResult: (transcript) => {
-        const followupText = String(transcript || '').trim();
-        if (!followupText) {
-          return;
-        }
-
-        const normalized = normalizeText(followupText);
-        if (
-          isNo(followupText) ||
-          normalized === '없어' ||
-          normalized === '없어요' ||
-          normalized === '괜찮아' ||
-          normalized === '괜찮습니다' ||
-          normalized === '아니요괜찮아요'
-        ) {
-          voiceActivationStateRef.current = {
-            mode: 'wake',
-            commandPending: false,
-          };
-          setVoicePhase('wake');
-          void speak('알겠습니다. 다시 우리봇이라고 부르면 도와드릴게요.');
-          return;
-        }
-
-        voiceActivationStateRef.current = {
-          mode: 'command',
-          commandPending: false,
-        };
-        setVoicePhase('command');
-
-        void (async () => {
-          await sendMessage(followupText);
-          if (pendingConfirmationRef.current) {
-            return;
-          }
-          await waitForSpeechPlaybackToFinish();
-          if (!voiceLoopStateRef.current.voiceModeEnabled) {
-            return;
-          }
-          await startVoiceFollowUp();
-        })();
-      },
-      onError: (event) => {
-        const errorType = event?.error || event?.message || '';
-        if (errorType === 'no-speech' || errorType === 'aborted') {
-          return;
-        }
-        appendAssistantMessage(
-          '추가 음성 입력 중 문제가 발생했습니다. 다시 우리봇이라고 불러주세요.',
-          [],
-          { suppressAutoRead: true }
-        );
-        voiceActivationStateRef.current = {
-          mode: 'wake',
-          commandPending: false,
-        };
-        setVoicePhase('wake');
-      },
-      onEnd: () => {
-        if (voiceActivationStateRef.current.mode === 'followup') {
-          voiceActivationStateRef.current = {
-            mode: 'wake',
-            commandPending: false,
-          };
-          setVoicePhase('wake');
-        }
-      },
-    });
-  }, [settings.voiceCommandEnabled, speak, startListening, waitForSpeechPlaybackToFinish, sendMessage]);
-
   const startVoiceCommand = useCallback(async (options = {}) => {
-    const { quiet = false, restartWakeWord = true } = options;
+    const { quiet = false } = options;
 
     if (!voiceModeEnabled) {
       enableVoiceMode();
@@ -1381,60 +1198,28 @@ export default function OrchestrateQuickAgent() {
     if (speaking) {
       if (!quiet) {
         appendAssistantMessage(
-          '답변을 읽는 중에는 음성 명령을 받지 않습니다. 읽기가 끝난 뒤 "우리봇"이라고 불러주세요.'
+          '답변을 읽는 중에는 마이크를 켤 수 없습니다. 읽기가 끝난 뒤 다시 시도해 주세요.'
         );
       }
       return;
     }
 
-    setVoicePhase('command');
-    voiceActivationStateRef.current = {
-      mode: 'command',
-      commandPending: true,
-    };
-
     if (!quiet) {
-      await speak('네 말씀하세요.');
-      const currentState = voiceLoopStateRef.current;
-      if (
-        !currentState.voiceModeEnabled ||
-        currentState.loading ||
-        currentState.speaking
-      ) {
-        setVoicePhase('wake');
-        voiceActivationStateRef.current = {
-          mode: 'wake',
-          commandPending: false,
-        };
-        return;
-      }
+      appendAssistantMessage(
+        '듣고 있습니다. 말씀을 마치면 답변을 준비할게요.',
+        [],
+        { suppressAutoRead: true }
+      );
     }
 
-    let hasResult = false;
     let hasVoiceError = false;
 
     startListening({
       onResult: (transcript) => {
-        hasResult = true;
         if (!transcript) {
           return;
         }
-        setVoicePhase('command');
-        voiceActivationStateRef.current = {
-          mode: 'command',
-          commandPending: false,
-        };
-        void (async () => {
-          await sendMessage(transcript);
-          if (pendingConfirmationRef.current) {
-            return;
-          }
-          await waitForSpeechPlaybackToFinish();
-          if (!voiceLoopStateRef.current.voiceModeEnabled) {
-            return;
-          }
-          await startVoiceFollowUp();
-        })();
+        void sendMessage(transcript);
       },
       onError: (event) => {
         const errorType = event?.error || event?.message || '';
@@ -1462,29 +1247,11 @@ export default function OrchestrateQuickAgent() {
           return;
         }
         appendAssistantMessage(
-          '음성 입력 중 문제가 발생했습니다. 다시 호출어 대기 상태로 전환합니다.',
+          '음성 입력 중 문제가 발생했습니다. 음성 버튼을 다시 눌러 시도해 주세요.',
           []
         );
-        setVoicePhase('wake');
-        voiceActivationStateRef.current = {
-          mode: 'wake',
-          commandPending: false,
-        };
       },
-      onEnd: () => {
-        const current = voiceLoopStateRef.current;
-        voiceActivationStateRef.current.commandPending = false;
-        if (hasVoiceError) {
-          return;
-        }
-        if (!hasResult) {
-          setVoicePhase('wake');
-          voiceActivationStateRef.current.mode = 'wake';
-        }
-        if (!restartWakeWord || hasResult || !current.voiceModeEnabled) {
-          return;
-        }
-      },
+      onEnd: () => {},
     });
   }, [
     voiceModeEnabled,
@@ -1492,124 +1259,9 @@ export default function OrchestrateQuickAgent() {
     settings.voiceCommandEnabled,
     isSpeechRecognitionSupported,
     speaking,
-    speak,
     startListening,
     sendMessage,
-    startVoiceFollowUp,
-    waitForSpeechPlaybackToFinish,
     disableVoiceMode,
-  ]);
-
-  const startWakeWordListening = useCallback(() => {
-    if (
-      !voiceModeEnabled ||
-      !settings.voiceCommandEnabled ||
-      !isSpeechRecognitionSupported ||
-      listening ||
-      loading ||
-      speaking ||
-      voiceActivationStateRef.current.commandPending
-    ) {
-      return;
-    }
-
-    setVoicePhase('wake');
-    voiceActivationStateRef.current.mode = 'wake';
-
-    let hasVoiceError = false;
-
-    startListening({
-      onResult: (transcript) => {
-        if (!containsWakeWord(transcript)) {
-          return;
-        }
-        stopListening();
-        window.setTimeout(() => {
-          void startVoiceCommand({ quiet: false, restartWakeWord: true });
-        }, 80);
-      },
-      onError: (event) => {
-        const errorType = event?.error || event?.message || '';
-        if (errorType === 'no-speech' || errorType === 'aborted') {
-          return;
-        }
-        if (hasVoiceError) {
-          return;
-        }
-        hasVoiceError = true;
-        if (VOICE_PERMISSION_ERRORS.has(errorType)) {
-          appendAssistantMessage(
-            '마이크 권한을 사용할 수 없어 음성 모드를 종료합니다. 브라우저 권한을 확인해 주세요.',
-            []
-          );
-          disableVoiceMode();
-          return;
-        }
-        if (VOICE_DEVICE_ERRORS.has(errorType)) {
-          appendAssistantMessage(
-            '마이크를 사용할 수 없어 음성 모드를 종료합니다. 입력 장치를 확인해 주세요.',
-            []
-          );
-          disableVoiceMode();
-          return;
-        }
-        if (!VOICE_RECOVERABLE_ERRORS.has(errorType)) {
-          appendAssistantMessage(
-            '호출어 대기 중 문제가 발생했습니다. 잠시 후 다시 대기 상태로 전환합니다.',
-            []
-          );
-        }
-        setVoicePhase('wake');
-        voiceActivationStateRef.current = {
-          mode: 'wake',
-          commandPending: false,
-        };
-      },
-      onEnd: () => {
-        if (hasVoiceError) {
-          return;
-        }
-      },
-      interimResults: true,
-      continuous: true,
-    });
-  }, [
-    voiceModeEnabled,
-    settings.voiceCommandEnabled,
-    isSpeechRecognitionSupported,
-    listening,
-    loading,
-    speaking,
-    startListening,
-    stopListening,
-    startVoiceCommand,
-    disableVoiceMode,
-  ]);
-
-  useEffect(() => {
-    if (
-      !voiceModeEnabled ||
-      !settings.voiceCommandEnabled ||
-      listening ||
-      loading ||
-      speaking ||
-      voiceActivationStateRef.current.commandPending
-    ) {
-      return undefined;
-    }
-
-    const timer = window.setTimeout(() => {
-      startWakeWordListening();
-    }, 700);
-
-    return () => window.clearTimeout(timer);
-  }, [
-    voiceModeEnabled,
-    settings.voiceCommandEnabled,
-    listening,
-    loading,
-    speaking,
-    startWakeWordListening,
   ]);
 
   const submit = async (event) => {
@@ -1730,8 +1382,7 @@ export default function OrchestrateQuickAgent() {
                 onClick={
                   listening
                     ? stopListening
-                    : () =>
-                        startVoiceCommand({ quiet: false, retryOnEmpty: true })
+                    : () => startVoiceCommand({ quiet: false })
                 }
               >
                 {listening ? '중지' : '음성'}

@@ -17,13 +17,12 @@ TOUR_APPLY_KEYWORDS = (
     "방보러",
     "방 보러",
     "방보러가",
-    "방 보고 싶",
-    "방보고싶",
+    "방 보고",
     "방문예약",
     "방문 예약",
 )
 
-CANCEL_KEYWORDS = ("취소", "그만", "중지", "아니오", "아니")
+CANCEL_KEYWORDS = ("취소", "그만", "중지", "아니요", "아니")
 
 
 def _compact_text(value: Any) -> str:
@@ -94,6 +93,7 @@ class TourApplyAgent:
         if session_state.get("stage") == "awaiting_user_name":
             if self.service.looks_like_name_input(user_text):
                 session_state["userName"] = user_text
+                session_state["stage"] = ""
             else:
                 self.store.set(session_id, session_state)
                 return self._build_collect_name_response(
@@ -105,6 +105,7 @@ class TourApplyAgent:
         if session_state.get("stage") == "awaiting_user_phone":
             if self.service.looks_like_phone_input(user_text):
                 session_state["userPhone"] = self.service.normalize_phone_input(user_text)
+                session_state["stage"] = ""
             else:
                 self.store.set(session_id, session_state)
                 return self._build_collect_phone_response(
@@ -114,12 +115,29 @@ class TourApplyAgent:
                 )
 
         if not session_state.get("preferredVisitAt"):
-            if not self.service.looks_like_schedule_input(user_text):
+            merged_schedule = self.service.merge_schedule_input(
+                existing_visit_date=session_state.get("visitDate"),
+                existing_visit_time=session_state.get("visitTime"),
+                user_input=user_text,
+            )
+            has_schedule_signal = bool(
+                merged_schedule.get("visitDate")
+                or merged_schedule.get("visitTime")
+                or self.service.looks_like_schedule_input(user_text)
+            )
+            if not has_schedule_signal:
                 session_state["stage"] = "awaiting_visit_at"
                 self.store.set(session_id, session_state)
                 return self._build_collecting_response(payload, session_state)
 
-            session_state["preferredVisitAt"] = user_text
+            session_state["visitDate"] = merged_schedule.get("visitDate", "")
+            session_state["visitTime"] = merged_schedule.get("visitTime", "")
+            session_state["preferredVisitAt"] = merged_schedule.get("preferredVisitAt", "")
+
+            if not session_state.get("preferredVisitAt"):
+                session_state["stage"] = "awaiting_visit_at"
+                self.store.set(session_id, session_state)
+                return self._build_collecting_response(payload, session_state)
 
         if not session_state.get("userName"):
             session_state["stage"] = "awaiting_user_name"
@@ -139,6 +157,8 @@ class TourApplyAgent:
                     clientRequestId=payload.get("clientRequestId"),
                     roomNo=session_state["roomNo"],
                     roomName=session_state.get("roomName"),
+                    visitDate=session_state.get("visitDate"),
+                    visitTime=session_state.get("visitTime"),
                     preferredVisitAt=session_state.get("preferredVisitAt"),
                     userName=session_state.get("userName"),
                     userPhone=session_state.get("userPhone"),
@@ -157,7 +177,7 @@ class TourApplyAgent:
                 )
             self.store.delete(session_id)
             return result
-        except Exception as exc:
+        except Exception:
             session_state["stage"] = "awaiting_visit_at"
             self.store.set(session_id, session_state)
             return self._build_collecting_response(payload, session_state)
@@ -169,6 +189,8 @@ class TourApplyAgent:
             "roomName": "",
             "userName": "",
             "userPhone": "",
+            "visitDate": "",
+            "visitTime": "",
             "preferredVisitAt": "",
             "stage": "awaiting_visit_at",
         }
@@ -205,16 +227,32 @@ class TourApplyAgent:
         session_state: dict[str, Any],
     ) -> dict[str, Any]:
         room_label = session_state.get("roomName") or "현재 보고 계신 방"
+        visit_date = session_state.get("visitDate", "")
+        visit_time = session_state.get("visitTime", "")
+        if visit_date and not visit_time:
+            schedule_guide = (
+                f"희망 방문 날짜는 {visit_date}로 확인했어요.\n"
+                "이제 방문 시간을 알려주세요.\n"
+            )
+        elif visit_time and not visit_date:
+            schedule_guide = (
+                f"희망 방문 시간은 {visit_time[:5]}로 확인했어요.\n"
+                "이제 방문 날짜를 알려주세요.\n"
+            )
+        else:
+            schedule_guide = "방문하실 날짜와 시간을 알려주세요.\n"
         return {
             "schemaVersion": payload.get("schemaVersion") or "v1",
             "reply": (
-                f"{room_label} 투어 신청을 도와드리겠습니다.\n"
-                "방문을 희망하시는 날짜와 시간을 함께 알려주세요.\n"
+                f"{room_label} 투어 신청을 이어서 도와드릴게요.\n"
+                f"{schedule_guide}"
             ),
             "intent": TOUR_APPLY_INTENT,
             "slots": {
                 "roomNo": session_state.get("roomNo", ""),
                 "roomName": session_state.get("roomName", ""),
+                "visitDate": session_state.get("visitDate", ""),
+                "visitTime": session_state.get("visitTime", ""),
                 "preferredVisitAt": session_state.get("preferredVisitAt", ""),
             },
             "action": {
@@ -224,7 +262,7 @@ class TourApplyAgent:
             },
             "result": {
                 "stage": "awaiting_visit_at",
-                "missingSlots": ["preferredVisitAt"],
+                "missingSlots": self._schedule_missing_slots(session_state),
             },
             "errorCode": None,
             "requiresConfirm": False,
@@ -240,16 +278,25 @@ class TourApplyAgent:
         error_message: str,
     ) -> dict[str, Any]:
         room_label = session_state.get("roomName") or "현재 보고 계신 방"
+        visit_date = session_state.get("visitDate", "")
+        if visit_date:
+            retry_guide = (
+                f"날짜는 {visit_date}로 저장되어 있어요. 가능한 방문 시간을 다시 알려주세요.\n"
+            )
+        else:
+            retry_guide = "방문 희망 날짜와 시간을 한 번 더 알려주세요.\n"
         return {
             "schemaVersion": payload.get("schemaVersion") or "v1",
             "reply": (
-                f"{room_label} 투어 신청을 이어서 도와드리겠습니다.\n"
-                "방문 희망 날짜와 시간을 한 번에 다시 알려주세요.\n"
+                f"{room_label} 투어 신청을 이어서 도와드릴게요.\n"
+                f"{retry_guide}"
             ),
             "intent": TOUR_APPLY_INTENT,
             "slots": {
                 "roomNo": session_state.get("roomNo", ""),
                 "roomName": session_state.get("roomName", ""),
+                "visitDate": session_state.get("visitDate", ""),
+                "visitTime": session_state.get("visitTime", ""),
                 "preferredVisitAt": session_state.get("preferredVisitAt", ""),
             },
             "action": {
@@ -259,7 +306,7 @@ class TourApplyAgent:
             },
             "result": {
                 "stage": "awaiting_visit_at",
-                "missingSlots": ["preferredVisitAt"],
+                "missingSlots": self._schedule_missing_slots(session_state),
             },
             "errorCode": error_message or "TOUR_APPLY_INVALID_SCHEDULE",
             "requiresConfirm": False,
@@ -280,7 +327,7 @@ class TourApplyAgent:
         return {
             "schemaVersion": payload.get("schemaVersion") or "v1",
             "reply": (
-                f"{room_label} 투어 신청을 이어서 도와드리겠습니다.\n"
+                f"{room_label} 투어 신청을 이어서 도와드릴게요.\n"
                 f"{prefix}"
                 "신청자 이름을 알려주세요."
             ),
@@ -288,6 +335,8 @@ class TourApplyAgent:
             "slots": {
                 "roomNo": session_state.get("roomNo", ""),
                 "roomName": session_state.get("roomName", ""),
+                "visitDate": session_state.get("visitDate", ""),
+                "visitTime": session_state.get("visitTime", ""),
                 "preferredVisitAt": session_state.get("preferredVisitAt", ""),
             },
             "action": {
@@ -315,14 +364,14 @@ class TourApplyAgent:
     ) -> dict[str, Any]:
         room_label = session_state.get("roomName") or "현재 보고 계신 방"
         prefix = (
-            "전화번호 형식이 올바르지 않습니다.\n숫자 10~11자리로 다시 알려주세요.\n"
+            "전화번호 형식이 올바르지 않아요.\n숫자 10~11자리로 다시 알려주세요.\n"
             if invalid_input
             else ""
         )
         return {
             "schemaVersion": payload.get("schemaVersion") or "v1",
             "reply": (
-                f"{room_label} 투어 신청을 이어서 도와드리겠습니다.\n"
+                f"{room_label} 투어 신청을 이어서 도와드릴게요.\n"
                 f"{prefix}"
                 "연락받으실 전화번호를 알려주세요.\n"
                 "예: 01012341234"
@@ -331,6 +380,8 @@ class TourApplyAgent:
             "slots": {
                 "roomNo": session_state.get("roomNo", ""),
                 "roomName": session_state.get("roomName", ""),
+                "visitDate": session_state.get("visitDate", ""),
+                "visitTime": session_state.get("visitTime", ""),
                 "preferredVisitAt": session_state.get("preferredVisitAt", ""),
                 "userName": session_state.get("userName", ""),
             },
@@ -353,7 +404,7 @@ class TourApplyAgent:
     def _build_missing_room_response(self, payload: dict[str, Any]) -> dict[str, Any]:
         return {
             "schemaVersion": payload.get("schemaVersion") or "v1",
-            "reply": "투어신청을 하시고 싶은 방 상세페이지에서 다시 입력해주세요.",
+            "reply": "투어 신청은 방 상세페이지에서 다시 시작해 주세요.",
             "intent": "CHAT",
             "slots": {},
             "action": {"name": "CHAT"},
@@ -368,7 +419,7 @@ class TourApplyAgent:
     def _build_cancelled_response(self, payload: dict[str, Any]) -> dict[str, Any]:
         return {
             "schemaVersion": payload.get("schemaVersion") or "v1",
-            "reply": "투어 신청을 취소했습니다. 원하시면 다시 말씀해 주세요.",
+            "reply": "투어 신청을 취소했어요. 원하시면 다시 말씀해 주세요.",
             "intent": TOUR_APPLY_INTENT,
             "slots": {},
             "action": {
@@ -383,3 +434,11 @@ class TourApplyAgent:
             "clientRequestId": payload.get("clientRequestId"),
             "raw": {"agent": "tour_apply_agent"},
         }
+
+    def _schedule_missing_slots(self, session_state: dict[str, Any]) -> list[str]:
+        missing_slots: list[str] = []
+        if not session_state.get("visitDate"):
+            missing_slots.append("visitDate")
+        if not session_state.get("visitTime"):
+            missing_slots.append("visitTime")
+        return missing_slots or ["preferredVisitAt"]

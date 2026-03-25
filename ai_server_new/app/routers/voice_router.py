@@ -20,6 +20,37 @@ router = APIRouter(prefix='/ai/voice', tags=['voice'])
 logger = logging.getLogger(__name__)
 
 
+def _map_voice_value_error(exc: ValueError) -> HTTPException:
+    message = str(exc)
+    lowered = message.lower()
+
+    if (
+        'google_application_credentials' in lowered
+        or 'google_service_account_json' in lowered
+        or '서비스 계정' in message
+        or 'access token' in lowered
+        or 'unsupported tts_provider' in lowered
+        or 'unsupported stt_provider' in lowered
+        or 'provider' in lowered and '지원' in message
+    ):
+        return HTTPException(status_code=503, detail=message)
+
+    if (
+        'text는 비어' in message
+        or 'audio_format' in lowered
+        or 'mime_type' in lowered
+        or 'audio_base64' in lowered
+        or '오디오 데이터가 비어' in message
+        or '오디오 데이터가 너무' in message
+    ):
+        return HTTPException(status_code=400, detail=message)
+
+    if 'google cloud' in lowered:
+        return HTTPException(status_code=502, detail=message)
+
+    return HTTPException(status_code=500, detail=message)
+
+
 def _build_voice_pipeline() -> VoicePipelineService:
     return VoicePipelineService(
         VoiceService(
@@ -50,7 +81,19 @@ def _get_voice_pipeline() -> VoicePipelineService:
     response_model=VoiceTranscribeRes,
 )
 async def transcribe(req: VoiceTranscribeReq):
-    return await _get_voice_pipeline().transcribe(req)
+    try:
+        return await _get_voice_pipeline().transcribe(req)
+    except HTTPException:
+        raise
+    except ValueError as exc:
+        logger.warning('Voice transcribe validation/provider error: %s', exc)
+        raise _map_voice_value_error(exc) from exc
+    except Exception as exc:
+        logger.exception('Voice transcribe failed: %s', exc)
+        raise HTTPException(
+            status_code=500,
+            detail='음성 인식 처리 중 내부 오류가 발생했습니다.',
+        ) from exc
 
 
 @router.post(
@@ -59,4 +102,16 @@ async def transcribe(req: VoiceTranscribeReq):
     response_model=VoiceSpeakRes,
 )
 async def speak(req: VoiceSpeakReq):
-    return await _get_voice_pipeline().speak(req)
+    try:
+        return await _get_voice_pipeline().speak(req)
+    except HTTPException:
+        raise
+    except ValueError as exc:
+        logger.warning('Voice speak validation/provider error: %s', exc)
+        raise _map_voice_value_error(exc) from exc
+    except Exception as exc:
+        logger.exception('Voice speak failed: %s', exc)
+        raise HTTPException(
+            status_code=500,
+            detail='음성 합성 처리 중 내부 오류가 발생했습니다.',
+        ) from exc

@@ -409,7 +409,6 @@ export function useLogin(redirectTo = '/') {
       });
 
       sessionStorage.removeItem('postLoginRedirect');
-      alert('로그인 성공!');
       navigate(redirectTo || '/', { replace: true });
     } catch (err) {
       setError(err.message || '로그인 중 오류가 발생했습니다.');

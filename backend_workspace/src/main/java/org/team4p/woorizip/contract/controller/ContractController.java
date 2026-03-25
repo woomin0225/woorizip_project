@@ -4,6 +4,7 @@ import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -78,6 +79,25 @@ public class ContractController {
      * 입주 신청 등록
      * POST /api/contract/insert/{roomNo}
      */
+    @GetMapping("/admin/all")
+    public ResponseEntity<ApiResponse<PageResponse<ContractDto>>> selectAllContractsForAdmin(
+            @AuthenticationPrincipal CustomUserPrincipal userPrincipal,
+            @RequestParam(name = "page", defaultValue = "1") int page,
+            @RequestParam(name = "size", defaultValue = "20") int size) {
+        boolean isAdmin = userPrincipal != null
+                && userPrincipal.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch("ROLE_ADMIN"::equals);
+
+        if (!isAdmin) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.fail("관리자만 전체 계약 내역을 조회할 수 있습니다.", null));
+        }
+
+        PageResponse<ContractDto> body = contractService.selectListAllContracts(page, size);
+        return ResponseEntity.ok(ApiResponse.ok("전체 계약 목록 조회 성공", body));
+    }
+
     @PostMapping("/insert/{roomNo}")
     public ResponseEntity<ApiResponse<ContractDto>> insertContract(
             @PathVariable("roomNo") String roomNo,
