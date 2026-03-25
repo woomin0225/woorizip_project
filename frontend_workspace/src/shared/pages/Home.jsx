@@ -8,6 +8,7 @@ import WishRankingFrame from '../../features/houseAndRoom/components/ranking/Wis
 import { fetchNoticeTop5 } from '../../features/board/api/NoticeApi';
 import { fetchInformationTop5 } from '../../features/board/api/InformationApi';
 import { fetchEventTop5 } from '../../features/board/api/EventApi';
+import ConvenienceEntryCard from '../components/ConvenienceEntryCard';
 
 import banner1 from '../../assets/images/banner/banner1.png';
 import banner2 from '../../assets/images/banner/banner2.png';
@@ -155,6 +156,12 @@ export default function Home() {
           </Container>
         </section>
 
+        <section className="section pt-0">
+          <Container>
+            <ConvenienceEntryCard />
+          </Container>
+        </section>
+
         <section className="section pt-4">
           <Container>
             <Row>
@@ -163,7 +170,7 @@ export default function Home() {
                   type="room"
                   period={1}
                   rankingTitle="일간 방 조회랭킹"
-                  limit={10}
+                  limit={3}
                 />
               </Col>
               <Col md="6" className="mb-4">
@@ -171,7 +178,7 @@ export default function Home() {
                   type="room"
                   period={30}
                   rankingTitle="월간 방 조회랭킹"
-                  limit={10}
+                  limit={3}
                 />
               </Col>
               <Col md="6" className="mb-4">
@@ -179,7 +186,7 @@ export default function Home() {
                   type="house"
                   period={1}
                   rankingTitle="일간 건물 조회랭킹"
-                  limit={10}
+                  limit={3}
                 />
               </Col>
               <Col md="6" className="mb-4">
@@ -187,7 +194,7 @@ export default function Home() {
                   type="house"
                   period={7}
                   rankingTitle="주간 건물 조회랭킹"
-                  limit={10}
+                  limit={3}
                 />
               </Col>
             </Row>
@@ -199,13 +206,13 @@ export default function Home() {
                 <ReviewRankingFrame
                   period={30}
                   rankingTitle="월간 리뷰평균 랭킹"
-                  limit={10}
+                  limit={3}
                 />
               </Col>
               <Col md="6" className="mb-4">
                 <WishRankingFrame
                   rankingTitle="관심목록 랭킹"
-                  limit={10}
+                  limit={3}
                   subTitle="Total Wish"
                 />
               </Col>

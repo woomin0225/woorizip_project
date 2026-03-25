@@ -111,6 +111,23 @@ public class ContractServiceImpl implements ContractService {
     }
 
     @Override
+    public PageResponse<ContractDto> selectListAllContracts(int page, int size) {
+        int safePage = Math.max(page, 1);
+        int safeSize = Math.max(size, 1);
+        Pageable pageable = PageRequest.of(safePage - 1, safeSize);
+        Page<ContractEntity> resultPage = contractRepository.findAll(pageable);
+
+        List<ContractDto> content = toList(resultPage.getContent());
+        return new PageResponse<>(
+                content,
+                safePage,
+                safeSize,
+                resultPage.getTotalElements(),
+                resultPage.getTotalPages()
+        );
+    }
+
+    @Override
     @Transactional
     public ContractDto insertContract(ContractDto contractDto) {
         contractDto.setStatus("APPLIED");
@@ -129,6 +146,15 @@ public class ContractServiceImpl implements ContractService {
                 );
         if (existingMine.isPresent()) {
             return ContractDto.fromEntity(existingMine.get());
+        }
+
+        boolean alreadyAppliedBySameUser = contractRepository.existsByRoomNoAndUserNoAndStatusIn(
+                entity.getRoomNo(),
+                entity.getUserNo(),
+                ACTIVE_CONTRACT_STATUSES
+        );
+        if (alreadyAppliedBySameUser) {
+            throw new IllegalStateException("이미 해당 방에 진행 중인 계약이 있습니다.");
         }
 
         boolean alreadyReserved = contractRepository.existsByRoomNoAndMoveInDateAndStatusIn(

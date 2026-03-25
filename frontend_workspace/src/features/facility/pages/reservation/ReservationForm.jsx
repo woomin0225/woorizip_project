@@ -1,11 +1,21 @@
 import React from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import styles from "./ReservationPage.module.css";
 import ReservationForm from "../../components/form/ReservationForm";
 
 export default function ReservationFormPage() {
   const { facilityNo, reservationNo } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const handleCancel = () => {
+    if (location.state?.targetUserNo) {
+      navigate('/reservation/view', { state: location.state });
+      return;
+    }
+
+    navigate(-1);
+  };
 
   return (
     <div className={styles.contentSection}>
@@ -13,7 +23,7 @@ export default function ReservationFormPage() {
         <ReservationForm 
           facilityNo={facilityNo}
           reservationNo={reservationNo}
-          onCancel={() => navigate(-1)} 
+          onCancel={handleCancel}
         />
       </div>
     </div>

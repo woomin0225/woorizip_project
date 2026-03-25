@@ -14,8 +14,8 @@ class Settings(BaseSettings):
     # ===== Providers =====
     LLM_PROVIDER: str = Field(default="groq", description="mock | watsonx | gemini | groq")
     EMBEDDING_PROVIDER: str = Field(default="mock", description="mock | openai")
-    STT_PROVIDER: str = Field(default="mock", description="mock | watson")
-    TTS_PROVIDER: str = Field(default="mock", description="mock | azure")
+    STT_PROVIDER: str = Field(default="google", description="google")
+    TTS_PROVIDER: str = Field(default="google", description="google")
     CAPTION_PROVIDER: str = Field(default="qwen", description="mock | qwen")
     OBJECT_DETECTION_PROVIDER: str = Field(default="groundingdino", description="mock | groundingdino")
     OCR_PROVIDER: str = Field(default="paddleocr", description="mock | paddleocr")
@@ -60,14 +60,16 @@ class Settings(BaseSettings):
     SPRING_INTERNAL_API_KEY: str | None = None
 
     # ===== Audio =====
-    DEFAULT_TTS_VOICE: str = "sage"
+    DEFAULT_TTS_VOICE: str = "ko-KR-Neural2-A"
     DEFAULT_AUDIO_FORMAT: str = "mp3"
-    AZURE_TTS_ENDPOINT: str | None = None
-    AZURE_TTS_REGION: str | None = None
-    AZURE_TTS_API_KEY: str | None = None
-    AZURE_TTS_DEPLOYMENT: str | None = None
-    AZURE_TTS_API_VERSION: str = "2025-01-01-preview"
-    AZURE_TTS_OUTPUT_FORMAT: str = "audio-24khz-48kbitrate-mono-mp3"
+    DEFAULT_STT_LANGUAGE: str = "ko-KR"
+    GOOGLE_APPLICATION_CREDENTIALS: str | None = None
+    GOOGLE_SERVICE_ACCOUNT_JSON: str | None = None
+    GOOGLE_CLOUD_PROJECT: str | None = None
+    GOOGLE_STT_LANGUAGE_CODE: str = "ko-KR"
+    GOOGLE_STT_MODEL: str = "latest_long"
+    GOOGLE_TTS_LANGUAGE_CODE: str = "ko-KR"
+    GOOGLE_TTS_SPEAKING_RATE: float = 1.0
 
     # ===== Assistant =====
     AI_AGENT_ENDPOINT: str | None = None
@@ -132,6 +134,13 @@ class Settings(BaseSettings):
 
         if self.TOOL_EXECUTION_MODE.lower() == "execute" and not self.SPRING_BASE_URL:
             raise RuntimeError("TOOL_EXECUTION_MODE=execute 이면 SPRING_BASE_URL 이 필요합니다.")
+
+        if self.TTS_PROVIDER.lower() == "google" or self.STT_PROVIDER.lower() == "google":
+            if not self.GOOGLE_APPLICATION_CREDENTIALS and not self.GOOGLE_SERVICE_ACCOUNT_JSON:
+                raise RuntimeError(
+                    "Google Cloud 음성을 사용하려면 GOOGLE_APPLICATION_CREDENTIALS 또는 "
+                    "GOOGLE_SERVICE_ACCOUNT_JSON 이 필요합니다."
+                )
 
 
 settings = Settings()

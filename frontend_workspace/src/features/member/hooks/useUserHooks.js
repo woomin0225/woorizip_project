@@ -374,7 +374,7 @@ export function useTourList() {
   return { tours, loading };
 }
 
-export function useLogin() {
+export function useLogin(redirectTo = '/') {
   const { setTokens } = useAuth();
 
   const [form, setForm] = useState({ emailId: '', password: '' });
@@ -408,8 +408,8 @@ export function useLogin() {
         userId: payload.sub, // 대부분 sub에 아이디 들어있음
       });
 
-      alert('로그인 성공!');
-      navigate('/');
+      sessionStorage.removeItem('postLoginRedirect');
+      navigate(redirectTo || '/', { replace: true });
     } catch (err) {
       setError(err.message || '로그인 중 오류가 발생했습니다.');
     } finally {

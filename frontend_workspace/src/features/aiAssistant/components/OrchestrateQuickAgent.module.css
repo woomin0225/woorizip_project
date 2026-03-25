@@ -6,8 +6,8 @@
 }
 
 .launcher {
-  width: 64px;
-  height: 64px;
+  width: 88px;
+  height: 88px;
   border: none;
   background: transparent;
   padding: 0;
@@ -16,18 +16,18 @@
 }
 
 .launcherIcon {
-  width: 64px;
-  height: 64px;
+  width: 88px;
+  height: 88px;
   border-radius: 50%;
   object-fit: cover;
-  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.18);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.2);
   display: block;
 }
 
 .panel {
   position: fixed;
   right: 24px;
-  bottom: 98px;
+  bottom: 124px;
   width: min(380px, calc(100vw - 32px));
   height: min(620px, calc(100vh - 140px));
   background: #fff;
@@ -86,8 +86,8 @@
 }
 
 .headerIcon {
-  width: 40px;
-  height: 40px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   object-fit: cover;
   box-shadow: 0 8px 18px rgba(37, 99, 235, 0.22);
@@ -105,15 +105,24 @@
 .resetBtn,
 .voiceBtn,
 .micBtn,
-.settingBtn {
+.settingBtn,
+.closeBtn {
   border: none;
   border-radius: 10px;
-  color: #fff !important;
   min-height: calc(1.9rem * var(--app-button-scale));
   padding: calc(0.3rem * var(--app-space-scale)) calc(0.75rem * var(--app-space-scale));
   cursor: pointer;
   font-size: 0.78rem;
   font-weight: 600;
+  box-sizing: border-box;
+}
+
+.modeBtn,
+.resetBtn,
+.voiceBtn,
+.micBtn,
+.settingBtn {
+  color: #fff !important;
 }
 
 .modeBtn {
@@ -146,14 +155,23 @@
 }
 
 .closeBtn {
-  width: 32px;
-  height: 32px;
-  border: none;
-  border-radius: 8px;
-  background: #f3f4f6;
-  color: #374151;
-  font-size: 18px;
-  cursor: pointer;
+  border: 1px solid #d1d5db;
+  background: #f8fafc;
+  color: #475569;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  min-width: calc(1.9rem * var(--app-button-scale));
+}
+
+.closeBtn:hover {
+  background: #eef2f7;
+}
+
+.closeBtn:disabled {
+  opacity: 0.6;
+  cursor: default;
 }
 
 .voiceGuide {
@@ -330,4 +348,24 @@
   line-height: 1.55;
 }
 
+@media (max-width: 768px) {
+  .root {
+    right: 16px;
+    bottom: 16px;
+  }
 
+  .launcher {
+    width: 76px;
+    height: 76px;
+  }
+
+  .launcherIcon {
+    width: 76px;
+    height: 76px;
+  }
+
+  .panel {
+    right: 16px;
+    bottom: 104px;
+  }
+}

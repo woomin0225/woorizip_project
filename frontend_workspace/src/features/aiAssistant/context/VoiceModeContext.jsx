@@ -19,6 +19,7 @@ const DEFAULT_SETTINGS = {
   voiceCommandEnabled: true,
   fontScale: 1,
 };
+const DEFAULT_SERVER_VOICE_NAME = 'ko-KR-Neural2-A';
 
 const VoiceModeContext = createContext(null);
 
@@ -74,6 +75,18 @@ export function VoiceModeProvider({ children }) {
   const recognitionHandlerRef = useRef({});
   const speechUtteranceRef = useRef(null);
   const audioRef = useRef(null);
+
+  const stopListeningInternal = useCallback(() => {
+    recognitionHandlerRef.current = {};
+    if (recognitionRef.current) {
+      recognitionRef.current.onresult = null;
+      recognitionRef.current.onerror = null;
+      recognitionRef.current.onend = null;
+      recognitionRef.current.stop();
+      recognitionRef.current = null;
+    }
+    setListening(false);
+  }, []);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -197,7 +210,7 @@ export function VoiceModeProvider({ children }) {
   const playServerSpeech = useCallback(async (text, options = {}) => {
     const { audioBytes, mimeType } = await synthesizeTts({
       text: String(text),
-      voiceName: options.voiceName,
+      voiceName: options.voiceName || DEFAULT_SERVER_VOICE_NAME,
     });
 
     return new Promise((resolve, reject) => {
@@ -240,36 +253,41 @@ export function VoiceModeProvider({ children }) {
     async (text, options = {}) => {
       if (!text) return false;
 
+      stopListeningInternal();
       stopSpeaking();
 
       if (options.preferBrowser !== true) {
         try {
           await playServerSpeech(text, options);
           return true;
-        } catch {
-          return playBrowserSpeech(text, options);
+        } catch (error) {
+          if (options.allowBrowserFallback === true) {
+            return playBrowserSpeech(text, options);
+          }
+          console.warn('Server TTS playback failed.', error);
+          return false;
         }
       }
 
       return playBrowserSpeech(text, options);
     },
-    [playBrowserSpeech, playServerSpeech, stopSpeaking]
+    [playBrowserSpeech, playServerSpeech, stopListeningInternal, stopSpeaking]
   );
 
   const stopListening = useCallback(() => {
-    recognitionHandlerRef.current = {};
-    if (recognitionRef.current) {
-      recognitionRef.current.onresult = null;
-      recognitionRef.current.onerror = null;
-      recognitionRef.current.onend = null;
-      recognitionRef.current.stop();
-      recognitionRef.current = null;
-    }
-    setListening(false);
-  }, []);
+    stopListeningInternal();
+  }, [stopListeningInternal]);
 
   const startListening = useCallback(
-    ({ onResult, onError, onEnd } = {}) => {
+    ({
+      onResult,
+      onError,
+      onEnd,
+      lang = 'ko-KR',
+      interimResults = false,
+      continuous = false,
+      maxAlternatives = 1,
+    } = {}) => {
       const RecognitionCtor = getSpeechRecognitionCtor();
       if (!RecognitionCtor) {
         onError?.(new Error('이 브라우저는 음성 인식을 지원하지 않습니다.'));
@@ -277,13 +295,12 @@ export function VoiceModeProvider({ children }) {
       }
 
       stopListening();
-      stopSpeaking();
 
       const recognition = new RecognitionCtor();
-      recognition.lang = 'ko-KR';
-      recognition.interimResults = false;
-      recognition.maxAlternatives = 1;
-      recognition.continuous = false;
+      recognition.lang = lang;
+      recognition.interimResults = interimResults;
+      recognition.maxAlternatives = maxAlternatives;
+      recognition.continuous = continuous;
       recognitionHandlerRef.current = { onResult, onError, onEnd };
 
       recognition.onresult = (event) => {
@@ -306,20 +323,28 @@ export function VoiceModeProvider({ children }) {
 
       recognitionRef.current = recognition;
       setListening(true);
-      recognition.start();
-      return true;
+      try {
+        recognition.start();
+        return true;
+      } catch (error) {
+        recognitionRef.current = null;
+        setListening(false);
+        recognitionHandlerRef.current.onError?.(error);
+        recognitionHandlerRef.current.onEnd?.();
+        return false;
+      }
     },
-    [stopListening, stopSpeaking]
+    [stopListening]
   );
 
   const enableVoiceMode = useCallback(
-    ({ speakWelcome = true } = {}) => {
+    ({ speakWelcome = false } = {}) => {
       setVoiceModeEnabled(true);
       setPromptDismissed(true);
       if (speakWelcome) {
         window.setTimeout(() => {
           speak(
-            '음성 모드가 켜졌습니다. 약 2초 정도 멈추면 자동으로 듣기를 마치고 안내를 이어갑니다.'
+            '음성 모드가 켜졌습니다. 음성 버튼을 누른 뒤 말씀해 주세요. 말씀하시는 동안에는 답하지 않고, 답변을 읽는 동안에는 마이크를 듣지 않습니다.'
           );
         }, 150);
       }

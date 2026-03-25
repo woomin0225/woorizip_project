@@ -1,6 +1,6 @@
 import React from 'react';
 import { useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useReservationForm } from '../../hooks/reservation/useReservationForm';
 import styles from './Form.module.css';
 import { useFacilityDetail } from './../../hooks/facility/useFacilityDetail';
@@ -11,6 +11,7 @@ export default function ReservationForm({
   onCancel,
 }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const {
     values,
     reservedList,
@@ -170,7 +171,7 @@ export default function ReservationForm({
             </div>
 
             <form
-              onSubmit={(e) => onSubmit(e, navigate)}
+              onSubmit={(e) => onSubmit(e, navigate, undefined, location.state)}
               className={styles.formBody}
             >
               <div className={styles.sectionBlock}>
@@ -282,7 +283,7 @@ export default function ReservationForm({
                         await onSubmit(null, navigate, {
                           ...values,
                           reservationStatus: 'CANCELED',
-                        });
+                        }, location.state);
                       }
                     }}
                   >

@@ -29,7 +29,6 @@ public class ReservationDetailResponseDTO {
 	private LocalTime reservationStartTime;
 	private LocalTime reservationEndTime;
 	private ReservationStatus reservationStatus;
-	private List<FacilityImageDTO> facilityImages;
 	
 	public static ReservationDetailResponseDTO from(ReservationEntity entity) {
 	    return ReservationDetailResponseDTO.builder()
@@ -41,9 +40,6 @@ public class ReservationDetailResponseDTO {
 	            .reservationStartTime(entity.getReservationStartTime())
 	            .reservationEndTime(entity.getReservationEndTime())
 	            .reservationStatus(entity.getReservationStatus())
-	            .facilityImages(entity.getFacility().getImages().stream()
-	                    .map(FacilityImageDTO::from)
-	                    .collect(Collectors.toList()))
 	            .build();
 	}
 }

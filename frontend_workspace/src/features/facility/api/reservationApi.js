@@ -7,13 +7,15 @@ export async function getReservationList({
   size = 10,
   sort = 'reservationDate,reservationStartTime',
   direct = 'DESC',
-  facilityNo = ""
+  facilityNo = '',
+  targetUserNo = '',
 }) {
-  const url = facilityNo ? `/api/facilities/${facilityNo}/reservations` : '/api/reservations';
-  const { data } = await apiJson().get(
-    url,
-    {params: { page, size, sort, direct }}
-  );
+  const url = facilityNo
+    ? `/api/facilities/${facilityNo}/reservations`
+    : '/api/reservations';
+  const { data } = await apiJson().get(url, {
+    params: { page, size, sort, direct, targetUserNo },
+  });
   return data;
 }
 
@@ -25,13 +27,17 @@ export async function getReservationDetail(reservationNo) {
 
 // 예약 신규 등록
 export async function createReservation(facilityNo, dto) {
-  const { data } = await apiJson().post(`/api/facilities/${facilityNo}/reservations`, dto);
+  const { data } = await apiJson().post(
+    `/api/facilities/${facilityNo}/reservations`,
+    dto
+  );
   return data;
 }
 
 // 예약 등록 시 기존 예약 시간 조회
 export async function getReservationTime(facilityNo, date) {
-  const { data } = await apiJson().get(`/api/facilities/${facilityNo}/reservations/check`,
+  const { data } = await apiJson().get(
+    `/api/facilities/${facilityNo}/reservations/check`,
     { params: { date } }
   );
   return data;
@@ -39,6 +45,9 @@ export async function getReservationTime(facilityNo, date) {
 
 // 예약 내용 수정
 export async function modifyReservation(reservationNo, dto) {
-  const { data } = await apiJson().patch(`/api/reservations/${reservationNo}`, dto);
+  const { data } = await apiJson().patch(
+    `/api/reservations/${reservationNo}`,
+    dto
+  );
   return data;
 }

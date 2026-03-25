@@ -3,11 +3,17 @@ import { Container, Row, Col, Card, CardBody } from 'reactstrap';
 import MyPageSideNav from '../components/MyPageSideNav';
 import { getAdminUserListPage } from '../api/userAPI';
 import styles from '../../../app/layouts/MyPageLayout.module.css';
+import { useNavigate } from 'react-router-dom';
 
-const PAGE_SIZE = 100;
+const FETCH_SIZE = 100;
+const PAGE_SIZE = 20;
 
 function pickFirst(...values) {
-  return values.find((value) => value !== undefined && value !== null && value !== '') || '';
+  return (
+    values.find(
+      (value) => value !== undefined && value !== null && value !== ''
+    ) || ''
+  );
 }
 
 function normalizeBirthDate(raw) {
@@ -45,24 +51,58 @@ function userTypeLabel(type) {
   return value || '-';
 }
 
+function resolveUserType(user) {
+  const role = String(user?.role || '').toUpperCase();
+  const type = String(user?.type || '').toUpperCase();
+
+  if (role === 'ADMIN') return 'ADMIN';
+  if (type === 'LESSOR' || type === 'LANDLORD') return 'LESSOR';
+  if (type === 'USER' || type === 'TENANT') return 'USER';
+  return type || role || '';
+}
+
 function compareValues(a, b, direction = 'asc') {
   if (a === b) return 0;
-  if (a === null || a === undefined || a === '') return direction === 'asc' ? 1 : -1;
-  if (b === null || b === undefined || b === '') return direction === 'asc' ? -1 : 1;
+  if (a === null || a === undefined || a === '')
+    return direction === 'asc' ? 1 : -1;
+  if (b === null || b === undefined || b === '')
+    return direction === 'asc' ? -1 : 1;
 
   if (typeof a === 'number' && typeof b === 'number') {
     return direction === 'asc' ? a - b : b - a;
   }
 
-  const left = String(a).localeCompare(String(b), 'ko', { numeric: true, sensitivity: 'base' });
+  const left = String(a).localeCompare(String(b), 'ko', {
+    numeric: true,
+    sensitivity: 'base',
+  });
   return direction === 'asc' ? left : -left;
 }
 
 export default function UserManagementPage() {
+  const navigate = useNavigate();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [sort, setSort] = useState({ key: 'userNo', direction: 'asc' });
+  const [search, setSearch] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [sort, setSort] = useState({ key: 'typeLabel', direction: 'asc' });
+
+  const handleTypeClick = (user) => {
+    const type = String(user.type || '').toUpperCase();
+    const state = { targetUserNo: user.userNo, targetUserType: type };
+
+    if (type === 'ADMIN') return;
+
+    if (type === 'USER' || type === 'TENANT') {
+      navigate('/reservation/view', { state });
+      return;
+    }
+
+    if (type === 'LESSOR' || type === 'LANDLORD') {
+      navigate('/facility/view', { state });
+    }
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -76,10 +116,10 @@ export default function UserManagementPage() {
         const collected = [];
 
         while (true) {
-          const list = await getAdminUserListPage(page, PAGE_SIZE);
+          const list = await getAdminUserListPage(page, FETCH_SIZE);
           const currentPageItems = Array.isArray(list) ? list : [];
           collected.push(...currentPageItems);
-          if (currentPageItems.length < PAGE_SIZE) break;
+          if (currentPageItems.length < FETCH_SIZE) break;
           page += 1;
         }
 
@@ -89,6 +129,7 @@ export default function UserManagementPage() {
           const birthDate = normalizeBirthDate(
             pickFirst(user?.birthDate, user?.birth_date)
           );
+          const resolvedType = resolveUserType(user);
           return {
             userNo: user?.userNo ?? null,
             emailId: pickFirst(user?.emailId, user?.email_id, user?.email),
@@ -96,9 +137,14 @@ export default function UserManagementPage() {
             gender: user?.gender || '',
             genderLabel: genderLabel(user?.gender),
             age: calculateAge(birthDate),
-            phone: pickFirst(user?.phone, user?.phoneNumber, user?.phone_number),
-            type: user?.type || '',
-            typeLabel: userTypeLabel(user?.type),
+            phone: pickFirst(
+              user?.phone,
+              user?.phoneNumber,
+              user?.phone_number
+            ),
+            type: resolvedType,
+            role: user?.role || '',
+            typeLabel: userTypeLabel(resolvedType),
           };
         });
 
@@ -128,6 +174,34 @@ export default function UserManagementPage() {
     });
     return copy;
   }, [sort.direction, sort.key, users]);
+
+  const filteredUsers = useMemo(() => {
+    const keyword = search.trim().toLowerCase();
+    if (!keyword) return sortedUsers;
+
+    return sortedUsers.filter((user) =>
+      [user.name, user.emailId, user.phone, user.typeLabel, user.genderLabel].some(
+        (value) => String(value || '').toLowerCase().includes(keyword)
+      )
+    );
+  }, [search, sortedUsers]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredUsers.length / PAGE_SIZE));
+
+  const pagedUsers = useMemo(() => {
+    const startIndex = (currentPage - 1) * PAGE_SIZE;
+    return filteredUsers.slice(startIndex, startIndex + PAGE_SIZE);
+  }, [currentPage, filteredUsers]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
 
   const onSort = (key) => {
     setSort((prev) => ({
@@ -171,21 +245,47 @@ export default function UserManagementPage() {
               <Card className={`shadow border-0 ${styles.mainCard}`}>
                 <CardBody>
                   <div className={styles.headerRow}>
-                    <h2 className={styles.title}>유저관리</h2>
-                    <p className={styles.subTitle}>
-                      등록된 전체 사용자 목록을 확인하고, 항목명을 눌러 정렬할 수 있습니다.
-                    </p>
+                    <div>
+                      <h2 className={styles.title}>유저관리</h2>
+                      <p className={styles.subTitle}>
+                        등록된 사용자 목록을 확인하고, 검색과 정렬로 빠르게 찾을
+                        수 있습니다.
+                      </p>
+                    </div>
+                    <input
+                      type="text"
+                      value={search}
+                      onChange={(event) => setSearch(event.target.value)}
+                      placeholder="이름, 이메일, 휴대번호, 사용자 유형 검색"
+                      style={{
+                        minWidth: 260,
+                        padding: '10px 12px',
+                        borderRadius: 10,
+                        border: '1px solid #d5dbea',
+                      }}
+                    />
                   </div>
 
-                  <div className={styles.surveyBox} style={{ marginBottom: 18 }}>
+                  <div
+                    className={styles.surveyBox}
+                    style={{ marginBottom: 18 }}
+                  >
                     <p className={styles.surveyTitle}>전체 사용자 {users.length}명</p>
                     <p className={styles.desc} style={{ marginBottom: 0 }}>
-                      이름, 나이, 성별, 유저번호 등 주요 정보를 한눈에 확인해보세요.
+                      {search.trim()
+                        ? `검색 결과 ${filteredUsers.length}명을 표시하고 있습니다.`
+                        : '사용자 유형, 이름, 나이, 성별, 연락처를 한눈에 확인해보세요.'}
                     </p>
                   </div>
 
-                  {loading && <p className={styles.desc}>유저 목록을 불러오는 중입니다.</p>}
-                  {!loading && error && <p className={styles.errorText}>{error}</p>}
+                  {loading && (
+                    <p className={styles.desc}>
+                      유저 목록을 불러오는 중입니다.
+                    </p>
+                  )}
+                  {!loading && error && (
+                    <p className={styles.errorText}>{error}</p>
+                  )}
 
                   {!loading && !error && (
                     <div className={styles.adminTableWrap}>
@@ -193,64 +293,139 @@ export default function UserManagementPage() {
                         <thead>
                           <tr>
                             <th>
-                              <button type="button" className={styles.sortBtn} onClick={() => onSort('userNo')}>
-                                유저번호 {sortLabel('userNo')}
+                              <button
+                                type="button"
+                                className={styles.sortBtn}
+                                onClick={() => onSort('typeLabel')}
+                              >
+                                사용자 유형 {sortLabel('typeLabel')}
                               </button>
                             </th>
                             <th>
-                              <button type="button" className={styles.sortBtn} onClick={() => onSort('name')}>
+                              <button
+                                type="button"
+                                className={styles.sortBtn}
+                                onClick={() => onSort('name')}
+                              >
                                 이름 {sortLabel('name')}
                               </button>
                             </th>
                             <th>
-                              <button type="button" className={styles.sortBtn} onClick={() => onSort('age')}>
+                              <button
+                                type="button"
+                                className={styles.sortBtn}
+                                onClick={() => onSort('age')}
+                              >
                                 나이 {sortLabel('age')}
                               </button>
                             </th>
                             <th>
-                              <button type="button" className={styles.sortBtn} onClick={() => onSort('genderLabel')}>
+                              <button
+                                type="button"
+                                className={styles.sortBtn}
+                                onClick={() => onSort('genderLabel')}
+                              >
                                 성별 {sortLabel('genderLabel')}
                               </button>
                             </th>
                             <th>
-                              <button type="button" className={styles.sortBtn} onClick={() => onSort('emailId')}>
+                              <button
+                                type="button"
+                                className={styles.sortBtn}
+                                onClick={() => onSort('emailId')}
+                              >
                                 이메일 {sortLabel('emailId')}
                               </button>
                             </th>
                             <th>
-                              <button type="button" className={styles.sortBtn} onClick={() => onSort('phone')}>
+                              <button
+                                type="button"
+                                className={styles.sortBtn}
+                                onClick={() => onSort('phone')}
+                              >
                                 휴대번호 {sortLabel('phone')}
-                              </button>
-                            </th>
-                            <th>
-                              <button type="button" className={styles.sortBtn} onClick={() => onSort('typeLabel')}>
-                                회원유형 {sortLabel('typeLabel')}
                               </button>
                             </th>
                           </tr>
                         </thead>
                         <tbody>
-                          {sortedUsers.length === 0 ? (
+                          {pagedUsers.length === 0 ? (
                             <tr>
-                              <td colSpan="7" className={styles.emptyCell}>
+                              <td colSpan="6" className={styles.emptyCell}>
                                 조회된 사용자가 없습니다.
                               </td>
                             </tr>
                           ) : (
-                            sortedUsers.map((user) => (
+                            pagedUsers.map((user) => (
                               <tr key={user.userNo || user.emailId}>
-                                <td>{user.userNo ?? '-'}</td>
+                                <td>
+                                  <span
+                                    onClick={() => handleTypeClick(user)}
+                                    style={{
+                                      cursor:
+                                        user.type === 'ADMIN' ? 'default' : 'pointer',
+                                    }}
+                                  >
+                                    {user.typeLabel}
+                                  </span>
+                                </td>
                                 <td>{user.name || '-'}</td>
                                 <td>{user.age ?? '-'}</td>
                                 <td>{user.genderLabel}</td>
                                 <td>{user.emailId || '-'}</td>
                                 <td>{user.phone || '-'}</td>
-                                <td>{user.typeLabel}</td>
                               </tr>
                             ))
                           )}
                         </tbody>
                       </table>
+                    </div>
+                  )}
+
+                  {!loading && !error && filteredUsers.length > 0 && (
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'center',
+                        gap: 8,
+                        marginTop: 16,
+                        flexWrap: 'wrap',
+                      }}
+                    >
+                      <button
+                        type="button"
+                        className={styles.inlineBtn}
+                        onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                        disabled={currentPage <= 1}
+                      >
+                        이전
+                      </button>
+
+                      {Array.from({ length: totalPages }, (_, index) => index + 1).map(
+                        (pageNumber) => (
+                          <button
+                            key={pageNumber}
+                            type="button"
+                            className={`${styles.inlineBtn} ${
+                              pageNumber === currentPage ? styles.inlineBtnActive : ''
+                            }`}
+                            onClick={() => setCurrentPage(pageNumber)}
+                          >
+                            {pageNumber}
+                          </button>
+                        )
+                      )}
+
+                      <button
+                        type="button"
+                        className={styles.inlineBtn}
+                        onClick={() =>
+                          setCurrentPage((prev) => Math.min(totalPages, prev + 1))
+                        }
+                        disabled={currentPage >= totalPages}
+                      >
+                        다음
+                      </button>
                     </div>
                   )}
                 </CardBody>

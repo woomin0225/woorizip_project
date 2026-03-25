@@ -7,8 +7,6 @@
 
 from app.agent.room_registration_agent import RoomRegistrationAgent
 from app.agent.tour_apply_agent import TourApplyAgent
+from app.agent.facility_agent import FacilityAgent
 
-__all__ = [
-    "RoomRegistrationAgent",
-    "TourApplyAgent",
-]
+__all__ = ["RoomRegistrationAgent", "TourApplyAgent", "FacilityAgent"]

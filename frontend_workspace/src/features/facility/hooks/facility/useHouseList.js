@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { getMyHouses } from '../../../houseAndRoom/api/houseApi';
 import { unwrapApi } from '../../../../shared/utils/apiUnwrap';
 
-export const useHouseList = (shouldFetch) => {
+export const useHouseList = (shouldFetch, targetUserNo = '') => {
   const [houses, setHouses] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -15,7 +15,7 @@ export const useHouseList = (shouldFetch) => {
       setLoading(true);
       setError(null);
 
-      const response = await getMyHouses();
+      const response = await getMyHouses(targetUserNo);
       const actualData = response.data || response;
 
       setHouses(Array.isArray(actualData) ? actualData : []);
@@ -25,7 +25,7 @@ export const useHouseList = (shouldFetch) => {
     } finally {
       setLoading(false);
     }
-  }, [shouldFetch]);
+  }, [shouldFetch, targetUserNo]);
 
   useEffect(() => {
     if (shouldFetch) {

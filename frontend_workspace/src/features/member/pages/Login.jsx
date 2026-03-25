@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { getApiBaseUrl } from '../../../app/config/env';
 import { useLogin } from '../hooks/useUserHooks';
 import {
@@ -20,8 +20,17 @@ import styles from './Login.module.css';
 
 export default function Login() {
   const navigate = useNavigate();
+  const location = useLocation();
   const mainRef = useRef(null);
-  const { form, loading, error, handleChange, handleLogin } = useLogin();
+  const redirectTo = (() => {
+    const from = location.state?.from;
+    if (!from) return '/';
+    if (typeof from === 'string') return from;
+    return `${from.pathname || '/'}${from.search || ''}${from.hash || ''}`;
+  })();
+  const { form, loading, error, handleChange, handleLogin } = useLogin(
+    redirectTo
+  );
   const [validated, setValidated] = useState(false);
   const backendBaseUrl = getApiBaseUrl();
 
@@ -39,6 +48,7 @@ export default function Login() {
   };
 
   const handleSocialLogin = (provider) => {
+    sessionStorage.setItem('postLoginRedirect', redirectTo);
     const backendUrl = `${backendBaseUrl}/oauth2/authorization/${provider}`;
     window.location.href = backendUrl;
   };

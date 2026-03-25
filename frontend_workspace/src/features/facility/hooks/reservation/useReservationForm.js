@@ -88,7 +88,7 @@ export function useReservationForm(facilityNoInput = null, reservationNo = null)
     }));
   }, []);
 
-  const onSubmit = async (e, navigate, manualValues) => {
+  const onSubmit = async (e, navigate, manualValues, navigationState) => {
     if (e) e.preventDefault();
     setSubmitting(true);
     const targetValues = manualValues || values;
@@ -104,7 +104,9 @@ export function useReservationForm(facilityNoInput = null, reservationNo = null)
 
       const result = response?.data || response;
       alert(result.message || '등록되었습니다.');
-      navigate('/reservation/view');
+      navigate('/reservation/view', {
+        state: navigationState,
+      });
       
     } catch (err) {
       setError(err);

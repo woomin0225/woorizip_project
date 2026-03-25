@@ -53,6 +53,9 @@ function newSessionId() {
   return `sess_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
 }
 
+const VOICE_PERMISSION_ERRORS = new Set(['not-allowed', 'service-not-allowed']);
+const VOICE_DEVICE_ERRORS = new Set(['audio-capture']);
+
 export default function OrchestrateQuickAgent() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -67,19 +70,14 @@ export default function OrchestrateQuickAgent() {
     disableVoiceMode,
     speak,
     startListening,
+    stopSpeaking,
     stopListening,
     updateSetting,
   } = useVoiceMode();
 
   const bottomRef = useRef(null);
   const lastSpokenMessageRef = useRef('');
-  const voiceGuideShownRef = useRef(false);
-  const voiceLoopStateRef = useRef({
-    voiceModeEnabled,
-    settings,
-    loading: false,
-    speaking: false,
-  });
+  const pendingConfirmationRef = useRef(null);
   const userDisplayName = useMemo(() => {
     const payload = parseJwt(accessToken);
     const rawName =
@@ -114,6 +112,9 @@ export default function OrchestrateQuickAgent() {
   const [awaitingRoomRecommendation, setAwaitingRoomRecommendation] = useState(false);
   const [lastRecommendedRooms, setLastRecommendedRooms] = useState([]);
   const [profileEditFlow, setProfileEditFlow] = useState(null);
+  useEffect(() => {
+    pendingConfirmationRef.current = pendingConfirmation;
+  }, [pendingConfirmation]);
 
   const resetConversation = useCallback(() => {
     setInput('');
@@ -129,14 +130,11 @@ export default function OrchestrateQuickAgent() {
     ]);
   }, [greetingText]);
 
-  useEffect(() => {
-    voiceLoopStateRef.current = {
-      voiceModeEnabled,
-      settings,
-      loading,
-      speaking,
-    };
-  }, [voiceModeEnabled, settings, loading, speaking]);
+  const closePanel = useCallback(() => {
+    stopListening();
+    stopSpeaking();
+    setOpen(false);
+  }, [stopListening, stopSpeaking]);
 
   useEffect(() => {
     if (!location.pathname.startsWith('/rooms')) {
@@ -157,13 +155,15 @@ export default function OrchestrateQuickAgent() {
       [...messages].reverse().find((msg) => msg.role === 'assistant') || null,
     [messages]
   );
-  const voiceStatusText = listening
-    ? '듣는 중입니다. 약 2초 정도 멈추면 자동으로 처리합니다.'
+  const voiceStatusText = pendingConfirmation
+    ? `${pendingConfirmation.label} 진행 전 재확인 대기 중입니다. 예 또는 아니오로 말씀해 주세요.`
     : speaking
       ? '답변을 읽는 중입니다.'
       : loading
         ? '요청을 처리하고 있습니다.'
-        : '대기 중입니다. 음성 모드에서는 자동으로 다시 듣기를 시작합니다.';
+        : listening
+          ? '말씀을 듣는 중입니다.'
+          : '대기 중입니다. 음성 버튼을 누른 뒤 말씀해 주세요.';
 
   useEffect(() => {
     if (!open) return;
@@ -173,22 +173,22 @@ export default function OrchestrateQuickAgent() {
   useEffect(() => {
     if (voiceModeEnabled) {
       setOpen(true);
-      if (!voiceGuideShownRef.current) {
-        appendAssistantMessage(
-          '음성 모드가 켜졌습니다. 말씀하시면 자동으로 듣고 답변해 드릴게요.',
-          [],
-          { showActions: false }
-        );
-        voiceGuideShownRef.current = true;
-      }
+      lastSpokenMessageRef.current = greetingText.replace(/\n/g, ' ').trim();
+      appendAssistantMessage(
+        '음성 모드가 켜졌습니다. 음성 버튼을 누른 뒤 말씀해 주세요. 말씀하시는 동안에는 답하지 않고, 답변을 읽는 동안에는 마이크를 듣지 않습니다.',
+        [],
+        { suppressAutoRead: true }
+      );
       return;
     }
-
-    voiceGuideShownRef.current = false;
-  }, [voiceModeEnabled]);
+  }, [voiceModeEnabled, greetingText]);
 
   useEffect(() => {
     if (!voiceModeEnabled || !settings.autoReadBotReplies || !latestAssistant) {
+      return;
+    }
+
+    if (latestAssistant.suppressAutoRead) {
       return;
     }
 
@@ -207,13 +207,14 @@ export default function OrchestrateQuickAgent() {
     speak(speechText);
   }, [voiceModeEnabled, settings.autoReadBotReplies, latestAssistant, speak]);
 
-  const appendAssistantMessage = (messageText, actionIds = []) => {
+  const appendAssistantMessage = (messageText, actionIds = [], options = {}) => {
     setMessages((prev) => [
       ...prev,
       {
         role: 'assistant',
         text: messageText,
         actionIds: uniqActionIds(actionIds),
+        suppressAutoRead: Boolean(options.suppressAutoRead),
       },
     ]);
   };
@@ -522,11 +523,19 @@ export default function OrchestrateQuickAgent() {
       return;
     }
 
+    if (actionId === 'roomRegister') {
+      await sendMessage('방 등록', {
+        skipQuickAction: true,
+        displayText: '방 등록',
+      });
+      return;
+    }
+
     if (actionId === 'roomRecommend') {
       goToPage(
         '/rooms',
-        '방 추천을 확인할 수 있도록 방 목록 페이지로 이동했습니다.',
-        ['tour', 'wishlist', 'summary']
+        '방을 찾을 수 있도록 방 목록 페이지로 이동했습니다. 원하는 조건을 말씀해 주시면 이어서 도와드릴게요.',
+        ['roomRegister', 'tour', 'wishlist']
       );
       return;
     }
@@ -534,6 +543,9 @@ export default function OrchestrateQuickAgent() {
     if (actionId === 'summary') {
       const postNo = extractPostNoFromPath(location.pathname);
       const roomContext = getRoomContext(location.pathname);
+      const isBoardListPage = ['/notices', '/events', '/information', '/qna', '/boards'].includes(
+        location.pathname
+      );
 
       if (postNo) {
         try {
@@ -541,12 +553,12 @@ export default function OrchestrateQuickAgent() {
           const response = await fetchBoardSummary(postNo);
           const result = response?.data?.data ?? response?.data;
 
-          const summaryText = String(result?.summary || '?? ??? ????.').trim();
+          const summaryText = String(result?.summary || '요약 결과가 없습니다.').trim();
           const keyPoints = Array.isArray(result?.keyPoints)
             ? result.keyPoints
                 .map((item) =>
                   String(item || '')
-                    .replace(/^[-?\s]+/, '')
+                    .replace(/^[-\s]+/, '')
                     .trim()
                 )
                 .filter(Boolean)
@@ -556,28 +568,23 @@ export default function OrchestrateQuickAgent() {
             ? result.warnings
                 .map((item) =>
                   String(item || '')
-                    .replace(/^[-?\s]+/, '')
+                    .replace(/^[-\s]+/, '')
                     .trim()
                 )
                 .filter(Boolean)
             : [];
 
-          const sections = ['??? AI ?????.'];
-          if (summaryText) sections.push(`??
-${summaryText}`);
-          if (keyPoints.length > 0)
-            sections.push(`??
-? ${keyPoints.join('
-? ')}`);
-          if (conclusion) sections.push(`??
-${conclusion}`);
-          if (warnings.length > 0) sections.push(`??
-? ${warnings.join('
-? ')}`);
+          const sections = ['게시글 AI 요약입니다.'];
+          if (summaryText) sections.push(`요약\n${summaryText}`);
+          if (keyPoints.length > 0) {
+            sections.push(`핵심 포인트\n- ${keyPoints.join('\n- ')}`);
+          }
+          if (conclusion) sections.push(`결론\n${conclusion}`);
+          if (warnings.length > 0) {
+            sections.push(`유의사항\n- ${warnings.join('\n- ')}`);
+          }
 
-          appendAssistantMessage(sections.join('
-
-'), [
+          appendAssistantMessage(sections.join('\n\n'), [
             'roomRecommend',
             'notices',
             'mypage',
@@ -589,9 +596,9 @@ ${conclusion}`);
             errorBody?.message ||
             errorBody?.error ||
             error?.message ||
-            '??? ?? ? ??? ??????.';
+            '게시글 요약 중 오류가 발생했습니다.';
 
-          appendAssistantMessage(`??: ${apiMessage}`, [
+          appendAssistantMessage(`오류: ${apiMessage}`, [
             'roomRecommend',
             'notices',
             'mypage',
@@ -603,9 +610,17 @@ ${conclusion}`);
         return;
       }
 
+      if (isBoardListPage) {
+        appendAssistantMessage(
+          '게시글 목록에서는 요약할 수 없습니다. 읽고 싶은 게시글 상세로 들어간 뒤 요약을 눌러주세요.',
+          ['notices', 'summary', 'mypage']
+        );
+        return;
+      }
+
       if (roomContext.roomNo) {
         appendAssistantMessage(
-          '? ???????? ??? ?? ? ?? ??? ??????. ?? AI ? ?? ?? ???? ?? ?? ?? ??? ??? ? ????.',
+          '페이지 내의 방 정보 요약을 참고해주세요.',
           ['roomRecommend', 'tour', 'wishlist']
         );
         return;
@@ -615,7 +630,7 @@ ${conclusion}`);
         setLoading(true);
         const roomCreateContext = getRoomCreateContext(location, managedHouses);
         const result = await runOrchestrateCommand({
-          text: '?? ???? ????',
+          text: '현재 보고 있는 웹페이지의 내용을 한국어로 간단히 요약해줘. 페이지에 없는 내용은 추측하지 마.',
           sessionId,
           context: {
             path: window.location.pathname,
@@ -630,7 +645,7 @@ ${conclusion}`);
               userPhone: userProfile?.userPhone || '',
             },
             siteProfile: {
-              serviceName: '???',
+              serviceName: '우리집',
               channel: 'web',
               language: 'ko-KR',
               voiceMode: voiceModeEnabled,
@@ -642,7 +657,7 @@ ${conclusion}`);
           result?.outputText ||
           result?.message ||
           result?.result ||
-          '?? ??? ???? ?????.';
+          '요약 결과를 불러오지 못했습니다.';
         const actionIds = extractSuggestedActions(result);
         appendAssistantMessage(formatAssistantReply(String(reply)), actionIds);
       } catch (error) {
@@ -652,9 +667,9 @@ ${conclusion}`);
           errorBody?.message ||
           errorBody?.error ||
           error?.message ||
-          '??? ?? ? ??? ??????.';
+          '페이지 요약 중 오류가 발생했습니다.';
 
-        appendAssistantMessage(`??: ${apiMessage}`, [
+        appendAssistantMessage(`오류: ${apiMessage}`, [
           'summary',
           'notices',
           'mypage',
@@ -687,7 +702,7 @@ ${conclusion}`);
     if (actionId === 'reservationStatus') {
       goToPage(
         '/reservation/view',
-        '?? ?? ???? ??????. ?? ?? ??? ??????.',
+        '예약 내역 페이지로 이동했습니다. 현재 예약 상태를 확인할 수 있습니다.',
         ['facilityCancel', 'reserve', 'facilityHours']
       );
       return;
@@ -696,7 +711,7 @@ ${conclusion}`);
     if (actionId === 'wishlist') {
       goToPage(
         '/wishlist',
-        '? ?? ???? ??????. ???? ?? ??? ? ????.',
+        '찜 목록 페이지로 이동했습니다. 저장해둔 방을 확인할 수 있습니다.',
         ['roomRecommend', 'tour', 'contract']
       );
       return;
@@ -705,7 +720,7 @@ ${conclusion}`);
     if (actionId === 'contract') {
       goToPage(
         '/mypage/contracts',
-        '?? ???? ??????. ?? ?? ??? ?? ??? ??? ? ????.',
+        '계약 페이지로 이동했습니다. 계약 내역과 진행 상태를 확인할 수 있습니다.',
         ['tour', 'wishlist', 'mypage']
       );
       return;
@@ -714,7 +729,7 @@ ${conclusion}`);
     if (actionId === 'tour') {
       goToPage(
         '/mypage/tour',
-        '?? ???? ??????. ?? ??? ?? ??? ??? ? ????.',
+        '투어 페이지로 이동했습니다. 투어 신청과 진행 내역을 확인할 수 있습니다.',
         ['roomRecommend', 'contract', 'wishlist']
       );
       return;
@@ -723,7 +738,7 @@ ${conclusion}`);
     if (actionId === 'notices') {
       goToPage(
         '/notices',
-        '???? ???? ??????. ?? ??? ?? ??? ??? ? ????.',
+        '공지사항 페이지로 이동했습니다. 최신 공지와 운영 안내를 확인할 수 있습니다.',
         ['summary', 'mypage', 'roomRecommend']
       );
       return;
@@ -732,14 +747,14 @@ ${conclusion}`);
     if (actionId === 'mypage') {
       goToPage(
         '/mypage',
-        '?????? ??????. ? ??? ?? ??? ??? ? ????.',
+        '마이페이지로 이동했습니다. 내 정보와 개인 설정을 확인할 수 있습니다.',
         ['wishlist', 'contract', 'tour']
       );
       return;
     }
 
     appendAssistantMessage(
-      `${action.label} ??? ?? ?? ????. ?? ??? ?? ??? ?? ??? ???.`,
+      `${action.label} 기능은 아직 준비 중입니다. 다른 명령을 말씀해 주시면 바로 도와드릴게요.`,
       expandRelatedActionIds(action.related || [], 3)
     );
   };
@@ -1132,12 +1147,15 @@ ${conclusion}`);
       }
     } catch (error) {
       const errorBody = error?.response?.data;
+      const errorCode = error?.code || '';
       const apiMessage =
-        errorBody?.data ||
-        errorBody?.message ||
-        errorBody?.error ||
-        error?.message ||
-        'Agent 호출 중 오류가 발생했습니다.';
+        errorCode === 'ECONNABORTED'
+          ? '응답이 지연되고 있습니다. 잠시 후 다시 시도해 주세요.'
+          : errorBody?.data ||
+            errorBody?.message ||
+            errorBody?.error ||
+            error?.message ||
+            'Agent 호출 중 오류가 발생했습니다.';
       appendAssistantMessage(`오류: ${apiMessage}`, [], { showActions: false });
     } finally {
       setLoading(false);
@@ -1147,12 +1165,16 @@ ${conclusion}`);
   const onQuickActionClick = (actionId) => {
     const action = ACTION_MAP[actionId];
     if (!action || loading) return;
+    if (actionId === 'roomRegister') {
+      void runQuickAction(actionId);
+      return;
+    }
     setMessages((prev) => [...prev, { role: 'user', text: action.label }]);
     void runQuickAction(actionId);
   };
 
-  const startVoiceCommand = (options = {}) => {
-    const { quiet = false, retryOnEmpty = false } = options;
+  const startVoiceCommand = useCallback(async (options = {}) => {
+    const { quiet = false } = options;
 
     if (!voiceModeEnabled) {
       enableVoiceMode();
@@ -1173,31 +1195,31 @@ ${conclusion}`);
       return;
     }
 
+    if (speaking) {
+      if (!quiet) {
+        appendAssistantMessage(
+          '답변을 읽는 중에는 마이크를 켤 수 없습니다. 읽기가 끝난 뒤 다시 시도해 주세요.'
+        );
+      }
+      return;
+    }
+
     if (!quiet) {
-      speak(
-        '말씀해 주세요. 약 2초 정도 멈추면 자동으로 처리합니다.'
+      appendAssistantMessage(
+        '듣고 있습니다. 말씀을 마치면 답변을 준비할게요.',
+        [],
+        { suppressAutoRead: true }
       );
     }
 
-    let hasResult = false;
     let hasVoiceError = false;
 
     startListening({
       onResult: (transcript) => {
-        hasResult = true;
         if (!transcript) {
-          if (!retryOnEmpty) {
-            appendAssistantMessage(
-              '음성 입력을 인식하지 못했습니다. 다시 말씀해 주세요.',
-              [],
-              { showActions: false }
-            );
-          }
           return;
         }
-        void sendMessage(transcript, {
-          displayText: `음성: ${transcript}`,
-        });
+        void sendMessage(transcript);
       },
       onError: (event) => {
         const errorType = event?.error || event?.message || '';
@@ -1208,65 +1230,38 @@ ${conclusion}`);
           return;
         }
         hasVoiceError = true;
-        appendAssistantMessage(
-          '음성 입력 중 문제가 발생했습니다. 다시 시도해 주세요. 음성 모드를 종료하고 텍스트 모드로 전환합니다.',
-          [],
-          { showActions: false }
-        );
-        disableVoiceMode();
-      },
-      onEnd: () => {
-        const current = voiceLoopStateRef.current;
-        if (
-          !retryOnEmpty ||
-          hasResult ||
-          hasVoiceError ||
-          !current.voiceModeEnabled ||
-          !current.settings.voiceCommandEnabled ||
-          current.loading ||
-          current.speaking
-        ) {
+        if (VOICE_PERMISSION_ERRORS.has(errorType)) {
+          appendAssistantMessage(
+            '마이크 권한을 사용할 수 없어 음성 모드를 종료합니다. 브라우저 권한을 확인해 주세요.',
+            []
+          );
+          disableVoiceMode();
           return;
         }
-
-        window.setTimeout(() => {
-          const latest = voiceLoopStateRef.current;
-          if (
-            latest.voiceModeEnabled &&
-            latest.settings.voiceCommandEnabled &&
-            !latest.loading &&
-            !latest.speaking
-          ) {
-            startVoiceCommand({ quiet: true, retryOnEmpty: true });
-          }
-        }, 700);
+        if (VOICE_DEVICE_ERRORS.has(errorType)) {
+          appendAssistantMessage(
+            '마이크를 사용할 수 없어 음성 모드를 종료합니다. 입력 장치를 확인해 주세요.',
+            []
+          );
+          disableVoiceMode();
+          return;
+        }
+        appendAssistantMessage(
+          '음성 입력 중 문제가 발생했습니다. 음성 버튼을 다시 눌러 시도해 주세요.',
+          []
+        );
       },
+      onEnd: () => {},
     });
-  };
-
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => {
-    if (
-      !voiceModeEnabled ||
-      !settings.voiceCommandEnabled ||
-      listening ||
-      loading ||
-      speaking
-    ) {
-      return undefined;
-    }
-
-    const timer = window.setTimeout(() => {
-      startVoiceCommand({ quiet: true, retryOnEmpty: true });
-    }, 900);
-
-    return () => window.clearTimeout(timer);
   }, [
     voiceModeEnabled,
+    enableVoiceMode,
     settings.voiceCommandEnabled,
-    listening,
-    loading,
+    isSpeechRecognitionSupported,
     speaking,
+    startListening,
+    sendMessage,
+    disableVoiceMode,
   ]);
 
   const submit = async (event) => {
@@ -1280,7 +1275,7 @@ ${conclusion}`);
         type="button"
         className={styles.launcher}
         onClick={() => setOpen((prev) => !prev)}
-        aria-label="AI Agent 열기"
+        aria-label={open ? 'AI Agent 닫기' : 'AI Agent 열기'}
       >
         <img src={botIcon} alt="AI 챗봇" className={styles.launcherIcon} />
       </button>
@@ -1316,6 +1311,15 @@ ${conclusion}`);
                 {voiceModeEnabled
                   ? '음성 끄기'
                   : '음성 켜기'}
+              </button>
+              <button
+                type="button"
+                className={styles.closeBtn}
+                onClick={closePanel}
+                aria-label="우리봇 채팅창 닫기"
+                title="닫기"
+              >
+                X
               </button>
             </div>
           </header>
@@ -1378,8 +1382,7 @@ ${conclusion}`);
                 onClick={
                   listening
                     ? stopListening
-                    : () =>
-                        startVoiceCommand({ quiet: false, retryOnEmpty: true })
+                    : () => startVoiceCommand({ quiet: false })
                 }
               >
                 {listening ? '중지' : '음성'}
@@ -1398,7 +1401,6 @@ ${conclusion}`);
     </div>
   );
 }
-
 
 
 

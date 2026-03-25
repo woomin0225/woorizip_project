@@ -12,7 +12,7 @@ export default function Completion() {
   const address = state?.address || '-';
   const accessGuide = state?.accessGuide || '관리사무소 또는 집주인에게 입실 절차를 확인해 주세요.';
   const contractNo = state?.contractNo || '-';
-  const eformContractUrl = state?.eformContractUrl || '';
+  const contractDocumentUrl = state?.contractDocumentUrl || '';
   const paymentStatus = state?.paymentStatus || '';
   const paymentProvider = state?.paymentProvider || '';
   const signProvider = state?.signProvider || '';
@@ -35,18 +35,18 @@ export default function Completion() {
                   <div className={styles.row}><span>계약번호</span><span>{contractNo}</span></div>
                   <div className={styles.row}><span>결제 연동</span><span>{paymentProvider || 'TOSS 테스트 연동'}</span></div>
                   <div className={styles.row}><span>결제 상태</span><span>{paymentStatus || '처리됨'}</span></div>
-                  <div className={styles.row}><span>전자서명 연동</span><span>{signProvider || '이폼사인 테스트 연동'}</span></div>
+                  <div className={styles.row}><span>전자서명 방식</span><span>{signProvider || '우리집 내부 전자서명'}</span></div>
                 </div>
 
                 {Array.isArray(state?.integrationPending) && state.integrationPending.length > 0 && (
                   <p className={styles.notice}>연동 대기: {state.integrationPending.join(', ')}</p>
                 )}
 
-                {eformContractUrl && (
+                {contractDocumentUrl && (
                   <div className={styles.noticeBox}>
                     <p className={styles.noticeTitle}>전자계약서 확인</p>
                     <p className={styles.noticeDesc}>아래 버튼으로 전자계약 문서를 새 창에서 확인할 수 있습니다.</p>
-                    <a className={styles.linkBtn} href={eformContractUrl} target="_blank" rel="noreferrer">
+                    <a className={styles.linkBtn} href={contractDocumentUrl} target="_blank" rel="noreferrer">
                       전자계약서 열기
                     </a>
                   </div>

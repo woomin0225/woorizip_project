@@ -9,10 +9,10 @@ from app.agent.room_registration_parser import extract_room_slots
 from app.agent.room_registration_response import (
     build_cancelled_response,
     build_collecting_response,
-    build_confirmed_response,
 )
 from app.agent.room_registration_slots import (
     ROOM_CREATE_INTENT,
+    build_draft_payload,
     compact_text,
     find_house_match,
     get_missing_slots,
@@ -23,6 +23,8 @@ from app.agent.room_registration_slots import (
     should_handle_room_create,
 )
 from app.agent.session_store import InMemorySessionStore
+from app.clients.spring_room_client import SpringRoomClient
+from app.services.room_service import RoomService
 
 try:
     from langgraph.graph import END, START, StateGraph
@@ -57,7 +59,12 @@ class RoomRegistrationState(TypedDict, total=False):
 class RoomRegistrationAgent:
     """방 등록 대화를 전담하는 규칙 기반 멀티턴 에이전트."""
 
-    def __init__(self, store: InMemorySessionStore | None = None):
+    def __init__(
+        self,
+        service: RoomService | None = None,
+        store: InMemorySessionStore | None = None,
+    ):
+        self.service = service or RoomService(SpringRoomClient())
         self.store = store or InMemorySessionStore()
         self.graph = self._build_graph()
 
@@ -77,18 +84,78 @@ class RoomRegistrationAgent:
             "request_meta": payload,
         }
 
-        if self.graph is not None:
-            result = self.graph.invoke(state)
-        else:
-            result = self._run_sequential(state)
+        state.update(self._load_session(state))
+        state.update(self._detect_intent(state))
+        state.update(self._extract_slots(state))
+        state.update(self._validate_state(state))
 
-        reply_payload = deepcopy(result.get("reply_payload", {}))
+        executed_payload = await self._maybe_execute_room_create(state, payload)
+        if executed_payload is not None:
+            reply_payload = deepcopy(executed_payload)
+            reply_payload.setdefault("schemaVersion", payload.get("schemaVersion") or "v1")
+            reply_payload.setdefault("sessionId", payload.get("sessionId"))
+            reply_payload.setdefault("clientRequestId", payload.get("clientRequestId"))
+            reply_payload.setdefault("errorCode", None)
+            reply_payload.setdefault("raw", {})
+            return reply_payload
+
+        state.update(self._build_reply(state))
+        state.update(self._save_session(state))
+
+        reply_payload = deepcopy(state.get("reply_payload", {}))
         reply_payload.setdefault("schemaVersion", payload.get("schemaVersion") or "v1")
         reply_payload.setdefault("sessionId", payload.get("sessionId"))
         reply_payload.setdefault("clientRequestId", payload.get("clientRequestId"))
         reply_payload.setdefault("errorCode", None)
         reply_payload.setdefault("raw", {})
         return reply_payload
+
+    async def _maybe_execute_room_create(
+        self,
+        state: RoomRegistrationState,
+        payload: dict[str, Any],
+    ) -> dict[str, Any] | None:
+        if state.get("intent") != ROOM_CREATE_INTENT:
+            return None
+        if state.get("cancel") or not state.get("completed"):
+            return None
+
+        session_state = deepcopy(state.get("session_state", {}))
+        draft_payload = build_draft_payload(session_state.get("slots", {}))
+
+        try:
+            result = await self.service.create_for_chatbot(
+                schema_version=payload.get("schemaVersion") or "v1",
+                session_id=payload.get("sessionId"),
+                client_request_id=payload.get("clientRequestId"),
+                draft_payload=draft_payload,
+                access_token=str(payload.get("accessToken") or "").strip() or None,
+            )
+        except Exception as exc:
+            session_state["completed"] = False
+            failure_payload, retry_slot = self.service.build_failure_response(
+                schema_version=payload.get("schemaVersion") or "v1",
+                session_id=payload.get("sessionId"),
+                client_request_id=payload.get("clientRequestId"),
+                draft_payload=draft_payload,
+                error_message=str(exc),
+            )
+            if retry_slot:
+                slots = deepcopy(session_state.get("slots", {}))
+                if retry_slot == "houseNo":
+                    slots.pop("houseNo", None)
+                    slots.pop("houseName", None)
+                else:
+                    slots.pop(retry_slot, None)
+                session_state["slots"] = slots
+                session_state["pending_slot"] = retry_slot
+            else:
+                session_state["pending_slot"] = None
+            self.store.set(state.get("session_id") or "", session_state)
+            return failure_payload
+
+        self.store.delete(state.get("session_id") or "")
+        return result
 
     def _run_sequential(self, state: RoomRegistrationState) -> RoomRegistrationState:
         """LangGraph가 없을 때도 같은 순서로 처리할 수 있게 둔 백업 경로다."""
@@ -387,8 +454,8 @@ class RoomRegistrationAgent:
                     "intent": ROOM_CREATE_INTENT,
                     "slots": {},
                     "action": {
-                        "name": "ROOM_CREATE_DRAFT",
-                        "target": "bff_room_api",
+                        "name": "ROOM_CREATE",
+                        "target": "room_registration_agent",
                         "operation": "create_room",
                         "status": "forbidden",
                     },
@@ -414,10 +481,6 @@ class RoomRegistrationAgent:
             session_state["pending_slot"] = None
             payload = build_cancelled_response(session_state)
             return {"session_state": session_state, "reply_payload": payload}
-
-        if state.get("completed"):
-            payload = build_confirmed_response(session_state)
-            return {"reply_payload": payload}
 
         payload = build_collecting_response(session_state)
         return {"session_state": session_state, "reply_payload": payload}

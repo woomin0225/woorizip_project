@@ -506,7 +506,7 @@ export default function ContractCreate() {
       } catch (stageError) {
         throw new Error(stageError?.message || '임차인 전자서명 확인 중 오류가 발생했습니다.');
       }
-      const contractUrl = signRes?.contractUrl || eContractRes?.contractUrl || '';
+      const contractDocumentUrl = signRes?.contractUrl || eContractRes?.contractUrl || '';
       const orderId = createOrderId();
       const context = {
         contractNo: ensuredContractNo,
@@ -521,9 +521,9 @@ export default function ContractCreate() {
         monthlyPayment: totalMonthlyPayment,
         deposit,
         accessGuide: '관리사무소 또는 집주인과 입실 안내를 확인해 주세요.',
-        eformContractUrl: contractUrl,
+        contractDocumentUrl,
         paymentProvider: 'TOSS_TEST',
-        signProvider: 'EFORMSIGN_TEST',
+        signProvider: 'WOORIZIP_INTERNAL_SIGNATURE',
         orderId,
         customerName: who,
       };

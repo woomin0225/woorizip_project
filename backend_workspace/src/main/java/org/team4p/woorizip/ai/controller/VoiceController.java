@@ -13,9 +13,9 @@ import org.team4p.woorizip.ai.dto.SttTranscribeRequest;
 import org.team4p.woorizip.ai.dto.SttTranscribeResponse;
 import org.team4p.woorizip.ai.dto.TtsSynthesizeRequest;
 import org.team4p.woorizip.ai.dto.TtsSynthesizeResult;
-import org.team4p.woorizip.ai.service.AzureTtsService;
 import org.team4p.woorizip.ai.service.PageSummaryService;
 import org.team4p.woorizip.ai.service.SpeechToTextService;
+import org.team4p.woorizip.ai.service.VoiceTtsService;
 import org.team4p.woorizip.common.api.ApiResponse;
 
 import jakarta.validation.Valid;
@@ -27,13 +27,13 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/api/voice")
 public class VoiceController {
 
-    private final AzureTtsService azureTtsService;
+    private final VoiceTtsService voiceTtsService;
     private final SpeechToTextService speechToTextService;
     private final PageSummaryService pageSummaryService;
 
     @PostMapping("/tts")
     public ResponseEntity<byte[]> tts(@Valid @RequestBody TtsSynthesizeRequest request) {
-        TtsSynthesizeResult result = azureTtsService.synthesize(request);
+        TtsSynthesizeResult result = voiceTtsService.synthesize(request);
         return ResponseEntity.ok()
                 .contentType(MediaType.valueOf(result.mimeType()))
                 .body(result.audioBytes());

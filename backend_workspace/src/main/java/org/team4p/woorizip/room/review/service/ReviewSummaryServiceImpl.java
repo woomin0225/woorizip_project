@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.team4p.woorizip.room.review.dto.ai.ReviewSummaryRequest;
@@ -104,6 +105,23 @@ public class ReviewSummaryServiceImpl implements ReviewSummaryService{
 	public ReviewSummaryEntity selectSummarizedReview(String roomNo) {
 		
 		return reviewSummaryRepository.findById(roomNo).orElse(null);
+	}
+
+	@Override
+	@Async("aiTaskExecutor")
+	public void startSummarizedReviewAsync(String roomNo) {
+		ReviewSummaryEntity entity = reviewSummaryRepository.findById(roomNo).orElse(null);
+		if(entity == null) {
+			return;
+		}
+		if("PROCESSING".equals(entity.getSummaryStatus()) || "DONE".equals(entity.getSummaryStatus())) {
+			return;
+		}
+		try {
+			summaryPendingRooms(entity);
+		} catch (Exception e) {
+			log.info("방번호({}) 리뷰 요약 비동기 처리 중 오류 발생: {}", roomNo, e.getMessage());
+		}
 	}
 
 }

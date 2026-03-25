@@ -75,6 +75,17 @@ export async function getOwnerContractsPage(page = 1, size = 8) {
   };
 }
 
+export async function getAdminContractsPage(page = 1, size = 20) {
+  const data = await request(`/api/contract/admin/all?page=${page}&size=${size}`);
+  return {
+    content: Array.isArray(data?.content) ? data.content : [],
+    page: Number(data?.page || page),
+    size: Number(data?.size || size),
+    totalElements: Number(data?.totalElements || 0),
+    totalPages: Number(data?.totalPages || 0),
+  };
+}
+
 export async function getContract(contractNo) {
   return request(`/api/contract/${contractNo}`);
 }

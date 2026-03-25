@@ -9,6 +9,7 @@ import { ROUTES } from '../../shared/constants/routes';
 
 import Home from '../../shared/pages/Home';
 import About from '../../shared/pages/About';
+import ConveniencePage from '../../shared/pages/ConveniencePage';
 import Login from '../../features/member/pages/Login';
 import Signup from '../../features/member/pages/Signup';
 import FindId from '../../features/member/pages/FindId';
@@ -35,7 +36,6 @@ import InformationDetail from '../../features/board/pages/information/Informatio
 import InformationWrite from '../../features/board/pages/information/InformationWrite';
 import InformationUpdate from '../../features/board/pages/information/InformationUpdate';
 
-import MyInfo from '../../features/user/pages/MyInfo';
 import MyInfoModify from '../../features/user/pages/MyInfoModify';
 import Withdraw from '../../features/user/pages/withdraw';
 import UserManagement from '../../features/user/pages/UserManagement';
@@ -89,8 +89,9 @@ export const router = createBrowserRouter([
       {
         element: <RequireAuth />,
         children: [
-          { path: ROUTES.MEMBER.MYPAGE, element: <MyInfo /> },
-          { path: ROUTES.MEMBER.MY_INFO, element: <MyInfo /> },
+          { path: ROUTES.CONVENIENCE.HOME, element: <ConveniencePage /> },
+          { path: ROUTES.MEMBER.MYPAGE, element: <MyInfoModify /> },
+          { path: ROUTES.MEMBER.MY_INFO, element: <MyInfoModify /> },
           { path: ROUTES.MEMBER.MY_INFO_EDIT, element: <MyInfoModify /> },
           { path: ROUTES.MEMBER.MY_WITHDRAW, element: <Withdraw /> },
 
@@ -204,6 +205,5 @@ export const router = createBrowserRouter([
     ],
   },
 ]);
-
 
 

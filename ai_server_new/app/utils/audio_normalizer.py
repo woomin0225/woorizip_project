@@ -61,7 +61,6 @@ def normalize_transcribe_payload(
     audio_base64: str,
     mime_type: str | None,
     language: str | None,
-    mock_text: str | None,
 ) -> dict[str, Any]:
     raw_bytes, inferred_mime = _decode_audio_base64(audio_base64)
     normalized_mime = normalize_text(mime_type or inferred_mime or 'audio/webm', 80).lower()
@@ -73,7 +72,6 @@ def normalize_transcribe_payload(
         'audio_bytes': len(raw_bytes),
         'mime_type': normalized_mime,
         'language': normalize_text(language or 'ko', 20).lower() or 'ko',
-        'mock_text': normalize_text(mock_text, 500) or None,
     }
 
 

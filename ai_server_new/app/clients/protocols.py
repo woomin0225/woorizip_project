@@ -28,7 +28,6 @@ class SpeechToTextClient(Protocol):
         *,
         mime_type: str | None = None,
         language: str | None = None,
-        mock_text: str | None = None,
     ) -> dict: ...
 
 

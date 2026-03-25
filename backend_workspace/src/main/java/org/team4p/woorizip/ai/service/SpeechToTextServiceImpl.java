@@ -23,9 +23,6 @@ public class SpeechToTextServiceImpl implements SpeechToTextService {
         payload.put("audio_base64", request.audioBase64());
         payload.put("mime_type", request.mimeType() == null ? "audio/webm" : request.mimeType());
         payload.put("language", request.language() == null ? "ko" : request.language());
-        if (request.mockText() != null) {
-            payload.put("mock_text", request.mockText());
-        }
 
         Map<String, Object> raw = aiServerClient.post("/ai/voice/transcribe", payload);
 
