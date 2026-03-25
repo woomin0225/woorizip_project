@@ -29,8 +29,11 @@ public class RoomAvailabilityPolicyService {
     ) {
         LocalDate today = LocalDate.now(KST);
         ContractEntity activeContract = findActiveOccupancyContract(roomNo, today);
+        ContractEntity upcomingContract = activeContract == null
+                ? findNearestUpcomingOccupancyContract(roomNo, today)
+                : null;
 
-        if (activeContract == null) {
+        if (activeContract == null && upcomingContract == null) {
             boolean isEmpty = !Boolean.FALSE.equals(fallbackEmptyYn);
             return new RoomAvailabilityPolicy(
                     isEmpty,
@@ -41,17 +44,32 @@ public class RoomAvailabilityPolicyService {
             );
         }
 
-        LocalDate occupancyEndDate = calculateOccupancyEndDate(activeContract);
-        LocalDate actualAvailableDate = occupancyEndDate != null ? occupancyEndDate.plusDays(1) : fallbackAvailableDate;
-        LocalDate reopenDate = occupancyEndDate != null ? occupancyEndDate.minusMonths(1) : today;
-        boolean canApply = occupancyEndDate == null || !today.isBefore(reopenDate);
+        if (activeContract != null) {
+            LocalDate occupancyEndDate = calculateOccupancyEndDate(activeContract);
+            LocalDate actualAvailableDate = occupancyEndDate != null ? occupancyEndDate.plusDays(1) : fallbackAvailableDate;
+            LocalDate reopenDate = occupancyEndDate != null ? occupancyEndDate.minusMonths(1) : today;
+            boolean canApply = occupancyEndDate == null || !today.isBefore(reopenDate);
+
+            return new RoomAvailabilityPolicy(
+                    false,
+                    canApply,
+                    canApply,
+                    actualAvailableDate,
+                    occupancyEndDate
+            );
+        }
+
+        LocalDate reservedOccupancyEndDate = calculateOccupancyEndDate(upcomingContract);
+        LocalDate reservedAvailableDate = reservedOccupancyEndDate != null
+                ? reservedOccupancyEndDate.plusDays(1)
+                : fallbackAvailableDate;
 
         return new RoomAvailabilityPolicy(
                 false,
-                canApply,
-                canApply,
-                actualAvailableDate,
-                occupancyEndDate
+                false,
+                false,
+                reservedAvailableDate,
+                reservedOccupancyEndDate
         );
     }
 
@@ -87,6 +105,25 @@ public class RoomAvailabilityPolicyService {
                 continue;
             }
             if (!today.isBefore(moveInDate) && !today.isAfter(moveOutDate)) {
+                return contract;
+            }
+        }
+        return null;
+    }
+
+    private ContractEntity findNearestUpcomingOccupancyContract(String roomNo, LocalDate today) {
+        List<ContractEntity> contracts = contractRepository.findByRoomNoAndStatusInOrderByMoveInDateAsc(
+                roomNo,
+                OCCUPYING_CONTRACT_STATUSES
+        );
+
+        for (ContractEntity contract : contracts) {
+            LocalDate moveInDate = toLocalDate(contract.getMoveInDate());
+            LocalDate moveOutDate = calculateOccupancyEndDate(contract);
+            if (moveInDate == null || moveOutDate == null) {
+                continue;
+            }
+            if (today.isBefore(moveInDate)) {
                 return contract;
             }
         }
