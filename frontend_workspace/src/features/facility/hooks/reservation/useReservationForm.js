@@ -150,9 +150,18 @@ export function useReservationForm(
       }
 
       const result = response?.data || response;
-      alert(result.message || '등록되었습니다.');
+      const successMessage = isCancelRequest
+        ? '예약이 정상적으로 취소되었습니다.'
+        : updateMode
+          ? result?.message || '예약이 정상적으로 수정되었습니다.'
+          : result?.message || '예약이 정상적으로 등록되었습니다.';
+
+      alert(successMessage);
       navigate('/reservation/view', {
-        state: navigationState,
+        state: {
+          ...(navigationState || {}),
+          refreshKey: Date.now(),
+        },
       });
     } catch (err) {
       const apiError = normalizeApiError(err);

@@ -1,4 +1,10 @@
-﻿import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+﻿import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   ACTION_MAP,
@@ -48,6 +54,17 @@ import { useAuth } from '../../../app/providers/AuthProvider';
 import { parseJwt } from '../../../app/providers/utils/jwt';
 import { useVoiceMode } from '../context/VoiceModeContext';
 import styles from './OrchestrateQuickAgent.module.css';
+import {
+  getFacilityList,
+  getFacilityDetail,
+} from '../../facility/api/facilityApi';
+import {
+  getReservationList,
+  getReservationTime,
+  createReservation,
+  modifyReservation,
+} from '../../facility/api/reservationApi';
+import { normalizeApiError } from '../../../app/http/errorMapper';
 
 function newSessionId() {
   return `sess_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
@@ -109,9 +126,11 @@ export default function OrchestrateQuickAgent() {
   // 같은 패널 안에서는 기본적으로 같은 세션을 쓰되,
   // 사용자가 다시 "방 등록"을 시작하면 새 세션으로 바꿔 오래된 상태를 끊는다.
   const [sessionId, setSessionId] = useState(newSessionId);
-  const [awaitingRoomRecommendation, setAwaitingRoomRecommendation] = useState(false);
+  const [awaitingRoomRecommendation, setAwaitingRoomRecommendation] =
+    useState(false);
   const [lastRecommendedRooms, setLastRecommendedRooms] = useState([]);
   const [profileEditFlow, setProfileEditFlow] = useState(null);
+  const [reservationFlow, setReservationFlow] = useState(null);
   useEffect(() => {
     pendingConfirmationRef.current = pendingConfirmation;
   }, [pendingConfirmation]);
@@ -128,12 +147,14 @@ export default function OrchestrateQuickAgent() {
     setMessages([
       { role: 'assistant', text: greetingText, actionIds: STARTER_ACTION_IDS },
     ]);
+    setReservationFlow(null);
   }, [greetingText]);
 
   const closePanel = useCallback(() => {
     stopListening();
     stopSpeaking();
     setOpen(false);
+    setReservationFlow(null);
   }, [stopListening, stopSpeaking]);
 
   useEffect(() => {
@@ -207,7 +228,11 @@ export default function OrchestrateQuickAgent() {
     speak(speechText);
   }, [voiceModeEnabled, settings.autoReadBotReplies, latestAssistant, speak]);
 
-  const appendAssistantMessage = (messageText, actionIds = [], options = {}) => {
+  const appendAssistantMessage = (
+    messageText,
+    actionIds = [],
+    options = {}
+  ) => {
     setMessages((prev) => [
       ...prev,
       {
@@ -239,7 +264,686 @@ export default function OrchestrateQuickAgent() {
     return true;
   };
 
+  const normalizeFacilityList = (response) => {
+    const actualData = response?.data?.data || response?.data || response;
+    return Array.isArray(actualData) ? actualData : [];
+  };
 
+  const canReserveFacility = (facility) => {
+    const status = String(
+      facility?.detail?.facilityStatus ?? facility?.facilityStatus ?? ''
+    ).toUpperCase();
+
+    const reservationRequired =
+      facility?.detail?.facilityRsvnRequiredYn ??
+      facility?.facilityRsvnRequiredYn;
+
+    if (status === 'UNAVAILABLE' || status === 'DELETED') return false;
+    return Boolean(reservationRequired);
+  };
+
+  const buildDateOptions = (days = 7) => {
+    const result = [];
+    const today = new Date();
+
+    for (let i = 0; i < days; i += 1) {
+      const next = new Date(today);
+      next.setDate(today.getDate() + i);
+
+      const yyyy = next.getFullYear();
+      const mm = String(next.getMonth() + 1).padStart(2, '0');
+      const dd = String(next.getDate()).padStart(2, '0');
+
+      result.push({
+        label: `${mm}/${dd}`,
+        value: `${yyyy}-${mm}-${dd}`,
+      });
+    }
+
+    return result;
+  };
+
+  const getTodayDateValue = () => {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  };
+
+  const timeToMinutes = (timeText) => {
+    const safe = String(timeText || '')
+      .trim()
+      .substring(0, 5);
+    if (!safe.includes(':')) return null;
+
+    const [hh, mm] = safe.split(':').map(Number);
+    if (Number.isNaN(hh) || Number.isNaN(mm)) return null;
+
+    return hh * 60 + mm;
+  };
+
+  const minutesToTime = (minutes) => {
+    if (minutes === null || Number.isNaN(minutes)) return '';
+
+    const hh = String(Math.floor(minutes / 60)).padStart(2, '0');
+    const mm = String(minutes % 60).padStart(2, '0');
+
+    return `${hh}:${mm}`;
+  };
+
+  const buildStartTimeOptions = (facilityDetail, reservedList = []) => {
+    if (
+      !facilityDetail?.facilityOpenTime ||
+      !facilityDetail?.facilityCloseTime
+    ) {
+      return [];
+    }
+
+    const unit = Number(facilityDetail?.facilityRsvnUnitMinutes || 0);
+    if (!unit) return [];
+
+    const openMinutes = timeToMinutes(facilityDetail.facilityOpenTime);
+    const closeMinutes = timeToMinutes(facilityDetail.facilityCloseTime);
+
+    if (
+      openMinutes === null ||
+      closeMinutes === null ||
+      openMinutes >= closeMinutes
+    ) {
+      return [];
+    }
+
+    const options = [];
+
+    for (
+      let current = openMinutes;
+      current + unit <= closeMinutes;
+      current += unit
+    ) {
+      const isOverlapped = reservedList.some((reservation) => {
+        const start = timeToMinutes(reservation?.reservationStartTime);
+        const end = timeToMinutes(reservation?.reservationEndTime);
+
+        if (start === null || end === null) return false;
+        return current >= start && current < end;
+      });
+
+      if (!isOverlapped) {
+        options.push(minutesToTime(current));
+      }
+    }
+
+    return options;
+  };
+
+  const buildEndTimeOptions = (
+    facilityDetail,
+    reservedList = [],
+    selectedStartTime
+  ) => {
+    const unit = Number(facilityDetail?.facilityRsvnUnitMinutes || 0);
+    const maxDuration = Number(facilityDetail?.facilityMaxDurationMinutes || 0);
+    const closeMinutes = timeToMinutes(facilityDetail?.facilityCloseTime);
+    const startMinutes = timeToMinutes(selectedStartTime);
+
+    if (
+      !unit ||
+      !maxDuration ||
+      closeMinutes === null ||
+      startMinutes === null
+    ) {
+      return [];
+    }
+
+    const options = [];
+    const maxEndMinutes = Math.min(closeMinutes, startMinutes + maxDuration);
+
+    for (
+      let currentEnd = startMinutes + unit;
+      currentEnd <= maxEndMinutes;
+      currentEnd += unit
+    ) {
+      const isBlocked = reservedList.some((reservation) => {
+        const resStart = timeToMinutes(reservation?.reservationStartTime);
+        const resEnd = timeToMinutes(reservation?.reservationEndTime);
+
+        if (resStart === null || resEnd === null) return false;
+
+        return startMinutes < resEnd && currentEnd > resStart;
+      });
+
+      if (isBlocked) break;
+      options.push(minutesToTime(currentEnd));
+    }
+
+    return options;
+  };
+
+  const resolveReservationContactInfo = async () => {
+    const fallbackName = String(
+      userProfile?.userName || userDisplayName || ''
+    ).trim();
+    const fallbackPhone = String(userProfile?.userPhone || '')
+      .replace(/[^0-9]/g, '')
+      .trim();
+
+    try {
+      const info = await getMyInfo();
+      return {
+        reservationName: String(
+          info?.name || info?.userName || info?.nickname || fallbackName
+        ).trim(),
+        reservationPhone: String(
+          info?.phone ||
+            info?.phoneNumber ||
+            info?.phone_number ||
+            info?.userPhone ||
+            fallbackPhone
+        )
+          .replace(/[^0-9]/g, '')
+          .trim(),
+      };
+    } catch {
+      return {
+        reservationName: fallbackName,
+        reservationPhone: fallbackPhone,
+      };
+    }
+  };
+
+  const openFacilityMenu = (
+    messageText = '공용시설에서 어떤 작업을 도와드릴까요?'
+  ) => {
+    setReservationFlow(null);
+    appendAssistantMessage(messageText, [
+      'reserve',
+      'reservationStatus',
+      'facilityCancel',
+    ]);
+  };
+
+  const moveToReservationView = (messageText = '', actionIds = []) => {
+    navigate('/reservation/view', {
+      state: {
+        ...(location.state || {}),
+        refreshKey: Date.now(),
+      },
+    });
+
+    if (messageText) {
+      appendAssistantMessage(messageText, actionIds);
+    }
+  };
+
+  const normalizeReservationList = (response) => {
+    const actualData =
+      response?.data?.data?.content ||
+      response?.data?.content ||
+      response?.content ||
+      [];
+    return Array.isArray(actualData) ? actualData : [];
+  };
+
+  const isCancelableReservation = (reservation) => {
+    const status = String(reservation?.reservationStatus || '').toUpperCase();
+    if (status !== 'APPROVED') return false;
+
+    const date = String(reservation?.reservationDate || '').split('T')[0];
+    const start = String(reservation?.reservationStartTime || '').substring(0, 5);
+    if (!date || !start) return false;
+
+    const startDateTime = new Date(`${date}T${start}:00`);
+    if (Number.isNaN(startDateTime.getTime())) return false;
+
+    return startDateTime.getTime() > Date.now();
+  };
+
+  const formatReservationListLabel = (reservation) => {
+    const facilityName = reservation?.facilityName || '공용시설';
+    const dateValue = String(reservation?.reservationDate || '').split('T')[0];
+    const dateLabel = dateValue ? dateValue.slice(5) : '-';
+    const start = String(reservation?.reservationStartTime || '').substring(0, 5);
+    const end = String(reservation?.reservationEndTime || '').substring(0, 5);
+
+    return `[${facilityName}] ${dateLabel} ${start}~${end}`;
+  };
+
+  const startReservationFlow = async () => {
+    const { reservationName, reservationPhone } =
+      await resolveReservationContactInfo();
+
+    if (!reservationName || reservationPhone.length !== 11) {
+      appendAssistantMessage(
+        '예약을 진행하려면 이름과 연락처 정보가 필요합니다. 마이페이지에서 먼저 확인해주세요.',
+        ['mypage', 'reservationStatus']
+      );
+      setReservationFlow(null);
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const facilityResponse = await getFacilityList();
+      const listItems = normalizeFacilityList(facilityResponse);
+
+      const detailedFacilities = await Promise.all(
+        listItems.map(async (facility) => {
+          if (!facility?.facilityNo) return null;
+
+          try {
+            const detailResponse = await getFacilityDetail(facility.facilityNo);
+            const detail = detailResponse?.data || detailResponse;
+
+            return {
+              ...facility,
+              detail,
+            };
+          } catch {
+            return {
+              ...facility,
+              detail: null,
+            };
+          }
+        })
+      );
+
+      const reservableFacilities = detailedFacilities.filter(
+        (facility) => facility && canReserveFacility(facility)
+      );
+
+      if (!reservableFacilities.length) {
+        appendAssistantMessage('현재 예약 가능한 공용시설이 없습니다.', [
+          'facilityHours',
+          'reservationStatus',
+        ]);
+        setReservationFlow(null);
+        return;
+      }
+
+      appendAssistantMessage('어떤 공용시설 예약을 진행할까요?');
+
+      setReservationFlow({
+        step: 'facility',
+        facilities: reservableFacilities,
+        selectedFacility: null,
+        selectedDate: '',
+        selectedStartTime: '',
+        selectedEndTime: '',
+        reservedList: [],
+        availableStartTimes: [],
+        availableEndTimes: [],
+        showCustomDatePicker: false,
+      });
+    } catch (err) {
+      const apiError = normalizeApiError(err);
+      appendAssistantMessage(
+        apiError.message || '공용시설 목록을 불러오지 못했습니다.',
+        ['facilityHours', 'reservationStatus']
+      );
+      setReservationFlow(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSelectReservationFacility = (facility) => {
+    if (!facility) return;
+
+    appendAssistantMessage(
+      `${facility.facilityName} 예약을 진행할게요. 날짜를 선택해주세요.`
+    );
+
+    setReservationFlow((prev) => ({
+      ...prev,
+      step: 'date',
+      selectedFacility: facility,
+      selectedDate: '',
+      selectedStartTime: '',
+      selectedEndTime: '',
+      reservedList: [],
+      availableStartTimes: [],
+      availableEndTimes: [],
+      showCustomDatePicker: false,
+    }));
+  };
+
+  const handleToggleReservationDatePicker = () => {
+    setReservationFlow((prev) =>
+      prev
+        ? {
+            ...prev,
+            showCustomDatePicker: !prev.showCustomDatePicker,
+          }
+        : prev
+    );
+  };
+
+  const handleSelectReservationDate = async (dateValue) => {
+    if (!reservationFlow?.selectedFacility?.facilityNo) return;
+
+    try {
+      setLoading(true);
+
+      const reservedResponse = await getReservationTime(
+        reservationFlow.selectedFacility.facilityNo,
+        dateValue
+      );
+
+      const reservedItems =
+        reservedResponse?.data?.data ||
+        reservedResponse?.data ||
+        reservedResponse ||
+        [];
+
+      const normalizedReservedItems = Array.isArray(reservedItems)
+        ? reservedItems
+        : [];
+
+      const availableStartTimes = buildStartTimeOptions(
+        reservationFlow.selectedFacility.detail,
+        normalizedReservedItems
+      );
+
+      if (!availableStartTimes.length) {
+        appendAssistantMessage(
+          '선택하신 날짜에는 예약 가능한 시간이 없습니다. 다른 날짜를 선택해주세요.'
+        );
+
+        setReservationFlow((prev) => ({
+          ...prev,
+          step: 'date',
+          selectedDate: dateValue,
+          selectedStartTime: '',
+          selectedEndTime: '',
+          reservedList: normalizedReservedItems,
+          availableStartTimes: [],
+          availableEndTimes: [],
+          showCustomDatePicker: prev?.showCustomDatePicker ?? false,
+        }));
+        return;
+      }
+
+      appendAssistantMessage(`${dateValue}의 시작 시간을 선택해주세요.`);
+
+      setReservationFlow((prev) => ({
+        ...prev,
+        step: 'start',
+        selectedDate: dateValue,
+        selectedStartTime: '',
+        selectedEndTime: '',
+        reservedList: normalizedReservedItems,
+        availableStartTimes,
+        availableEndTimes: [],
+        showCustomDatePicker: false,
+      }));
+    } catch (err) {
+      const apiError = normalizeApiError(err);
+      appendAssistantMessage(
+        apiError.message || '예약 가능 시간을 불러오지 못했습니다.'
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSelectReservationStartTime = (startTime) => {
+    if (!reservationFlow?.selectedFacility?.detail) return;
+
+    const availableEndTimes = buildEndTimeOptions(
+      reservationFlow.selectedFacility.detail,
+      reservationFlow.reservedList,
+      startTime
+    );
+
+    if (!availableEndTimes.length) {
+      appendAssistantMessage(
+        '선택하신 시작 시간으로 예약 가능한 종료 시간이 없습니다. 다른 시작 시간을 선택해주세요.'
+      );
+      return;
+    }
+
+    appendAssistantMessage(
+      `${startTime} 시작으로 선택했어요. 종료 시간을 선택해주세요.`
+    );
+
+    setReservationFlow((prev) => ({
+      ...prev,
+      step: 'end',
+      selectedStartTime: startTime,
+      selectedEndTime: '',
+      availableEndTimes,
+    }));
+  };
+
+  const handleSelectReservationEndTime = (endTime) => {
+    if (!reservationFlow?.selectedFacility) return;
+
+    appendAssistantMessage(
+      `${reservationFlow.selectedFacility.facilityName} / ${reservationFlow.selectedDate} / ${reservationFlow.selectedStartTime}~${endTime}로 예약할까요?`
+    );
+
+    setReservationFlow((prev) => ({
+      ...prev,
+      step: 'confirm',
+      selectedEndTime: endTime,
+    }));
+  };
+
+  const handleRestartReservationFlow = () => {
+    setReservationFlow(null);
+    void startReservationFlow();
+  };
+
+  const handleCancelReservationFlow = () => {
+    setReservationFlow(null);
+    appendAssistantMessage('예약 진행을 취소했습니다.', [
+      'reserve',
+      'reservationStatus',
+      'facilityCancel',
+    ]);
+  };
+
+  const startFacilityCancelFlow = async () => {
+    try {
+      setLoading(true);
+
+      const response = await getReservationList({
+        page: 1,
+        size: 30,
+        sort: 'reservationDate,reservationStartTime',
+        direct: 'ASC',
+      });
+
+      const cancelableItems = normalizeReservationList(response)
+        .filter(isCancelableReservation)
+        .sort((a, b) => {
+          const left = `${a?.reservationDate || ''} ${String(
+            a?.reservationStartTime || ''
+          ).substring(0, 5)}`;
+          const right = `${b?.reservationDate || ''} ${String(
+            b?.reservationStartTime || ''
+          ).substring(0, 5)}`;
+          return left.localeCompare(right);
+        });
+
+      if (!cancelableItems.length) {
+        appendAssistantMessage('현재 취소 가능한 예약이 없습니다.', [
+          'reservationStatus',
+          'reserve',
+        ]);
+        setReservationFlow(null);
+        return;
+      }
+
+      appendAssistantMessage('취소할 예약을 선택해주세요.');
+
+      setReservationFlow({
+        step: 'cancel-select',
+        facilities: [],
+        selectedFacility: null,
+        selectedDate: '',
+        selectedStartTime: '',
+        selectedEndTime: '',
+        reservedList: [],
+        availableStartTimes: [],
+        availableEndTimes: [],
+        showCustomDatePicker: false,
+        cancelItems: cancelableItems,
+        selectedCancelReservation: null,
+      });
+    } catch (err) {
+      const apiError = normalizeApiError(err);
+      appendAssistantMessage(
+        apiError.message || '취소 가능한 예약 목록을 불러오지 못했습니다.',
+        ['reservationStatus', 'reserve']
+      );
+      setReservationFlow(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSelectCancelReservation = (reservation) => {
+    if (!reservation) return;
+
+    appendAssistantMessage('정말 예약 취소하시겠습니까?');
+    setReservationFlow((prev) => ({
+      ...prev,
+      step: 'cancel-confirm',
+      selectedCancelReservation: reservation,
+    }));
+  };
+
+  const handleRejectCancelReservation = () => {
+    openFacilityMenu('공용시설에서 어떤 작업을 도와드릴까요?');
+  };
+
+  const handleConfirmCancelReservation = async () => {
+    const reservation = reservationFlow?.selectedCancelReservation;
+    if (!reservation?.reservationNo) return;
+
+    const { reservationName, reservationPhone } =
+      await resolveReservationContactInfo();
+
+    if (!reservationName || reservationPhone.length !== 11) {
+      appendAssistantMessage(
+        '예약 취소를 진행하려면 이름과 연락처 정보가 필요합니다. 마이페이지에서 먼저 확인해주세요.',
+        ['mypage', 'reservationStatus']
+      );
+      setReservationFlow((prev) =>
+        prev
+          ? {
+              ...prev,
+              step: 'cancel-confirm',
+            }
+          : prev
+      );
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setReservationFlow((prev) => ({
+        ...prev,
+        step: 'submitting',
+      }));
+
+      await modifyReservation(reservation.reservationNo, {
+        reservationName,
+        reservationPhone,
+        reservationDate: reservation.reservationDate,
+        reservationStartTime: String(
+          reservation.reservationStartTime || ''
+        ).substring(0, 5),
+        reservationEndTime: String(reservation.reservationEndTime || '').substring(
+          0,
+          5
+        ),
+        reservationStatus: 'CANCELED',
+      });
+
+      appendAssistantMessage('예약이 정상적으로 취소되었습니다.', [
+        'reserve',
+        'facilityCancel',
+      ]);
+      setReservationFlow(null);
+      moveToReservationView();
+    } catch (err) {
+      const apiError = normalizeApiError(err);
+      appendAssistantMessage(apiError.message || '예약 취소에 실패했습니다.', [
+        'reservationStatus',
+        'facilityCancel',
+      ]);
+      setReservationFlow((prev) => ({
+        ...prev,
+        step: 'cancel-confirm',
+      }));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleConfirmReservation = async () => {
+    if (!reservationFlow?.selectedFacility?.facilityNo) return;
+
+    const { reservationName, reservationPhone } =
+      await resolveReservationContactInfo();
+
+    if (!reservationName || reservationPhone.length !== 11) {
+      appendAssistantMessage(
+        '예약을 진행하려면 이름과 연락처 정보가 필요합니다. 마이페이지에서 먼저 확인해주세요.',
+        ['mypage', 'reservationStatus']
+      );
+      setReservationFlow((prev) =>
+        prev
+          ? {
+              ...prev,
+              step: 'confirm',
+            }
+          : prev
+      );
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setReservationFlow((prev) => ({
+        ...prev,
+        step: 'submitting',
+      }));
+
+      await createReservation(reservationFlow.selectedFacility.facilityNo, {
+        reservationName,
+        reservationPhone,
+        reservationDate: reservationFlow.selectedDate,
+        reservationStartTime: reservationFlow.selectedStartTime,
+        reservationEndTime: reservationFlow.selectedEndTime,
+      });
+
+      appendAssistantMessage(
+        '공용시설 예약이 완료되었습니다. 예약 내역 페이지로 이동할게요.',
+        ['reservationStatus', 'facilityCancel']
+      );
+
+      setReservationFlow(null);
+      moveToReservationView();
+    } catch (err) {
+      const apiError = normalizeApiError(err);
+      appendAssistantMessage(apiError.message || '예약에 실패했습니다.', [
+        'reserve',
+        'reservationStatus',
+      ]);
+
+      setReservationFlow((prev) => ({
+        ...prev,
+        step: 'confirm',
+      }));
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const startProfileEditWorkflow = () => {
     navigate('/mypage/edit');
@@ -404,10 +1108,14 @@ export default function OrchestrateQuickAgent() {
       return moveToRecommendedRoomDetail(selectedRoom);
     }
 
-    const explicitRecommendationRequest = isRoomRecommendationRequest(normalized);
+    const explicitRecommendationRequest =
+      isRoomRecommendationRequest(normalized);
     const preferenceRecommendationRequest = isRoomPreferenceRequest(normalized);
 
-    if (explicitRecommendationRequest && !isRoomsSearchPage(location.pathname)) {
+    if (
+      explicitRecommendationRequest &&
+      !isRoomsSearchPage(location.pathname)
+    ) {
       goToPage(
         '/rooms',
         '방 추천은 방찾기 페이지에서 바로 도와드릴게요. 방찾기 페이지로 이동했습니다. 원하는 지역, 예산, 방 종류를 말씀해 주세요.',
@@ -458,10 +1166,10 @@ export default function OrchestrateQuickAgent() {
       setLoading(true);
       const slice = await searchRooms(request.cond, 0, 12);
       const fetchedRooms = Array.isArray(slice?.content) ? slice.content : [];
-      const rooms = sortRecommendedRooms(fetchedRooms, request.preference).slice(
-        0,
-        3
-      );
+      const rooms = sortRecommendedRooms(
+        fetchedRooms,
+        request.preference
+      ).slice(0, 3);
 
       setAwaitingRoomRecommendation(false);
       setLastRecommendedRooms(rooms);
@@ -514,12 +1222,13 @@ export default function OrchestrateQuickAgent() {
       return;
     }
 
+    if (actionId === 'facilityMenu') {
+      openFacilityMenu();
+      return;
+    }
+
     if (actionId === 'reserve') {
-      goToPage(
-        '/reservation/view',
-        '예약 페이지로 이동했습니다. 원하시는 시설과 시간을 선택해주세요.',
-        ['facilityHours', 'reservationStatus', 'facilityCancel']
-      );
+      await startReservationFlow();
       return;
     }
 
@@ -543,9 +1252,13 @@ export default function OrchestrateQuickAgent() {
     if (actionId === 'summary') {
       const postNo = extractPostNoFromPath(location.pathname);
       const roomContext = getRoomContext(location.pathname);
-      const isBoardListPage = ['/notices', '/events', '/information', '/qna', '/boards'].includes(
-        location.pathname
-      );
+      const isBoardListPage = [
+        '/notices',
+        '/events',
+        '/information',
+        '/qna',
+        '/boards',
+      ].includes(location.pathname);
 
       if (postNo) {
         try {
@@ -553,7 +1266,9 @@ export default function OrchestrateQuickAgent() {
           const response = await fetchBoardSummary(postNo);
           const result = response?.data?.data ?? response?.data;
 
-          const summaryText = String(result?.summary || '요약 결과가 없습니다.').trim();
+          const summaryText = String(
+            result?.summary || '요약 결과가 없습니다.'
+          ).trim();
           const keyPoints = Array.isArray(result?.keyPoints)
             ? result.keyPoints
                 .map((item) =>
@@ -619,10 +1334,11 @@ export default function OrchestrateQuickAgent() {
       }
 
       if (roomContext.roomNo) {
-        appendAssistantMessage(
-          '페이지 내의 방 정보 요약을 참고해주세요.',
-          ['roomRecommend', 'tour', 'wishlist']
-        );
+        appendAssistantMessage('페이지 내의 방 정보 요약을 참고해주세요.', [
+          'roomRecommend',
+          'tour',
+          'wishlist',
+        ]);
         return;
       }
 
@@ -691,19 +1407,14 @@ export default function OrchestrateQuickAgent() {
     }
 
     if (actionId === 'facilityCancel') {
-      goToPage(
-        '/reservation/view',
-        '예약 내역 페이지로 이동했습니다. 취소할 예약을 선택해 진행해주세요.',
-        ['reservationStatus', 'reserve', 'facilityHours']
-      );
+      await startFacilityCancelFlow();
       return;
     }
 
     if (actionId === 'reservationStatus') {
-      goToPage(
-        '/reservation/view',
-        '예약 내역 페이지로 이동했습니다. 현재 예약 상태를 확인할 수 있습니다.',
-        ['facilityCancel', 'reserve', 'facilityHours']
+      moveToReservationView(
+        '예약 내역 페이지로 이동했습니다.',
+        ['reserve', 'facilityCancel']
       );
       return;
     }
@@ -908,7 +1619,6 @@ export default function OrchestrateQuickAgent() {
       return true;
     }
 
-
     if (
       normalized.includes('투어페이지') ||
       normalized.includes('투어내역') ||
@@ -936,11 +1646,7 @@ export default function OrchestrateQuickAgent() {
       normalized.includes('시설페이지') ||
       normalized === '시설안내'
     ) {
-      goToPage(
-        '/facility/view',
-        '공용시설 페이지로 이동했습니다. 시설 안내와 예약 정보를 확인할 수 있습니다.',
-        ['facilityHours', 'reserve', 'reservationStatus']
-      );
+      openFacilityMenu();
       return true;
     }
 
@@ -949,9 +1655,8 @@ export default function OrchestrateQuickAgent() {
       normalized.includes('예약페이지') ||
       normalized.includes('예약확인')
     ) {
-      goToPage(
-        '/reservation/view',
-        '예약 페이지로 이동했습니다. 현재 예약 상태를 확인하거나 예약을 진행할 수 있습니다.',
+      moveToReservationView(
+        '예약 내역 페이지로 이동했습니다.',
         ['reserve', 'facilityCancel']
       );
       return true;
@@ -1173,96 +1878,99 @@ export default function OrchestrateQuickAgent() {
     void runQuickAction(actionId);
   };
 
-  const startVoiceCommand = useCallback(async (options = {}) => {
-    const { quiet = false } = options;
+  const startVoiceCommand = useCallback(
+    async (options = {}) => {
+      const { quiet = false } = options;
 
-    if (!voiceModeEnabled) {
-      enableVoiceMode();
-      return;
-    }
+      if (!voiceModeEnabled) {
+        enableVoiceMode();
+        return;
+      }
 
-    if (!settings.voiceCommandEnabled) {
-      appendAssistantMessage(
-        '음성 명령이 꺼져 있습니다. 접근성 설정에서 음성 명령 사용을 켜 주세요.'
-      );
-      return;
-    }
+      if (!settings.voiceCommandEnabled) {
+        appendAssistantMessage(
+          '음성 명령이 꺼져 있습니다. 접근성 설정에서 음성 명령 사용을 켜 주세요.'
+        );
+        return;
+      }
 
-    if (!isSpeechRecognitionSupported) {
-      appendAssistantMessage(
-        '이 브라우저에서는 음성 인식을 지원하지 않습니다. 텍스트 입력을 사용해 주세요.'
-      );
-      return;
-    }
+      if (!isSpeechRecognitionSupported) {
+        appendAssistantMessage(
+          '이 브라우저에서는 음성 인식을 지원하지 않습니다. 텍스트 입력을 사용해 주세요.'
+        );
+        return;
+      }
 
-    if (speaking) {
+      if (speaking) {
+        if (!quiet) {
+          appendAssistantMessage(
+            '답변을 읽는 중에는 마이크를 켤 수 없습니다. 읽기가 끝난 뒤 다시 시도해 주세요.'
+          );
+        }
+        return;
+      }
+
       if (!quiet) {
         appendAssistantMessage(
-          '답변을 읽는 중에는 마이크를 켤 수 없습니다. 읽기가 끝난 뒤 다시 시도해 주세요.'
+          '듣고 있습니다. 말씀을 마치면 답변을 준비할게요.',
+          [],
+          { suppressAutoRead: true }
         );
       }
-      return;
-    }
 
-    if (!quiet) {
-      appendAssistantMessage(
-        '듣고 있습니다. 말씀을 마치면 답변을 준비할게요.',
-        [],
-        { suppressAutoRead: true }
-      );
-    }
+      let hasVoiceError = false;
 
-    let hasVoiceError = false;
-
-    startListening({
-      onResult: (transcript) => {
-        if (!transcript) {
-          return;
-        }
-        void sendMessage(transcript);
-      },
-      onError: (event) => {
-        const errorType = event?.error || event?.message || '';
-        if (errorType === 'no-speech' || errorType === 'aborted') {
-          return;
-        }
-        if (hasVoiceError) {
-          return;
-        }
-        hasVoiceError = true;
-        if (VOICE_PERMISSION_ERRORS.has(errorType)) {
+      startListening({
+        onResult: (transcript) => {
+          if (!transcript) {
+            return;
+          }
+          void sendMessage(transcript);
+        },
+        onError: (event) => {
+          const errorType = event?.error || event?.message || '';
+          if (errorType === 'no-speech' || errorType === 'aborted') {
+            return;
+          }
+          if (hasVoiceError) {
+            return;
+          }
+          hasVoiceError = true;
+          if (VOICE_PERMISSION_ERRORS.has(errorType)) {
+            appendAssistantMessage(
+              '마이크 권한을 사용할 수 없어 음성 모드를 종료합니다. 브라우저 권한을 확인해 주세요.',
+              []
+            );
+            disableVoiceMode();
+            return;
+          }
+          if (VOICE_DEVICE_ERRORS.has(errorType)) {
+            appendAssistantMessage(
+              '마이크를 사용할 수 없어 음성 모드를 종료합니다. 입력 장치를 확인해 주세요.',
+              []
+            );
+            disableVoiceMode();
+            return;
+          }
           appendAssistantMessage(
-            '마이크 권한을 사용할 수 없어 음성 모드를 종료합니다. 브라우저 권한을 확인해 주세요.',
+            '음성 입력 중 문제가 발생했습니다. 음성 버튼을 다시 눌러 시도해 주세요.',
             []
           );
-          disableVoiceMode();
-          return;
-        }
-        if (VOICE_DEVICE_ERRORS.has(errorType)) {
-          appendAssistantMessage(
-            '마이크를 사용할 수 없어 음성 모드를 종료합니다. 입력 장치를 확인해 주세요.',
-            []
-          );
-          disableVoiceMode();
-          return;
-        }
-        appendAssistantMessage(
-          '음성 입력 중 문제가 발생했습니다. 음성 버튼을 다시 눌러 시도해 주세요.',
-          []
-        );
-      },
-      onEnd: () => {},
-    });
-  }, [
-    voiceModeEnabled,
-    enableVoiceMode,
-    settings.voiceCommandEnabled,
-    isSpeechRecognitionSupported,
-    speaking,
-    startListening,
-    sendMessage,
-    disableVoiceMode,
-  ]);
+        },
+        onEnd: () => {},
+      });
+    },
+    [
+      voiceModeEnabled,
+      enableVoiceMode,
+      settings.voiceCommandEnabled,
+      isSpeechRecognitionSupported,
+      speaking,
+      startListening,
+      sendMessage,
+      disableVoiceMode,
+    ]
+  );
 
   const submit = async (event) => {
     event.preventDefault();
@@ -1308,9 +2016,7 @@ export default function OrchestrateQuickAgent() {
                   voiceModeEnabled ? disableVoiceMode : () => enableVoiceMode()
                 }
               >
-                {voiceModeEnabled
-                  ? '음성 끄기'
-                  : '음성 켜기'}
+                {voiceModeEnabled ? '음성 끄기' : '음성 켜기'}
               </button>
               <button
                 type="button"
@@ -1360,6 +2066,337 @@ export default function OrchestrateQuickAgent() {
                   )}
               </div>
             ))}
+
+            {reservationFlow?.step === 'facility' && (
+              <div className={styles.botMsg}>
+                <div className={styles.reservationCard}>
+                  <p className={styles.reservationTitle}>
+                    예약할 공용시설을 선택해주세요.
+                  </p>
+                  <div className={styles.reservationOptionGrid}>
+                    {reservationFlow.facilities.map((facility) => (
+                      <button
+                        key={facility.facilityNo}
+                        type="button"
+                        className={styles.reservationOptionBtn}
+                        onClick={() =>
+                          handleSelectReservationFacility(facility)
+                        }
+                        disabled={loading}
+                      >
+                        {facility.facilityName}
+                      </button>
+                    ))}
+                  </div>
+                  <div className={styles.reservationActions}>
+                    <button
+                      type="button"
+                      className={styles.reservationSecondaryBtn}
+                      onClick={handleCancelReservationFlow}
+                      disabled={loading}
+                    >
+                      취소
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {reservationFlow?.step === 'date' && (
+              <div className={styles.botMsg}>
+                <div className={styles.reservationCard}>
+                  <p className={styles.reservationTitle}>
+                    예약 날짜를 선택해주세요.
+                  </p>
+                  <p className={styles.reservationMeta}>
+                    선택한 시설: {reservationFlow.selectedFacility?.facilityName}
+                  </p>
+                  <div className={styles.reservationOptionGrid}>
+                    {buildDateOptions(7).map((date) => (
+                      <button
+                        key={date.value}
+                        type="button"
+                        className={styles.reservationOptionBtn}
+                        onClick={() => handleSelectReservationDate(date.value)}
+                        disabled={loading}
+                      >
+                        {date.label}
+                      </button>
+                    ))}
+                    <button
+                      type="button"
+                      className={styles.reservationOptionBtn}
+                      onClick={handleToggleReservationDatePicker}
+                      disabled={loading}
+                    >
+                      {reservationFlow.showCustomDatePicker
+                        ? '달력 닫기'
+                        : '직접 선택'}
+                    </button>
+                  </div>
+                  {reservationFlow.showCustomDatePicker && (
+                    <div className={styles.reservationDatePickerWrap}>
+                      <label
+                        htmlFor="reservation-date-picker"
+                        className={styles.reservationDatePickerLabel}
+                      >
+                        원하는 날짜가 없다면 달력에서 선택해주세요.
+                      </label>
+                      <input
+                        id="reservation-date-picker"
+                        type="date"
+                        className={styles.reservationDateInput}
+                        min={getTodayDateValue()}
+                        value={reservationFlow.selectedDate || ''}
+                        onChange={(event) => {
+                          if (!event.target.value) return;
+                          void handleSelectReservationDate(event.target.value);
+                        }}
+                      />
+                    </div>
+                  )}
+                  <div className={styles.reservationActions}>
+                    <button
+                      type="button"
+                      className={styles.reservationSecondaryBtn}
+                      onClick={handleRestartReservationFlow}
+                      disabled={loading}
+                    >
+                      다시 선택
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.reservationSecondaryBtn}
+                      onClick={handleCancelReservationFlow}
+                      disabled={loading}
+                    >
+                      취소
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {reservationFlow?.step === 'start' && (
+              <div className={styles.botMsg}>
+                <div className={styles.reservationCard}>
+                  <p className={styles.reservationTitle}>
+                    시작 시간을 선택해주세요.
+                  </p>
+                  <p className={styles.reservationMeta}>
+                    {reservationFlow.selectedFacility?.facilityName} /{' '}
+                    {reservationFlow.selectedDate}
+                  </p>
+                  <div className={styles.reservationOptionGrid}>
+                    {reservationFlow.availableStartTimes.map((time) => (
+                      <button
+                        key={time}
+                        type="button"
+                        className={styles.reservationOptionBtn}
+                        onClick={() =>
+                          handleSelectReservationStartTime(time)
+                        }
+                        disabled={loading}
+                      >
+                        {time}
+                      </button>
+                    ))}
+                  </div>
+                  <div className={styles.reservationActions}>
+                    <button
+                      type="button"
+                      className={styles.reservationSecondaryBtn}
+                      onClick={handleRestartReservationFlow}
+                      disabled={loading}
+                    >
+                      다시 선택
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.reservationSecondaryBtn}
+                      onClick={handleCancelReservationFlow}
+                      disabled={loading}
+                    >
+                      취소
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {reservationFlow?.step === 'end' && (
+              <div className={styles.botMsg}>
+                <div className={styles.reservationCard}>
+                  <p className={styles.reservationTitle}>
+                    종료 시간을 선택해주세요.
+                  </p>
+                  <p className={styles.reservationMeta}>
+                    {reservationFlow.selectedFacility?.facilityName} /{' '}
+                    {reservationFlow.selectedDate} / 시작{' '}
+                    {reservationFlow.selectedStartTime}
+                  </p>
+                  <div className={styles.reservationOptionGrid}>
+                    {reservationFlow.availableEndTimes.map((time) => (
+                      <button
+                        key={time}
+                        type="button"
+                        className={styles.reservationOptionBtn}
+                        onClick={() => handleSelectReservationEndTime(time)}
+                        disabled={loading}
+                      >
+                        {time}
+                      </button>
+                    ))}
+                  </div>
+                  <div className={styles.reservationActions}>
+                    <button
+                      type="button"
+                      className={styles.reservationSecondaryBtn}
+                      onClick={handleRestartReservationFlow}
+                      disabled={loading}
+                    >
+                      다시 선택
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.reservationSecondaryBtn}
+                      onClick={handleCancelReservationFlow}
+                      disabled={loading}
+                    >
+                      취소
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {reservationFlow?.step === 'confirm' && (
+              <div className={styles.botMsg}>
+                <div className={styles.reservationCard}>
+                  <p className={styles.reservationTitle}>
+                    예약 내용을 확인해주세요.
+                  </p>
+                  <div className={styles.reservationSummary}>
+                    <p>시설: {reservationFlow.selectedFacility?.facilityName}</p>
+                    <p>날짜: {reservationFlow.selectedDate}</p>
+                    <p>
+                      시간: {reservationFlow.selectedStartTime} ~{' '}
+                      {reservationFlow.selectedEndTime}
+                    </p>
+                  </div>
+                  <div className={styles.reservationActions}>
+                    <button
+                      type="button"
+                      className={styles.reservationPrimaryBtn}
+                      onClick={handleConfirmReservation}
+                      disabled={loading}
+                    >
+                      예약 확정
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.reservationSecondaryBtn}
+                      onClick={handleRestartReservationFlow}
+                      disabled={loading}
+                    >
+                      다시 선택
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.reservationSecondaryBtn}
+                      onClick={handleCancelReservationFlow}
+                      disabled={loading}
+                    >
+                      취소
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {reservationFlow?.step === 'cancel-select' && (
+              <div className={styles.botMsg}>
+                <div className={styles.reservationCard}>
+                  <p className={styles.reservationTitle}>
+                    취소할 예약을 선택해주세요.
+                  </p>
+                  <div className={styles.reservationList}>
+                    {reservationFlow.cancelItems?.map((reservation) => (
+                      <button
+                        key={reservation.reservationNo}
+                        type="button"
+                        className={styles.reservationListBtn}
+                        onClick={() =>
+                          handleSelectCancelReservation(reservation)
+                        }
+                        disabled={loading}
+                      >
+                        {formatReservationListLabel(reservation)}
+                      </button>
+                    ))}
+                  </div>
+                  <div className={styles.reservationActions}>
+                    <button
+                      type="button"
+                      className={styles.reservationSecondaryBtn}
+                      onClick={handleRejectCancelReservation}
+                      disabled={loading}
+                    >
+                      돌아가기
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {reservationFlow?.step === 'cancel-confirm' && (
+              <div className={styles.botMsg}>
+                <div className={styles.reservationCard}>
+                  <p className={styles.reservationTitle}>
+                    정말 예약 취소하시겠습니까?
+                  </p>
+                  <div className={styles.reservationSummary}>
+                    <p>
+                      {formatReservationListLabel(
+                        reservationFlow.selectedCancelReservation
+                      )}
+                    </p>
+                  </div>
+                  <div className={styles.reservationActions}>
+                    <button
+                      type="button"
+                      className={styles.reservationPrimaryBtn}
+                      onClick={handleConfirmCancelReservation}
+                      disabled={loading}
+                    >
+                      예
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.reservationSecondaryBtn}
+                      onClick={handleRejectCancelReservation}
+                      disabled={loading}
+                    >
+                      아니오
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {reservationFlow?.step === 'submitting' && (
+              <div className={styles.botMsg}>
+                <div className={styles.reservationCard}>
+                  <p className={styles.reservationTitle}>
+                    예약을 처리하고 있습니다.
+                  </p>
+                  <p className={styles.reservationMeta}>
+                    잠시만 기다려주세요.
+                  </p>
+                </div>
+              </div>
+            )}
+
             <div ref={bottomRef} />
           </div>
 
@@ -1401,10 +2438,3 @@ export default function OrchestrateQuickAgent() {
     </div>
   );
 }
-
-
-
-
-
-
-

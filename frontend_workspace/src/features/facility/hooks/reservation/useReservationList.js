@@ -10,7 +10,7 @@ const schema = {
   direct: 'DESC',
 };
 
-export const useReservationList = (facilityNo, targetUserNo) => {
+export const useReservationList = (facilityNo, targetUserNo, refreshKey) => {
   const { query, setQuery } = useQueryState(schema);
   const [response, setResponse] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -43,7 +43,7 @@ export const useReservationList = (facilityNo, targetUserNo) => {
       }
     };
     fetchReservations();
-  }, [query, facilityNo, targetUserNo]);
+  }, [query, facilityNo, targetUserNo, refreshKey]);
 
   const pageResponse = useMemo(() => {
     if (!response) return null;

@@ -244,6 +244,159 @@
   cursor: default;
 }
 
+.reservationCard {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: min(100%, 320px);
+  padding: 16px 18px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 10px 26px rgba(30, 41, 59, 0.08);
+}
+
+.reservationTitle {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #334155;
+}
+
+.reservationMeta {
+  margin: 0;
+  font-size: 13px;
+  color: #64748b;
+  line-height: 1.5;
+}
+
+.reservationSummary {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 14px;
+  color: #475569;
+}
+
+.reservationSummary p {
+  margin: 0;
+}
+
+.reservationList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.reservationListBtn {
+  width: 100%;
+  border: 1px solid #fed7aa;
+  background: #fffaf5;
+  color: #9a3412;
+  border-radius: 14px;
+  padding: 12px 14px;
+  text-align: left;
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1.5;
+  cursor: pointer;
+}
+
+.reservationListBtn:hover {
+  background: #fff1e6;
+}
+
+.reservationListBtn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.reservationOptionGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.reservationDatePickerWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  background: #f8fafc;
+}
+
+.reservationDatePickerLabel {
+  font-size: 0.78rem;
+  color: #64748b;
+  line-height: 1.5;
+}
+
+.reservationDateInput {
+  width: 180px;
+  max-width: 100%;
+  min-height: 40px;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  padding: 8px 12px;
+  background: #fff;
+  color: #334155;
+  font-size: 0.84rem;
+}
+
+.reservationOptionBtn {
+  border: 1px solid #fdba74;
+  background: #fff7ed;
+  color: #9a3412;
+  border-radius: 999px;
+  padding: 10px 14px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.reservationOptionBtn:hover {
+  background: #ffedd5;
+}
+
+.reservationOptionBtn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.reservationActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.reservationPrimaryBtn,
+.reservationSecondaryBtn {
+  border-radius: 999px;
+  padding: 10px 14px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.reservationPrimaryBtn {
+  border: none;
+  background: #c9713f;
+  color: #fff;
+}
+
+.reservationSecondaryBtn {
+  border: 1px solid #d1d5db;
+  background: #fff;
+  color: #475569;
+}
+
+.reservationPrimaryBtn:disabled,
+.reservationSecondaryBtn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
 .form {
   display: flex;
   gap: 10px;
