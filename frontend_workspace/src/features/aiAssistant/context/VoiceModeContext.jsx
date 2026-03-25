@@ -343,9 +343,7 @@ export function VoiceModeProvider({ children }) {
       setPromptDismissed(true);
       if (speakWelcome) {
         window.setTimeout(() => {
-          speak(
-            '음성 모드가 켜졌습니다. 음성 버튼을 누른 뒤 말씀해 주세요. 말씀하시는 동안에는 답하지 않고, 답변을 읽는 동안에는 마이크를 듣지 않습니다.'
-          );
+          speak('음성 모드가 켜졌습니다.');
         }, 150);
       }
     },
