@@ -11,15 +11,6 @@ function isMissingEndpointError(error) {
 
 async function postWithPathFallback(payload, paths) {
   let lastError;
-  const userProfile = payload?.context?.userProfile || {};
-  const extraHeaders = {
-    ...(userProfile?.userName
-      ? { 'X-User-Name': String(userProfile.userName).trim() }
-      : {}),
-    ...(userProfile?.userPhone
-      ? { 'X-User-Phone': String(userProfile.userPhone).trim() }
-      : {}),
-  };
 
   for (let i = 0; i < paths.length; i += 1) {
     const path = paths[i];
@@ -27,7 +18,6 @@ async function postWithPathFallback(payload, paths) {
       const { data } = await apiJson().post(path, payload, {
         baseURL: getAiBaseUrl(),
         timeout: ORCHESTRATE_TIMEOUT_MS,
-        headers: extraHeaders,
       });
       return data;
     } catch (error) {
