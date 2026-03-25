@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.team4p.woorizip.room.dto.ai.RoomTotalRequest;
 import org.team4p.woorizip.room.jpa.entity.RoomEntity;
 
@@ -26,4 +27,12 @@ public interface RoomRepository extends JpaRepository<RoomEntity, String>, RoomR
 			"""
 			, nativeQuery=true)
 	RoomTotalRequest findRoomInfoForTotalSummary(String roomNo);
+
+	@Query(value = """
+			select f.facility_name
+			from `tb_rooms` as r
+			join `tb_fm_list` as f on r.house_no = f.house_no
+			where r.room_no = :roomNo
+			""", nativeQuery = true)
+	List<String> findFacilityNamesByRoomNo(@Param("roomNo") String roomNo);
 }
