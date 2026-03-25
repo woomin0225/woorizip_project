@@ -83,6 +83,7 @@ export default function OrchestrateQuickAgent() {
     disableVoiceMode,
     speak,
     startListening,
+    stopSpeaking,
     stopListening,
     updateSetting,
   } = useVoiceMode();
@@ -155,6 +156,12 @@ export default function OrchestrateQuickAgent() {
       { role: 'assistant', text: greetingText, actionIds: STARTER_ACTION_IDS },
     ]);
   }, [greetingText]);
+
+  const closePanel = useCallback(() => {
+    stopListening();
+    stopSpeaking();
+    setOpen(false);
+  }, [stopListening, stopSpeaking]);
 
   useEffect(() => {
     voiceLoopStateRef.current = {
@@ -1616,7 +1623,7 @@ export default function OrchestrateQuickAgent() {
         type="button"
         className={styles.launcher}
         onClick={() => setOpen((prev) => !prev)}
-        aria-label="AI Agent 열기"
+        aria-label={open ? 'AI Agent 닫기' : 'AI Agent 열기'}
       >
         <img src={botIcon} alt="AI 챗봇" className={styles.launcherIcon} />
       </button>
@@ -1652,6 +1659,15 @@ export default function OrchestrateQuickAgent() {
                 {voiceModeEnabled
                   ? '음성 끄기'
                   : '음성 켜기'}
+              </button>
+              <button
+                type="button"
+                className={styles.closeBtn}
+                onClick={closePanel}
+                aria-label="우리봇 채팅창 닫기"
+                title="닫기"
+              >
+                X
               </button>
             </div>
           </header>
@@ -1734,7 +1750,6 @@ export default function OrchestrateQuickAgent() {
     </div>
   );
 }
-
 
 
 
