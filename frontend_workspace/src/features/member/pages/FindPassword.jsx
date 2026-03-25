@@ -91,7 +91,7 @@ export default function FindPassword() {
                       <FormGroup className="mb-3">
                         <InputGroup className="input-group-alternative">
                           <InputGroupText>
-                            <i className="ni ni-email-83" />
+                            <i className="fa fa-envelope" />
                           </InputGroupText>
                           <Input
                             name="emailId"

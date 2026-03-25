@@ -47,6 +47,11 @@ import botIcon from '../../../assets/images/ai_bot.png';
 import { useAuth } from '../../../app/providers/AuthProvider';
 import { parseJwt } from '../../../app/providers/utils/jwt';
 import { useVoiceMode } from '../context/VoiceModeContext';
+import {
+  getCurrentPageNavigationContext,
+  PAGE_NAVIGATION_TARGETS,
+  resolvePageNavigation,
+} from '../navigation/pageNavigation';
 import styles from './OrchestrateQuickAgent.module.css';
 
 function newSessionId() {
@@ -226,6 +231,25 @@ export default function OrchestrateQuickAgent() {
   const goToPage = (pathName, messageText, actionIds = []) => {
     navigate(pathName);
     appendAssistantMessage(messageText, actionIds);
+  };
+
+  const handleAssistantNavigateAction = (result, fallbackActionIds = []) => {
+    const actionName = String(result?.action?.name || '').toUpperCase();
+    const actionPath = String(result?.action?.path || '').trim();
+    if (result?.requiresConfirm || actionName !== 'NAVIGATE' || !actionPath) {
+      return false;
+    }
+    navigate(actionPath);
+    if (fallbackActionIds.length > 0) {
+      setMessages((prev) =>
+        prev.map((message, index) =>
+          index === prev.length - 1 && message.role === 'assistant'
+            ? { ...message, actionIds: uniqActionIds(fallbackActionIds) }
+            : message
+        )
+      );
+    }
+    return true;
   };
 
   const moveToRecommendedRoomDetail = (room) => {
@@ -629,6 +653,10 @@ export default function OrchestrateQuickAgent() {
       try {
         setLoading(true);
         const roomCreateContext = getRoomCreateContext(location, managedHouses);
+        const navigationContext = getCurrentPageNavigationContext(
+          window.location.pathname,
+          roomContext
+        );
         const result = await runOrchestrateCommand({
           text: '현재 보고 있는 웹페이지의 내용을 한국어로 간단히 요약해줘. 페이지에 없는 내용은 추측하지 마.',
           sessionId,
@@ -637,6 +665,8 @@ export default function OrchestrateQuickAgent() {
             ...roomContext,
             ...roomCreateContext,
             currentRoomResolved: Boolean(roomContext.roomNo),
+            availablePageTargets: PAGE_NAVIGATION_TARGETS,
+            navigationContext,
             pageSnapshot: getPageContext(),
             userProfile: {
               isAdmin,
@@ -768,6 +798,31 @@ export default function OrchestrateQuickAgent() {
     }
 
     if (await handleRoomRecommendationFlow(messageText)) {
+      return true;
+    }
+
+    const roomContext = getRoomContext(location.pathname);
+    const navigationContext = getCurrentPageNavigationContext(
+      location.pathname,
+      roomContext
+    );
+    const resolvedNavigation = resolvePageNavigation(
+      messageText,
+      navigationContext
+    );
+    if (resolvedNavigation?.type === 'navigate') {
+      goToPage(
+        resolvedNavigation.path,
+        resolvedNavigation.message,
+        resolvedNavigation.actionIds || []
+      );
+      return true;
+    }
+    if (resolvedNavigation?.type === 'unavailable') {
+      appendAssistantMessage(
+        resolvedNavigation.message,
+        resolvedNavigation.actionIds || []
+      );
       return true;
     }
 
@@ -1094,6 +1149,10 @@ export default function OrchestrateQuickAgent() {
 
       const roomContext = getRoomContext(location.pathname);
       const roomCreateContext = getRoomCreateContext(location, managedHouses);
+      const navigationContext = getCurrentPageNavigationContext(
+        window.location.pathname,
+        roomContext
+      );
       const result = await runOrchestrateCommand({
         text: messageText,
         sessionId: requestSessionId,
@@ -1102,6 +1161,8 @@ export default function OrchestrateQuickAgent() {
           ...roomContext,
           ...roomCreateContext,
           currentRoomResolved: Boolean(roomContext.roomNo),
+          availablePageTargets: PAGE_NAVIGATION_TARGETS,
+          navigationContext,
           pageSnapshot: getPageContext(),
           userProfile: {
             isAdmin,
@@ -1134,6 +1195,7 @@ export default function OrchestrateQuickAgent() {
       const actionIds = extractSuggestedActions(result);
       const formattedReply = formatAssistantReply(String(reply));
       appendAssistantMessage(formattedReply, actionIds);
+      handleAssistantNavigateAction(result, actionIds);
 
       if (voiceModeEnabled && result?.requiresConfirm && actionIds.length > 0) {
         setPendingConfirmation({
