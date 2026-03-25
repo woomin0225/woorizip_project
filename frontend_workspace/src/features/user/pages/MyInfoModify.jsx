@@ -1,5 +1,6 @@
 ﻿import React, { useEffect, useMemo, useState } from 'react';
 import { Container, Row, Col, Card, CardBody } from 'reactstrap';
+import DaumPostcodeEmbed from 'react-daum-postcode';
 import MyPageSideNav from '../components/MyPageSideNav';
 import { getMyInfo, updateMyInfo } from '../api/userAPI';
 import styles from '../../../app/layouts/MyPageLayout.module.css';
@@ -58,6 +59,7 @@ export default function MyInfoModify() {
     address: false,
     type: false,
   });
+  const [openPostcode, setOpenPostcode] = useState(false);
   const [message, setMessage] = useState('');
 
   useEffect(() => {
@@ -87,6 +89,21 @@ export default function MyInfoModify() {
 
   const toggleEdit = (key) => {
     setEditable((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const openAddressSearch = () => {
+    if (!editable.address) return;
+    setOpenPostcode(true);
+  };
+
+  const handleCompleteAddress = (data) => {
+    const nextAddress =
+      data?.roadAddress || data?.jibunAddress || data?.address || '';
+
+    if (nextAddress) {
+      setForm((prev) => ({ ...prev, address: nextAddress }));
+    }
+    setOpenPostcode(false);
   };
 
   const onSave = async () => {
@@ -229,15 +246,25 @@ export default function MyInfoModify() {
                           disabled={!editable.address}
                         />
                       </div>
-                      <button
-                        type="button"
-                        className={`${styles.inlineBtn} ${
-                          editable.address ? styles.inlineBtnActive : ''
-                        }`}
-                        onClick={() => toggleEdit('address')}
-                      >
-                        {editable.address ? '완료' : '수정'}
-                      </button>
+                      <div className={styles.inlineBtnGroup}>
+                        <button
+                          type="button"
+                          className={`${styles.inlineBtn} ${
+                            editable.address ? styles.inlineBtnActive : ''
+                          }`}
+                          onClick={() => toggleEdit('address')}
+                        >
+                          {editable.address ? '완료' : '수정'}
+                        </button>
+                        <button
+                          type="button"
+                          className={styles.inlineBtn}
+                          onClick={openAddressSearch}
+                          disabled={!editable.address}
+                        >
+                          주소검색
+                        </button>
+                      </div>
                     </div>
 
                     <div className={styles.fieldRow}>
@@ -323,6 +350,37 @@ export default function MyInfoModify() {
           </Row>
         </Container>
       </section>
+      {openPostcode && (
+        <div className={styles.backdrop} onClick={() => setOpenPostcode(false)}>
+          <div
+            className={styles.modal}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className={styles.modalHeader}>
+              <div>주소검색</div>
+              <button
+                type="button"
+                className={styles.closeBtn}
+                onClick={() => setOpenPostcode(false)}
+              >
+                ✕
+              </button>
+            </div>
+
+            <DaumPostcodeEmbed onComplete={handleCompleteAddress} />
+
+            <div className={styles.modalFooter}>
+              <button
+                type="button"
+                className={styles.inlineBtn}
+                onClick={() => setOpenPostcode(false)}
+              >
+                닫기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

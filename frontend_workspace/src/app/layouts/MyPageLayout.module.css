@@ -125,6 +125,11 @@
   color: #c9713f;
   background: #fff;
 }
+.inlineBtnGroup {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
 .inlineBtnActive {
   color: #fff;
   background: #c9713f;
@@ -272,6 +277,53 @@
 .itemTitle { margin: 0; font-size: 0.95rem; color: #344767; }
 .meta { margin: 8px 0 4px; font-size: 0.86rem; color: #b2673c; }
 .desc { margin: 0; font-size: 0.86rem; color: #525f7f; }
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(17, 24, 39, 0.44);
+  padding: 20px;
+}
+
+.modal {
+  width: min(700px, 100%);
+  max-height: 90vh;
+  overflow: auto;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 30px 70px rgba(15, 23, 42, 0.28);
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 18px;
+  border-bottom: 1px solid #f1e2d4;
+  font-size: 1rem;
+  font-weight: 800;
+  color: #9b5a34;
+}
+
+.closeBtn {
+  border: 0;
+  background: transparent;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #8b5e3c;
+  cursor: pointer;
+}
+
+.modalFooter {
+  display: flex;
+  justify-content: flex-end;
+  padding: 14px 18px 18px;
+  border-top: 1px solid #f1e2d4;
+}
 
 .sectionBlock {
   margin-top: 16px;
