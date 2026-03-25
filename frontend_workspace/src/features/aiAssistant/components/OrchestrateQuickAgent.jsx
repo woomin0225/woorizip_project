@@ -1715,6 +1715,9 @@ export default function OrchestrateQuickAgent() {
       normalized.includes('계약페이지') ||
       normalized.includes('계약내역') ||
       normalized.includes('계약목록') ||
+      normalized.includes('계약현황') ||
+      normalized.includes('계약상태') ||
+      normalized.includes('계약진행상황') ||
       normalized.includes('전자계약')
     ) {
       goToPage(
@@ -1728,7 +1731,11 @@ export default function OrchestrateQuickAgent() {
     if (
       normalized.includes('투어페이지') ||
       normalized.includes('투어내역') ||
-      normalized.includes('투어목록')
+      normalized.includes('투어목록') ||
+      normalized.includes('신청현황') ||
+      normalized.includes('신청목록') ||
+      normalized.includes('승인현황') ||
+      normalized.includes('승인목록')
     ) {
       goToPage(
         '/mypage/tour',
@@ -1765,6 +1772,40 @@ export default function OrchestrateQuickAgent() {
         'reserve',
         'facilityCancel',
       ]);
+      return true;
+    }
+
+    if (
+      (normalized.includes('현재페이지') ||
+        normalized.includes('지금보고있는페이지') ||
+        normalized.includes('이페이지') ||
+        normalized.includes('여기서')) &&
+      (normalized.includes('예약해줘') ||
+        normalized.includes('예약하고싶') ||
+        normalized.includes('예약할래') ||
+        normalized === '예약')
+    ) {
+      if (location.pathname.startsWith('/facility')) {
+        moveToReservationView(
+          '예약 페이지로 이동했습니다. 날짜와 시간을 선택해 예약을 진행할 수 있습니다.',
+          ['reserve', 'facilityCancel']
+        );
+        return true;
+      }
+
+      if (roomContext?.roomNo) {
+        goToPage(
+          `/rooms/${roomContext.roomNo}/tour`,
+          '현재 방의 투어 신청 페이지로 이동했습니다. 방문 날짜와 시간을 선택해 주세요.',
+          ['tour']
+        );
+        return true;
+      }
+
+      appendAssistantMessage(
+        '현재 페이지에서는 바로 예약할 대상을 찾지 못했습니다. 공용시설 페이지나 방 상세페이지에서 다시 말씀해 주세요.',
+        ['facilityMenu', 'roomRecommend']
+      );
       return true;
     }
 
