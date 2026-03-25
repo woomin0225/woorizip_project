@@ -52,11 +52,14 @@ export default function MyInfoModify() {
     birthDate: '',
     gender: '',
     type: 'USER',
+    provider: '',
+    socialId: '',
   });
   const [editable, setEditable] = useState({
     name: false,
     phone: false,
     address: false,
+    birthDate: false,
     type: false,
   });
   const [openPostcode, setOpenPostcode] = useState(false);
@@ -75,12 +78,18 @@ export default function MyInfoModify() {
           ),
           gender: normalizeGender(info?.gender),
           type: normalizeType(info?.type),
+          provider: String(info?.provider || '').trim(),
+          socialId: String(info?.socialId || info?.social_id || '').trim(),
         })
       )
       .catch((e) => setMessage(e.message || '내정보 조회 실패'));
   }, []);
 
   const age = useMemo(() => calculateAge(form.birthDate), [form.birthDate]);
+  const isSocialLoginUser = useMemo(
+    () => Boolean(form.provider || form.socialId),
+    [form.provider, form.socialId]
+  );
 
   const onChange = (key) => (e) => {
     const value = e.target.value;
@@ -112,6 +121,7 @@ export default function MyInfoModify() {
         name: form.name?.trim(),
         phone: form.phone?.trim(),
         address: form.address?.trim(),
+        birthDate: isSocialLoginUser ? form.birthDate || undefined : undefined,
         type: form.type || undefined,
       };
 
@@ -134,6 +144,7 @@ export default function MyInfoModify() {
         name: false,
         phone: false,
         address: false,
+        birthDate: false,
         type: false,
       });
     } catch (e) {
@@ -271,13 +282,34 @@ export default function MyInfoModify() {
                       <p className={styles.fieldLabel}>생년월일</p>
                       <div className={styles.fieldControl}>
                         <input
-                          className={`${styles.input} ${styles.readOnlyInput}`}
+                          className={`${styles.input} ${
+                            !editable.birthDate ? styles.readOnlyInput : ''
+                          }`}
                           type="date"
                           value={form.birthDate}
-                          readOnly
+                          onChange={onChange('birthDate')}
+                          disabled={!editable.birthDate}
                         />
                       </div>
+                      <div className={styles.inlineBtnGroup}>
+                        <button
+                          type="button"
+                          className={`${styles.inlineBtn} ${
+                            editable.birthDate ? styles.inlineBtnActive : ''
+                          }`}
+                          onClick={() => toggleEdit('birthDate')}
+                          disabled={!isSocialLoginUser}
+                        >
+                          {editable.birthDate ? '완료' : '수정'}
+                        </button>
+                      </div>
                     </div>
+
+                    {isSocialLoginUser && (
+                      <p className={styles.desc} style={{ marginTop: -4, marginBottom: 12 }}>
+                        소셜 로그인 회원은 생년월일을 수정할 수 있으며, 나이는 저장한 생년월일 기준으로 자동 계산됩니다.
+                      </p>
+                    )}
 
                     <div className={styles.fieldRow}>
                       <p className={styles.fieldLabel}>나이</p>

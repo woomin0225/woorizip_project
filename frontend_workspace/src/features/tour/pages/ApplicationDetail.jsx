@@ -26,6 +26,9 @@ function statusLabel(status) {
       return '승인됨';
     case 'REJECTED':
       return '취소/거절';
+    case 'CANCELED':
+    case 'CANCELLED':
+      return '자동취소';
     case 'APPLIED':
       return '신청됨';
     case 'ACTIVE':
