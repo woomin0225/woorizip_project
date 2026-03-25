@@ -60,7 +60,7 @@ class Settings(BaseSettings):
     SPRING_INTERNAL_API_KEY: str | None = None
 
     # ===== Audio =====
-    DEFAULT_TTS_VOICE: str = "ko-KR-Standard-A"
+    DEFAULT_TTS_VOICE: str = "ko-KR-Neural2-A"
     DEFAULT_AUDIO_FORMAT: str = "mp3"
     DEFAULT_STT_LANGUAGE: str = "ko-KR"
     GOOGLE_APPLICATION_CREDENTIALS: str | None = None

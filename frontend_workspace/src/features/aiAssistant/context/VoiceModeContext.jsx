@@ -19,6 +19,7 @@ const DEFAULT_SETTINGS = {
   voiceCommandEnabled: true,
   fontScale: 1,
 };
+const DEFAULT_SERVER_VOICE_NAME = 'ko-KR-Neural2-A';
 
 const VoiceModeContext = createContext(null);
 
@@ -209,7 +210,7 @@ export function VoiceModeProvider({ children }) {
   const playServerSpeech = useCallback(async (text, options = {}) => {
     const { audioBytes, mimeType } = await synthesizeTts({
       text: String(text),
-      voiceName: options.voiceName,
+      voiceName: options.voiceName || DEFAULT_SERVER_VOICE_NAME,
     });
 
     return new Promise((resolve, reject) => {
@@ -259,8 +260,12 @@ export function VoiceModeProvider({ children }) {
         try {
           await playServerSpeech(text, options);
           return true;
-        } catch {
-          return playBrowserSpeech(text, options);
+        } catch (error) {
+          if (options.allowBrowserFallback === true) {
+            return playBrowserSpeech(text, options);
+          }
+          console.warn('Server TTS playback failed.', error);
+          return false;
         }
       }
 

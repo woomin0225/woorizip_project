@@ -97,7 +97,7 @@ class GoogleCloudTTSClient(TextToSpeechClient):
         }
 
     def _normalize_voice_name(self, voice_name: str | None) -> str:
-        default_voice = (settings.DEFAULT_TTS_VOICE or 'ko-KR-Standard-A').strip()
+        default_voice = (settings.DEFAULT_TTS_VOICE or 'ko-KR-Neural2-A').strip()
         candidate = (voice_name or '').strip()
         if not candidate:
             return default_voice
