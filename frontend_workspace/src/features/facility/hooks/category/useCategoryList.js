@@ -1,7 +1,7 @@
 // src/features/facility/hooks/category/useCategoryList.js
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { getFacilityCategories } from '../../api/facilityApi';
-import { unwrapApi } from '../../../../shared/utils/apiUnwrap';
+import { normalizeApiError } from '../../../../app/http/errorMapper';
 
 export const useCategoryList = () => {
   const [categories, setCategories] = useState([]);
@@ -17,8 +17,9 @@ export const useCategoryList = () => {
       console.log('상세 데이터 로드 성공:', actualData);
       setCategories(actualData);
     } catch (err) {
-      setError(err);
-      console.error(err.message);
+      const apiError = normalizeApiError(err);
+      setError(apiError);
+      console.error(apiError.message);
     } finally {
       setLoading(false);
     }

@@ -5,7 +5,7 @@ import {
   modifyFacilityCategory,
   getFacilityCategories,
 } from '../../api/facilityApi';
-import { unwrapApi } from '../../../../shared/utils/apiUnwrap';
+import { normalizeApiError } from '../../../../app/http/errorMapper';
 
 const schema = {
   facilityType: '',
@@ -36,8 +36,9 @@ export function useCategoryForm(facilityCode = null) {
             });
           }
         } catch (err) {
-          setError(err);
-          console.error(err.message);
+          const apiError = normalizeApiError(err);
+          setError(apiError);
+          console.error(apiError.message);
         } finally {
           setLoading(false);
         }
@@ -78,8 +79,9 @@ export function useCategoryForm(facilityCode = null) {
       alert(response.message);
       navigate('/admin/category');
     } catch (err) {
-      setError(err);
-      alert(err.message);
+      const apiError = normalizeApiError(err);
+      setError(apiError);
+      alert(apiError.message);
     } finally {
       setSubmitting(false);
     }
