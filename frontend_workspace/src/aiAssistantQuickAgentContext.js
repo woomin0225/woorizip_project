@@ -18,10 +18,18 @@ export const getRoomContext = (pathname = window.location.pathname) => {
   const href = tourLink?.getAttribute('href') || '';
   const hrefMatch = href.match(/^\/rooms\/([^/]+)\/tour$/);
   const roomNo = hrefMatch?.[1] || roomMatch?.[1] || '';
+  const blockedTitles = ['투어 신청', '계약 신청', '투어내역', '계약내역', '예약', '요약'];
   const titleCandidates = Array.from(document.querySelectorAll('main h3, main h2'))
     .map((node) => String(node.textContent || '').replace(/^[^\p{L}\p{N}]+/gu, '').trim())
-    .filter(Boolean);
-  const roomName = titleCandidates.find((currentText) => !currentText.includes('위치') && !currentText.includes('공용시설') && !currentText.includes('방 옵션')) || '';
+    .filter(Boolean)
+    .filter(
+      (currentText) =>
+        !currentText.includes('위치') &&
+        !currentText.includes('공용시설') &&
+        !currentText.includes('방 옵션') &&
+        !blockedTitles.includes(currentText)
+    );
+  const roomName = titleCandidates[0] || '';
   if (!roomNo) return {};
   return { roomNo, roomName };
 };

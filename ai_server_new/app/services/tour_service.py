@@ -73,6 +73,37 @@ class TourService:
             resolved_user_phone = self._resolve_optional_user_phone(
                 request.userPhone or default_user_phone
             )
+            if not resolved_user_name or not resolved_user_phone:
+                return {
+                    'schemaVersion': request.schemaVersion,
+                    'reply': (
+                        "투어 신청을 계속하려면 신청자 정보 확인이 필요합니다.\n"
+                        "로그인 상태를 확인한 뒤 다시 시도해 주세요."
+                    ),
+                    'intent': 'TOUR_APPLY',
+                    'slots': {
+                        'roomNo': (request.roomNo or '').strip(),
+                        'roomName': (request.roomName or '').strip(),
+                        'visitDate': visit_date,
+                        'visitTime': visit_time,
+                        'preferredVisitAt': (request.preferredVisitAt or '').strip(),
+                        'userName': resolved_user_name,
+                        'userPhone': resolved_user_phone,
+                        'inquiry': self._normalize_inquiry(request.inquiry),
+                    },
+                    'action': {
+                        'name': 'TOUR_APPLY',
+                        'path': '/ai/tour/workflow/apply',
+                        'target': 'spring_tour_api',
+                        'status': 'missing_user_profile',
+                    },
+                    'result': {},
+                    'errorCode': 'TOUR_APPLY_MISSING_USER_PROFILE',
+                    'requiresConfirm': False,
+                    'sessionId': request.sessionId,
+                    'clientRequestId': request.clientRequestId,
+                    'raw': {'error': '사용자 이름 또는 전화번호가 필요합니다.'},
+                }
             apply_result = await self.apply(
                 TourApplyReq(
                     roomNo=request.roomNo,
