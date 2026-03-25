@@ -81,7 +81,7 @@ export default function Login() {
                       <FormGroup className="mb-3">
                         <InputGroup className="input-group-alternative">
                           <InputGroupText>
-                            <i className="ni ni-email-83" />
+                            <i className="fa fa-envelope" />
                           </InputGroupText>
                           <Input
                             name="emailId"
@@ -97,7 +97,7 @@ export default function Login() {
                       <FormGroup>
                         <InputGroup className="input-group-alternative">
                           <InputGroupText>
-                            <i className="ni ni-lock-circle-open" />
+                            <i className="fa fa-lock" />
                           </InputGroupText>
                           <Input
                             name="password"

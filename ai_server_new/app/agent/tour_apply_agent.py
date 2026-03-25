@@ -169,7 +169,10 @@ class TourApplyAgent:
                 default_user_name=session_state.get("userName"),
                 default_user_phone=session_state.get("userPhone"),
             )
-            if result.get("errorCode") == "TOUR_APPLY_FAILED":
+            if result.get("errorCode") in {
+                "TOUR_APPLY_FAILED",
+                "TOUR_APPLY_INVALID_SCHEDULE",
+            }:
                 session_state["stage"] = "awaiting_visit_at"
                 self.store.set(session_id, session_state)
                 return self._build_retry_response(
@@ -177,6 +180,9 @@ class TourApplyAgent:
                     session_state,
                     str(result.get("raw", {}).get("error") or result.get("reply") or ""),
                 )
+            if result.get("errorCode"):
+                self.store.set(session_id, session_state)
+                return result
             self.store.delete(session_id)
             return result
         except Exception:

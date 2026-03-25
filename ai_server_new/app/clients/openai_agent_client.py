@@ -255,10 +255,55 @@ class OpenAIAgentClient:
         if not text:
             return raw
 
+        structured = self._try_parse_structured_text(text)
+        if structured is not None:
+            normalized = dict(raw)
+            normalized.update(structured)
+            normalized.setdefault("result", {"provider": "azure-ai-agent"})
+            return normalized
+
         normalized = dict(raw)
         normalized.setdefault("reply", text)
         normalized.setdefault("result", {"provider": "azure-ai-agent"})
         return normalized
+
+    def _try_parse_structured_text(self, text: str) -> dict[str, Any] | None:
+        compact = (text or "").strip()
+        if not compact:
+            return None
+
+        candidates = [compact]
+        fenced_match = parse_re = None
+        try:
+            import re
+
+            fenced_match = re.search(
+                r"```(?:json)?\s*(\{.*?\})\s*```",
+                compact,
+                re.DOTALL,
+            )
+            parse_re = re
+        except Exception:
+            fenced_match = None
+
+        if fenced_match:
+            candidates.append(fenced_match.group(1).strip())
+
+        if parse_re is not None and compact.startswith("{") and compact.endswith("}"):
+            candidates.append(compact)
+
+        for candidate in candidates:
+            try:
+                parsed = json.loads(candidate)
+            except json.JSONDecodeError:
+                continue
+            if isinstance(parsed, dict) and (
+                isinstance(parsed.get("reply"), str)
+                or isinstance(parsed.get("intent"), str)
+                or isinstance(parsed.get("action"), dict)
+            ):
+                return parsed
+        return None
 
     def _extract_output_text(self, raw: dict[str, Any]) -> str:
         for key in ("reply", "output_text", "message"):

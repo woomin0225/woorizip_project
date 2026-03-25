@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+import json
 import re
 
 from app.clients.spring_tour_client import SpringTourClient
@@ -144,9 +145,99 @@ class TourService:
                     'clientRequestId': request.clientRequestId,
                     'raw': {'error': error_message},
                 }
+            if self._is_schedule_error(error_message):
+                return {
+                    'schemaVersion': request.schemaVersion,
+                    'reply': (
+                        "방문 날짜와 시간을 다시 확인해 주세요.\n"
+                        "투어 가능 시간은 14시 ~ 19시 사이 정각입니다.\n"
+                        "예: 5월 13일 오후 5시"
+                    ),
+                    'intent': 'TOUR_APPLY',
+                    'slots': {
+                        'roomNo': (request.roomNo or '').strip(),
+                        'roomName': (request.roomName or '').strip(),
+                        'visitDate': (request.visitDate or '').strip(),
+                        'visitTime': (request.visitTime or '').strip(),
+                        'preferredVisitAt': (request.preferredVisitAt or '').strip(),
+                    },
+                    'action': {
+                        'name': 'TOUR_APPLY',
+                        'path': '/ai/tour/workflow/apply',
+                        'target': 'spring_tour_api',
+                        'status': 'retry',
+                    },
+                    'result': {},
+                    'errorCode': 'TOUR_APPLY_INVALID_SCHEDULE',
+                    'requiresConfirm': False,
+                    'sessionId': request.sessionId,
+                    'clientRequestId': request.clientRequestId,
+                    'raw': {'error': error_message},
+                }
+            if self._is_auth_error(error_message):
+                return {
+                    'schemaVersion': request.schemaVersion,
+                    'reply': (
+                        "투어 신청을 진행하려면 로그인 상태를 먼저 확인해 주세요.\n"
+                        "로그인 후 같은 방에서 다시 신청해 주시면 바로 도와드릴게요."
+                    ),
+                    'intent': 'TOUR_APPLY',
+                    'slots': {
+                        'roomNo': (request.roomNo or '').strip(),
+                        'roomName': (request.roomName or '').strip(),
+                        'visitDate': (request.visitDate or '').strip(),
+                        'visitTime': (request.visitTime or '').strip(),
+                        'preferredVisitAt': (request.preferredVisitAt or '').strip(),
+                    },
+                    'action': {
+                        'name': 'TOUR_APPLY',
+                        'path': '/ai/tour/workflow/apply',
+                        'target': 'spring_tour_api',
+                        'status': 'rejected',
+                    },
+                    'result': {},
+                    'errorCode': 'TOUR_APPLY_AUTH_REQUIRED',
+                    'requiresConfirm': False,
+                    'sessionId': request.sessionId,
+                    'clientRequestId': request.clientRequestId,
+                    'raw': {'error': error_message},
+                }
+            spring_message = self._extract_spring_error_message(error_message)
+            if spring_message:
+                return {
+                    'schemaVersion': request.schemaVersion,
+                    'reply': (
+                        f"투어 신청을 완료하지 못했어요.\n"
+                        f"{spring_message}"
+                    ),
+                    'intent': 'TOUR_APPLY',
+                    'slots': {
+                        'roomNo': (request.roomNo or '').strip(),
+                        'roomName': (request.roomName or '').strip(),
+                        'visitDate': (request.visitDate or '').strip(),
+                        'visitTime': (request.visitTime or '').strip(),
+                        'preferredVisitAt': (request.preferredVisitAt or '').strip(),
+                    },
+                    'action': {
+                        'name': 'TOUR_APPLY',
+                        'path': '/ai/tour/workflow/apply',
+                        'target': 'spring_tour_api',
+                        'status': 'failed',
+                    },
+                    'result': {},
+                    'errorCode': 'TOUR_APPLY_REJECTED',
+                    'requiresConfirm': False,
+                    'sessionId': request.sessionId,
+                    'clientRequestId': request.clientRequestId,
+                    'raw': {'error': error_message},
+                }
             return {
                 'schemaVersion': request.schemaVersion,
-                'reply': f"투어 신청 처리 중 문제가 발생했습니다. {error_message}",
+                'reply': (
+                    "투어 신청 처리 중 문제가 발생했습니다.\n"
+                    "입력하신 일정은 확인했지만 신청을 완료하지 못했어요.\n"
+                    "잠시 후 다시 시도해 주세요."
+                ),
                 'intent': 'TOUR_APPLY',
                 'slots': {
                     'roomNo': (request.roomNo or '').strip(),
@@ -174,6 +265,44 @@ class TourService:
                 'clientRequestId': request.clientRequestId,
                 'raw': {'error': str(exc)},
             }
+
+    def _is_schedule_error(self, error_message: str) -> bool:
+        lowered = (error_message or '').lower()
+        schedule_keywords = (
+            '날짜와 시간 형식이 올바르지 않습니다',
+            '방문시간 형식이 올바르지 않습니다',
+            '방문시간 값이 필요합니다',
+            '방문일자 값이 필요합니다',
+            '방문일자 형식이 올바르지 않습니다',
+            'tour_unavailable_time',
+        )
+        return any(keyword in lowered for keyword in map(str.lower, schedule_keywords))
+
+    def _is_auth_error(self, error_message: str) -> bool:
+        lowered = (error_message or '').lower()
+        return 'status=401' in lowered or 'status=403' in lowered
+
+    def _extract_spring_error_message(self, error_message: str) -> str:
+        compact = (error_message or '').strip()
+        if not compact:
+            return ''
+        body_marker = 'body='
+        marker_index = compact.find(body_marker)
+        if marker_index < 0:
+            return ''
+        body_text = compact[marker_index + len(body_marker):].strip()
+        if not body_text:
+            return ''
+        try:
+            parsed = json.loads(body_text)
+        except json.JSONDecodeError:
+            return ''
+        if not isinstance(parsed, dict):
+            return ''
+        message = parsed.get('message')
+        if isinstance(message, str) and message.strip():
+            return message.strip()
+        return ''
 
     def _resolve_visit_schedule(
         self,
