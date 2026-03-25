@@ -1,5 +1,6 @@
 package org.team4p.woorizip.tour.model.service;
 
+import java.time.LocalDate;
 import org.team4p.woorizip.common.api.PageResponse;
 import org.team4p.woorizip.tour.model.dto.TourDto;
 
@@ -19,4 +20,7 @@ public interface TourService {
 
     // 투어 수정
     int updateTour(TourDto tourDto);
+
+    // 계약 승인에 따라 같은 기간의 투어 자동 취소
+    int cancelToursForApprovedContract(String roomNo, LocalDate moveInDate, int termMonths);
 }

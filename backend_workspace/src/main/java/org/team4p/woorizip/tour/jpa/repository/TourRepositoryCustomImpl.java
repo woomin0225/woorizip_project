@@ -115,4 +115,23 @@ public class TourRepositoryCustomImpl implements TourRepositoryCustom {
 
         return exists != null;
     }
+
+    @Override
+    public List<TourEntity> findByRoomNoAndVisitDateBetweenAndStatusIn(
+            String roomNo,
+            LocalDate startDate,
+            LocalDate endDate,
+            Collection<String> statuses
+    ) {
+        return queryFactory
+                .selectFrom(tourEntity)
+                .where(
+                        tourEntity.roomNo.eq(roomNo),
+                        tourEntity.visitDate.goe(startDate),
+                        tourEntity.visitDate.loe(endDate),
+                        tourEntity.status.in(statuses)
+                )
+                .orderBy(tourEntity.visitDate.asc(), tourEntity.visitTime.asc())
+                .fetch();
+    }
 }

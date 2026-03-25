@@ -24,4 +24,10 @@ public interface TourRepositoryCustom {
             Collection<String> statuses,
             String tourNo
     );
+    List<TourEntity> findByRoomNoAndVisitDateBetweenAndStatusIn(
+            String roomNo,
+            LocalDate startDate,
+            LocalDate endDate,
+            Collection<String> statuses
+    );
 }
