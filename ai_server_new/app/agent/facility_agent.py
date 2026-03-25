@@ -4,6 +4,19 @@ from app.services.reservation_service import ReservationService
 from app.schemas import ReservationAnalyzeReq
 from datetime import datetime
 
+FACILITY_KEYWORDS = (
+    "예약",
+    "시설",
+    "공용시설",
+    "예약내역",
+    "예약현황",
+    "예약목록",
+    "시설예약",
+    "공용시설예약",
+    "시설현황",
+    "시설분석",
+)
+
 
 class FacilityAgent:
     def __init__(self, service: ReservationService):
@@ -16,7 +29,7 @@ class FacilityAgent:
             return True
         text = str(payload.get("text") or "").replace(" ", "")
         print(f">>> [DEBUG] Payload Text: {text}")
-        return any(kw in text for kw in ("예약", "시설", "현황", "분석"))
+        return any(kw in text for kw in FACILITY_KEYWORDS)
 
     async def run(self, payload: dict[str, Any]) -> dict[str, Any]:
         session_id = str(payload.get("userId") or payload.get("sessionId") or "")
@@ -56,7 +69,7 @@ class FacilityAgent:
         if status == "ANALYZE_COMPLETED":
             return self._build_confirm_response(payload, result, session)
 
-        return {"reply": result.get("message"), "sessionId": session_id}
+        return self._build_collecting_response(payload, result, session_id)
 
     def _partial_clear(self, session_id: str):
         h_no = self.sessions[session_id].get("house_no")
@@ -121,4 +134,19 @@ class FacilityAgent:
             "data": result.get("data"),
             "options": result.get("options"),
             "sessionId": payload.get("sessionId"),
+        }
+
+    def _build_collecting_response(self, payload, result, session_id: str):
+        return {
+            "schemaVersion": payload.get("schemaVersion") or "v1",
+            "reply": result.get("message") or "예약 정보를 다시 말씀해 주세요.",
+            "intent": "FACILITY_MANAGEMENT",
+            "action": {
+                "name": "COLLECT_RESERVATION_INFO",
+                "target": "facility_agent",
+                "status": "collecting",
+            },
+            "result": {},
+            "sessionId": payload.get("sessionId") or session_id,
+            "clientRequestId": payload.get("clientRequestId"),
         }
