@@ -1088,12 +1088,13 @@ export default function OrchestrateQuickAgent() {
       setLoading(true);
       await updateMyInfo({ [field.key]: value });
       if (field.key === 'name') {
+        sessionStorage.setItem('userName', value);
         localStorage.setItem('userName', value);
       }
       window.dispatchEvent(new Event('profile-updated'));
-      setProfileEditFlow({ step: 'field' });
+      setProfileEditFlow(null);
       appendAssistantMessage(
-        `${field.label}이 ${displayValue}(으)로 변경되었습니다. 다른 항목도 수정하려면 항목 이름과 새 값을 말씀해 주세요.`,
+        `${field.label}이 ${displayValue}(으)로 변경되었습니다.`,
         []
       );
       return true;
@@ -1844,6 +1845,48 @@ export default function OrchestrateQuickAgent() {
     return true;
   };
 
+  const isConversationCancelIntent = (messageText) => {
+    const normalized = normalizeText(messageText);
+    return (
+      normalized === '취소' ||
+      normalized.includes('그만') ||
+      normalized.includes('중지') ||
+      normalized.includes('멈춰') ||
+      normalized.includes('안할래') ||
+      normalized.includes('안할게') ||
+      normalized.includes('취소할래') ||
+      normalized.includes('취소해줘')
+    );
+  };
+
+  const cancelActiveConversationFlows = (messageText) => {
+    if (!isConversationCancelIntent(messageText)) {
+      return false;
+    }
+
+    const hasActiveLocalFlow =
+      Boolean(reservationFlow) ||
+      Boolean(profileEditFlow) ||
+      Boolean(awaitingRoomRecommendation) ||
+      Boolean(pendingConfirmation);
+
+    if (!hasActiveLocalFlow) {
+      return false;
+    }
+
+    setReservationFlow(null);
+    setProfileEditFlow(null);
+    setAwaitingRoomRecommendation(false);
+    setLastRecommendedRooms([]);
+    setPendingConfirmation(null);
+    setSessionId(newSessionId());
+    appendAssistantMessage(
+      '진행 중인 요청을 취소했어요. 처음 상태로 돌아갈게요. 무엇을 도와드릴까요?',
+      starterActionIds
+    );
+    return true;
+  };
+
   const sendMessage = async (rawText, options = {}) => {
     const messageText = String(rawText || '').trim();
     if (!messageText || loading) return;
@@ -1852,6 +1895,10 @@ export default function OrchestrateQuickAgent() {
     const displayText = options.displayText || messageText;
     setInput('');
     setMessages((prev) => [...prev, { role: 'user', text: displayText }]);
+
+    if (cancelActiveConversationFlows(messageText)) {
+      return;
+    }
 
     if (await resolveReservationDraftConfirmation(messageText)) {
       return;
