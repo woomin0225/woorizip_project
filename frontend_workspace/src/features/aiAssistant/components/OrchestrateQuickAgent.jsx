@@ -1712,7 +1712,10 @@ export default function OrchestrateQuickAgent() {
     if (
       normalized.includes('예약내역') ||
       normalized.includes('예약페이지') ||
-      normalized.includes('예약확인')
+      normalized.includes('예약확인') ||
+      normalized.includes('예약현황') ||
+      normalized.includes('내예약') ||
+      normalized.includes('예약목록')
     ) {
       moveToReservationView('예약 내역 페이지로 이동했습니다.', [
         'reserve',
