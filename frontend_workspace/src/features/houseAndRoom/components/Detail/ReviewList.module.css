@@ -8,11 +8,31 @@
   font-weight: 800;
 }
 .writeLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   text-decoration: none;
-  border: 1px solid #ddd;
+  border: 1px solid #c9713f;
   border-radius: 10px;
   padding: 8px 10px;
-  background: #fff;
+  background: #c9713f;
+  color: #fff;
+  font-weight: 800;
+  line-height: 1.35;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.writeLink,
+.writeLink:visited,
+.writeLink:hover,
+.writeLink:active {
+  color: #fff;
+  text-decoration: none;
+}
+
+.writeLink:hover {
+  border-color: #b86334;
+  background: #b86334;
 }
 .empty {
   color: #666;
@@ -36,20 +56,44 @@
   gap: 6px;
   flex-wrap: wrap;
 }
+.navButton,
 .page,
 .active {
-  border: 1px solid #ddd;
-  background: #fff;
+  border: 1px solid #c9713f;
+  background: #c9713f;
   border-radius: 8px;
   padding: 6px 10px;
   cursor: pointer;
+  color: #fff;
+  font-weight: 800;
+  line-height: 1.35;
+  transition: background-color 0.2s ease, border-color 0.2s ease,
+    color 0.2s ease;
 }
 .active {
-  border-color: #6b5b95;
-  background: #f2eef7;
-  font-weight: 700;
+  border-color: #8f4d2c;
+  background: #8f4d2c;
+}
+
+.navButton:hover:not(:disabled),
+.page:hover {
+  border-color: #b86334;
+  background: #b86334;
+}
+
+.active:hover {
+  border-color: #8f4d2c;
+  background: #8f4d2c;
+}
+
+.navButton:disabled {
+  border-color: #ead7c8;
+  background: #f6ede7;
+  color: #c7a892;
+  cursor: not-allowed;
 }
 .dots {
-  color: #888;
+  color: #8a4c2d;
   padding: 0 4px;
+  font-weight: 700;
 }

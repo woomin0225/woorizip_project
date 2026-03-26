@@ -26,7 +26,7 @@ export default function ReviewList({ roomNo, page, currentUserNo, onChangePage, 
 
   const buttons = buildButtons(number, totalPages);
 
-const navigate = useNavigate();
+  const navigate = useNavigate();
 
   function go(p) {
     if (!onChangePage) return;
@@ -78,12 +78,21 @@ const navigate = useNavigate();
 
       {/* 페이지네이션 */}
       <div className={styles.paging}>
-        <button onClick={() => go(number - 1)} disabled={number <= 0}>이전</button>
+        <button
+          type="button"
+          className={styles.navButton}
+          onClick={() => go(number - 1)}
+          disabled={number <= 0}
+        >
+          이전
+        </button>
 
         <div className={styles.pages}>
           {buttons[0] > 0 && (
             <>
-              <button className={styles.page} onClick={() => go(0)}>1</button>
+              <button type="button" className={styles.page} onClick={() => go(0)}>
+                1
+              </button>
               <span className={styles.dots}>…</span>
             </>
           )}
@@ -91,6 +100,7 @@ const navigate = useNavigate();
           {buttons.map((p) => (
             <button
               key={p}
+              type="button"
               onClick={() => go(p)}
               className={p === number ? styles.active : styles.page}
             >
@@ -101,12 +111,25 @@ const navigate = useNavigate();
           {buttons[buttons.length - 1] < totalPages - 1 && (
             <>
               <span className={styles.dots}>…</span>
-              <button className={styles.page} onClick={() => go(totalPages - 1)}>{totalPages}</button>
+              <button
+                type="button"
+                className={styles.page}
+                onClick={() => go(totalPages - 1)}
+              >
+                {totalPages}
+              </button>
             </>
           )}
         </div>
 
-        <button onClick={() => go(number + 1)} disabled={number >= totalPages - 1}>다음</button>
+        <button
+          type="button"
+          className={styles.navButton}
+          onClick={() => go(number + 1)}
+          disabled={number >= totalPages - 1}
+        >
+          다음
+        </button>
       </div>
 
       <DeleteConfirmModal
