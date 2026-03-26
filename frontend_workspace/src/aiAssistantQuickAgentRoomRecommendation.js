@@ -4,7 +4,7 @@ const DEFAULT_ROOM_RECOMMENDATION_COND = {
   keyword: '', roomType: 'L', minDeposit: null, maxDeposit: null, minTax: null, maxTax: null,
   swLat: 37.4531, swLng: 126.8446, neLat: 37.7201, neLng: 127.2244,
   houseOptions: [], roomOptions: [], roomRoomCount: null, houseElevatorYn: false,
-  housePetYn: false, houseFemaleLimit: false, houseParking: true, criterion: 'LATEST',
+  housePetYn: false, houseFemaleLimit: false, houseParking: false, criterion: 'LATEST',
 };
 const ROOM_SEARCH_PAGE_TRIGGER_PATTERNS = ['방검색', '방 찾기', '방찾기', '방찾고싶어', '방찾고싶', '방보고싶어', '방보고싶', '방보여줘', '방목록', '방 리스트'];
 const ROOM_RECOMMENDATION_TRIGGER_PATTERNS = ['방추천', '추천해줘', '추천해주세요', '추천부탁', '추천받고싶', '추천받고싶어', '추천좀', '추천해줄래', '추천받을래', '추천받아보고싶'];
@@ -42,7 +42,7 @@ const extractBudgetRange = (text, label) => {
   const minMatch = source.match(new RegExp(`${label}\\s*([\\d.,]+\\s*(?:억|천만|백만|십만|만원|만|원)?)\\s*(?:이상|부터|초과|넘는)`));
   return { min: minMatch ? parseAmountToWon(minMatch[1]) : null, max: maxMatch ? parseAmountToWon(maxMatch[1]) : null };
 };
-const extractLocationKeyword = (messageText) => String(messageText || '').match(/([가-힣0-9]{2,}(?:역|구|동|로|가))(?:근처|부근|쪽|인근)?/)?.[1] || '';
+const extractLocationKeyword = (messageText) => String(messageText || '').match(/([가-힣0-9]{1,}(?:역|구|동|로|가))(?:\s*(?:근처|부근|쪽|인근))?/)?.[1] || '';
 
 export const buildRoomRecommendationRequest = (messageText) => {
   const text = String(messageText || '');

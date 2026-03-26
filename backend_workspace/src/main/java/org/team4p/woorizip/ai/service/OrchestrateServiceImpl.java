@@ -4,10 +4,13 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.HashMap;
 
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.team4p.woorizip.ai.dto.OrchestrateCommandRequest;
 import org.team4p.woorizip.ai.dto.OrchestrateCommandResponse;
+import org.team4p.woorizip.auth.security.principal.CustomUserPrincipal;
 
 import lombok.RequiredArgsConstructor;
 
@@ -43,6 +46,7 @@ public class OrchestrateServiceImpl implements OrchestrateService {
             }
             extraHeaders.put("Authorization", token);
         }
+        appendUserContextHeaders(extraHeaders);
 
         Map<String, Object> raw = aiServerClient.post("/ai/assistant/run", payload, extraHeaders);
 
@@ -78,5 +82,27 @@ public class OrchestrateServiceImpl implements OrchestrateService {
             return bool;
         }
         return Boolean.parseBoolean(String.valueOf(value));
+    }
+
+    private void appendUserContextHeaders(Map<String, String> headers) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !StringUtils.hasText(authentication.getName())) {
+            return;
+        }
+
+        headers.put("X-User-Id", authentication.getName());
+
+        if (authentication.getPrincipal() instanceof CustomUserPrincipal principal
+                && StringUtils.hasText(principal.getName())) {
+            headers.put("X-User-Name", principal.getName());
+        }
+
+        String roles = authentication.getAuthorities().stream()
+                .map(grantedAuthority -> grantedAuthority.getAuthority())
+                .reduce((left, right) -> left + "," + right)
+                .orElse("");
+        if (StringUtils.hasText(roles)) {
+            headers.put("X-Roles", roles);
+        }
     }
 }

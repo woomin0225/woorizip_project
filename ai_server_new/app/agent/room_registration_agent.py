@@ -249,6 +249,11 @@ class RoomRegistrationAgent:
         slots = session_state.setdefault("slots", {})
         available_houses = context.get("available_houses") or session_state.get("available_houses") or []
         current_house = context.get("current_house") or {}
+        defer_initial_house_autofill = self._should_defer_initial_house_autofill(
+            session_state,
+            request_meta,
+            available_houses,
+        )
         # 권한 결과를 세션에 저장해 두면 같은 턴의 응답 생성과 세션 정리에서 재사용할 수 있다.
         session_state["room_create_allowed"] = self._get_room_create_permission(request_meta)
 
@@ -256,7 +261,7 @@ class RoomRegistrationAgent:
         # 다음 턴에서 사용자가 건물명만 말해도 houseNo로 다시 연결할 수 있다.
         session_state["available_houses"] = available_houses
 
-        if current_house:
+        if current_house and not defer_initial_house_autofill:
             if current_house.get("houseNo") and not slots.get("houseNo"):
                 slots["houseNo"] = current_house["houseNo"]
             if current_house.get("houseName"):
@@ -278,6 +283,30 @@ class RoomRegistrationAgent:
 
         session_state["slots"] = slots
         return session_state
+
+    def _should_defer_initial_house_autofill(
+        self,
+        session_state: dict[str, Any],
+        request_meta: dict[str, Any] | None,
+        available_houses: list[dict[str, str]],
+    ) -> bool:
+        """첫 방 등록 요청에서는 여러 건물 중 하나를 자동 선택하지 않는다."""
+
+        if len(available_houses) <= 1:
+            return False
+
+        slots = session_state.get("slots", {})
+        if slots.get("houseNo") or slots.get("houseName"):
+            return False
+
+        if session_state.get("pending_slot") == "houseNo":
+            return True
+
+        if session_state.get("pending_slot"):
+            return False
+
+        user_text = str((request_meta or {}).get("text") or "")
+        return should_handle_room_create(user_text, session_state)
 
     def _load_session(self, state: RoomRegistrationState) -> dict[str, Any]:
         """기존 세션을 불러오고, 이번 요청의 프론트 컨텍스트도 덧입힌다."""
