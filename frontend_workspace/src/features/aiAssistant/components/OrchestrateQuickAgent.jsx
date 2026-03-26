@@ -1867,7 +1867,6 @@ export default function OrchestrateQuickAgent() {
     const hasActiveLocalFlow =
       Boolean(reservationFlow) ||
       Boolean(profileEditFlow) ||
-      Boolean(awaitingRoomRecommendation) ||
       Boolean(pendingConfirmation);
 
     if (!hasActiveLocalFlow) {
@@ -1876,8 +1875,6 @@ export default function OrchestrateQuickAgent() {
 
     setReservationFlow(null);
     setProfileEditFlow(null);
-    setAwaitingRoomRecommendation(false);
-    setLastRecommendedRooms([]);
     setPendingConfirmation(null);
     setSessionId(newSessionId());
     appendAssistantMessage(
