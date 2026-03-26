@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+﻿import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { buildUploadUrl } from '../../../app/config/env';
 
@@ -47,6 +47,12 @@ function toKrwText(value) {
   return money ? `${money} 원` : '-';
 }
 
+function formatRoomLabel(roomName) {
+  if (!roomName) return '';
+  const text = String(roomName).trim();
+  return text.endsWith('호') ? text : `${text}호`;
+}
+
 export default function Detail() {
   const navigate = useNavigate();
   const { isAuthed, userNo: currentUserNo } = useAuth();
@@ -64,7 +70,7 @@ export default function Detail() {
   const [roomImageNames, setRoomImageNames] = useState([]);
   const [houseImageNames, setHouseImageNames] = useState([]);
 
-  // 리뷰는 Page로 오고, 숫자 페이지네이션
+  // 리뷰 페이지 번호와 페이지 데이터를 관리합니다.
   const [reviewPageNo, setReviewPageNo] = useState(0);
   const [reviewPage, setReviewPage] = useState(null);
   const [roomSummaryMap, setRoomSummaryMap] = useState({});
@@ -115,7 +121,7 @@ export default function Detail() {
 
   async function toggleWish(roomNo, nextWished) {
     if (!currentUserNo) {
-      alert('찜 기능은 로그인 후 사용할 수 있습니다.');
+      alert('찜 기능은 로그인 후에만 사용할 수 있습니다.');
       navigate(ROUTES.AUTH.LOGIN, { replace: true });
       return false;
     }
@@ -174,7 +180,7 @@ export default function Detail() {
 
   useEffect(() => () => clearTimeout(summaryPollTimeoutRef.current), []);
 
-  // 방 선택 -> 방/방이미지 로드 + 리뷰 0페이지
+  // 방 선택 시 방 정보, 이미지, 리뷰 첫 페이지를 다시 불러옵니다.
   useEffect(() => {
     if (!selectedRoomNo) {
       setRoom(null);
@@ -201,7 +207,7 @@ export default function Detail() {
     })();
   }, [selectedRoomNo]);
 
-  // 리뷰 페이지 변경 -> 재조회
+  // 리뷰 페이지가 바뀌면 해당 페이지를 다시 조회합니다.
   useEffect(() => {
     if (!selectedRoomNo) return;
 
@@ -215,7 +221,7 @@ export default function Detail() {
     })();
   }, [selectedRoomNo, reviewPageNo]);
 
-  // houseNo가 준비되면 건물 관련 로드
+  // houseNo가 준비되면 건물 정보와 방 목록을 불러옵니다.
   useEffect(() => {
     if (!activeHouseNo) {
       setHouse(null);
@@ -300,7 +306,7 @@ export default function Detail() {
     }
   }
 
-  // 업로드 경로(UploadProperties 기준)
+  // 업로드 경로 기준으로 이미지 URL을 구성합니다.
   const houseImageUrls = useMemo(
     () =>
       houseImageNames
@@ -329,11 +335,11 @@ export default function Detail() {
     }
     shouldScrollToRoomRef.current = true;
     setSelectedRoomNo(nextRoomNo);
-    // 라우트 작업 이후: navigate(`/rooms/${nextRoomNo}`)
+    // 필요하면 추후 라우팅도 함께 갱신할 수 있습니다.
   }
 
   function handleRequireLoginForWish() {
-    alert('찜 기능은 로그인 후 사용할 수 있습니다.');
+    alert('찜 기능은 로그인 후에만 사용할 수 있습니다.');
     navigate(ROUTES.AUTH.LOGIN, { replace: true });
   }
 
@@ -375,7 +381,7 @@ export default function Detail() {
     } catch (e) {
       if (summaryRequestIdRef.current !== requestId) return;
       clearTimeout(summaryPollTimeoutRef.current);
-      setSummaryError(e.message || 'AI 방 정보 요약 생성 요청에 실패했습니다.');
+      setSummaryError(e.message || 'AI 방 정보 요약 요청에 실패했습니다.');
     } finally {
       if (summaryRequestIdRef.current === requestId && !shouldKeepPolling) {
         setSummaryLoading(false);
@@ -385,7 +391,7 @@ export default function Detail() {
 
   return (
     <div className={styles.wrap}>
-      {/* 좌측 */}
+      {/* 좌측 사이드바 */}
       <aside className={styles.sidebar}>
         <div className={styles.sidebarSticky}>
           <div className={styles.roomListWrap}>
@@ -407,14 +413,6 @@ export default function Detail() {
               disabled={!canApplyContract}
             />
             {room?.roomEmptyYn === false &&
-              !canApplyTour &&
-              occupancyEndDateText && (
-                <div className={styles.applyHint}>
-                  현재 거주중인 방입니다. 투어/입주 신청은 계약 종료 1개월
-                  전부터 가능하며, 예상 종료일은 {occupancyEndDateText}입니다.
-                </div>
-              )}
-            {room?.roomEmptyYn === false &&
               canApplyTour &&
               occupancyEndDateText && (
                 <div className={styles.applyHint}>
@@ -427,10 +425,10 @@ export default function Detail() {
         </div>
       </aside>
 
-      {/* 중앙~우측 */}
+      {/* 메인 콘텐츠 */}
       <main className={styles.main}>
         {!activeHouseNo && (
-          <div className={styles.empty}>왼쪽 목록에서 방을 선택하세요.</div>
+          <div className={styles.empty}>좌측 목록에서 방을 선택하세요.</div>
         )}
 
         {activeHouseNo && (
@@ -444,24 +442,24 @@ export default function Detail() {
                   {house?.houseAddress ?? ''} {house?.houseAddressDetail ?? ''}
                 </div>
               </div>
-              {loading && <div className={styles.loading}>불러오는 중…</div>}
+              {loading && <div className={styles.loading}>불러오는 중...</div>}
             </div>
 
-            {/* 1) 건물이미지 */}
+            {/* 1) 건물 이미지 */}
             <section className={styles.section}>
               {/* <h3 className={styles.sectionTitle}>건물 사진</h3> */}
               <ImageGallery images={houseImageUrls} />
             </section>
 
-            {/* 2) 건물정보 */}
+            {/* 2) 건물 정보 */}
             <section className={styles.section}>
               {/* <h3 className={styles.sectionTitle}>{house?.houseName}</h3> */}
               <HouseInfoCard house={house} />
             </section>
 
-            {/* 3) 작은지도(주변 아이콘은 숨김) */}
+            {/* 3) 방 위치 */}
             <section className={styles.section}>
-              <h3 className={styles.sectionTitle}>📍 위치</h3>
+              <h3 className={styles.sectionTitle}>방 위치</h3>
               <HouseMiniMap lat={house?.houseLat} lng={house?.houseLng} />
             </section>
 
@@ -472,7 +470,7 @@ export default function Detail() {
             </section>
 
             {!selectedRoomNo && (
-              <div className={styles.empty}>왼쪽 목록에서 방을 선택하세요.</div>
+              <div className={styles.empty}>좌측 목록에서 방을 선택하세요.</div>
             )}
 
             {selectedRoomNo && (
@@ -480,7 +478,9 @@ export default function Detail() {
                 <section className={styles.section} ref={roomNameSectionRef}>
                   <br />
                   <br />
-                  <h3 className={styles.sectionTitle}>🛋️ {room?.roomName}</h3>
+                  <h3 className={styles.sectionTitle}>
+                    {formatRoomLabel(room?.roomName)}
+                  </h3>
                 </section>
 
                 <section className={styles.section}>
@@ -490,7 +490,7 @@ export default function Detail() {
                         <h4 className={styles.summaryTitle}>AI 방 정보 요약</h4>
                         <p className={styles.summaryHint}>
                           방 기본 정보, 사진 요약, 리뷰 요약을 묶어서 AI가 한
-                          번에 정리합니다.
+                          번에 정리해드립니다.
                         </p>
                       </div>
 
@@ -547,49 +547,49 @@ export default function Detail() {
                   </div>
                 </section>
 
-                {/* 5) 방이미지 */}
+                {/* 5) 방 이미지 */}
                 <section className={styles.section}>
                   {/* <h3 className={styles.sectionTitle}>방 사진</h3> */}
                   <ImageGallery images={roomImageUrls} />
                 </section>
 
-                {/* 6) 방정보 (공실여부 포함) */}
+                {/* 6) 방 정보 */}
                 <section className={styles.section}>
                   {/* <h3 className={styles.sectionTitle}>방 정보</h3> */}
                   <div className={styles.infoGrid}>
-                    {/* <div>🛋️ 호실: {room?.roomName ?? '-'}</div> */}
+                    {/* <div>호수: {room?.roomName ?? '-'}</div> */}
                     <div>
-                      🔑 공실여부: {room?.roomEmptyYn ? '공실' : '거주중'}
+                      상태: {room?.roomEmptyYn ? '공실' : '거주중'}
                     </div>
                     <div>
-                      ✍️ 거래:{' '}
+                      거래 종류:{' '}
                       {room?.roomMethod == 'L'
                         ? '전세'
                         : room?.roomMethod == 'M'
                           ? '월세'
                           : '-'}
                     </div>
-                    <div>💰 보증금: {toKrwText(room?.roomDeposit)}</div>
-                    <div>💰 월세: {toKrwText(room?.roomMonthly)}</div>
-                    <div>📐 면적: {room?.roomArea ?? '-'}</div>
-                    <div>🧭 방향: {room?.roomFacing ?? '-'}</div>
-                    <div>🛏️ 방 수: {room?.roomRoomCount ?? '-'}</div>
-                    <div>🚽 욕실 수: {room?.roomBathCount ?? '-'}</div>
-                    <div>📆 입주가능일: {room?.roomAvailableDate ?? '-'}</div>
+                    <div>보증금: {toKrwText(room?.roomDeposit)}</div>
+                    <div>월세: {toKrwText(room?.roomMonthly)}</div>
+                    <div>면적: {room?.roomArea ?? '-'}</div>
+                    <div>방향: {room?.roomFacing ?? '-'}</div>
+                    <div>방 개수: {room?.roomRoomCount ?? '-'}</div>
+                    <div>욕실 수: {room?.roomBathCount ?? '-'}</div>
+                    <div>입주가능일: {room?.roomAvailableDate ?? '-'}</div>
                   </div>
 
                   <div className={styles.abstractBox}>
-                    {room?.roomAbstract || '소개 내용이 없습니다.'}
+                    {room?.roomAbstract || '공개 내용이 없습니다.'}
                   </div>
                 </section>
 
-                {/* 7) 방옵션 */}
+                {/* 7) 방 옵션 */}
                 <section className={styles.section}>
                   <h3 className={styles.sectionTitle}>방 옵션</h3>
                   <RoomOptionList options={room?.roomOptions} />
                 </section>
 
-                {/* 8) 리뷰(Page + 숫자 페이지네이션) */}
+                {/* 8) 리뷰 */}
                 <section className={styles.section}>
                   <br />
                   <br />

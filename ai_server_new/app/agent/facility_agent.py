@@ -1,8 +1,22 @@
 # app/agents/facility_agent.py
-from typing import Any
-from app.services.reservation_service import ReservationService
-from app.schemas import ReservationAnalyzeReq
 from datetime import datetime
+from typing import Any
+
+from app.schemas import ReservationAnalyzeReq
+from app.services.reservation_service import ReservationService
+
+FACILITY_KEYWORDS = (
+    "예약",
+    "시설",
+    "공용시설",
+    "예약내역",
+    "예약현황",
+    "예약목록",
+    "시설예약",
+    "공용시설예약",
+    "시설현황",
+    "시설분석",
+)
 
 
 class FacilityAgent:
@@ -18,7 +32,7 @@ class FacilityAgent:
         if session_key in self.sessions:
             return True
         text = str(payload.get("text") or "").replace(" ", "")
-        return any(kw in text for kw in ("예약", "시설", "현황", "분석"))
+        return any(kw in text for kw in FACILITY_KEYWORDS)
 
     async def run(self, payload: dict[str, Any]) -> dict[str, Any]:
         session_key = self._get_session_key(payload)
@@ -83,7 +97,7 @@ class FacilityAgent:
 
     def _build_house_select_response(self, payload, result):
         return {
-            "schemaVersion": "v1",
+            "schemaVersion": payload.get("schemaVersion") or "v1",
             "reply": self._reply_text(
                 result,
                 "현황을 확인할 건물을 선택해 주세요.",
@@ -100,6 +114,7 @@ class FacilityAgent:
             },
             "requiresConfirm": False,
             "sessionId": payload.get("sessionId"),
+            "clientRequestId": payload.get("clientRequestId"),
         }
 
     def _build_confirm_response(self, payload, result, session):
@@ -122,7 +137,7 @@ class FacilityAgent:
             )
 
         return {
-            "schemaVersion": "v1",
+            "schemaVersion": payload.get("schemaVersion") or "v1",
             "reply": self._reply_text(
                 result,
                 "예약 정보를 다시 확인해 주세요.",
@@ -148,11 +163,12 @@ class FacilityAgent:
             },
             "requiresConfirm": False,
             "sessionId": payload.get("sessionId"),
+            "clientRequestId": payload.get("clientRequestId"),
         }
 
     def _build_stats_response(self, payload, result):
         return {
-            "schemaVersion": "v1",
+            "schemaVersion": payload.get("schemaVersion") or "v1",
             "reply": self._reply_text(
                 result,
                 "시설 현황 결과를 불러왔습니다.",
@@ -170,11 +186,12 @@ class FacilityAgent:
             },
             "requiresConfirm": False,
             "sessionId": payload.get("sessionId"),
+            "clientRequestId": payload.get("clientRequestId"),
         }
 
-    def _build_collecting_response(self, payload, result, session_id):
+    def _build_collecting_response(self, payload, result, session_id: str):
         return {
-            "schemaVersion": "v1",
+            "schemaVersion": payload.get("schemaVersion") or "v1",
             "reply": self._reply_text(
                 result,
                 "예약에 필요한 정보를 다시 말씀해 주세요.",
@@ -191,4 +208,5 @@ class FacilityAgent:
             },
             "requiresConfirm": False,
             "sessionId": payload.get("sessionId") or session_id,
+            "clientRequestId": payload.get("clientRequestId"),
         }
