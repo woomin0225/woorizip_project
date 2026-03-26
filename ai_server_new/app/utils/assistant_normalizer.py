@@ -116,8 +116,8 @@ def normalize_context(context: dict[str, Any] | None) -> dict[str, Any]:
 
     current_house = normalize_house_context_item(context.get('currentHouse'))
     if current_house:
-        # 사용자가 이미 특정 건물의 등록 화면에 있다면
-        # 첫 질문부터 건물을 다시 묻지 않도록 현재 건물 정보를 함께 보낸다.
+        # 사용자가 특정 건물 화면에 있더라도,
+        # 실제 자동 선택 여부는 방 등록 에이전트가 후보 건물 수와 대화 단계에 따라 판단한다.
         normalized['currentHouse'] = current_house
 
     available_houses = context.get('availableHouses')

@@ -33,6 +33,10 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ReservationServiceImpl implements ReservationService {
 
+	private static final int DEFAULT_RESERVATION_UNIT_MINUTES = 30;
+	private static final int DEFAULT_MAX_DURATION_MINUTES = 120;
+	private static final int DEFAULT_MAX_RESERVATIONS_PER_DAY = Integer.MAX_VALUE;
+
 	private final FacilityRepository facilityRepository;
 	private final ReservationRepository reservationRepository;
 	private final UserRepository userRepository;
@@ -227,6 +231,11 @@ public class ReservationServiceImpl implements ReservationService {
 	                                 LocalTime start, LocalTime end, String excludeRsvnNo, boolean isAdmin) {
 	    
 	    LocalDateTime startDateTime = LocalDateTime.of(date, start);
+	    LocalTime openTime = facility.getFacilityOpenTime();
+	    LocalTime closeTime = facility.getFacilityCloseTime();
+	    int unit = resolveReservationUnitMinutes(facility);
+	    int maxDurationMinutes = resolveMaxDurationMinutes(facility, unit);
+	    int maxReservationsPerDay = resolveMaxReservationsPerDay(facility);
 
 	    // 과거 시간 예약 불가
 	    if (startDateTime.isBefore(LocalDateTime.now())) {
@@ -234,7 +243,10 @@ public class ReservationServiceImpl implements ReservationService {
 	    }
 
 	    // 시설 운영 시간 확인
-	    if (start.isBefore(facility.getFacilityOpenTime()) || end.isAfter(facility.getFacilityCloseTime())) {
+	    if (openTime == null || closeTime == null) {
+	        throw new IllegalArgumentException("시설 운영 시간이 설정되지 않았습니다.");
+	    }
+	    if (start.isBefore(openTime) || end.isAfter(closeTime)) {
 	        throw new ForbiddenException("시설 운영 시간 내의 예약이 아닙니다.");
 	    }
 
@@ -244,13 +256,12 @@ public class ReservationServiceImpl implements ReservationService {
 	    }
 	    
 	    // 운영 종료 시간이 23:59일 때
-	    boolean isLastTimeFull = end.equals(facility.getFacilityCloseTime());
+	    boolean isLastTimeFull = end.equals(closeTime);
 
 	    // 예약 단위/최대 시간 검증 수정
-	    int unit = facility.getFacilityRsvnUnitMinutes();
 	    long duration;
 
-	    if (isLastTimeFull && end.toString().startsWith("23:59")) {
+	    if (isLastTimeFull && closeTime.toString().startsWith("23:59")) {
 	        duration = java.time.Duration.between(start, end).toMinutes() + 1;
 	    } else {
 	        duration = java.time.Duration.between(start, end).toMinutes();
@@ -261,7 +272,7 @@ public class ReservationServiceImpl implements ReservationService {
 	        throw new ForbiddenException("예약 시간은 " + unit + "분 단위로 지정되어야 합니다.");
 	    }
 
-	    if (finalDuration > facility.getFacilityMaxDurationMinutes()) {
+	    if (finalDuration > maxDurationMinutes) {
 	        throw new ForbiddenException("최대 예약 가능 시간을 초과하였습니다.");
 	    }
 
@@ -274,7 +285,7 @@ public class ReservationServiceImpl implements ReservationService {
 	            count = reservationRepository.countByUser_UserNoAndFacility_FacilityNoAndReservationDateAndReservationNoNotAndReservationStatus(userNo, facility.getFacilityNo(), date, excludeRsvnNo, ReservationStatus.APPROVED);
 	        }
 	        
-	        if (count >= facility.getMaxRsvnPerDay()) {
+	        if (count >= maxReservationsPerDay) {
 	            throw new ForbiddenException("일일 예약 가능 횟수를 초과하였습니다.");
 	        }
 	    }
@@ -307,6 +318,22 @@ public class ReservationServiceImpl implements ReservationService {
 	    if (isUserBusy) {
 	        throw new ForbiddenException("해당 시간대에 다른 시설 예약 내역이 존재합니다.");
 	    }
+	}
+
+	private int resolveReservationUnitMinutes(FacilityEntity facility) {
+	    Integer value = facility.getFacilityRsvnUnitMinutes();
+	    return (value != null && value > 0) ? value : DEFAULT_RESERVATION_UNIT_MINUTES;
+	}
+
+	private int resolveMaxDurationMinutes(FacilityEntity facility, int unitMinutes) {
+	    Integer value = facility.getFacilityMaxDurationMinutes();
+	    int fallback = Math.max(DEFAULT_MAX_DURATION_MINUTES, unitMinutes);
+	    return (value != null && value > 0) ? value : fallback;
+	}
+
+	private int resolveMaxReservationsPerDay(FacilityEntity facility) {
+	    Integer value = facility.getMaxRsvnPerDay();
+	    return (value != null && value > 0) ? value : DEFAULT_MAX_RESERVATIONS_PER_DAY;
 	}
 	
 	// 시설 사용 분석용 데이터 조회
