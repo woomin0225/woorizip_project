@@ -78,9 +78,9 @@ export default function Header() {
         setMyPageRoute(ROUTES.MEMBER.MYPAGE);
 
         const latestName =
-          decodedToken.name ||
           sessionStorage.getItem('userName') ||
           localStorage.getItem('userName') ||
+          decodedToken.name ||
           '고객';
         setUserName(latestName);
       } catch (e) {
