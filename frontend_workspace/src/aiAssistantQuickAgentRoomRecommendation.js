@@ -117,15 +117,20 @@ export const formatRecommendedRoomsMessage = (rooms) =>
 export const pickRecommendedRoom = (messageText, rooms) => {
   if (!Array.isArray(rooms) || rooms.length === 0) return null;
   const normalized = normalizeText(messageText);
-  if (!isRoomDetailRequest(normalized)) return null;
-  if (normalized.includes('2번') || normalized.includes('두번째') || normalized.includes('두번')) return rooms[1] || null;
-  if (normalized.includes('3번') || normalized.includes('세번째') || normalized.includes('세번')) return rooms[2] || null;
+  const indexMatch = normalized.match(/(\d+)\s*번(?:방)?/);
+  const selectedIndex = indexMatch ? Number(indexMatch[1]) - 1 : null;
+  if (selectedIndex !== null && selectedIndex >= 0 && selectedIndex < rooms.length) {
+    return rooms[selectedIndex] || null;
+  }
   const matchedByName = rooms.find((room) => {
     const roomName = normalizeText(room?.roomName || '');
     const houseName = normalizeText(room?.houseName || '');
     return (roomName && normalized.includes(roomName)) || (houseName && normalized.includes(houseName));
   });
   if (matchedByName) return matchedByName;
+  if (!isRoomDetailRequest(normalized)) return null;
+  if (normalized.includes('2번') || normalized.includes('두번째') || normalized.includes('두번')) return rooms[1] || null;
+  if (normalized.includes('3번') || normalized.includes('세번째') || normalized.includes('세번')) return rooms[2] || null;
   if (normalized.includes('1번') || normalized.includes('첫번째') || normalized.includes('첫방') || normalized.includes('그방') || normalized.includes('이방')) return rooms[0] || null;
   return rooms[0] || null;
 };

@@ -189,7 +189,7 @@ class TourApplyAgent:
                     str(result.get("raw", {}).get("error") or result.get("reply") or ""),
                 )
             if result.get("errorCode"):
-                self.store.set(session_id, session_state)
+                self.store.delete(session_id)
                 return result
             self.store.delete(session_id)
             return result
