@@ -11,7 +11,7 @@ export const ACTIONS = [
   {
     id: 'roomRegister',
     label: '방 등록',
-    prompt: '방 등록',
+    prompt: '방 등록해줘',
     aliases: ['방등록', '매물등록', '등록하기'],
     related: ['facilityMenu', 'summary'],
     mode: 'direct',

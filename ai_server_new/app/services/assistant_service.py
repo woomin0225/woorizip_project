@@ -1,13 +1,19 @@
 from __future__ import annotations
 
-from app.agent import RoomRegistrationAgent, TourApplyAgent, FacilityAgent
+from app.agent import (
+    RoomRegistrationAgent,
+    TourApplyAgent,
+    FacilityAgent,
+    RoomRecommendationAgent,
+)
+from app.clients.groq_llm_client import GroqLLMClient
 from app.clients.openai_agent_client import OpenAIAgentClient
 from app.clients.spring_room_client import SpringRoomClient
 from app.clients.spring_tour_client import SpringTourClient
-from app.clients.spring_facility_client import SpringFacilityClient
 from app.core.config import settings
 from app.schemas import AssistantRunReq
 from app.services.room_service import RoomService
+from app.services.room_recommendation_service import RoomRecommendationService
 from app.services.tour_service import TourService
 from app.services.reservation_service import ReservationService
 from app.utils.assistant_normalizer import (
@@ -27,7 +33,17 @@ class AssistantService:
             RoomService(SpringRoomClient())
         )
         self.tour_apply_agent = TourApplyAgent(TourService(SpringTourClient()))
-        self.facility_agent = FacilityAgent(ReservationService(SpringFacilityClient()))
+        self.facility_agent = FacilityAgent(
+            ReservationService(
+                GroqLLMClient(
+                    api_key=settings.GROQ_API_KEY,
+                    model=settings.GROQ_MODEL,
+                )
+            )
+        )
+        self.room_recommendation_agent = RoomRecommendationAgent(
+            RoomRecommendationService(SpringRoomClient())
+        )
 
     async def run(
         self,
@@ -50,6 +66,9 @@ class AssistantService:
 
         if self.facility_agent.should_handle(payload):
             return await self.facility_agent.run(payload)
+
+        if self.room_recommendation_agent.should_handle(payload):
+            return await self.room_recommendation_agent.run(payload)
 
         if not (settings.AI_AGENT_ENDPOINT or "").strip():
             return self._build_mock_response(payload)

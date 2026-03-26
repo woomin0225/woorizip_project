@@ -36,19 +36,13 @@ import {
 } from '../../../aiAssistantQuickAgentProfileEdit';
 import {
   buildRoomRecommendationRequest,
-  formatRecommendedRoomsMessage,
   hasRoomPreference,
-  isRoomPreferenceRequest,
   isRoomRecommendationRequest,
   isRoomSearchPageRequest,
-  isRoomsSearchPage,
-  pickRecommendedRoom,
-  sortRecommendedRooms,
 } from '../../../aiAssistantQuickAgentRoomRecommendation';
 import { useAiAssistantAgentUserContext } from '../../../useAiAssistantAgentUserContext';
 import { runOrchestrateCommand } from '../api/orchestrateApi';
 import { fetchBoardSummary } from '../../board/api/BoardSummaryApi';
-import { searchRooms } from '../../houseAndRoom/api/roomApi';
 import { getMyInfo, isLessorType, updateMyInfo } from '../../user/api/userAPI';
 import botIcon from '../../../assets/images/ai_bot.png';
 import { useAuth } from '../../../app/providers/AuthProvider';
@@ -141,9 +135,6 @@ export default function OrchestrateQuickAgent() {
   // 같은 패널 안에서는 기본적으로 같은 세션을 쓰되,
   // 사용자가 다시 "방 등록"을 시작하면 새 세션으로 바꿔 오래된 상태를 끊는다.
   const [sessionId, setSessionId] = useState(newSessionId);
-  const [awaitingRoomRecommendation, setAwaitingRoomRecommendation] =
-    useState(false);
-  const [lastRecommendedRooms, setLastRecommendedRooms] = useState([]);
   const [profileEditFlow, setProfileEditFlow] = useState(null);
   const [reservationFlow, setReservationFlow] = useState(null);
   useEffect(() => {
@@ -154,8 +145,6 @@ export default function OrchestrateQuickAgent() {
     setInput('');
     setLoading(false);
     setPendingConfirmation(null);
-    setAwaitingRoomRecommendation(false);
-    setLastRecommendedRooms([]);
     setProfileEditFlow(null);
     setSessionId(newSessionId());
     lastSpokenMessageRef.current = '';
@@ -185,13 +174,6 @@ export default function OrchestrateQuickAgent() {
     setOpen(false);
     setReservationFlow(null);
   }, [stopListening, stopSpeaking]);
-
-  useEffect(() => {
-    if (!location.pathname.startsWith('/rooms')) {
-      setAwaitingRoomRecommendation(false);
-      setLastRecommendedRooms([]);
-    }
-  }, [location.pathname]);
 
   useEffect(() => {
     if (!isProfileEditPage(location.pathname)) {
@@ -304,15 +286,48 @@ export default function OrchestrateQuickAgent() {
     return true;
   };
 
-  const moveToRecommendedRoomDetail = (room) => {
-    if (!room?.roomNo) return false;
+  const applyFacilityManagementResult = (result) => {
+    const normalizedIntent = String(result?.intent || '').toUpperCase();
+    if (normalizedIntent !== 'FACILITY_MANAGEMENT') {
+      return;
+    }
 
-    navigate(`/rooms/${room.roomNo}`);
-    appendAssistantMessage(
-      `${room.roomName || '선택한 방'} 상세보기 페이지로 이동했습니다. 사진, 가격, 후기와 투어 정보를 확인할 수 있습니다.`,
-      ['reviews', 'tour', 'summary']
-    );
-    return true;
+    const normalizedActionName = String(result?.action?.name || '').toUpperCase();
+    const resultPayload =
+      result && typeof result?.result === 'object' ? result.result : {};
+    const analyzeResult =
+      resultPayload && typeof resultPayload.analyzeResult === 'object'
+        ? resultPayload.analyzeResult
+        : null;
+
+    if (normalizedActionName !== 'CONFIRM_RESERVATION' || !analyzeResult) {
+      return;
+    }
+
+    setReservationFlow({
+      step: 'confirm',
+      facilities: [],
+      selectedFacility: {
+        facilityNo:
+          analyzeResult.facilityNo || resultPayload?.session?.facilityNo || '',
+        facilityName:
+          resultPayload?.session?.facilityName || '공용시설',
+      },
+      selectedDate:
+        analyzeResult.reservationDate || resultPayload?.session?.date || '',
+      selectedStartTime: String(
+        analyzeResult.reservationStartTime ||
+          resultPayload?.session?.startTime ||
+          ''
+      ).substring(0, 5),
+      selectedEndTime: String(
+        analyzeResult.reservationEndTime || resultPayload?.session?.endTime || ''
+      ).substring(0, 5),
+      reservedList: [],
+      availableStartTimes: [],
+      availableEndTimes: [],
+      showCustomDatePicker: false,
+    });
   };
 
   const normalizeFacilityList = (response) => {
@@ -1001,6 +1016,28 @@ export default function OrchestrateQuickAgent() {
     }
   };
 
+  const resolveReservationDraftConfirmation = async (messageText) => {
+    if (reservationFlow?.step !== 'confirm') {
+      return false;
+    }
+
+    if (isYes(messageText)) {
+      appendAssistantMessage('예약을 진행할게요.', [
+        'reservationStatus',
+        'facilityCancel',
+      ]);
+      await handleConfirmReservation();
+      return true;
+    }
+
+    if (isNo(messageText)) {
+      handleCancelReservationFlow();
+      return true;
+    }
+
+    return false;
+  };
+
   const startProfileEditWorkflow = () => {
     navigate('/mypage/edit');
     setProfileEditFlow({ step: 'field' });
@@ -1156,111 +1193,6 @@ export default function OrchestrateQuickAgent() {
 
     return false;
   };
-  const handleRoomRecommendationFlow = async (messageText) => {
-    const normalized = normalizeText(messageText);
-    const selectedRoom = pickRecommendedRoom(messageText, lastRecommendedRooms);
-    if (selectedRoom) {
-      setAwaitingRoomRecommendation(false);
-      return moveToRecommendedRoomDetail(selectedRoom);
-    }
-
-    const explicitRecommendationRequest =
-      isRoomRecommendationRequest(normalized);
-    const preferenceRecommendationRequest = isRoomPreferenceRequest(normalized);
-
-    if (
-      explicitRecommendationRequest &&
-      !isRoomsSearchPage(location.pathname)
-    ) {
-      goToPage(
-        '/rooms',
-        '방 추천은 방찾기 페이지에서 바로 도와드릴게요. 방찾기 페이지로 이동했습니다. 원하는 지역, 예산, 방 종류를 말씀해 주세요.',
-        ['roomRecommend', 'deposit', 'monthlyRent']
-      );
-      setAwaitingRoomRecommendation(true);
-      setLastRecommendedRooms([]);
-      return true;
-    }
-
-    if (!isRoomsSearchPage(location.pathname)) {
-      return false;
-    }
-
-    if (
-      !explicitRecommendationRequest &&
-      !preferenceRecommendationRequest &&
-      !awaitingRoomRecommendation
-    ) {
-      return false;
-    }
-
-    if (awaitingRoomRecommendation && isNo(messageText)) {
-      setAwaitingRoomRecommendation(false);
-      appendAssistantMessage(
-        '방 추천을 잠시 멈출게요. 다시 원하시면 원하는 조건과 함께 말씀해 주세요.',
-        [],
-        { showActions: false }
-      );
-      return true;
-    }
-
-    const request = buildRoomRecommendationRequest(messageText);
-    if (
-      (explicitRecommendationRequest || preferenceRecommendationRequest) &&
-      !hasRoomPreference(request)
-    ) {
-      setAwaitingRoomRecommendation(true);
-      appendAssistantMessage(
-        '원하는 방 조건을 먼저 알려주세요. 예를 들면 전세나 월세, 보증금이나 월세 예산, 1인실 또는 2인실, 원하는 지역, 저렴한 방이나 넓은 방 같은 선호를 말씀해 주시면 바로 추천해 드릴게요.',
-        [],
-        { showActions: false }
-      );
-      return true;
-    }
-
-    try {
-      setLoading(true);
-      const slice = await searchRooms(request.cond, 0, 12);
-      const fetchedRooms = Array.isArray(slice?.content) ? slice.content : [];
-      const rooms = sortRecommendedRooms(
-        fetchedRooms,
-        request.preference
-      ).slice(0, 3);
-
-      setAwaitingRoomRecommendation(false);
-      setLastRecommendedRooms(rooms);
-
-      if (rooms.length === 0) {
-        appendAssistantMessage(
-          '조건에 맞는 방을 아직 찾지 못했어요. 지역이나 예산을 조금 넓히거나 방 종류를 바꿔서 다시 말씀해 주시면 다시 찾아볼게요.',
-          ['roomRecommend', 'tour', 'wishlist']
-        );
-        return true;
-      }
-
-      appendAssistantMessage(
-        `조건에 맞춰 추천한 방입니다.\n${formatRecommendedRoomsMessage(rooms)}\n\n마음에 드는 방이 있으면 "1번 방 자세히 보여줘", "그 방 들어가줘"처럼 말씀해 주세요.`,
-        ['reviews', 'tour', 'wishlist']
-      );
-      return true;
-    } catch (error) {
-      const errorBody = error?.response?.data;
-      const apiMessage =
-        errorBody?.data ||
-        errorBody?.message ||
-        error?.message ||
-        '방 추천을 불러오는 중 오류가 발생했습니다.';
-      appendAssistantMessage(`오류: ${apiMessage}`, [
-        'roomRecommend',
-        'availableRooms',
-        'deposit',
-      ]);
-      return true;
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const runQuickAction = async (actionId, options = {}) => {
     const action = ACTION_MAP[actionId];
     if (!action) return;
@@ -1308,9 +1240,9 @@ export default function OrchestrateQuickAgent() {
     }
 
     if (actionId === 'roomRegister') {
-      await sendMessage('방 등록', {
+      await sendMessage('방 등록해줘', {
         skipQuickAction: true,
-        displayText: '방 등록',
+        displayText: '방 등록해줘',
       });
       return;
     }
@@ -1559,8 +1491,21 @@ export default function OrchestrateQuickAgent() {
       return true;
     }
 
-    if (await handleRoomRecommendationFlow(messageText)) {
-      return true;
+    const wantsRoomCreateFlow =
+      isRoomCreateMessage(messageText) &&
+      !normalized.includes('페이지') &&
+      !normalized.includes('화면') &&
+      !normalized.includes('이동') &&
+      !normalized.includes('가줘') &&
+      !normalized.includes('가고싶') &&
+      !normalized.includes('바로가기') &&
+      !normalized.includes('열어') &&
+      !normalized.includes('들어가') &&
+      !normalized.includes('보여줘');
+    if (wantsRoomCreateFlow) {
+      // "방 등록"은 기본적으로 대화형 등록 흐름으로 해석하고,
+      // 페이지 이동 의도가 뚜렷한 표현만 navigation resolver로 보낸다.
+      return false;
     }
 
     const roomContext = getRoomContext(location.pathname);
@@ -1846,6 +1791,22 @@ export default function OrchestrateQuickAgent() {
       );
     }
 
+    const normalizedIntent = String(result?.intent || '').toUpperCase();
+    const normalizedActionName = String(result?.action?.name || '').toUpperCase();
+
+    if (normalizedIntent === 'ROOM_RECOMMEND') {
+      add('roomRecommend');
+    }
+    if (normalizedIntent === 'FACILITY_MANAGEMENT') {
+      add('facilityMenu');
+    }
+    if (normalizedActionName === 'CONFIRM_RESERVATION') {
+      add('reserve');
+    }
+    if (normalizedActionName === 'DISPLAY_STATS') {
+      add('facilityMenu');
+    }
+
     addMatches(result?.intent || '');
     addMatches(result?.action?.name || '');
 
@@ -1886,10 +1847,15 @@ export default function OrchestrateQuickAgent() {
   const sendMessage = async (rawText, options = {}) => {
     const messageText = String(rawText || '').trim();
     if (!messageText || loading) return;
+    const normalizedMessageText = normalizeText(messageText);
 
     const displayText = options.displayText || messageText;
     setInput('');
     setMessages((prev) => [...prev, { role: 'user', text: displayText }]);
+
+    if (await resolveReservationDraftConfirmation(messageText)) {
+      return;
+    }
 
     if (await resolveConfirmation(messageText)) {
       return;
@@ -1899,9 +1865,14 @@ export default function OrchestrateQuickAgent() {
       return;
     }
 
-    const quickAction = options.skipQuickAction
-      ? null
-      : detectQuickAction(messageText, { role: agentRole });
+    const roomRecommendationRequest =
+      isRoomRecommendationRequest(normalizedMessageText) &&
+      hasRoomPreference(buildRoomRecommendationRequest(messageText));
+
+    const quickAction =
+      options.skipQuickAction || roomRecommendationRequest
+        ? null
+        : detectQuickAction(messageText, { role: agentRole });
     if (quickAction) {
       void runQuickAction(quickAction);
       return;
@@ -2004,6 +1975,7 @@ export default function OrchestrateQuickAgent() {
         result?.result ||
         '응답은 받았지만 표시 가능한 메시지 필드가 없습니다.';
       const normalizedIntent = String(result?.intent || '').toUpperCase();
+      applyFacilityManagementResult(result);
 
       if (normalizedIntent === 'SUMMARY') {
         await runQuickAction('summary', { skipConfirm: true });
