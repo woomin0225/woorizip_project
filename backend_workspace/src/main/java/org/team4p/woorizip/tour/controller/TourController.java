@@ -95,13 +95,19 @@ public class TourController {
     public ResponseEntity<ApiResponse<Void>> insertTourInternal(
             @PathVariable("roomNo") String roomNo,
             @RequestHeader(value = "X-API-KEY", required = false) String apiKey,
+            @RequestHeader(value = "X-User-Id", required = false) String userId,
             @RequestBody @Valid InternalTourApplyRequest req) {
         if (!StringUtils.hasText(apiKey) || !apiKey.trim().equals(resolveInternalApiKey())) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ApiResponse.fail("내부 호출 인증에 실패했습니다.", null));
         }
 
-        UserEntity user = findUserByNameAndPhone(req.getUserName(), req.getUserPhone());
+        if (!StringUtils.hasText(roomNo) || "current".equalsIgnoreCase(roomNo.trim())) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.fail("현재 방 정보를 확인할 수 없습니다.", null));
+        }
+
+        UserEntity user = resolveInternalRequestUser(userId, req);
         if (user == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.fail("일치하는 사용자 정보를 찾을 수 없습니다.", null));
@@ -191,6 +197,16 @@ public class TourController {
         return StringUtils.hasText(aiServerProperties.getInternalApiKey())
                 ? aiServerProperties.getInternalApiKey().trim()
                 : "local-dev-key";
+    }
+
+    private UserEntity resolveInternalRequestUser(String userId, InternalTourApplyRequest req) {
+        if (StringUtils.hasText(userId)) {
+            UserEntity user = userRepository.findById(userId.trim()).orElse(null);
+            if (user != null) {
+                return user;
+            }
+        }
+        return findUserByNameAndPhone(req.getUserName(), req.getUserPhone());
     }
 
     private UserEntity findUserByNameAndPhone(String name, String phone) {

@@ -248,8 +248,8 @@ class TourApplyReq(BaseModel):
     roomNo: str
     visitDate: str
     visitTime: str
-    userName: str
-    userPhone: str
+    userName: str | None = None
+    userPhone: str | None = None
     inquiry: str | None = None
 
 
