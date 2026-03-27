@@ -12,15 +12,30 @@ logger = logging.getLogger(__name__)
 
 
 class SpringTourClient:
-    async def apply_tour(self, *, room_no: str, payload: dict, access_token: str | None = None) -> dict:
+    async def apply_tour(
+        self,
+        *,
+        room_no: str,
+        payload: dict,
+        access_token: str | None = None,
+        user_id: str | None = None,
+    ) -> dict:
         return await asyncio.to_thread(
             self._apply_tour_sync,
             room_no=room_no,
             payload=payload,
             access_token=access_token,
+            user_id=user_id,
         )
 
-    def _apply_tour_sync(self, *, room_no: str, payload: dict, access_token: str | None = None) -> dict:
+    def _apply_tour_sync(
+        self,
+        *,
+        room_no: str,
+        payload: dict,
+        access_token: str | None = None,
+        user_id: str | None = None,
+    ) -> dict:
         base_url = (settings.SPRING_BASE_URL or '').rstrip('/')
         if not base_url:
             raise ValueError('SPRING_BASE_URL environment variable is required')
@@ -37,6 +52,8 @@ class SpringTourClient:
             headers['Authorization'] = f'Bearer {access_token}'
         elif settings.SPRING_INTERNAL_API_KEY:
             headers['X-API-KEY'] = settings.SPRING_INTERNAL_API_KEY
+        if user_id:
+            headers['X-User-Id'] = user_id
 
         req = request.Request(url=url, data=body, headers=headers, method='POST')
         try:

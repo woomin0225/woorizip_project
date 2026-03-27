@@ -56,6 +56,7 @@ async def apply_tour_from_workflow(
     return await tour_service.apply_for_chatbot(
         req,
         access_token=None,
+        default_user_id=ctx.get('user_id'),
         default_user_name=ctx.get('user_name'),
         default_user_phone=ctx.get('user_phone'),
     )

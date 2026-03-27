@@ -25,13 +25,19 @@ class TourService:
     def __init__(self, client: SpringTourClient):
         self.client = client
 
-    async def apply(self, request: TourApplyReq, *, access_token: str | None = None) -> dict:
+    async def apply(
+        self,
+        request: TourApplyReq,
+        *,
+        access_token: str | None = None,
+        user_id: str | None = None,
+    ) -> dict:
         normalized_request = TourApplyReq(
             roomNo=self._normalize_room_no(request.roomNo),
             visitDate=self._normalize_visit_date(request.visitDate),
             visitTime=self._normalize_visit_time(request.visitTime),
-            userName=self._normalize_user_name(request.userName),
-            userPhone=self._normalize_user_phone(request.userPhone),
+            userName=self._resolve_optional_user_name(request.userName),
+            userPhone=self._resolve_optional_user_phone(request.userPhone),
             inquiry=self._normalize_inquiry(request.inquiry),
         )
 
@@ -58,6 +64,7 @@ class TourService:
             room_no=normalized_request.roomNo,
             payload=payload,
             access_token=access_token,
+            user_id=user_id,
         )
 
         # CODEX-AZURE-TRACE-START
@@ -82,6 +89,7 @@ class TourService:
         request: TourWorkflowApplyReq,
         *,
         access_token: str | None = None,
+        default_user_id: str | None = None,
         default_user_name: str | None = None,
         default_user_phone: str | None = None,
     ) -> dict:
@@ -108,18 +116,20 @@ class TourService:
             resolved_user_phone = self._resolve_optional_user_phone(
                 request.userPhone or default_user_phone
             )
+            normalized_room_no = self._normalize_room_no(request.roomNo)
             # CODEX-AZURE-TRACE-START
             logger.info(
-                "TOUR_WORKFLOW_APPLY_SERVICE_RESOLVED sessionId=%s roomNo=%s visitDate=%s visitTime=%s userNamePresent=%s userPhonePresent=%s",
+                "TOUR_WORKFLOW_APPLY_SERVICE_RESOLVED sessionId=%s roomNo=%s visitDate=%s visitTime=%s userIdPresent=%s userNamePresent=%s userPhonePresent=%s",
                 request.sessionId,
-                request.roomNo,
+                normalized_room_no,
                 visit_date,
                 visit_time,
+                bool((default_user_id or '').strip()),
                 bool(resolved_user_name),
                 bool(resolved_user_phone),
             )
             # CODEX-AZURE-TRACE-END
-            if not resolved_user_name or not resolved_user_phone:
+            if self._is_current_room_placeholder(normalized_room_no):
                 return {
                     'schemaVersion': request.schemaVersion,
                     'reply': (
@@ -152,7 +162,7 @@ class TourService:
                 }
             apply_result = await self.apply(
                 TourApplyReq(
-                    roomNo=self._normalize_room_no(request.roomNo),
+                    roomNo=normalized_room_no,
                     visitDate=visit_date,
                     visitTime=visit_time,
                     userName=resolved_user_name,
@@ -160,6 +170,7 @@ class TourService:
                     inquiry=request.inquiry,
                 ),
                 access_token=None,
+                user_id=(default_user_id or '').strip() or None,
             )
             room_name = (request.roomName or '').strip()
             room_label = room_name or '현재 보고 계신 방'
@@ -176,8 +187,6 @@ class TourService:
                     'roomNo': apply_result['roomNo'],
                     'visitDate': apply_result['visitDate'],
                     'visitTime': apply_result['visitTime'],
-                    'userName': resolved_user_name,
-                    'userPhone': resolved_user_phone,
                     'inquiry': self._normalize_inquiry(request.inquiry),
                 },
                 'action': {
@@ -724,12 +733,18 @@ class TourService:
         compact = re.sub(r'\s+', '', str(value or '')).strip()
         if not compact:
             raise ValueError('roomNo is required')
+        if self._is_current_room_placeholder(compact):
+            return 'current'
         if compact.isdigit():
             return f'room{compact}'
         match = re.fullmatch(r'room[-_\s]?(\d+)', compact, re.IGNORECASE)
         if match:
             return f'room{match.group(1)}'
         return compact
+
+    def _is_current_room_placeholder(self, value: str | None) -> bool:
+        compact = re.sub(r'\s+', '', str(value or '')).strip().lower()
+        return compact in {'current', 'currentroom', 'roomcurrent'}
 
     def _coerce_future_schedule_year(self, parsed: datetime) -> datetime:
         now = datetime.now()
