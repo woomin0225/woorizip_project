@@ -33,7 +33,7 @@ public class RoomFinalSummaryScheduler {
 				// Pass only roomNo so every caller goes through the same claim logic in the service.
 				String summary = roomAiService.summaryPendingRooms(entity.getRoomNo());
 				i += 1;
-				log.info("방번호({}) - 방 종합 요약({}/50): {}", entity.getRoomNo(), i, summary);
+				log.info("방번호({}) - 방 종합 요약({}/{}): {}", entity.getRoomNo(), i, (list.size()<50?list.size():50), summary);
 			} catch (Exception e) {
 				log.info("방번호({}) 방 종합 요약 중 에러 발생: {}", entity.getRoomNo(), e.getMessage());
 			}
