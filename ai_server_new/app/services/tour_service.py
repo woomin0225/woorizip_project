@@ -159,7 +159,7 @@ class TourService:
                     userPhone=resolved_user_phone,
                     inquiry=request.inquiry,
                 ),
-                access_token=access_token,
+                access_token=None,
             )
             room_name = (request.roomName or '').strip()
             room_label = room_name or '현재 보고 계신 방'

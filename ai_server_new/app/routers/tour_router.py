@@ -53,12 +53,9 @@ async def apply_tour_from_workflow(
         bool(req.userPhone or ctx.get('user_phone')),
     )
     # CODEX-AZURE-TRACE-END
-    access_token = None
-    if authorization and authorization.lower().startswith('bearer '):
-        access_token = authorization[7:].strip()
     return await tour_service.apply_for_chatbot(
         req,
-        access_token=access_token,
+        access_token=None,
         default_user_name=ctx.get('user_name'),
         default_user_phone=ctx.get('user_phone'),
     )
