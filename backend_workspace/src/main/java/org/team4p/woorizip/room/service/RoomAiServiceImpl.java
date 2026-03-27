@@ -279,6 +279,7 @@ public class RoomAiServiceImpl implements RoomAiService {
 			entity.setLastErrorMessage(null);
 			entity.setUpdatedAt(LocalDateTime.now());
 			roomFinalSummaryRepository.save(entity);
+			startEmbeddingAsync(roomNo);
 			return response.getSummary();
 		} catch (Exception e) {
 			int retryCount = entity.getRetryCount() == null ? 0 : entity.getRetryCount();
@@ -325,6 +326,30 @@ public class RoomAiServiceImpl implements RoomAiService {
 			log.info("방 종합 요약 비동기 처리 대기 시간 초과. roomNo={}", roomNo);
 		} catch (Exception e) {
 			log.info("방 종합 요약 비동기 처리중 에러 발생 {}: {}", roomNo, e.getMessage());
+		}
+	}
+
+	@Override
+	@Async("aiTaskExecutor")
+	public void startEmbeddingAsync(String roomNo) {
+		RoomEmbeddingEntity entity = roomEmbeddingRepository.findById(roomNo).orElse(null);
+		if(entity == null) {
+			return;
+		}
+		if(STATUS_PROCESSING.equals(entity.getEmbeddingStatus()) || STATUS_DONE.equals(entity.getEmbeddingStatus())) {
+			return;
+		}
+		if(!STATUS_PENDING.equals(entity.getEmbeddingStatus())) {
+			return;
+		}
+		if(!isReadyForEmbedding(roomNo)) {
+			return;
+		}
+
+		try {
+			embedRoom(roomNo);
+		} catch (Exception e) {
+			log.info("방번호({}) 임베딩 비동기 처리 중 오류 발생: {}", roomNo, e.getMessage());
 		}
 	}
 
