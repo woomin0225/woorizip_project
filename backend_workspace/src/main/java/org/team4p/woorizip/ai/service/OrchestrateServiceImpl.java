@@ -11,6 +11,8 @@ import org.springframework.util.StringUtils;
 import org.team4p.woorizip.ai.dto.OrchestrateCommandRequest;
 import org.team4p.woorizip.ai.dto.OrchestrateCommandResponse;
 import org.team4p.woorizip.auth.security.principal.CustomUserPrincipal;
+import org.team4p.woorizip.user.jpa.entity.UserEntity;
+import org.team4p.woorizip.user.jpa.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -19,6 +21,7 @@ import lombok.RequiredArgsConstructor;
 public class OrchestrateServiceImpl implements OrchestrateService {
 
     private final AiServerClient aiServerClient;
+    private final UserRepository userRepository;
 
     @Override
     public OrchestrateCommandResponse execute(OrchestrateCommandRequest request, String authorization) {
@@ -95,6 +98,10 @@ public class OrchestrateServiceImpl implements OrchestrateService {
         if (authentication.getPrincipal() instanceof CustomUserPrincipal principal
                 && StringUtils.hasText(principal.getName())) {
             headers.put("X-User-Name", principal.getName());
+            userRepository.findById(principal.getUserNo())
+                    .map(UserEntity::getPhone)
+                    .filter(StringUtils::hasText)
+                    .ifPresent(phone -> headers.put("X-User-Phone", phone));
         }
 
         String roles = authentication.getAuthorities().stream()
