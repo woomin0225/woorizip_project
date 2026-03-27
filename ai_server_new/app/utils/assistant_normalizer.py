@@ -234,6 +234,20 @@ def build_instruction(text: str, context: dict[str, Any]) -> str:
                 ]
             )
         )
+        room_no = compact_text(context.get('roomNo'), 120)
+        room_name = compact_text(context.get('roomName'), 160)
+        if room_no or room_name:
+            parts.append(
+                '\n'.join(
+                    [
+                        '[CURRENT_ROOM_CONTEXT]',
+                        f'room_no: {room_no}' if room_no else '',
+                        f'room_name: {room_name}' if room_name else '',
+                        'instruction: 위 room_no가 현재 사용자가 보고 있는 방입니다. 투어 신청 시 이 방을 기준으로 진행하세요.',
+                        '[/CURRENT_ROOM_CONTEXT]',
+                    ]
+                )
+            )
 
     site_profile = context.get('siteProfile') or {}
     if site_profile:

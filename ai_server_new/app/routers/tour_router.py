@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import logging
+
 from fastapi import APIRouter, Depends, Header
 
 from app.clients.spring_tour_client import SpringTourClient
@@ -10,6 +12,7 @@ from app.services.tour_service import TourService
 
 router = APIRouter(prefix='/ai', tags=['tour'])
 tour_service = TourService(SpringTourClient())
+logger = logging.getLogger(__name__)
 
 
 @router.post(
@@ -37,6 +40,19 @@ async def apply_tour_from_workflow(
     authorization: str | None = Header(default=None),
     ctx: dict = Depends(get_user_context),
 ):
+    # CODEX-AZURE-TRACE-START
+    logger.info(
+        "TOUR_WORKFLOW_APPLY_RECEIVED sessionId=%s roomNo=%s roomName=%s visitDate=%s visitTime=%s preferredVisitAt=%s userNamePresent=%s userPhonePresent=%s",
+        req.sessionId,
+        req.roomNo,
+        req.roomName,
+        req.visitDate,
+        req.visitTime,
+        req.preferredVisitAt,
+        bool(req.userName or ctx.get('user_name')),
+        bool(req.userPhone or ctx.get('user_phone')),
+    )
+    # CODEX-AZURE-TRACE-END
     access_token = None
     if authorization and authorization.lower().startswith('bearer '):
         access_token = authorization[7:].strip()

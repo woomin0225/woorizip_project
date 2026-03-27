@@ -14,22 +14,34 @@ class OpenAIAgentClient:
         self.timeout_seconds = max(settings.AI_AGENT_TIMEOUT_MS, 1000) / 1000.0
 
     async def run(
-        self, instruction: str, system_prompt: str | None = None
+        self,
+        instruction: str,
+        system_prompt: str | None = None,
+        conversation_state: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         return await asyncio.to_thread(
             self._run_sync,
             instruction,
             system_prompt,
+            conversation_state,
         )
 
     def _run_sync(
-        self, instruction: str, system_prompt: str | None = None
+        self,
+        instruction: str,
+        system_prompt: str | None = None,
+        conversation_state: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         endpoint = (settings.AI_AGENT_ENDPOINT or "").strip()
         if not endpoint:
             raise ValueError("AI_AGENT_ENDPOINT 설정이 필요합니다.")
 
-        attempts = self._build_attempts(endpoint, instruction, system_prompt)
+        attempts = self._build_attempts(
+            endpoint,
+            instruction,
+            system_prompt,
+            conversation_state,
+        )
         error_parts: list[str] = []
 
         for url, payload in attempts:
@@ -68,6 +80,7 @@ class OpenAIAgentClient:
         endpoint: str,
         instruction: str,
         system_prompt: str | None,
+        conversation_state: dict[str, Any] | None = None,
     ) -> list[tuple[str, dict[str, Any]]]:
         base = endpoint.rstrip("/")
         endpoint_path = self._normalize_path(settings.AI_AGENT_ENDPOINT_PATH)
@@ -79,10 +92,27 @@ class OpenAIAgentClient:
         is_openai_root = ".openai.azure.com/openai/v1" in base
 
         if endpoint_path:
+            full_path = base + endpoint_path
+            is_application_path = "/applications/" in full_path
             attempts = [
                 (
-                    base + endpoint_path,
-                    self._build_chat_payload(instruction, system_prompt),
+                    full_path,
+                    self._build_responses_payload(
+                        instruction,
+                        system_prompt,
+                        conversation_state=conversation_state,
+                        is_agent_endpoint=is_application_path,
+                    )
+                    if (
+                        is_application_path
+                        or endpoint_path.endswith("/responses")
+                        or "/responses" in endpoint_path
+                    )
+                    else self._build_chat_payload(
+                        instruction,
+                        system_prompt,
+                        conversation_state,
+                    ),
                 )
             ]
         elif is_exact_responses:
@@ -92,19 +122,38 @@ class OpenAIAgentClient:
                     self._build_responses_payload(
                         instruction,
                         system_prompt,
+                        conversation_state=conversation_state,
                         is_agent_endpoint="/applications/" in base,
                     ),
                 )
             ]
         elif is_exact_chat:
-            attempts = [(base, self._build_chat_payload(instruction, system_prompt))]
+            attempts = [
+                (
+                    base,
+                    self._build_chat_payload(
+                        instruction,
+                        system_prompt,
+                        conversation_state,
+                    ),
+                )
+            ]
         elif is_project_root:
             attempts = [
+                (
+                    base + "/openai/v1/responses",
+                    self._build_responses_payload(
+                        instruction,
+                        system_prompt,
+                        conversation_state=conversation_state,
+                    ),
+                ),
                 (
                     base + "/protocols/openai/responses",
                     self._build_responses_payload(
                         instruction,
                         system_prompt,
+                        conversation_state=conversation_state,
                         is_agent_endpoint=True,
                     ),
                 ),
@@ -113,15 +162,24 @@ class OpenAIAgentClient:
                     self._build_responses_payload(
                         instruction,
                         system_prompt,
+                        conversation_state=conversation_state,
                     ),
                 ),
                 (
                     base + "/chat/completions",
-                    self._build_chat_payload(instruction, system_prompt),
+                    self._build_chat_payload(
+                        instruction,
+                        system_prompt,
+                        conversation_state,
+                    ),
                 ),
                 (
                     base + "/models/chat/completions",
-                    self._build_chat_payload(instruction, system_prompt),
+                    self._build_chat_payload(
+                        instruction,
+                        system_prompt,
+                        conversation_state,
+                    ),
                 ),
             ]
         elif is_openai_root:
@@ -131,15 +189,29 @@ class OpenAIAgentClient:
                     self._build_responses_payload(
                         instruction,
                         system_prompt,
+                        conversation_state=conversation_state,
                     ),
                 ),
                 (
                     base + "/chat/completions",
-                    self._build_chat_payload(instruction, system_prompt),
+                    self._build_chat_payload(
+                        instruction,
+                        system_prompt,
+                        conversation_state,
+                    ),
                 ),
             ]
         else:
-            attempts = [(base, self._build_custom_payload(instruction, system_prompt))]
+            attempts = [
+                (
+                    base,
+                    self._build_custom_payload(
+                        instruction,
+                        system_prompt,
+                        conversation_state,
+                    ),
+                )
+            ]
 
         unique: list[tuple[str, dict[str, Any]]] = []
         seen: set[str] = set()
@@ -161,7 +233,10 @@ class OpenAIAgentClient:
         return messages
 
     def _build_chat_payload(
-        self, instruction: str, system_prompt: str | None
+        self,
+        instruction: str,
+        system_prompt: str | None,
+        conversation_state: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         payload: dict[str, Any] = {
             "stream": False,
@@ -176,11 +251,28 @@ class OpenAIAgentClient:
         self,
         instruction: str,
         system_prompt: str | None,
+        conversation_state: dict[str, Any] | None = None,
         is_agent_endpoint: bool = False,
     ) -> dict[str, Any]:
         payload: dict[str, Any] = {
             "input": instruction,
         }
+        previous_response_id = str(
+            (conversation_state or {}).get("previousResponseId") or ""
+        ).strip()
+        if previous_response_id:
+            payload["previous_response_id"] = previous_response_id
+        agent_reference_name = str(settings.AI_AGENT_REFERENCE_NAME or "").strip()
+        agent_reference_version = str(settings.AI_AGENT_REFERENCE_VERSION or "").strip()
+        agent_reference_type = str(
+            settings.AI_AGENT_REFERENCE_TYPE or "agent_reference"
+        ).strip() or "agent_reference"
+        if agent_reference_name and agent_reference_version and not is_agent_endpoint:
+            payload["agent_reference"] = {
+                "name": agent_reference_name,
+                "version": agent_reference_version,
+                "type": agent_reference_type,
+            }
         if system_prompt and not is_agent_endpoint:
             payload["instructions"] = system_prompt
         model = (settings.AI_AGENT_MODEL or "").strip()
@@ -189,7 +281,10 @@ class OpenAIAgentClient:
         return payload
 
     def _build_custom_payload(
-        self, instruction: str, system_prompt: str | None
+        self,
+        instruction: str,
+        system_prompt: str | None,
+        conversation_state: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         return {
             "stream": False,
@@ -221,6 +316,15 @@ class OpenAIAgentClient:
         system_prompt: str | None,
     ) -> None:
         preview = json.dumps(payload, ensure_ascii=False)[:1200]
+        # CODEX-AZURE-TRACE-START
+        previous_response_id = str(payload.get("previous_response_id") or "").strip()
+        agent_reference = payload.get("agent_reference")
+        print(
+            "[CODEX-AZURE-TRACE] "
+            f"OPENAI_AGENT_REQUEST previous_response_id={bool(previous_response_id)} "
+            f"agent_reference={json.dumps(agent_reference, ensure_ascii=False) if isinstance(agent_reference, dict) else agent_reference}"
+        )
+        # CODEX-AZURE-TRACE-END
         print(f"[OpenAIAgentClient][{datetime.now().isoformat()}] REQUEST url={url}")
         print(
             "[OpenAIAgentClient] "
@@ -230,6 +334,13 @@ class OpenAIAgentClient:
 
     def _log_response(self, url: str, raw: Any) -> None:
         preview = json.dumps(raw, ensure_ascii=False, default=str)[:1200]
+        # CODEX-AZURE-TRACE-START
+        response_id = raw.get("id") if isinstance(raw, dict) else None
+        print(
+            "[CODEX-AZURE-TRACE] "
+            f"OPENAI_AGENT_RESPONSE response_id={response_id}"
+        )
+        # CODEX-AZURE-TRACE-END
         print(
             f"[OpenAIAgentClient][{datetime.now().isoformat()}] "
             f"RESPONSE url={url} body={preview}"
@@ -259,10 +370,14 @@ class OpenAIAgentClient:
         if structured is not None:
             normalized = dict(raw)
             normalized.update(structured)
+            if isinstance(raw.get("id"), str) and raw.get("id"):
+                normalized.setdefault("responseId", raw["id"])
             normalized.setdefault("result", {"provider": "azure-ai-agent"})
             return normalized
 
         normalized = dict(raw)
+        if isinstance(raw.get("id"), str) and raw.get("id"):
+            normalized.setdefault("responseId", raw["id"])
         normalized.setdefault("reply", text)
         normalized.setdefault("result", {"provider": "azure-ai-agent"})
         return normalized

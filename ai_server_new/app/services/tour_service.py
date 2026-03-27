@@ -2,10 +2,14 @@ from __future__ import annotations
 
 from datetime import datetime
 import json
+import logging
 import re
 
 from app.clients.spring_tour_client import SpringTourClient
 from app.schemas import TourApplyReq, TourWorkflowApplyReq
+
+
+logger = logging.getLogger(__name__)
 
 
 class TourService:
@@ -23,7 +27,7 @@ class TourService:
 
     async def apply(self, request: TourApplyReq, *, access_token: str | None = None) -> dict:
         normalized_request = TourApplyReq(
-            roomNo=(request.roomNo or '').strip(),
+            roomNo=self._normalize_room_no(request.roomNo),
             visitDate=self._normalize_visit_date(request.visitDate),
             visitTime=self._normalize_visit_time(request.visitTime),
             userName=self._normalize_user_name(request.userName),
@@ -36,13 +40,33 @@ class TourService:
             'visitDate': normalized_request.visitDate,
             'visitTime': self._normalize_visit_time(normalized_request.visitTime),
             'message': message,
+            'userName': normalized_request.userName,
+            'userPhone': normalized_request.userPhone,
         }
+
+        # CODEX-AZURE-TRACE-START
+        logger.info(
+            "TOUR_SPRING_APPLY_REQUEST roomNo=%s visitDate=%s visitTime=%s accessTokenPresent=%s",
+            normalized_request.roomNo,
+            normalized_request.visitDate,
+            payload['visitTime'],
+            bool(access_token),
+        )
+        # CODEX-AZURE-TRACE-END
 
         spring_response = await self.client.apply_tour(
             room_no=normalized_request.roomNo,
             payload=payload,
             access_token=access_token,
         )
+
+        # CODEX-AZURE-TRACE-START
+        logger.info(
+            "TOUR_SPRING_APPLY_RESPONSE roomNo=%s response=%s",
+            normalized_request.roomNo,
+            spring_response,
+        )
+        # CODEX-AZURE-TRACE-END
 
         return {
             'ok': True,
@@ -62,6 +86,17 @@ class TourService:
         default_user_phone: str | None = None,
     ) -> dict:
         try:
+            # CODEX-AZURE-TRACE-START
+            logger.info(
+                "TOUR_WORKFLOW_APPLY_SERVICE_START sessionId=%s roomNo=%s roomName=%s preferredVisitAt=%s visitDate=%s visitTime=%s",
+                request.sessionId,
+                request.roomNo,
+                request.roomName,
+                request.preferredVisitAt,
+                request.visitDate,
+                request.visitTime,
+            )
+            # CODEX-AZURE-TRACE-END
             visit_date, visit_time = self._resolve_visit_schedule(
                 visit_date=request.visitDate,
                 visit_time=request.visitTime,
@@ -73,6 +108,17 @@ class TourService:
             resolved_user_phone = self._resolve_optional_user_phone(
                 request.userPhone or default_user_phone
             )
+            # CODEX-AZURE-TRACE-START
+            logger.info(
+                "TOUR_WORKFLOW_APPLY_SERVICE_RESOLVED sessionId=%s roomNo=%s visitDate=%s visitTime=%s userNamePresent=%s userPhonePresent=%s",
+                request.sessionId,
+                request.roomNo,
+                visit_date,
+                visit_time,
+                bool(resolved_user_name),
+                bool(resolved_user_phone),
+            )
+            # CODEX-AZURE-TRACE-END
             if not resolved_user_name or not resolved_user_phone:
                 return {
                     'schemaVersion': request.schemaVersion,
@@ -106,7 +152,7 @@ class TourService:
                 }
             apply_result = await self.apply(
                 TourApplyReq(
-                    roomNo=request.roomNo,
+                    roomNo=self._normalize_room_no(request.roomNo),
                     visitDate=visit_date,
                     visitTime=visit_time,
                     userName=resolved_user_name,
@@ -148,6 +194,14 @@ class TourService:
                 'raw': apply_result,
             }
         except Exception as exc:
+            # CODEX-AZURE-TRACE-START
+            logger.exception(
+                "TOUR_WORKFLOW_APPLY_SERVICE_ERROR sessionId=%s roomNo=%s error=%s",
+                request.sessionId,
+                request.roomNo,
+                exc,
+            )
+            # CODEX-AZURE-TRACE-END
             error_message = str(exc)
             if 'TOUR_UNAVAILABLE_TIME' in error_message:
                 return {
@@ -344,16 +398,31 @@ class TourService:
     ) -> tuple[str, str]:
         if preferred_visit_at and preferred_visit_at.strip():
             compact = preferred_visit_at.strip()
-            for fmt in ('%Y-%m-%d %H:%M', '%Y-%m-%d %H:%M:%S', '%Y.%m.%d %H:%M', '%Y/%m/%d %H:%M'):
+            for fmt in (
+                '%Y-%m-%d %H:%M',
+                '%Y-%m-%d %H:%M:%S',
+                '%Y-%m-%dT%H:%M:%S',
+                '%Y-%m-%dT%H:%M',
+                '%Y.%m.%d %H:%M',
+                '%Y/%m/%d %H:%M',
+            ):
                 try:
                     parsed = datetime.strptime(compact, fmt)
+                    parsed = self._coerce_future_schedule_year(parsed)
                     return parsed.strftime('%Y-%m-%d'), self._validate_allowed_visit_time(
                         parsed.strftime('%H:%M:%S')
                     )
                 except ValueError:
                     continue
+            parsed = self._parse_simple_korean_schedule(compact)
+            if parsed is not None:
+                parsed = self._coerce_future_schedule_year(parsed)
+                return parsed.strftime('%Y-%m-%d'), self._validate_allowed_visit_time(
+                    parsed.strftime('%H:%M:%S')
+                )
             parsed = self._parse_natural_korean_schedule(compact)
             if parsed is not None:
+                parsed = self._coerce_future_schedule_year(parsed)
                 return parsed.strftime('%Y-%m-%d'), self._validate_allowed_visit_time(
                     parsed.strftime('%H:%M:%S')
                 )
@@ -568,6 +637,52 @@ class TourService:
 
         return parsed
 
+    def _parse_simple_korean_schedule(self, value: str) -> datetime | None:
+        compact = (value or '').strip()
+        if not compact:
+            return None
+
+        match = re.search(
+            r'(?:(?P<year>\d{4})\s*년\s*)?'
+            r'(?P<month>\d{1,2})\s*월\s*'
+            r'(?P<day>\d{1,2})\s*일?\s*'
+            r'(?:(?P<ampm>오전|오후|am|pm)\s*)?'
+            r'(?P<hour>\d{1,2})\s*(?:시|:)\s*'
+            r'(?:(?P<minute>\d{1,2})\s*(?:분)?)?',
+            compact,
+            re.IGNORECASE,
+        )
+        if not match:
+            return None
+
+        now = datetime.now()
+        year = int(match.group('year') or now.year)
+        month = int(match.group('month'))
+        day = int(match.group('day'))
+        hour = int(match.group('hour'))
+        minute = int(match.group('minute') or 0)
+        ampm = (match.group('ampm') or '').lower()
+
+        if ampm in ('오후', 'pm') and hour < 12:
+            hour += 12
+        elif ampm in ('오전', 'am') and hour == 12:
+            hour = 0
+        elif not ampm and 1 <= hour <= 7:
+            hour += 12
+
+        try:
+            parsed = datetime(year, month, day, hour, minute)
+        except ValueError:
+            return None
+
+        if not match.group('year') and parsed.date() < now.date():
+            try:
+                parsed = datetime(year + 1, month, day, hour, minute)
+            except ValueError:
+                return None
+
+        return parsed
+
     def _normalize_visit_time(self, value: str) -> str:
         compact = (value or '').strip()
         if not compact:
@@ -604,6 +719,31 @@ class TourService:
         if not compact:
             raise ValueError('사용자 이름 값이 필요합니다.')
         return compact
+
+    def _normalize_room_no(self, value: str | None) -> str:
+        compact = re.sub(r'\s+', '', str(value or '')).strip()
+        if not compact:
+            raise ValueError('roomNo is required')
+        if compact.isdigit():
+            return f'room{compact}'
+        match = re.fullmatch(r'room[-_\s]?(\d+)', compact, re.IGNORECASE)
+        if match:
+            return f'room{match.group(1)}'
+        return compact
+
+    def _coerce_future_schedule_year(self, parsed: datetime) -> datetime:
+        now = datetime.now()
+        if parsed.year < now.year:
+            try:
+                parsed = parsed.replace(year=now.year)
+            except ValueError:
+                return parsed
+            if parsed.date() < now.date():
+                try:
+                    parsed = parsed.replace(year=now.year + 1)
+                except ValueError:
+                    return parsed
+        return parsed
 
     def _resolve_optional_user_name(self, value: str | None) -> str:
         return (value or '').strip()

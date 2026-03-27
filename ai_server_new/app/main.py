@@ -145,18 +145,69 @@ async def _startup() -> None:
     settings.validate()
 
 
-llm = build_llm()
-summary = SummaryService(llm)
-caption_client = QwenCaptionClient()
-detection_client = GroundingDINOClient()
-ocr_client = PaddleOCRClient()
-vision = VisionService(
-    caption_client=caption_client,
-    detection_client=detection_client,
-    ocr_client=ocr_client,
-    rag=None,
+# CODEX-LOCAL-BOOT-START
+# Keep local server bootable even when optional AI providers are unavailable.
+try:
+    llm = build_llm()
+except Exception as exc:
+    logger.warning("Primary LLM initialization skipped: %s", exc)
+    llm = None
+
+try:
+    summary = SummaryService(llm) if llm is not None else None
+except Exception as exc:
+    logger.warning("Summary service initialization skipped: %s", exc)
+    summary = None
+
+try:
+    caption_client = (
+        None
+        if settings.CAPTION_PROVIDER.lower() == "mock"
+        else QwenCaptionClient()
+    )
+except Exception as exc:
+    logger.warning("Caption client initialization skipped: %s", exc)
+    caption_client = None
+
+try:
+    detection_client = (
+        None
+        if settings.OBJECT_DETECTION_PROVIDER.lower() == "mock"
+        else GroundingDINOClient()
+    )
+except Exception as exc:
+    logger.warning("Detection client initialization skipped: %s", exc)
+    detection_client = None
+
+try:
+    ocr_client = (
+        None
+        if settings.OCR_PROVIDER.lower() == "mock"
+        else PaddleOCRClient()
+    )
+except Exception as exc:
+    logger.warning("OCR client initialization skipped: %s", exc)
+    ocr_client = None
+
+vision = (
+    VisionService(
+        caption_client=caption_client,
+        detection_client=detection_client,
+        ocr_client=ocr_client,
+        rag=None,
+    )
+    if caption_client is not None
+    and detection_client is not None
+    and ocr_client is not None
+    else None
 )
-reservation = ReservationService(llm)
+
+try:
+    reservation = ReservationService(llm) if llm is not None else None
+except Exception as exc:
+    logger.warning("Reservation service initialization skipped: %s", exc)
+    reservation = None
+# CODEX-LOCAL-BOOT-END
 
 
 @app.get("/")
