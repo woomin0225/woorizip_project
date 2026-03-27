@@ -35,6 +35,7 @@ public final class EndpointPolicy {
             "/api/facilities/ai**",
             "/api/rooms/rag/room",
             "/api/rooms/*/summarized_room/request",
+            "/api/tour/internal/**",
             "/auth/login"
     };
 

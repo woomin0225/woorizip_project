@@ -82,6 +82,9 @@ class Settings(BaseSettings):
     AI_AGENT_BEARER_TOKEN: str | None = None
     AI_AGENT_API_VERSION: str | None = None
     AI_AGENT_TIMEOUT_MS: int = 15000
+    AI_AGENT_REFERENCE_NAME: str | None = None
+    AI_AGENT_REFERENCE_VERSION: str | None = None
+    AI_AGENT_REFERENCE_TYPE: str = "agent_reference"
 
     # ===== Misc =====
     DEFAULT_TIMEZONE: str = "Asia/Seoul"
