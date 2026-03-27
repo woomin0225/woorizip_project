@@ -20,7 +20,7 @@ public class RoomScheduler {
 
 	private final RoomAiService roomAiService;
 
-	@Scheduled(initialDelay = 660000, fixedDelay = 600000)
+	@Scheduled(initialDelay = 660000, fixedDelay = 60000)
 	public void roomEmbeddingSchedule() {
 		log.info("방 정보 임베딩/벡터저장 스케줄러 시작");
 

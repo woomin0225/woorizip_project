@@ -17,7 +17,7 @@ public class RoomImageScheduler {
 
 	private final RoomImageSummaryService roomImageSummaryService;
 
-	@Scheduled(initialDelay = 60000, fixedDelay = 600000)
+	@Scheduled(initialDelay = 60000, fixedDelay = 60000)
 	public void roomImageCaptionsSummery() {
 		log.info("방 사진 요약 스케줄러 시작");
 

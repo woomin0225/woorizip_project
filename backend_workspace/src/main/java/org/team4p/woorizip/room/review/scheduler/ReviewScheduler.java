@@ -17,7 +17,7 @@ public class ReviewScheduler {
 
 	private final ReviewSummaryService reviewSummaryService;
 
-	@Scheduled(initialDelay = 360000, fixedDelay = 600000)
+	@Scheduled(initialDelay = 360000, fixedDelay = 60000)
 	public void roomReviewSummery() {
 		log.info("방 리뷰 요약 스케줄러 시작");
 
