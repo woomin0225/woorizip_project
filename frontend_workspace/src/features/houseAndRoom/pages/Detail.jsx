@@ -85,6 +85,11 @@ export default function Detail() {
     ? (roomSummaryMap[selectedRoomNo] ?? null)
     : null;
   const currentRoomSummary = currentSummaryState?.finalSummary || '';
+  const hasCurrentRoomSummary = Boolean(currentRoomSummary);
+  const isSummaryRefreshing =
+    (currentSummaryState?.summaryStatus === 'PENDING' ||
+      currentSummaryState?.summaryStatus === 'PROCESSING') &&
+    hasCurrentRoomSummary;
 
   const refreshReviews = async () => {
     if (!selectedRoomNo) return;
@@ -509,7 +514,7 @@ export default function Detail() {
                       </button>
                     </div>
 
-                    {summaryLoading && (
+                    {summaryLoading && !hasCurrentRoomSummary && (
                       <div
                         className={styles.summaryLoading}
                         role="status"
@@ -527,18 +532,23 @@ export default function Detail() {
                       <div className={styles.summaryError}>{summaryError}</div>
                     )}
 
-                    {!summaryLoading &&
-                      !summaryError &&
-                      currentSummaryState?.summaryStatus === 'DONE' &&
-                      currentRoomSummary && (
+                    {!summaryError && hasCurrentRoomSummary && (
+                      <>
+                        {isSummaryRefreshing && (
+                          <div className={styles.summaryRefreshing}>
+                            이전 요약입니다. 최신 리뷰를 반영해 AI가 다시
+                            생각중입니다.
+                          </div>
+                        )}
                         <div className={styles.summaryResult}>
                           {currentRoomSummary}
                         </div>
-                      )}
+                      </>
+                    )}
 
                     {!summaryLoading &&
                       !summaryError &&
-                      currentSummaryState?.summaryStatus !== 'DONE' && (
+                      !hasCurrentRoomSummary && (
                         <div className={styles.summaryPlaceholder}>
                           버튼을 누르면 현재 방의 종합 요약 결과를 여기에서
                           확인할 수 있습니다.
