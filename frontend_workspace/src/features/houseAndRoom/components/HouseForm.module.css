@@ -64,3 +64,17 @@
   color: #c7a892;
   cursor: not-allowed;
 }
+
+@media (max-width: 768px) {
+  .grid2 {
+    grid-template-columns: 1fr;
+  }
+
+  .inline {
+    flex-direction: column;
+  }
+
+  .inline button {
+    width: 100%;
+  }
+}
