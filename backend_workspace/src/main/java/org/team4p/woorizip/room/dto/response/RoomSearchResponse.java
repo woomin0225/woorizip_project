@@ -33,6 +33,9 @@ public class RoomSearchResponse {
 	private Integer roomImageCount;
 	private String houseName;
 	private String houseAddress;
+	private String houseAddressDetail;
+	private Double houseLat;
+	private Double houseLng;
 	
 	private List<String> imageNames;
 }

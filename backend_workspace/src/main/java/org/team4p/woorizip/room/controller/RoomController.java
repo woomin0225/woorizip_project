@@ -279,9 +279,15 @@ public class RoomController {
 	@PostMapping("/rag/room")
 	public ResponseEntity<ApiResponse<RoomRagSearchResult>> ragSearchRooms(@RequestBody String text){
 		RoomRagSearchResult result = roomService.selectRoomRag(text);
-		RoomRagSearchResult list = result;
 		
-		return ResponseEntity.status(200).body(ApiResponse.ok("방 rag 검색 성공", list));
+		return ResponseEntity.status(200).body(ApiResponse.ok("방 rag 검색 성공", result));
+	}
+
+	@PostMapping("/rag/room/explanation")
+	public ResponseEntity<ApiResponse<String>> ragSearchRoomExplanation(@RequestBody String text){
+		String explanation = roomService.selectRoomRagExplanation(text);
+		
+		return ResponseEntity.status(200).body(ApiResponse.ok("방 rag 설명 생성 성공", explanation));
 	}
 	
 	@GetMapping("/{roomNo}/summarized_review")

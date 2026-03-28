@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from typing import Any
 
 from app.clients.embedding_client import KureEmbeddingClient
@@ -21,25 +22,26 @@ class RagService:
         self.llmClient = llmClient
 
     async def room_rag(self, text: str) -> dict[str, Any]:
-        # 질문 문장을 임베딩한 뒤 Qdrant에서 유사한 방을 찾습니다.
-        embedded = self.embeddingClient.embed(text)
-
-        collection_name = "room_collection"
-        hits = self.vectorClient.room_query(
-            collection_name=collection_name,
-            point=embedded,
-        )
-        ranked_contexts = self._build_ranked_contexts(hits)
-
+        ranked_contexts = self._search_ranked_contexts(text)
         results = [
             {"roomNo": context["roomNo"], "score": context["score"]}
             for context in ranked_contexts
         ]
-        explanation = self._generate_explanation(text, ranked_contexts[:5])
-        return {
-            "results": results,
-            "explanation": explanation,
-        }
+        return {"results": results}
+
+    async def room_rag_explanation(self, text: str) -> dict[str, Any]:
+        ranked_contexts = self._search_ranked_contexts(text)
+        explanation = await self._generate_explanation(text, ranked_contexts[:5])
+        return {"explanation": explanation}
+
+    def _search_ranked_contexts(self, text: str) -> list[dict[str, Any]]:
+        # 질문 문장을 임베딩한 뒤 Qdrant에서 유사한 방을 찾습니다.
+        embedded = self.embeddingClient.embed(text)
+        hits = self.vectorClient.room_query(
+            collection_name="room_collection",
+            point=embedded,
+        )
+        return self._build_ranked_contexts(hits)
 
     def _build_ranked_contexts(self, hits: list[Any]) -> list[dict[str, Any]]:
         best: dict[str, dict[str, Any]] = {}
@@ -60,7 +62,7 @@ class RagService:
 
         return sorted(best.values(), key=lambda item: item["score"], reverse=True)
 
-    def _generate_explanation(
+    async def _generate_explanation(
         self,
         user_query: str,
         ranked_contexts: list[dict[str, Any]],
@@ -80,7 +82,7 @@ class RagService:
                     "반드시 제공된 검색 결과 정보만 근거로 설명하고, 없는 정보는 추측하지 마라. "
                     "응답은 자연스러운 한국어만 사용하고, 영어식 표현이나 외국어 문장은 쓰지 마라. "
                     "사용자에게 안내하듯 친절하고 부드러운 존댓말로 2~4문장으로 설명하라. "
-                    "검색 조건과 잘 맞는 이유를 알기 쉽게 요약하고, 근거가 약한 내용은 말하지 마라."
+                    "검색 조건과 잘 맞는 이유를 알기 쉽게 요약하고, 근거가 약한 내용은 말하지 마라. "
                     "문장은 항상 마침표로 끝내라."
                 ),
             },
@@ -96,13 +98,13 @@ class RagService:
         ]
 
         try:
-            return str(
-                self.llmClient.generate_from_messages(
-                    messages,
-                    max_new_tokens=100,
-                    do_sample=False,
-                )
-            ).strip()
+            result = await asyncio.to_thread(
+                self.llmClient.generate_from_messages,
+                messages,
+                100,
+                False,
+            )
+            return str(result).strip()
         except Exception:
             return ""
 

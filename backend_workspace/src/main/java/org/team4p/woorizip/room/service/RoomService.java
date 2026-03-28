@@ -35,4 +35,5 @@ public interface RoomService {
 	List<WishRankingResponse> selectTopNByWish(int limit);
 	
 	RoomRagSearchResult selectRoomRag(String text);
+	String selectRoomRagExplanation(String text);
 }

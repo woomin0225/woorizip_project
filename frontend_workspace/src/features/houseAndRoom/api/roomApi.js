@@ -26,6 +26,13 @@ export async function searchRoomsByNaturalText(text) {
   return unwrap(data); // { rooms: List<RoomDto>, explanation: string }
 }
 
+export async function searchRoomsByNaturalTextExplanation(text) {
+  const { data } = await apiJson().post('/api/rooms/rag/room/explanation', text, {
+    headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+  });
+  return unwrap(data); // string
+}
+
 // 방 등록 POST
 export async function createRoom(houseNo, roomDto, newImages = []) {
   const fd = new FormData();

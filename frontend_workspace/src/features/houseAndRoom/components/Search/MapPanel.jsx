@@ -225,18 +225,46 @@ export default function MapPanel({
       mapRef.current = map;
 
       let fired = false;
-      kakao.maps.event.addListener(map, 'idle', () => {
-        if (fired) return;
-        fired = true;
+      let timer = null;
+      let lastBbox = null;
+      let dragging = false;
+
+      const emitBbox = () => {
         const b = map.getBounds();
         const sw = b.getSouthWest();
         const ne = b.getNorthEast();
-        onChangeBboxRef.current?.({
+        const next = {
           swLat: sw.getLat(),
           swLng: sw.getLng(),
           neLat: ne.getLat(),
           neLng: ne.getLng(),
-        });
+        };
+
+        const same =
+          lastBbox &&
+          Math.abs(lastBbox.swLat - next.swLat) < 1e-6 &&
+          Math.abs(lastBbox.swLng - next.swLng) < 1e-6 &&
+          Math.abs(lastBbox.neLat - next.neLat) < 1e-6 &&
+          Math.abs(lastBbox.neLng - next.neLng) < 1e-6;
+
+        if (!same) {
+          lastBbox = next;
+          onChangeBboxRef.current?.(next);
+        }
+      };
+
+      const scheduleEmit = () => {
+        if (timer) clearTimeout(timer);
+        timer = setTimeout(() => {
+          if (dragging) return;
+          emitBbox();
+        }, 250);
+      };
+
+      kakao.maps.event.addListener(map, 'idle', () => {
+        if (fired) return;
+        fired = true;
+        emitBbox();
       });
 
       setTimeout(() => {
@@ -244,34 +272,19 @@ export default function MapPanel({
         map.setCenter(center);
       }, 0);
 
-      let timer = null;
-      let lastBbox = null;
-      kakao.maps.event.addListener(map, 'idle', () => {
+      kakao.maps.event.addListener(map, 'dragstart', () => {
+        dragging = true;
         if (timer) clearTimeout(timer);
+      });
 
-        timer = setTimeout(() => {
-          const b = map.getBounds();
-          const sw = b.getSouthWest();
-          const ne = b.getNorthEast();
-          const next = {
-            swLat: sw.getLat(),
-            swLng: sw.getLng(),
-            neLat: ne.getLat(),
-            neLng: ne.getLng(),
-          };
+      kakao.maps.event.addListener(map, 'dragend', () => {
+        dragging = false;
+        scheduleEmit();
+      });
 
-          const same =
-            lastBbox &&
-            Math.abs(lastBbox.swLat - next.swLat) < 1e-6 &&
-            Math.abs(lastBbox.swLng - next.swLng) < 1e-6 &&
-            Math.abs(lastBbox.neLat - next.neLat) < 1e-6 &&
-            Math.abs(lastBbox.neLng - next.neLng) < 1e-6;
-
-          if (!same) {
-            lastBbox = next;
-            onChangeBboxRef.current?.(next);
-          }
-        }, 600);
+      kakao.maps.event.addListener(map, 'zoom_changed', () => {
+        if (dragging) return;
+        scheduleEmit();
       });
     }
 

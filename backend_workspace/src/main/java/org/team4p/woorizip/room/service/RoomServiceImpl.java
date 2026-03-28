@@ -438,37 +438,13 @@ public class RoomServiceImpl implements RoomService {
 		// 여기서 중요한 점:
 		// roomRepository.findAllById(...)는 "입력한 순서"를 보장하지 않을 수 있습니다.
 		// 그래서 아래에서 Map을 한 번 만든 뒤, roomNoList 순서대로 다시 dtoList를 조립합니다.
-		WebClient webClient = webClientBuilder.build();
-		
-		RoomRagResponse response;
-		try {
-			Mono<RoomRagResponse> monoResponse = webClient.post()
-					.uri(aiServerUri.concat("/ai/rag/room"))
-					.contentType(MediaType.TEXT_PLAIN)
-					.bodyValue(text)
-					.retrieve()
-					.onStatus(HttpStatusCode::isError, clientResponse -> clientResponse.bodyToMono(String.class)
-							.defaultIfEmpty("")
-							.map(body -> new IllegalStateException("AI 방 검색 서버 오류(" + clientResponse.statusCode().value()
-									+ "): " + body)))
-					.bodyToMono(RoomRagResponse.class);
-			response = monoResponse.block();
-		} catch (WebClientResponseException e) {
-			throw new IllegalStateException(
-					"AI 방 검색 서버 호출 실패(" + e.getStatusCode().value() + "): " + e.getResponseBodyAsString(),
-					e);
-		} catch (Exception e) {
-			throw new IllegalStateException("AI 방 검색 서버 호출 중 오류가 발생했습니다: " + e.getMessage(), e);
-		}
+		RoomRagResponse response = requestRoomRag(text, "/ai/rag/room");
 
 		// RAG 서버가 비어 있는 결과를 주면 바로 빈 리스트를 반환합니다.
 		// 프론트는 "추천 결과 없음"으로 자연스럽게 처리할 수 있습니다.
-		String explanation = response != null && response.getExplanation() != null
-				? response.getExplanation().trim()
-				: "";
 		List<String> roomNoList = response != null ? response.getRoom_list() : null;
 		if (roomNoList == null || roomNoList.isEmpty()) {
-			return new RoomRagSearchResult(List.of(), explanation);
+			return new RoomRagSearchResult(List.of(), "");
 		}
 
 		// DB 조회는 roomNo 기준으로 한 번에 처리해 성능을 아낍니다.
@@ -508,6 +484,9 @@ public class RoomServiceImpl implements RoomService {
 				if (house != null) {
 					item.setHouseName(house.getHouseName());
 					item.setHouseAddress(house.getHouseAddress());
+					item.setHouseAddressDetail(house.getHouseAddressDetail());
+					item.setHouseLat(house.getHouseLat());
+					item.setHouseLng(house.getHouseLng());
 				}
 
 				List<RoomImageDto> images = roomImageService.selectRoomImages(entity.getRoomNo());
@@ -523,7 +502,40 @@ public class RoomServiceImpl implements RoomService {
 			}
 		}
 		
-		return new RoomRagSearchResult(dtoLists, explanation);
+		return new RoomRagSearchResult(dtoLists, "");
+	}
+
+	@Override
+	public String selectRoomRagExplanation(String text) {
+		RoomRagResponse response = requestRoomRag(text, "/ai/rag/room/explanation");
+		if (response == null || response.getExplanation() == null) {
+			return "";
+		}
+		return response.getExplanation().trim();
+	}
+
+	private RoomRagResponse requestRoomRag(String text, String path) {
+		WebClient webClient = webClientBuilder.build();
+		
+		try {
+			Mono<RoomRagResponse> monoResponse = webClient.post()
+					.uri(aiServerUri.concat(path))
+					.contentType(MediaType.TEXT_PLAIN)
+					.bodyValue(text)
+					.retrieve()
+					.onStatus(HttpStatusCode::isError, clientResponse -> clientResponse.bodyToMono(String.class)
+							.defaultIfEmpty("")
+							.map(body -> new IllegalStateException("AI 방 검색 서버 오류(" + clientResponse.statusCode().value()
+									+ "): " + body)))
+					.bodyToMono(RoomRagResponse.class);
+			return monoResponse.block();
+		} catch (WebClientResponseException e) {
+			throw new IllegalStateException(
+					"AI 방 검색 서버 호출 실패(" + e.getStatusCode().value() + "): " + e.getResponseBodyAsString(),
+					e);
+		} catch (Exception e) {
+			throw new IllegalStateException("AI 방 검색 서버 호출 중 오류가 발생했습니다: " + e.getMessage(), e);
+		}
 	}
 
 	private void applyAvailability(RoomDto dto, RoomEntity entity) {

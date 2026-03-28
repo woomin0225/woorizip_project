@@ -4,8 +4,12 @@ import MapPanel from '../components/Search/MapPanel';
 import ResultList from './../components/Search/ResultList';
 import ResultItem from './../components/Search/ResultItem';
 
-import { searchRooms, searchRoomsByNaturalText } from '../api/roomApi';
-import { getHouse, getHouseMarkers, getRoomsInHouseMarker } from '../api/houseApi';
+import {
+  searchRooms,
+  searchRoomsByNaturalText,
+  searchRoomsByNaturalTextExplanation,
+} from '../api/roomApi';
+import { getHouseMarkers, getRoomsInHouseMarker } from '../api/houseApi';
 import { tokenStore } from '../../../app/http/tokenStore';
 import { parseJwt } from '../../../app/providers/utils/jwt';
 import {
@@ -397,6 +401,7 @@ export default function Search() {
   const [naturalRooms, setNaturalRooms] = useState([]);
   const [naturalExplanation, setNaturalExplanation] = useState('');
   const [loadingNatural, setLoadingNatural] = useState(false);
+  const [loadingNaturalExplanation, setLoadingNaturalExplanation] = useState(false);
   const [naturalMarkers, setNaturalMarkers] = useState([]);
   const [loadingNaturalMarkers, setLoadingNaturalMarkers] = useState(false);
   const [naturalError, setNaturalError] = useState('');
@@ -556,7 +561,7 @@ export default function Search() {
     return searchResult;
   }
 
-  async function hydrateNaturalMarkers(roomList, fallbackMarkers = []) {
+  function hydrateNaturalMarkers(roomList, fallbackMarkers = []) {
     const roomsByHouseNo = new Map();
     (roomList || []).forEach((room) => {
       const houseNo = String(room?.houseNo || '').trim();
@@ -568,93 +573,68 @@ export default function Search() {
 
     if (roomsByHouseNo.size === 0) {
       setNaturalMarkers([]);
+      setLoadingNaturalMarkers(false);
       return;
     }
 
     setLoadingNaturalMarkers(true);
-    try {
-      const fallbackMarkerMap = new Map(
-        (fallbackMarkers || [])
-          .filter((marker) => marker?.houseNo)
-          .map((marker) => [String(marker.houseNo), marker])
-      );
+    const fallbackMarkerMap = new Map(
+      (fallbackMarkers || [])
+        .filter((marker) => marker?.houseNo)
+        .map((marker) => [String(marker.houseNo), marker])
+    );
 
-      const missingHouseNos = Array.from(roomsByHouseNo.keys()).filter(
-        (houseNo) => {
-          const marker = fallbackMarkerMap.get(houseNo);
-          return (
-            marker?.houseLat === null ||
-            marker?.houseLat === undefined ||
-            marker?.houseLng === null ||
-            marker?.houseLng === undefined
-          );
+    const nextMarkers = Array.from(roomsByHouseNo.entries())
+      .map(([houseNo, groupedRooms]) => {
+        const representativeRoom = groupedRooms[0] || {};
+        const fallbackMarker = fallbackMarkerMap.get(houseNo);
+        const houseLat = representativeRoom.houseLat ?? fallbackMarker?.houseLat ?? null;
+        const houseLng = representativeRoom.houseLng ?? fallbackMarker?.houseLng ?? null;
+
+        if (
+          houseLat === null ||
+          houseLat === undefined ||
+          houseLng === null ||
+          houseLng === undefined
+        ) {
+          return null;
         }
-      );
 
-      const houseEntries = await Promise.allSettled(
-        missingHouseNos.map(async (houseNo) => [houseNo, await getHouse(houseNo)])
-      );
+        return {
+          houseNo,
+          houseName:
+            representativeRoom.houseName ?? fallbackMarker?.houseName ?? '',
+          houseAddress:
+            representativeRoom.houseAddress ?? fallbackMarker?.houseAddress ?? '',
+          houseAddressDetail:
+            representativeRoom.houseAddressDetail ??
+            fallbackMarker?.houseAddressDetail ??
+            '',
+          houseLat,
+          houseLng,
+          imageNames:
+            representativeRoom.imageNames?.length > 0
+              ? representativeRoom.imageNames
+              : (fallbackMarker?.imageNames ?? []),
+          rooms: groupedRooms,
+        };
+      })
+      .filter(Boolean);
 
-      const houseMap = new Map();
-      houseEntries.forEach((entry) => {
-        if (entry.status !== 'fulfilled') return;
-        const [houseNo, house] = entry.value || [];
-        if (!houseNo || !house) return;
-        houseMap.set(String(houseNo), house);
-      });
-
-      const nextMarkers = Array.from(roomsByHouseNo.entries())
-        .map(([houseNo, groupedRooms]) => {
-          const representativeRoom = groupedRooms[0] || {};
-          const fallbackMarker = fallbackMarkerMap.get(houseNo);
-          const house = houseMap.get(houseNo);
-          const houseLat = fallbackMarker?.houseLat ?? house?.houseLat ?? null;
-          const houseLng = fallbackMarker?.houseLng ?? house?.houseLng ?? null;
-
-          if (
-            houseLat === null ||
-            houseLat === undefined ||
-            houseLng === null ||
-            houseLng === undefined
-          ) {
-            return null;
-          }
-
-          return {
-            houseNo,
-            houseName:
-              fallbackMarker?.houseName ??
-              representativeRoom.houseName ??
-              house?.houseName ??
-              '',
-            houseAddress:
-              fallbackMarker?.houseAddress ??
-              representativeRoom.houseAddress ??
-              house?.houseAddress ??
-              '',
-            houseAddressDetail: house?.houseAddressDetail ?? '',
-            houseLat,
-            houseLng,
-            imageNames: fallbackMarker?.imageNames ?? [],
-            rooms: groupedRooms,
-          };
-        })
-        .filter(Boolean);
-
-      setNaturalMarkers(nextMarkers);
-    } finally {
-      setLoadingNaturalMarkers(false);
-    }
+    setNaturalMarkers(nextMarkers);
+    setLoadingNaturalMarkers(false);
   }
 
   async function runNaturalSearch(targetBbox = bboxRef.current) {
     const query = naturalQuery.trim();
     if (!query) {
+      naturalSearchRequestIdRef.current += 1;
       setNaturalRooms([]);
       setNaturalExplanation('');
       setNaturalMarkers([]);
       setNaturalError('');
       setNaturalAppliedLabels([]);
+      setLoadingNaturalExplanation(false);
       return;
     }
 
@@ -666,7 +646,11 @@ export default function Search() {
     setAppliedCond(nextCond);
     setNaturalAppliedLabels(appliedLabels);
 
+    const requestId = naturalSearchRequestIdRef.current + 1;
+    naturalSearchRequestIdRef.current = requestId;
     setLoadingNatural(true);
+    setLoadingNaturalMarkers(false);
+    setLoadingNaturalExplanation(false);
     setNaturalError('');
     setNaturalExplanation('');
     setIsNaturalSearchMode(false);
@@ -678,23 +662,43 @@ export default function Search() {
         searchRoomsByNaturalText(query),
         runSearch(nextCond, targetBbox),
       ]);
+      if (naturalSearchRequestIdRef.current !== requestId) return;
       const nextNaturalRooms = Array.isArray(ragResult?.rooms)
         ? ragResult.rooms
         : [];
       setNaturalRooms(nextNaturalRooms);
-      setNaturalExplanation(
-        typeof ragResult?.explanation === 'string'
-          ? ragResult.explanation.trim()
-          : ''
-      );
-      await hydrateNaturalMarkers(nextNaturalRooms, searchResult?.markerList ?? []);
+      hydrateNaturalMarkers(nextNaturalRooms, searchResult?.markerList ?? []);
       setIsNaturalSearchMode(true);
+
+      if (nextNaturalRooms.length > 0) {
+        setLoadingNaturalExplanation(true);
+        searchRoomsByNaturalTextExplanation(query)
+          .then((result) => {
+            if (naturalSearchRequestIdRef.current !== requestId) return;
+            const nextExplanation =
+              typeof result === 'string'
+                ? result.trim()
+                : String(result?.explanation || '').trim();
+            setNaturalExplanation(nextExplanation);
+          })
+          .catch(() => {
+            if (naturalSearchRequestIdRef.current !== requestId) return;
+            setNaturalExplanation('');
+          })
+          .finally(() => {
+            if (naturalSearchRequestIdRef.current !== requestId) return;
+            setLoadingNaturalExplanation(false);
+          });
+      }
     } catch (e) {
+      if (naturalSearchRequestIdRef.current !== requestId) return;
       setNaturalRooms([]);
       setNaturalExplanation('');
       setNaturalMarkers([]);
       setNaturalError(e?.message || '자연어 검색에 실패했습니다.');
+      setLoadingNaturalExplanation(false);
     } finally {
+      if (naturalSearchRequestIdRef.current !== requestId) return;
       setLoadingNatural(false);
     }
   }
@@ -703,6 +707,7 @@ export default function Search() {
     // 자연어 입력과 상단 추천 결과만 초기화합니다.
     // 기존 필터 전체를 되돌리지는 않는 이유는
     // 사용자가 자연어 검색 후 수동으로 미세 조정하는 흐름을 막지 않기 위해서입니다.
+    naturalSearchRequestIdRef.current += 1;
     setNaturalQuery('');
     setNaturalRooms([]);
     setNaturalExplanation('');
@@ -710,6 +715,8 @@ export default function Search() {
     setNaturalError('');
     setNaturalAppliedLabels([]);
     setLoadingNatural(false);
+    setLoadingNaturalExplanation(false);
+    setLoadingNaturalMarkers(false);
     setIsNaturalSearchMode(false);
   }
 
@@ -746,6 +753,7 @@ export default function Search() {
   // bbox는 객체라서 이전 값 비교가 필요합니다.
   // ref를 두면 불필요한 재검색을 막을 수 있습니다.
   const bboxRef = useRef(bbox);
+  const naturalSearchRequestIdRef = useRef(0);
 
   useEffect(() => {
     bboxRef.current = bbox;
@@ -867,6 +875,8 @@ export default function Search() {
   const showSemanticSection =
     loadingNatural || naturalRooms.length > 0 || naturalQuery.trim();
   const semanticPreviewRooms = naturalRooms.slice(0, SEMANTIC_PREVIEW_LIMIT);
+  const showingNaturalThinking =
+    (loadingNatural || loadingNaturalExplanation) && !naturalExplanation;
   const showNormalSection =
     loadingRooms || rooms.length > 0 || naturalQuery.trim() || appliedCond !== null;
   const displayedMarkers = isNaturalSearchMode ? naturalMarkers : markers;
@@ -963,7 +973,7 @@ export default function Search() {
                 )}
               </div>
 
-              {loadingNatural && (
+              {showingNaturalThinking && (
                 <div className={styles.semanticEmpty}>
                   AI가 생각 중...
                 </div>
