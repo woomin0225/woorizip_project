@@ -5,7 +5,6 @@ import java.util.List;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Slice;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -29,6 +28,7 @@ import org.team4p.woorizip.room.dto.request.RoomSearchCondition;
 import org.team4p.woorizip.room.dto.response.ReviewRankingResponse;
 import org.team4p.woorizip.room.dto.response.RoomAiAnalyzeResponse;
 import org.team4p.woorizip.room.dto.response.RoomSearchResponse;
+import org.team4p.woorizip.room.dto.response.RoomSearchSliceResponse;
 import org.team4p.woorizip.room.dto.response.ViewsRankingResponse;
 import org.team4p.woorizip.room.dto.response.WishRankingResponse;
 import org.team4p.woorizip.room.image.dto.RoomImageDto;
@@ -64,9 +64,9 @@ public class RoomController {
 	private final RoomImageSummaryService roomImageSummaryService;
 	
 	@GetMapping("/search")
-	public ResponseEntity<ApiResponse<Slice<RoomSearchResponse>>> searchRooms(@Valid @ModelAttribute RoomSearchCondition cond, Pageable pageable) {
+	public ResponseEntity<ApiResponse<RoomSearchSliceResponse>> searchRooms(@Valid @ModelAttribute RoomSearchCondition cond, Pageable pageable) {
 		// 방 검색 결과 조회
-		Slice<RoomSearchResponse> slice = roomService.selectRoomSearch(cond, pageable);
+		RoomSearchSliceResponse slice = roomService.selectRoomSearch(cond, pageable);
 		
 		return ResponseEntity.status(200).body(ApiResponse.ok("검색 성공", slice));
 	}

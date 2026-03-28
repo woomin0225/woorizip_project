@@ -14,7 +14,7 @@ export async function searchRooms(cond, page = 0, size = 10) {
   const { data } = await apiJson().get('/api/rooms/search', {
     params: { ...cond, page, size },
   });
-  return unwrap(data); // Slice<RoomSearchResponse>
+  return unwrap(data); // RoomSearchSliceResponse
 }
 
 // 자연어 검색 API입니다.

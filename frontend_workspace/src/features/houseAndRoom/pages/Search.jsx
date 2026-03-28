@@ -314,6 +314,7 @@ export default function Search() {
 
   // 기존 검색 결과 관련 상태들입니다.
   const [rooms, setRooms] = useState([]);
+  const [normalTotalCount, setNormalTotalCount] = useState(0);
   const [markers, setMarkers] = useState([]);
   const [page, setPage] = useState(0);
   const [hasNext, setHasNext] = useState(true);
@@ -452,6 +453,7 @@ export default function Search() {
     setLoadingRooms(true);
     setLoadingMarkers(true);
     setMarkerPopup(null);
+    setNormalTotalCount(0);
 
     try {
       const merged = { ...firstCond, ...firstBbox };
@@ -463,6 +465,7 @@ export default function Search() {
       ]);
 
       setRooms(slice?.content ?? []);
+      setNormalTotalCount(slice?.totalElements ?? slice?.content?.length ?? 0);
       setMarkers(markerList ?? []);
       setSearchBbox(firstBbox);
       setPage(slice?.number ?? 0);
@@ -620,6 +623,7 @@ export default function Search() {
       const content = slice?.content ?? [];
 
       setRooms((prev) => [...prev, ...content]);
+      setNormalTotalCount((prev) => slice?.totalElements ?? prev);
       setPage(slice?.number ?? nextPage);
       setHasNext(
         typeof slice?.hasNext === 'boolean' ? slice.hasNext : !slice?.last
@@ -822,8 +826,8 @@ export default function Search() {
             <section className={styles.normalSection}>
               <div className={styles.normalHeader}>
                 <h3 className={styles.normalTitle}>일반 검색 결과</h3>
-                {!loadingRooms && rooms.length > 0 && (
-                  <span className={styles.normalCount}>{rooms.length}건</span>
+                {!loadingRooms && (
+                  <span className={styles.normalCount}>{normalTotalCount}건</span>
                 )}
               </div>
 

@@ -29,6 +29,7 @@ import org.team4p.woorizip.room.dto.ai.RoomRagResponse;
 import org.team4p.woorizip.room.dto.request.RoomSearchCondition;
 import org.team4p.woorizip.room.dto.response.ReviewRankingResponse;
 import org.team4p.woorizip.room.dto.response.RoomSearchResponse;
+import org.team4p.woorizip.room.dto.response.RoomSearchSliceResponse;
 import org.team4p.woorizip.room.dto.response.ViewsRankingResponse;
 import org.team4p.woorizip.room.dto.response.WishRankingResponse;
 import org.team4p.woorizip.room.image.dto.RoomImageDto;
@@ -68,11 +69,12 @@ public class RoomServiceImpl implements RoomService {
 	private String aiServerUri;
 	
 	@Override
-	public Slice<RoomSearchResponse> selectRoomSearch(RoomSearchCondition cond, Pageable pageable) {
+	public RoomSearchSliceResponse selectRoomSearch(RoomSearchCondition cond, Pageable pageable) {
 		// 방 검색
 		
 		// bbox 좌표 크기순서 보증
 		cond.adjustment();
+		long totalCount = roomRepository.countSearchRooms(cond);
 		
 		// 방 검색 결과 조회 -> 응답객체에 저장
 		Slice<RoomSearchResponse> slice = roomRepository.searchRooms(cond, pageable)
@@ -117,7 +119,7 @@ public class RoomServiceImpl implements RoomService {
 			}
 		}
 		
-		return slice;
+		return RoomSearchSliceResponse.from(slice, totalCount);
 	}
 
 	private RoomSearchResponse toRoomSearchResponse(RoomEntity entity) {
