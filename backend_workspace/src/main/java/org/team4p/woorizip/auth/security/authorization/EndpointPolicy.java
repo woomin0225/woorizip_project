@@ -31,12 +31,13 @@ public final class EndpointPolicy {
             "/api/orchestrate/command",
             "/api/voice/tts",
             "/api/voice/stt",
-            "/auth/login",
-            "/api/facilities/ai**",
-            "/api/rooms/rag/room",
-            "/api/rooms/*/summarized_room/request",
-            "/api/tour/internal/**",
-            "/auth/login"
+             "/auth/login",
+             "/api/facilities/ai**",
+             "/api/rooms/rag/room",
+             "/api/rooms/rag/room/explanation",
+             "/api/rooms/*/summarized_room/request",
+             "/api/tour/internal/**",
+             "/auth/login"
     };
 
     // 공지사항, 정책・정보, 이벤트 : ADMIN만 (POST/PUT/DELETE)
