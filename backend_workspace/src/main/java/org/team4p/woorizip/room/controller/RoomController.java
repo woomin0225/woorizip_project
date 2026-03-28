@@ -27,6 +27,7 @@ import org.team4p.woorizip.room.dto.RoomDto;
 import org.team4p.woorizip.room.dto.request.RoomSearchCondition;
 import org.team4p.woorizip.room.dto.response.ReviewRankingResponse;
 import org.team4p.woorizip.room.dto.response.RoomAiAnalyzeResponse;
+import org.team4p.woorizip.room.dto.response.RoomRagSearchResult;
 import org.team4p.woorizip.room.dto.response.RoomSearchResponse;
 import org.team4p.woorizip.room.dto.response.RoomSearchSliceResponse;
 import org.team4p.woorizip.room.dto.response.ViewsRankingResponse;
@@ -276,8 +277,9 @@ public class RoomController {
 	}
 
 	@PostMapping("/rag/room")
-	public ResponseEntity<ApiResponse<List<RoomSearchResponse>>> ragSearchRooms(@RequestBody String text){
-		List<RoomSearchResponse> list = roomService.selectRoomRag(text);
+	public ResponseEntity<ApiResponse<RoomRagSearchResult>> ragSearchRooms(@RequestBody String text){
+		RoomRagSearchResult result = roomService.selectRoomRag(text);
+		RoomRagSearchResult list = result;
 		
 		return ResponseEntity.status(200).body(ApiResponse.ok("방 rag 검색 성공", list));
 	}

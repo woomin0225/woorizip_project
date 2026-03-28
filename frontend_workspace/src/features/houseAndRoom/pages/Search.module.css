@@ -232,6 +232,16 @@
   color: rgba(17, 24, 39, 0.7);
 }
 
+.semanticExplanation {
+  margin: 0 12px 12px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: #f3f6fb;
+  color: #1f2937;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
 .normalSection {
   background: #fff;
 }

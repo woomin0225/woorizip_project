@@ -8,6 +8,7 @@ import org.springframework.data.domain.Slice;
 import org.team4p.woorizip.room.dto.RoomDto;
 import org.team4p.woorizip.room.dto.request.RoomSearchCondition;
 import org.team4p.woorizip.room.dto.response.ReviewRankingResponse;
+import org.team4p.woorizip.room.dto.response.RoomRagSearchResult;
 import org.team4p.woorizip.room.dto.response.RoomSearchResponse;
 import org.team4p.woorizip.room.dto.response.RoomSearchSliceResponse;
 import org.team4p.woorizip.room.dto.response.ViewsRankingResponse;
@@ -33,5 +34,5 @@ public interface RoomService {
 	
 	List<WishRankingResponse> selectTopNByWish(int limit);
 	
-	List<RoomSearchResponse> selectRoomRag(String text);
+	RoomRagSearchResult selectRoomRag(String text);
 }

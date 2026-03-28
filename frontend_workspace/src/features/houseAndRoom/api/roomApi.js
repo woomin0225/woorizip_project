@@ -23,7 +23,7 @@ export async function searchRoomsByNaturalText(text) {
   const { data } = await apiJson().post('/api/rooms/rag/room', text, {
     headers: { 'Content-Type': 'text/plain; charset=utf-8' },
   });
-  return unwrap(data); // List<RoomDto>
+  return unwrap(data); // { rooms: List<RoomDto>, explanation: string }
 }
 
 // 방 등록 POST

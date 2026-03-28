@@ -9,5 +9,6 @@ public class RoomRagResponse {
 	private Boolean status;
 	private String text;
 	private List<String> room_list;
+	private String explanation;
 	private String message;
 }

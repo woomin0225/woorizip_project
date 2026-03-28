@@ -2,6 +2,7 @@
 
 from fastapi import Depends, HTTPException, Request
 
+from app.clients.qwen_llm_client import QwenLlmClient
 from app.services.embedding_service import RoomEmbeddingService
 from app.services.rag_service import RagService
 from app.services.summary_service import RoomSummaryService
@@ -28,6 +29,9 @@ def get_qwen_llm_client(request: Request):
         )
     return client
 
+def get_optional_qwen_llm_client(request: Request) -> QwenLlmClient | None:
+    return getattr(request.app.state, "qwen_llm_client", None)
+
 async def get_room_summary_service(llm_client=Depends(get_qwen_llm_client)):
     return RoomSummaryService(client=llm_client)
 
@@ -46,5 +50,13 @@ def get_tokenizer(request: Request):
         )
     return tokenizer
 
-def get_rag_service(vector_client=Depends(get_vector_client), embedding_client=Depends(get_embedding_client)):
-    return RagService(vectorClient=vector_client, embeddingClient=embedding_client)
+def get_rag_service(
+    vector_client=Depends(get_vector_client),
+    embedding_client=Depends(get_embedding_client),
+    llm_client=Depends(get_optional_qwen_llm_client),
+):
+    return RagService(
+        vectorClient=vector_client,
+        embeddingClient=embedding_client,
+        llmClient=llm_client,
+    )

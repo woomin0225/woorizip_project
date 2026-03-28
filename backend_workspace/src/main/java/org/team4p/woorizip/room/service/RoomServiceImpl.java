@@ -28,6 +28,7 @@ import org.team4p.woorizip.room.dto.RoomDto;
 import org.team4p.woorizip.room.dto.ai.RoomRagResponse;
 import org.team4p.woorizip.room.dto.request.RoomSearchCondition;
 import org.team4p.woorizip.room.dto.response.ReviewRankingResponse;
+import org.team4p.woorizip.room.dto.response.RoomRagSearchResult;
 import org.team4p.woorizip.room.dto.response.RoomSearchResponse;
 import org.team4p.woorizip.room.dto.response.RoomSearchSliceResponse;
 import org.team4p.woorizip.room.dto.response.ViewsRankingResponse;
@@ -426,7 +427,7 @@ public class RoomServiceImpl implements RoomService {
 	}
 
 	@Override
-	public List<RoomSearchResponse> selectRoomRag(String text) {
+	public RoomRagSearchResult selectRoomRag(String text) {
 		// 이 메서드는 "자연어 문장 -> RAG 추천 방 목록" 흐름의 Spring 측 연결 지점입니다.
 		//
 		// 역할을 나누면:
@@ -462,9 +463,12 @@ public class RoomServiceImpl implements RoomService {
 
 		// RAG 서버가 비어 있는 결과를 주면 바로 빈 리스트를 반환합니다.
 		// 프론트는 "추천 결과 없음"으로 자연스럽게 처리할 수 있습니다.
+		String explanation = response != null && response.getExplanation() != null
+				? response.getExplanation().trim()
+				: "";
 		List<String> roomNoList = response != null ? response.getRoom_list() : null;
 		if (roomNoList == null || roomNoList.isEmpty()) {
-			return List.of();
+			return new RoomRagSearchResult(List.of(), explanation);
 		}
 
 		// DB 조회는 roomNo 기준으로 한 번에 처리해 성능을 아낍니다.
@@ -519,7 +523,7 @@ public class RoomServiceImpl implements RoomService {
 			}
 		}
 		
-		return dtoLists;
+		return new RoomRagSearchResult(dtoLists, explanation);
 	}
 
 	private void applyAvailability(RoomDto dto, RoomEntity entity) {

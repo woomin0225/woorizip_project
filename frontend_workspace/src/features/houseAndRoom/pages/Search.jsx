@@ -395,6 +395,7 @@ export default function Search() {
   // 기존 검색과 섞지 않고 분리해 두어야 UI가 단순해집니다.
   const [naturalQuery, setNaturalQuery] = useState('');
   const [naturalRooms, setNaturalRooms] = useState([]);
+  const [naturalExplanation, setNaturalExplanation] = useState('');
   const [loadingNatural, setLoadingNatural] = useState(false);
   const [naturalMarkers, setNaturalMarkers] = useState([]);
   const [loadingNaturalMarkers, setLoadingNaturalMarkers] = useState(false);
@@ -651,6 +652,7 @@ export default function Search() {
     const query = naturalQuery.trim();
     if (!query) {
       setNaturalRooms([]);
+      setNaturalExplanation('');
       setNaturalMarkers([]);
       setNaturalError('');
       setNaturalAppliedLabels([]);
@@ -667,23 +669,32 @@ export default function Search() {
 
     setLoadingNatural(true);
     setNaturalError('');
+    setNaturalExplanation('');
     setIsNaturalSearchMode(false);
     setPendingMapSearch(false);
     try {
       // 자연어 검색의 목표는 두 가지입니다.
       // 1. 상단에는 의미 기반 추천(RAG) 결과를 보여 주기
       // 2. 하단에는 같은 문장에서 추출한 필터로 일반 검색 결과를 보여 주기
-      const [list, searchResult] = await Promise.all([
+      const [ragResult, searchResult] = await Promise.all([
         searchRoomsByNaturalText(query),
         runSearch(nextCond, bboxRef.current),
       ]);
-      const nextNaturalRooms = Array.isArray(list) ? list : [];
+      const nextNaturalRooms = Array.isArray(ragResult?.rooms)
+        ? ragResult.rooms
+        : [];
       setNaturalRooms(nextNaturalRooms);
+      setNaturalExplanation(
+        typeof ragResult?.explanation === 'string'
+          ? ragResult.explanation.trim()
+          : ''
+      );
       await hydrateNaturalMarkers(nextNaturalRooms, searchResult?.markerList ?? []);
       setIsNaturalSearchMode(true);
       setPendingMapSearch(false);
     } catch (e) {
       setNaturalRooms([]);
+      setNaturalExplanation('');
       setNaturalMarkers([]);
       setNaturalError(e?.message || '자연어 검색에 실패했습니다.');
     } finally {
@@ -698,6 +709,7 @@ export default function Search() {
     // 사용자가 자연어 검색 후 수동으로 미세 조정하는 흐름을 막지 않기 위해서입니다.
     setNaturalQuery('');
     setNaturalRooms([]);
+    setNaturalExplanation('');
     setNaturalMarkers([]);
     setNaturalError('');
     setNaturalAppliedLabels([]);
@@ -986,6 +998,12 @@ export default function Search() {
               {loadingNatural && (
                 <div className={styles.semanticEmpty}>
                   자연어 검색 결과를 불러오는 중입니다.
+                </div>
+              )}
+
+              {!loadingNatural && naturalExplanation && (
+                <div className={styles.semanticExplanation}>
+                  {naturalExplanation}
                 </div>
               )}
 
