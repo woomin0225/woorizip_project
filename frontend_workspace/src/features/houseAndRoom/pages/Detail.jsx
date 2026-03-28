@@ -91,6 +91,14 @@ export default function Detail() {
       currentSummaryState?.summaryStatus === 'PROCESSING') &&
     hasCurrentRoomSummary;
 
+  function restartSummaryStatusFetch(roomNo) {
+    if (!roomNo) return;
+    summaryRequestIdRef.current += 1;
+    clearTimeout(summaryPollTimeoutRef.current);
+    setSummaryError('');
+    void loadRoomSummaryStatus(roomNo, summaryRequestIdRef.current);
+  }
+
   const refreshReviews = async () => {
     if (!selectedRoomNo) return;
     const page = await getRoomReviews(
@@ -99,6 +107,7 @@ export default function Detail() {
       REVIEW_PAGE_SIZE
     );
     setReviewPage(page);
+    restartSummaryStatusFetch(selectedRoomNo);
   };
 
   function buildWishMap(list) {
@@ -180,7 +189,7 @@ export default function Detail() {
 
     if (!selectedRoomNo) return;
 
-    loadRoomSummaryStatus(selectedRoomNo, summaryRequestIdRef.current);
+    void loadRoomSummaryStatus(selectedRoomNo, summaryRequestIdRef.current);
   }, [selectedRoomNo]);
 
   useEffect(() => () => clearTimeout(summaryPollTimeoutRef.current), []);

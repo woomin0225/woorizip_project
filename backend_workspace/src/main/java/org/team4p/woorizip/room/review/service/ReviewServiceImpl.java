@@ -1,5 +1,6 @@
 package org.team4p.woorizip.room.review.service;
 
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Optional;
 
@@ -128,11 +129,15 @@ public class ReviewServiceImpl implements ReviewService {
 	}
 
 	private void markReviewAndEmbeddingPending(String roomNo) {
+		LocalDateTime now = LocalDateTime.now();
+
 		// 리뷰 요약 상태를 다시 PENDING으로 등록
 		reviewSummaryRepository.save(ReviewSummaryEntity.builder()
 				.roomNo(roomNo)
 				.summaryStatus("PENDING")
 				.reviewCount(0)
+				.updatedAt(now)
+				.lastErrorMessage(null)
 				.retryCount(0)
 				.build());
 
@@ -141,6 +146,8 @@ public class ReviewServiceImpl implements ReviewService {
 		roomEmbeddingRepository.save(RoomEmbeddingEntity.builder()
 				.roomNo(room.getRoomNo())
 				.embeddingStatus("PENDING")
+				.updatedAt(now)
+				.lastErrorMessage(null)
 				.retryCount(0)
 				.build());
 	}

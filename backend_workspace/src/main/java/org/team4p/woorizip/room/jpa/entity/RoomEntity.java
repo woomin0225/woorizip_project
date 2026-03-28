@@ -101,8 +101,7 @@ public class RoomEntity {
 	
 	@PreUpdate
 	public void preUpdated() {
-		if (roomUpdatedAt == null)
-			roomUpdatedAt = LocalDateTime.now();
+		roomUpdatedAt = LocalDateTime.now();
 	}
 	
 	public RoomDto toDto() {

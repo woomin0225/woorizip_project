@@ -203,11 +203,13 @@ public class RoomAiServiceImpl implements RoomAiService {
 		if(entity.getRetryCount() == null) {
 			entity.setRetryCount(0);
 		}
+		entity.setUpdatedAt(LocalDateTime.now());
 		roomFinalSummaryRepository.save(entity);
 		return entity;
 	}
 
 	@Override
+	@Transactional
 	public RoomFinalSummaryEntity selectSummarizedRoom(String roomNo) {
 		RoomFinalSummaryEntity entity = roomFinalSummaryRepository.findById(roomNo).orElse(null);
 		if(entity == null) {
@@ -216,7 +218,16 @@ public class RoomAiServiceImpl implements RoomAiService {
 		if(isFinalSummaryFresh(entity, roomNo)) {
 			return entity;
 		}
+		if(STATUS_PROCESSING.equals(entity.getSummaryStatus()) || STATUS_PENDING.equals(entity.getSummaryStatus())) {
+			return entity;
+		}
 		entity.setSummaryStatus(STATUS_PENDING);
+		entity.setLastErrorMessage(null);
+		if(entity.getRetryCount() == null) {
+			entity.setRetryCount(0);
+		}
+		entity.setUpdatedAt(LocalDateTime.now());
+		roomFinalSummaryRepository.save(entity);
 		return entity;
 	}
 
