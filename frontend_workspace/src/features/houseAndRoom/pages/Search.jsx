@@ -402,7 +402,6 @@ export default function Search() {
   const [naturalError, setNaturalError] = useState('');
   const [naturalAppliedLabels, setNaturalAppliedLabels] = useState([]);
   const [isNaturalSearchMode, setIsNaturalSearchMode] = useState(false);
-  const [pendingMapSearch, setPendingMapSearch] = useState(false);
 
   // 찜 기능 관련 상태입니다.
   const currentUserNo = useMemo(() => getCurrentUserNo(), []);
@@ -648,7 +647,7 @@ export default function Search() {
     }
   }
 
-  async function runNaturalSearch() {
+  async function runNaturalSearch(targetBbox = bboxRef.current) {
     const query = naturalQuery.trim();
     if (!query) {
       setNaturalRooms([]);
@@ -671,14 +670,13 @@ export default function Search() {
     setNaturalError('');
     setNaturalExplanation('');
     setIsNaturalSearchMode(false);
-    setPendingMapSearch(false);
     try {
       // 자연어 검색의 목표는 두 가지입니다.
       // 1. 상단에는 의미 기반 추천(RAG) 결과를 보여 주기
       // 2. 하단에는 같은 문장에서 추출한 필터로 일반 검색 결과를 보여 주기
       const [ragResult, searchResult] = await Promise.all([
         searchRoomsByNaturalText(query),
-        runSearch(nextCond, bboxRef.current),
+        runSearch(nextCond, targetBbox),
       ]);
       const nextNaturalRooms = Array.isArray(ragResult?.rooms)
         ? ragResult.rooms
@@ -691,7 +689,6 @@ export default function Search() {
       );
       await hydrateNaturalMarkers(nextNaturalRooms, searchResult?.markerList ?? []);
       setIsNaturalSearchMode(true);
-      setPendingMapSearch(false);
     } catch (e) {
       setNaturalRooms([]);
       setNaturalExplanation('');
@@ -703,7 +700,6 @@ export default function Search() {
   }
 
   function clearNaturalSearch() {
-    const shouldRefreshForCurrentMap = pendingMapSearch;
     // 자연어 입력과 상단 추천 결과만 초기화합니다.
     // 기존 필터 전체를 되돌리지는 않는 이유는
     // 사용자가 자연어 검색 후 수동으로 미세 조정하는 흐름을 막지 않기 위해서입니다.
@@ -715,12 +711,6 @@ export default function Search() {
     setNaturalAppliedLabels([]);
     setLoadingNatural(false);
     setIsNaturalSearchMode(false);
-    setPendingMapSearch(false);
-
-    if (shouldRefreshForCurrentMap) {
-      const base = appliedCond ?? cond;
-      if (base) runSearch(base, bboxRef.current);
-    }
   }
 
   const clickSearch = () => {
@@ -729,7 +719,6 @@ export default function Search() {
     const nextApplied = { ...cond };
     setAppliedCond(nextApplied);
     setIsNaturalSearchMode(false);
-    setPendingMapSearch(false);
     runSearch(nextApplied, bboxRef.current);
   };
 
@@ -738,7 +727,6 @@ export default function Search() {
     setCond(nextApplied);
     setAppliedCond(nextApplied);
     setIsNaturalSearchMode(false);
-    setPendingMapSearch(false);
     runSearch(nextApplied, bboxRef.current);
   };
 
@@ -752,7 +740,6 @@ export default function Search() {
 
     setAppliedCond(nextApplied);
     setIsNaturalSearchMode(false);
-    setPendingMapSearch(false);
     runSearch(nextApplied, bboxRef.current);
   };
 
@@ -786,21 +773,13 @@ export default function Search() {
 
     // 지도를 움직였을 때는 현재 "적용 중인 조건" 기준으로만 재검색합니다.
     if (isNaturalSearchMode) {
-      setPendingMapSearch(true);
+      if (naturalQuery.trim()) {
+        runNaturalSearch(nextBbox);
+      }
       return;
     }
 
     runSearch(appliedCond, nextBbox);
-  };
-
-  const rerunSearchInCurrentMap = () => {
-    if (!appliedCond) return;
-    setPendingMapSearch(false);
-    if (isNaturalSearchMode && naturalQuery.trim()) {
-      runNaturalSearch();
-      return;
-    }
-    runSearch(appliedCond, bboxRef.current);
   };
 
   const onLoadMore = async () => {
@@ -947,24 +926,13 @@ export default function Search() {
               <div className={styles.naturalModeCopy}>
                 <strong className={styles.naturalModeTitle}>AI 검색 모드</strong>
                 <div className={styles.naturalModeText}>
-                  {pendingMapSearch
-                    ? '지도를 옮겼습니다. 현재 결과는 이전 지도 기준으로 유지되고 있습니다.'
-                    : '현재 결과를 유지합니다. 새 지도 범위를 반영하려면 다시 검색하세요.'}
+                  지도를 움직이면 현재 지도 범위를 기준으로 AI 검색을 바로 다시 진행합니다.
                 </div>
               </div>
 
-              {pendingMapSearch ? (
-                <button
-                  className={styles.naturalMapRefreshBtn}
-                  type="button"
-                  onClick={rerunSearchInCurrentMap}
-                  disabled={loadingRooms || loadingMarkers}
-                >
-                  이 지도에서 다시 검색
-                </button>
-              ) : (
-                <span className={styles.naturalModeBadge}>현재 지도 범위 적용됨</span>
-              )}
+              <span className={styles.naturalModeBadge}>
+                현재 지도 범위 자동 반영 중
+              </span>
             </div>
           )}
 
@@ -997,7 +965,7 @@ export default function Search() {
 
               {loadingNatural && (
                 <div className={styles.semanticEmpty}>
-                  자연어 검색 결과를 불러오는 중입니다.
+                  AI가 생각 중...
                 </div>
               )}
 

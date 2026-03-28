@@ -81,6 +81,7 @@ class RagService:
                     "응답은 자연스러운 한국어만 사용하고, 영어식 표현이나 외국어 문장은 쓰지 마라. "
                     "사용자에게 안내하듯 친절하고 부드러운 존댓말로 2~4문장으로 설명하라. "
                     "검색 조건과 잘 맞는 이유를 알기 쉽게 요약하고, 근거가 약한 내용은 말하지 마라."
+                    "문장은 항상 마침표로 끝내라."
                 ),
             },
             {
@@ -98,7 +99,7 @@ class RagService:
             return str(
                 self.llmClient.generate_from_messages(
                     messages,
-                    max_new_tokens=180,
+                    max_new_tokens=100,
                     do_sample=False,
                 )
             ).strip()
