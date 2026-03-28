@@ -190,6 +190,10 @@ public class RoomServiceImpl implements RoomService {
 		}
 		
 		// 소유권 검사 통과하면 방 소프트삭제 수행
+		if (roomAvailabilityPolicyService.hasCurrentOccupancy(roomNo)) {
+			throw new IllegalArgumentException("현재 거주중인 방은 삭제할 수 없습니다.");
+		}
+
 		long roomResult = roomRepository.softDeleteByRoomNo(roomNo);
 		if (roomResult != 1L) throw new IllegalStateException("방 정보 삭제 실패");
 	}

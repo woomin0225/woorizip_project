@@ -70,11 +70,21 @@ export default function Delete() {
     [houses, selectedHouseNo]
   );
 
+  const occupiedRoomCount = useMemo(
+    () => rooms.filter((room) => room && !isRoomEmpty(room)).length,
+    [rooms]
+  );
+
+  const canDeleteSelectedHouse = Boolean(selectedHouseNo) && occupiedRoomCount === 0;
+
   function openDeleteHouse() {
     if (!selectedHouse) return;
+    if (occupiedRoomCount > 0) {
+      alert("거주중인 방이 있는 건물은 삭제할 수 없습니다.");
+      return;
+    }
 
     const roomCount = rooms.filter(Boolean).length;
-    const occupiedRoomCount = rooms.filter((room) => room && !isRoomEmpty(room)).length;
 
     setTarget({
       type: "HOUSE",
@@ -176,11 +186,21 @@ export default function Delete() {
           <button
             type="button"
             className={styles.dangerBtn}
-            disabled={!selectedHouseNo || loading}
+            disabled={!canDeleteSelectedHouse || loading}
+            title={!selectedHouseNo
+              ? undefined
+              : occupiedRoomCount > 0
+                ? "거주중인 방이 있는 건물은 삭제할 수 없습니다."
+                : undefined}
             onClick={openDeleteHouse}
           >
             선택한 건물 삭제
           </button>
+          {selectedHouseNo && occupiedRoomCount > 0 && (
+            <div className={styles.disabledHint}>
+              거주중인 방이 {occupiedRoomCount}개 있어 건물을 삭제할 수 없습니다.
+            </div>
+          )}
         </aside>
 
         <main className={styles.right}>

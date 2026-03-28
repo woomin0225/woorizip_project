@@ -92,6 +92,13 @@ public class RoomAvailabilityPolicyService {
         }
     }
 
+    public boolean hasCurrentOccupancy(String roomNo) {
+        if (roomNo == null || roomNo.isBlank()) {
+            return false;
+        }
+        return findActiveOccupancyContract(roomNo, LocalDate.now(KST)) != null;
+    }
+
     private ContractEntity findActiveOccupancyContract(String roomNo, LocalDate today) {
         List<ContractEntity> contracts = contractRepository.findByRoomNoAndStatusInOrderByMoveInDateAsc(
                 roomNo,
