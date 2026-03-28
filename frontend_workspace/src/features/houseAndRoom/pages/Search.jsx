@@ -62,6 +62,41 @@ function normalizeText(text) {
   return String(text || '').toLowerCase();
 }
 
+function escapeRegExp(text) {
+  return String(text || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function detectBooleanIntent(text, { keywords = [], positive = [], negative = [] }) {
+  const lowered = normalizeText(text);
+
+  if (positive.some((phrase) => lowered.includes(normalizeText(phrase)))) {
+    return true;
+  }
+  if (negative.some((phrase) => lowered.includes(normalizeText(phrase)))) {
+    return false;
+  }
+
+  if (keywords.length === 0) return null;
+
+  const keywordPattern = keywords.map(escapeRegExp).join('|');
+  const negativeWordPattern =
+    '(금지|불가|불가능|안\\s?됨|안\\s?되는|안\\s?돼|없음|없는|아님|아닌|아니다)';
+
+  const aroundKeywordNegative = new RegExp(
+    `(?:${keywordPattern})\\s*(?:은|는|이|가)?\\s*${negativeWordPattern}|${negativeWordPattern}\\s*(?:${keywordPattern})`,
+    'i'
+  );
+  if (aroundKeywordNegative.test(text)) {
+    return false;
+  }
+
+  if (keywords.some((keyword) => lowered.includes(normalizeText(keyword)))) {
+    return true;
+  }
+
+  return null;
+}
+
 function toMoneyValue(rawNumber, unit = '') {
   // 사용자는 "1000", "50만", "2억"처럼 여러 방식으로 금액을 말할 수 있습니다.
   // 기존 검색 필터는 숫자 하나만 받으므로 여기서 실제 금액 숫자로 통일합니다.
@@ -307,33 +342,59 @@ function buildNaturalSearchPatch(text, baseCond) {
     appliedLabels.push(`옵션 ${options.join(', ')}`);
   }
 
-  if (
-    lowered.includes('여성전용') ||
-    lowered.includes('여성 전용') ||
-    lowered.includes('여자만')
-  ) {
+  const femaleIntent = detectBooleanIntent(source, {
+    keywords: ['여성전용', '여성 전용', '여자만'],
+    negative: ['여성전용 아님', '여성 전용 아님', '남녀공용'],
+  });
+  if (femaleIntent === true) {
     nextCond.houseFemaleLimit = true;
     appliedLabels.push('여성전용');
+  } else if (femaleIntent === false) {
+    nextCond.houseFemaleLimit = false;
   }
 
-  if (
-    lowered.includes('반려동물') ||
-    lowered.includes('애완동물') ||
-    lowered.includes('펫 가능') ||
-    lowered.includes('반려 가능')
-  ) {
+  const petIntent = detectBooleanIntent(source, {
+    keywords: ['반려동물', '애완동물', '펫'],
+    positive: ['반려동물 가능', '애완동물 가능', '펫 가능', '반려 가능'],
+    negative: [
+      '반려동물 금지',
+      '애완동물 금지',
+      '펫 금지',
+      '반려동물 불가',
+      '애완동물 불가',
+      '펫 불가',
+      '반려 불가',
+    ],
+  });
+  if (petIntent === true) {
     nextCond.housePetYn = true;
     appliedLabels.push('반려동물 가능');
+  } else if (petIntent === false) {
+    nextCond.housePetYn = false;
   }
 
-  if (lowered.includes('주차')) {
+  const parkingIntent = detectBooleanIntent(source, {
+    keywords: ['주차'],
+    positive: ['주차 가능', '주차 됨', '주차 되는'],
+    negative: ['주차 금지', '주차 불가', '주차 안됨', '주차 안 되는', '주차 없음'],
+  });
+  if (parkingIntent === true) {
     nextCond.houseParking = true;
     appliedLabels.push('주차 가능');
+  } else if (parkingIntent === false) {
+    nextCond.houseParking = false;
   }
 
-  if (lowered.includes('엘리베이터')) {
+  const elevatorIntent = detectBooleanIntent(source, {
+    keywords: ['엘리베이터'],
+    positive: ['엘리베이터 있음', '엘리베이터 있는'],
+    negative: ['엘리베이터 없음', '엘리베이터 없는', '엘리베이터 불가'],
+  });
+  if (elevatorIntent === true) {
     nextCond.houseElevatorYn = true;
     appliedLabels.push('엘리베이터');
+  } else if (elevatorIntent === false) {
+    nextCond.houseElevatorYn = false;
   }
 
   return {
@@ -781,9 +842,7 @@ export default function Search() {
 
     // 지도를 움직였을 때는 현재 "적용 중인 조건" 기준으로만 재검색합니다.
     if (isNaturalSearchMode) {
-      if (naturalQuery.trim()) {
-        runNaturalSearch(nextBbox);
-      }
+      runSearch(appliedCond, nextBbox);
       return;
     }
 
@@ -936,12 +995,13 @@ export default function Search() {
               <div className={styles.naturalModeCopy}>
                 <strong className={styles.naturalModeTitle}>AI 검색 모드</strong>
                 <div className={styles.naturalModeText}>
-                  지도를 움직이면 현재 지도 범위를 기준으로 AI 검색을 바로 다시 진행합니다.
+                  지도를 움직이면 AI 검색에서 추출된 일반 검색 결과만 현재 지도 범위로 다시 불러옵니다.
+                  AI 추천 결과는 그대로 유지됩니다.
                 </div>
               </div>
 
               <span className={styles.naturalModeBadge}>
-                현재 지도 범위 자동 반영 중
+                AI 추천 유지 중
               </span>
             </div>
           )}
