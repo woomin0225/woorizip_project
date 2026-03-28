@@ -5,7 +5,7 @@ import ResultList from './../components/Search/ResultList';
 import ResultItem from './../components/Search/ResultItem';
 
 import { searchRooms, searchRoomsByNaturalText } from '../api/roomApi';
-import { getHouseMarkers, getRoomsInHouseMarker } from '../api/houseApi';
+import { getHouse, getHouseMarkers, getRoomsInHouseMarker } from '../api/houseApi';
 import { tokenStore } from '../../../app/http/tokenStore';
 import { parseJwt } from '../../../app/providers/utils/jwt';
 import {
@@ -75,6 +75,14 @@ function toMoneyValue(rawNumber, unit = '') {
   return Math.round(numeric * 10_000);
 }
 
+function toExclusiveMoneyMax(rawNumber, unit = '') {
+  const value = toMoneyValue(rawNumber, unit);
+  if (value === null) return null;
+
+  const step = unit.includes('원') && !unit.includes('만원') ? 1 : 10_000;
+  return Math.max(value - step, 0);
+}
+
 function extractMoneyRange(text, keywords) {
   // 이 함수는 "보증금 1000 이하", "월세 50~70", "관리비 10 이하"처럼
   // 자연어 안에 들어 있는 금액 조건을 기존 min/max 필터 구조로 바꿔 줍니다.
@@ -87,14 +95,26 @@ function extractMoneyRange(text, keywords) {
     `(?:${keywordPattern})\\s*(?:은|는|이|가)?\\s*([0-9]+(?:[.,][0-9]+)?)\\s*(억|만원|만|원)?\\s*(?:~|-|부터)\\s*([0-9]+(?:[.,][0-9]+)?)\\s*(억|만원|만|원)?`,
     'i'
   );
-  const maxPattern = new RegExp(
-    `(?:${keywordPattern})\\s*(?:은|는|이|가)?\\s*([0-9]+(?:[.,][0-9]+)?)\\s*(억|만원|만|원)?\\s*(?:이하|미만|까지|이내)`,
-    'i'
-  );
-  const minPattern = new RegExp(
-    `(?:${keywordPattern})\\s*(?:은|는|이|가)?\\s*([0-9]+(?:[.,][0-9]+)?)\\s*(억|만원|만|원)?\\s*(?:이상|초과|부터)`,
-    'i'
-  );
+  const maxPatterns = [
+    new RegExp(
+      `(?:${keywordPattern})\\s*(?:은|는|이|가)?\\s*(?:최대\\s*)?([0-9]+(?:[.,][0-9]+)?)\\s*(억|만원|만|원)?\\s*(이하|미만|까지|이내)`,
+      'i'
+    ),
+    new RegExp(
+      `(?:${keywordPattern})\\s*(?:은|는|이|가)?\\s*최대\\s*([0-9]+(?:[.,][0-9]+)?)\\s*(억|만원|만|원)?`,
+      'i'
+    ),
+  ];
+  const minPatterns = [
+    new RegExp(
+      `(?:${keywordPattern})\\s*(?:은|는|이|가)?\\s*(?:최소\\s*)?([0-9]+(?:[.,][0-9]+)?)\\s*(억|만원|만|원)?\\s*(이상|초과|부터)`,
+      'i'
+    ),
+    new RegExp(
+      `(?:${keywordPattern})\\s*(?:은|는|이|가)?\\s*최소\\s*([0-9]+(?:[.,][0-9]+)?)\\s*(억|만원|만|원)?`,
+      'i'
+    ),
+  ];
 
   const rangeMatch = source.match(rangePattern);
   if (rangeMatch) {
@@ -104,15 +124,22 @@ function extractMoneyRange(text, keywords) {
     };
   }
 
-  const maxMatch = source.match(maxPattern);
+  const maxMatch = maxPatterns
+    .map((pattern) => source.match(pattern))
+    .find(Boolean);
   if (maxMatch) {
+    const isExclusive = String(maxMatch[3] || '').includes('미만');
     return {
       min: null,
-      max: toMoneyValue(maxMatch[1], maxMatch[2] || ''),
+      max: isExclusive
+        ? toExclusiveMoneyMax(maxMatch[1], maxMatch[2] || '')
+        : toMoneyValue(maxMatch[1], maxMatch[2] || ''),
     };
   }
 
-  const minMatch = source.match(minPattern);
+  const minMatch = minPatterns
+    .map((pattern) => source.match(pattern))
+    .find(Boolean);
   if (minMatch) {
     return {
       min: toMoneyValue(minMatch[1], minMatch[2] || ''),
@@ -123,6 +150,37 @@ function extractMoneyRange(text, keywords) {
   return { min: null, max: null };
 }
 
+function cleanKeywordCandidate(value) {
+  const cleaned = String(value || '')
+    .replace(/^[\s"'`]+|[\s"'`]+$/g, '')
+    .replace(/[.,!?]+$/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  if (!cleaned) return '';
+
+  const blocked = new Set([
+    '방',
+    '집',
+    '건물',
+    '건물명',
+    '방이름',
+    '방 이름',
+    '방명',
+    '호실',
+    '호수',
+    '지역',
+    '동네',
+    '주소',
+    '근처',
+    '주변',
+    '인근',
+    '부근',
+  ]);
+
+  return blocked.has(cleaned) ? '' : cleaned;
+}
+
 function extractKeyword(text) {
   // 자연어 전체를 keyword 필드에 그대로 넣으면 기존 검색과 충돌하기 쉽습니다.
   // 그래서 "신촌 근처", "강남역 주변", "마포구"처럼
@@ -130,14 +188,17 @@ function extractKeyword(text) {
   const source = String(text || '');
   const patterns = [
     /([가-힣A-Za-z0-9]{2,})\s*(?:역|근처|인근|주변|부근|쪽)/g,
-    /\b([가-힣]{2,}(?:구|동))\b/g,
+    /\b([가-힣]{2,}(?:구|동|로|가))\b/g,
+    /([가-힣A-Za-z0-9]{2,}\s*(?:하우스|빌라|빌딩|오피스텔|레지던스|스테이|타운|맨션|원룸))/g,
+    /\b([A-Za-z0-9가-힣]{2,}호)\b/g,
+    /(?:지역|동네|주소|건물명|건물|매물명|방이름|방 이름|방명|호실|호수)\s*(?:은|는|이|가|:)?\s*['"]?([A-Za-z0-9가-힣][^,'"\n]{0,30})/g,
     /['"]([^'"]+)['"]/g,
   ];
 
   const values = [];
   patterns.forEach((pattern) => {
     for (const match of source.matchAll(pattern)) {
-      const value = String(match[1] || '').trim();
+      const value = cleanKeywordCandidate(match[1]);
       if (value) values.push(value);
     }
   });
@@ -192,7 +253,11 @@ function buildNaturalSearchPatch(text, baseCond) {
     appliedLabels.push(`거래유형 ${roomType === 'L' ? '전세' : '월세'}`);
   }
 
-  const depositRange = extractMoneyRange(source, ['보증금', 'deposit']);
+  const depositRange = extractMoneyRange(source, [
+    '보증금',
+    '보증금액',
+    'deposit',
+  ]);
   if (depositRange.min !== null) {
     nextCond.minDeposit = depositRange.min;
   }
@@ -203,7 +268,12 @@ function buildNaturalSearchPatch(text, baseCond) {
     appliedLabels.push('보증금');
   }
 
-  const taxRange = extractMoneyRange(source, ['월세', '관리비', 'rent']);
+  const taxRange = extractMoneyRange(source, [
+    '월세',
+    '월세액',
+    '관리비',
+    'rent',
+  ]);
   if (taxRange.min !== null) {
     nextCond.minTax = taxRange.min;
   }
@@ -326,6 +396,8 @@ export default function Search() {
   const [naturalQuery, setNaturalQuery] = useState('');
   const [naturalRooms, setNaturalRooms] = useState([]);
   const [loadingNatural, setLoadingNatural] = useState(false);
+  const [naturalMarkers, setNaturalMarkers] = useState([]);
+  const [loadingNaturalMarkers, setLoadingNaturalMarkers] = useState(false);
   const [naturalError, setNaturalError] = useState('');
   const [naturalAppliedLabels, setNaturalAppliedLabels] = useState([]);
   const [isNaturalSearchMode, setIsNaturalSearchMode] = useState(false);
@@ -454,6 +526,7 @@ export default function Search() {
     setLoadingMarkers(true);
     setMarkerPopup(null);
     setNormalTotalCount(0);
+    let searchResult = null;
 
     try {
       const merged = { ...firstCond, ...firstBbox };
@@ -472,6 +545,7 @@ export default function Search() {
       setHasNext(
         typeof slice?.hasNext === 'boolean' ? slice.hasNext : !slice?.last
       );
+      searchResult = { slice, markerList: markerList ?? [] };
     } finally {
       setLoadingRooms(false);
       setLoadingMarkers(false);
@@ -479,12 +553,105 @@ export default function Search() {
 
     if (firstCond.roomType === 'L') setIsJeonse(true);
     if (firstCond.roomType === 'M') setIsJeonse(false);
+    return searchResult;
+  }
+
+  async function hydrateNaturalMarkers(roomList, fallbackMarkers = []) {
+    const roomsByHouseNo = new Map();
+    (roomList || []).forEach((room) => {
+      const houseNo = String(room?.houseNo || '').trim();
+      if (!houseNo) return;
+      const currentRooms = roomsByHouseNo.get(houseNo) || [];
+      currentRooms.push(room);
+      roomsByHouseNo.set(houseNo, currentRooms);
+    });
+
+    if (roomsByHouseNo.size === 0) {
+      setNaturalMarkers([]);
+      return;
+    }
+
+    setLoadingNaturalMarkers(true);
+    try {
+      const fallbackMarkerMap = new Map(
+        (fallbackMarkers || [])
+          .filter((marker) => marker?.houseNo)
+          .map((marker) => [String(marker.houseNo), marker])
+      );
+
+      const missingHouseNos = Array.from(roomsByHouseNo.keys()).filter(
+        (houseNo) => {
+          const marker = fallbackMarkerMap.get(houseNo);
+          return (
+            marker?.houseLat === null ||
+            marker?.houseLat === undefined ||
+            marker?.houseLng === null ||
+            marker?.houseLng === undefined
+          );
+        }
+      );
+
+      const houseEntries = await Promise.allSettled(
+        missingHouseNos.map(async (houseNo) => [houseNo, await getHouse(houseNo)])
+      );
+
+      const houseMap = new Map();
+      houseEntries.forEach((entry) => {
+        if (entry.status !== 'fulfilled') return;
+        const [houseNo, house] = entry.value || [];
+        if (!houseNo || !house) return;
+        houseMap.set(String(houseNo), house);
+      });
+
+      const nextMarkers = Array.from(roomsByHouseNo.entries())
+        .map(([houseNo, groupedRooms]) => {
+          const representativeRoom = groupedRooms[0] || {};
+          const fallbackMarker = fallbackMarkerMap.get(houseNo);
+          const house = houseMap.get(houseNo);
+          const houseLat = fallbackMarker?.houseLat ?? house?.houseLat ?? null;
+          const houseLng = fallbackMarker?.houseLng ?? house?.houseLng ?? null;
+
+          if (
+            houseLat === null ||
+            houseLat === undefined ||
+            houseLng === null ||
+            houseLng === undefined
+          ) {
+            return null;
+          }
+
+          return {
+            houseNo,
+            houseName:
+              fallbackMarker?.houseName ??
+              representativeRoom.houseName ??
+              house?.houseName ??
+              '',
+            houseAddress:
+              fallbackMarker?.houseAddress ??
+              representativeRoom.houseAddress ??
+              house?.houseAddress ??
+              '',
+            houseAddressDetail: house?.houseAddressDetail ?? '',
+            houseLat,
+            houseLng,
+            imageNames: fallbackMarker?.imageNames ?? [],
+            rooms: groupedRooms,
+          };
+        })
+        .filter(Boolean);
+
+      setNaturalMarkers(nextMarkers);
+    } finally {
+      setLoadingNaturalMarkers(false);
+    }
   }
 
   async function runNaturalSearch() {
     const query = naturalQuery.trim();
     if (!query) {
       setNaturalRooms([]);
+      setNaturalMarkers([]);
       setNaturalError('');
       setNaturalAppliedLabels([]);
       return;
@@ -506,15 +673,18 @@ export default function Search() {
       // 자연어 검색의 목표는 두 가지입니다.
       // 1. 상단에는 의미 기반 추천(RAG) 결과를 보여 주기
       // 2. 하단에는 같은 문장에서 추출한 필터로 일반 검색 결과를 보여 주기
-      const [list] = await Promise.all([
+      const [list, searchResult] = await Promise.all([
         searchRoomsByNaturalText(query),
         runSearch(nextCond, bboxRef.current),
       ]);
-      setNaturalRooms(Array.isArray(list) ? list : []);
+      const nextNaturalRooms = Array.isArray(list) ? list : [];
+      setNaturalRooms(nextNaturalRooms);
+      await hydrateNaturalMarkers(nextNaturalRooms, searchResult?.markerList ?? []);
       setIsNaturalSearchMode(true);
       setPendingMapSearch(false);
     } catch (e) {
       setNaturalRooms([]);
+      setNaturalMarkers([]);
       setNaturalError(e?.message || '자연어 검색에 실패했습니다.');
     } finally {
       setLoadingNatural(false);
@@ -528,6 +698,7 @@ export default function Search() {
     // 사용자가 자연어 검색 후 수동으로 미세 조정하는 흐름을 막지 않기 위해서입니다.
     setNaturalQuery('');
     setNaturalRooms([]);
+    setNaturalMarkers([]);
     setNaturalError('');
     setNaturalAppliedLabels([]);
     setLoadingNatural(false);
@@ -544,6 +715,15 @@ export default function Search() {
     // 사용자가 직접 필터 검색 버튼을 눌렀을 때는
     // 현재 화면 입력값(cond)을 확정 조건(appliedCond)으로 승격시킵니다.
     const nextApplied = { ...cond };
+    setAppliedCond(nextApplied);
+    setIsNaturalSearchMode(false);
+    setPendingMapSearch(false);
+    runSearch(nextApplied, bboxRef.current);
+  };
+
+  const resetFilters = () => {
+    const nextApplied = { ...initialCond };
+    setCond(nextApplied);
     setAppliedCond(nextApplied);
     setIsNaturalSearchMode(false);
     setPendingMapSearch(false);
@@ -604,6 +784,10 @@ export default function Search() {
   const rerunSearchInCurrentMap = () => {
     if (!appliedCond) return;
     setPendingMapSearch(false);
+    if (isNaturalSearchMode && naturalQuery.trim()) {
+      runNaturalSearch();
+      return;
+    }
     runSearch(appliedCond, bboxRef.current);
   };
 
@@ -667,9 +851,12 @@ export default function Search() {
     // 이때도 현재 적용 중인 필터 조건을 유지해야 사용자가 예상한 결과가 나옵니다.
     setMarkerPopup(null);
 
-    const base = appliedCond ?? cond;
-    const slice = await getRoomsInHouseMarker(mk.houseNo, base, 0, 10);
-    const list = slice?.content ?? [];
+    let list = Array.isArray(mk?.rooms) ? mk.rooms : [];
+    if (list.length === 0) {
+      const base = appliedCond ?? cond;
+      const slice = await getRoomsInHouseMarker(mk.houseNo, base, 0, 10);
+      list = slice?.content ?? [];
+    }
 
     setMarkerPopup({
       house: mk,
@@ -691,6 +878,9 @@ export default function Search() {
   const semanticPreviewRooms = naturalRooms.slice(0, SEMANTIC_PREVIEW_LIMIT);
   const showNormalSection =
     loadingRooms || rooms.length > 0 || naturalQuery.trim() || appliedCond !== null;
+  const displayedMarkers = isNaturalSearchMode ? naturalMarkers : markers;
+  const displayedLoadingMarkers =
+    loadingMarkers || (isNaturalSearchMode && loadingNaturalMarkers);
 
   return (
     <div className={styles.page}>
@@ -776,6 +966,7 @@ export default function Search() {
           handleCondChange={handleCondChange}
           handleOptionsChange={handleOptionsChange}
           clickSearch={clickSearch}
+          resetFilters={resetFilters}
         />
       </div>
 
@@ -857,8 +1048,8 @@ export default function Search() {
 
         <div className={styles.right}>
           <MapPanel
-            markers={markers}
-            loadingMarkers={loadingMarkers}
+            markers={displayedMarkers}
+            loadingMarkers={displayedLoadingMarkers}
             onChangeBbox={handleChangeBbox}
             onMarkerClick={handleMarkerClick}
             popup={markerPopup}

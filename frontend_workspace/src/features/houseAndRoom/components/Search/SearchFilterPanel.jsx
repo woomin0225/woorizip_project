@@ -34,6 +34,10 @@ SearchFilterPanel.propTypes = {
     houseFemaleLimit: PropTypes.bool,
     houseParking: PropTypes.bool,
   }),
+  handleCondChange: PropTypes.func,
+  handleOptionsChange: PropTypes.func,
+  clickSearch: PropTypes.func,
+  resetFilters: PropTypes.func,
 };
 
 export default function SearchFilterPanel({
@@ -41,6 +45,7 @@ export default function SearchFilterPanel({
   handleCondChange,
   handleOptionsChange,
   clickSearch,
+  resetFilters,
 }) {
   const selectedSet = new Set(parseOptions(cond?.options));
 
@@ -90,6 +95,9 @@ export default function SearchFilterPanel({
           />
           <button className={styles.btn} type="submit">
             검색
+          </button>
+          <button className={styles.btn} type="button" onClick={resetFilters}>
+            초기화
           </button>
         </div>
 

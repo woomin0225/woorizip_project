@@ -316,9 +316,11 @@ export default function MapPanel({
           houseNo: mk.houseNo,
           houseName: mk.houseName,
           houseAddress: mk.houseAddress,
+          houseAddressDetail: mk.houseAddressDetail,
           imageNames: mk.imageNames,
           houseLat: mk.houseLat,
           houseLng: mk.houseLng,
+          rooms: mk.rooms,
         });
       });
 
