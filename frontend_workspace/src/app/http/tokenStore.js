@@ -19,18 +19,18 @@ function getStorage(kind) {
 }
 
 function getPrimaryStorage() {
-  return getStorage('sessionStorage') || getStorage('localStorage');
+  return getStorage('localStorage') || getStorage('sessionStorage');
 }
 
 function getLegacyStorage() {
   const primary = getPrimaryStorage();
-  const local = getStorage('localStorage');
+  const session = getStorage('sessionStorage');
 
-  if (!primary || !local || primary === local) {
+  if (!primary || !session || primary === session) {
     return null;
   }
 
-  return local;
+  return session;
 }
 
 function normalizeTokenValue(token) {
