@@ -1,10 +1,18 @@
 .wrap {
-  padding: 16px;
+  width: min(1020px, 100%);
+  margin: 0 auto;
+  padding: 24px 16px 40px;
 }
 .title {
   margin: 0 0 6px 0;
 }
 .sub {
   color: #666;
-  margin-bottom: 12px;
+  margin-bottom: 18px;
+}
+
+@media (max-width: 720px) {
+  .wrap {
+    padding: 20px 12px 32px;
+  }
 }

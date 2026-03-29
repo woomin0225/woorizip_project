@@ -1,13 +1,29 @@
 // 방 작성 및 수정 양식
-import ImageUploadField from "./ImageUploadField";
-import styles from "./RoomForm.module.css";
+import ImageUploadField from './ImageUploadField';
+import styles from './RoomForm.module.css';
 import { PropTypes } from 'prop-types';
+// 추후 자동등록 기능 사용하려면 주석 제거
+// import { useEffect, useState } from 'react';
+// import { analyzeRoomImages } from '../api/roomApi';
 import { useEffect } from 'react';
 
-const OPTIONS = ["WiFi", "냉장고", "세탁기", "에어컨", "침대", "책상", "옷장", "TV", "신발장"];
+const OPTIONS = [
+  'WiFi',
+  '냉장고',
+  '세탁기',
+  '에어컨',
+  '침대',
+  '책상',
+  '옷장',
+  'TV',
+  '신발장',
+];
 
 function optionChecked(roomOptions, value) {
-  const arr = String(roomOptions || "").split(",").map(v => v.trim()).filter(Boolean);
+  const arr = String(roomOptions || '')
+    .split(',')
+    .map((v) => v.trim())
+    .filter(Boolean);
   return arr.includes(value);
 }
 
@@ -40,20 +56,79 @@ export default function RoomForm({
   };
 
   const today = new Date().toISOString().slice(0, 10);
-  const raw = room.roomAvailableDate ? String(room.roomAvailableDate).slice(0, 10) : "";
+  const raw = room.roomAvailableDate
+    ? String(room.roomAvailableDate).slice(0, 10)
+    : '';
   useEffect(() => {
     // 입주 가능 날짜가 비어있으면 기본값을 오늘로 세팅(부모 state도 같이 바뀜)
     if (!raw || raw < today) {
-      onChange?.({ target: { name: "roomAvailableDate", value: today } });
+      onChange?.({ target: { name: 'roomAvailableDate', value: today } });
     }
   }, [raw, today, onChange]);
-  const isJeonse = room.roomMethod === "L";
+
+  // 추후 자동등록 기능 사용하려면 주석 제거
+  // const [aiLoading, setAiLoading] = useState(false);
+  // const [aiMessage, setAiMessage] = useState('');
+
+  const isJeonse = room.roomMethod === 'L';
+
+  // 추후 자동등록 기능 사용하려면 주석 제거
+  /* const handleAiAnalyze = async () => {
+    try {
+      if (!images || images.length === 0) {
+        setAiMessage('먼저 방 이미지를 추가해주세요.');
+        return;
+      }
+
+      const newImageFiles = images.filter((img) => img instanceof File);
+
+      if (newImageFiles.length === 0) {
+        setAiMessage('새로 추가한 이미지가 있어야 AI 분석이 가능합니다.');
+        return;
+      }
+
+      setAiLoading(true);
+      setAiMessage('이미지 분석 중입니다...');
+
+      const result = await analyzeRoomImages(newImageFiles);
+
+      if (result?.summary) {
+        onChange?.({
+          target: {
+            name: 'roomAbstract',
+            value: result.summary,
+          },
+        });
+      }
+
+      if (Array.isArray(result?.normalizedOptions)) {
+        onChange?.({
+          target: {
+            name: 'roomOptions',
+            value: result.normalizedOptions.join(','),
+          },
+        });
+      }
+
+      setAiMessage('AI 분석 결과를 반영했습니다.');
+    } catch (e) {
+      console.error(e);
+      setAiMessage('AI 분석 중 오류가 발생했습니다.');
+    } finally {
+      setAiLoading(false);
+    }
+  }; */
 
   return (
     <form className={styles.form} onSubmit={onSubmit}>
       <div className={styles.row}>
         <label>호실명</label>
-        <input name="roomName" value={room.roomName || ""} onChange={onChange} maxLength={20} />
+        <input
+          name="roomName"
+          value={room.roomName || ''}
+          onChange={onChange}
+          maxLength={20}
+        />
       </div>
 
       <div className={styles.grid2}>
@@ -65,7 +140,7 @@ export default function RoomForm({
                 type="radio"
                 name="roomMethod"
                 value="L"
-                checked={room.roomMethod === "L"}
+                checked={room.roomMethod === 'L'}
                 onChange={onChange}
               />
               전세
@@ -75,7 +150,7 @@ export default function RoomForm({
                 type="radio"
                 name="roomMethod"
                 value="M"
-                checked={room.roomMethod === "M"}
+                checked={room.roomMethod === 'M'}
                 onChange={onChange}
               />
               월세
@@ -112,11 +187,11 @@ export default function RoomForm({
 
       <div className={styles.grid2}>
         <div className={styles.row}>
-          <label>전세금</label>
+          <label>보증금</label>
           <input
             type="number"
             name="roomDeposit"
-            value={room.roomDeposit ?? ""}
+            value={room.roomDeposit ?? ''}
             onChange={onChange}
             min={0}
             max={10000000000}
@@ -128,7 +203,7 @@ export default function RoomForm({
           <input
             type="number"
             name="roomMonthly"
-            value={room.roomMonthly ?? ""}
+            value={room.roomMonthly ?? ''}
             onChange={onChange}
             disabled={isJeonse && !!room.roomMethod}
             min={0}
@@ -140,12 +215,24 @@ export default function RoomForm({
       <div className={styles.grid2}>
         <div className={styles.row}>
           <label>면적(㎡)</label>
-          <input type="number" step={0.01} name="roomArea" value={room.roomArea ?? ""} onChange={onChange} min={0.0} max={999.99}/>
+          <input
+            type="number"
+            step={0.01}
+            name="roomArea"
+            value={room.roomArea ?? ''}
+            onChange={onChange}
+            min={0.0}
+            max={999.99}
+          />
         </div>
 
         <div className={styles.row}>
           <label>방향</label>
-          <select name="roomFacing" value={room.roomFacing || ""} onChange={onChange}>
+          <select
+            name="roomFacing"
+            value={room.roomFacing || ''}
+            onChange={onChange}
+          >
             <option value="동향">동향</option>
             <option value="서향">서향</option>
             <option value="남향">남향</option>
@@ -161,12 +248,24 @@ export default function RoomForm({
       <div className={styles.grid2}>
         <div className={styles.row}>
           <label>방 수</label>
-          <input type="number" min="1" name="roomRoomCount" value={room.roomRoomCount ?? 1} onChange={onChange} />
+          <input
+            type="number"
+            min="1"
+            name="roomRoomCount"
+            value={room.roomRoomCount ?? 1}
+            onChange={onChange}
+          />
         </div>
 
         <div className={styles.row}>
           <label>욕실 수</label>
-          <input type="number" min="0" name="roomBathCount" value={room.roomBathCount ?? 1} onChange={onChange} />
+          <input
+            type="number"
+            min="0"
+            name="roomBathCount"
+            value={room.roomBathCount ?? 1}
+            onChange={onChange}
+          />
         </div>
       </div>
 
@@ -181,8 +280,34 @@ export default function RoomForm({
       </div>
 
       <div className={styles.row}>
+        <label>방 사진</label>
+        <ImageUploadField
+          images={images}
+          onAddFiles={onAddImages}
+          onRemove={onRemoveImage}
+        />
+      </div>
+
+      {/* 추후 자동등록 기능 사용하려면 주석 제거
+      <div className={styles.row}>
+        <label>AI 이미지 분석</label>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <button type="button" onClick={handleAiAnalyze} disabled={aiLoading}>
+            {aiLoading ? '분석 중...' : 'AI로 이미지 분석'}
+          </button>
+          {aiMessage && <span>{aiMessage}</span>}
+        </div>
+      </div>
+      */}
+
+      <div className={styles.row}>
         <label>소개글</label>
-        <textarea name="roomAbstract" value={room.roomAbstract || ""} onChange={onChange} rows={4} />
+        <textarea
+          name="roomAbstract"
+          value={room.roomAbstract || ''}
+          onChange={onChange}
+          rows={4}
+        />
       </div>
 
       <div className={styles.row}>
@@ -199,11 +324,6 @@ export default function RoomForm({
             </label>
           ))}
         </div>
-      </div>
-
-      <div className={styles.row}>
-        <label>방 사진</label>
-        <ImageUploadField images={images} onAddFiles={onAddImages} onRemove={onRemoveImage} />
       </div>
 
       <div className={styles.actions}>

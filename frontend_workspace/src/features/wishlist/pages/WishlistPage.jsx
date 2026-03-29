@@ -1,22 +1,22 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { Container, Row, Col, Card, CardBody } from 'reactstrap';
 import MyPageSideNav from '../../user/components/MyPageSideNav';
 import { getWishlistPageByUser, deleteWishlist } from '../api/wishlistAPI';
 import { getRoom, getRoomImages } from '../../houseAndRoom/api/roomApi';
+import { pickRepresentativeRoomImageName } from '../../houseAndRoom/utils/roomImage';
+import { tokenStore } from '../../../app/http/tokenStore';
 import { parseJwt } from '../../../app/providers/utils/jwt';
 import WishlistTable from '../components/WishlistTable';
 import styles from '../../../app/layouts/MyPageLayout.module.css';
+import pageStyles from './WishlistPage.module.css';
 
 function getCurrentUserNo() {
-  const storedUserNo = localStorage.getItem('userNo');
+  const storedUserNo =
+    sessionStorage.getItem('userNo') || localStorage.getItem('userNo');
   if (storedUserNo) return storedUserNo;
 
-  const raw = localStorage.getItem('accessToken');
-  if (!raw) return null;
-  let token = String(raw).trim();
-  if (token.startsWith('"') && token.endsWith('"')) token = token.slice(1, -1).trim();
-  if (token.startsWith('Bearer ')) token = token.slice('Bearer '.length).trim();
-  if (!token || token === 'null' || token === 'undefined') return null;
+  const token = tokenStore.getAccess();
+  if (!token) return null;
 
   const payload = parseJwt(token);
   if (!payload) return null;
@@ -24,17 +24,12 @@ function getCurrentUserNo() {
   return payload.userNo || null;
 }
 
-function pickImageName(x) {
-  if (!x) return null;
-  if (typeof x === 'string') return x;
-  return x.imageName || x.storedImageName || x.fileName || x.roomImageName || x.name || null;
-}
-
 export default function WishlistPage() {
   const [items, setItems] = useState([]);
   const [error, setError] = useState('');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
+  const [totalItems, setTotalItems] = useState(0);
   const [isDeletingAll, setIsDeletingAll] = useState(false);
   const PAGE_SIZE = 8;
   const BULK_PAGE_SIZE = 100;
@@ -44,7 +39,9 @@ export default function WishlistPage() {
       setError('');
       const userNo = getCurrentUserNo();
       if (!userNo) {
-        throw new Error('로그인 사용자 정보를 확인할 수 없습니다. 다시 로그인해 주세요.');
+        throw new Error(
+          '로그인 사용자 정보를 확인할 수 없습니다. 다시 로그인해 주세요.'
+        );
       }
 
       const pageRes = await getWishlistPageByUser(userNo, nextPage, PAGE_SIZE);
@@ -59,7 +56,9 @@ export default function WishlistPage() {
             ]);
 
             const firstImageName =
-              Array.isArray(images) && images.length > 0 ? pickImageName(images[0]) : null;
+              Array.isArray(images) && images.length > 0
+                ? pickRepresentativeRoomImageName(images[0])
+                : pickRepresentativeRoomImageName(room);
 
             return {
               ...item,
@@ -83,8 +82,10 @@ export default function WishlistPage() {
       setItems(enriched);
       setPage(pageRes.page || nextPage);
       setTotalPages(pageRes.totalPages || 0);
+      setTotalItems(pageRes.totalElements || 0);
     } catch (e) {
       setItems([]);
+      setTotalItems(0);
       setError(e.message || '찜목록 조회 실패');
     }
   }
@@ -101,7 +102,9 @@ export default function WishlistPage() {
   const handleDeleteAll = async () => {
     const userNo = getCurrentUserNo();
     if (!userNo) {
-      setError('로그인 사용자 정보를 확인할 수 없습니다. 다시 로그인해 주세요.');
+      setError(
+        '로그인 사용자 정보를 확인할 수 없습니다. 다시 로그인해 주세요.'
+      );
       return;
     }
 
@@ -121,9 +124,7 @@ export default function WishlistPage() {
 
       const wishNos = Array.from(
         new Set(
-          all
-            .map((x) => x?.wishNo)
-            .filter((v) => v !== null && v !== undefined)
+          all.map((x) => x?.wishNo).filter((v) => v !== null && v !== undefined)
         )
       );
 
@@ -138,9 +139,18 @@ export default function WishlistPage() {
 
   return (
     <>
-      <section className={`section section-shaped section-lg ${styles.heroSection}`}>
+      <section
+        className={`section section-shaped section-lg ${styles.heroSection}`}
+      >
         <div className="shape shape-style-1 bg-gradient-info">
-          <span /><span /><span /><span /><span /><span /><span /><span />
+          <span />
+          <span />
+          <span />
+          <span />
+          <span />
+          <span />
+          <span />
+          <span />
         </div>
       </section>
       <section className={styles.contentSection}>
@@ -148,42 +158,71 @@ export default function WishlistPage() {
           <Row>
             <Col lg="3" className="mb-4">
               <Card className={`shadow border-0 ${styles.mainCard}`}>
-                <CardBody><MyPageSideNav /></CardBody>
+                <CardBody>
+                  <MyPageSideNav />
+                </CardBody>
               </Card>
             </Col>
             <Col lg="9">
               <Card className={`shadow border-0 ${styles.mainCard}`}>
                 <CardBody>
-                  <div className={styles.headerRow}>
+                  <div className={pageStyles.wishlistHeader}>
                     <div>
                       <h2 className={styles.title}>찜목록</h2>
-                      <p className={styles.subTitle}>내가 저장한 매물 목록</p>
+                      <p className={styles.subTitle}>
+                        관심 있는 방을 모아보고 한눈에 비교해보세요.
+                      </p>
                     </div>
                     <button
                       type="button"
-                      className={styles.dangerBtn}
+                      className={pageStyles.deleteAllBtn}
                       onClick={handleDeleteAll}
-                      disabled={isDeletingAll || items.length === 0}
+                      disabled={isDeletingAll || totalItems === 0}
                     >
-                      {isDeletingAll ? '전체 삭제 중...' : '찜목록 전체삭제'}
+                      {isDeletingAll ? '전체 삭제 중...' : '전체삭제'}
                     </button>
                   </div>
 
                   {error && <p className={styles.desc}>{error}</p>}
-                  {!error && items.length === 0 && <p className={styles.desc}>찜목록이 없습니다.</p>}
+
+                  {!error && items.length === 0 && (
+                    <div className={styles.warningBox}>
+                      <p className={styles.warningTitle}>아직 찜한 방이 없어요.</p>
+                      <p className={styles.desc} style={{ marginBottom: 0 }}>
+                        방 상세페이지에서 관심 매물을 찜해두면 여기서 모아보고 비교할 수 있습니다.
+                      </p>
+                    </div>
+                  )}
+
                   {!error && items.length > 0 && (
                     <>
+                      <div className={styles.surveyBox} style={{ marginBottom: 18 }}>
+                        <p className={styles.surveyTitle}>저장된 매물 {totalItems}건</p>
+                        <p className={styles.desc} style={{ marginBottom: 0 }}>
+                          가격, 면적, 입주 가능 상태를 비교하면서 원하는 방을 빠르게 확인해보세요.
+                        </p>
+                      </div>
+
                       <WishlistTable
                         items={items}
                         onDelete={async (wishNo) => {
                           await deleteWishlist(wishNo);
-                          const fallback = items.length === 1 && page > 1 ? page - 1 : page;
+                          const fallback =
+                            items.length === 1 && page > 1 ? page - 1 : page;
                           await load(fallback);
                         }}
                       />
 
                       {totalPages > 1 && (
-                        <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginTop: 16, flexWrap: 'wrap' }}>
+                        <div
+                          style={{
+                            display: 'flex',
+                            justifyContent: 'center',
+                            gap: 8,
+                            marginTop: 16,
+                            flexWrap: 'wrap',
+                          }}
+                        >
                           <button
                             type="button"
                             className={styles.inlineBtn}
@@ -193,11 +232,16 @@ export default function WishlistPage() {
                             이전
                           </button>
 
-                          {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                          {Array.from(
+                            { length: totalPages },
+                            (_, i) => i + 1
+                          ).map((p) => (
                             <button
                               key={p}
                               type="button"
-                              className={`${styles.inlineBtn} ${p === page ? styles.inlineBtnActive : ''}`}
+                              className={`${styles.inlineBtn} ${
+                                p === page ? styles.inlineBtnActive : ''
+                              }`}
                               onClick={() => clickPage(p)}
                             >
                               {p}

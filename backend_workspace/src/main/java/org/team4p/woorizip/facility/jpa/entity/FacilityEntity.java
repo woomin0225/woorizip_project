@@ -119,4 +119,13 @@ public class FacilityEntity {
 		 if (dto.getFacilityMaxDurationMinutes() != null) this.facilityMaxDurationMinutes = dto.getFacilityMaxDurationMinutes();
 		 this.facilityUpdatedAt = LocalDateTime.now();
 	}
+	
+	public void updateStatus(FacilityStatus status) {
+	    this.facilityStatus = status;
+	    this.facilityUpdatedAt = LocalDateTime.now();
+	    
+	    if (status != FacilityStatus.DELETED) {
+	        this.facilityDeletedAt = null;
+	    }
+	}
 }

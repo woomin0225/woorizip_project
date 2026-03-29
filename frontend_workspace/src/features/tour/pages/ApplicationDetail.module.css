@@ -12,12 +12,83 @@
   flex-wrap: wrap;
 }
 
+.roomSummaryCard {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+  background: #fff;
+  padding: 14px;
+  margin-bottom: 14px;
+}
+
+.roomImageWrap {
+  width: 120px;
+  height: 90px;
+  border-radius: 12px;
+  overflow: hidden;
+  flex: 0 0 120px;
+  background: #f8f9fe;
+  border: 1px solid #e9ecef;
+}
+
+.roomImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.noImage {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #8898aa;
+  font-size: 0.8rem;
+}
+
+.roomSummaryInfo {
+  min-width: 0;
+}
+
+.roomTitle {
+  margin: 0;
+  font-size: 1rem;
+  color: #172b4d;
+  font-weight: 700;
+}
+
+.roomSubtitle {
+  margin: 6px 0 0;
+  font-size: 0.82rem;
+  color: #61708b;
+}
+
 .detailCard {
   border: 1px solid #e9ecef;
   border-radius: 12px;
   background: #fff;
   padding: 14px;
   margin-bottom: 14px;
+}
+
+.contractPreviewCard {
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+  background: #fff;
+  padding: 14px;
+  margin-bottom: 14px;
+}
+
+.contractFrame {
+  width: 100%;
+  min-height: 520px;
+  border: 1px solid #e9ecef;
+  border-radius: 10px;
+  background: #fff;
 }
 
 .detailRow {
@@ -111,7 +182,7 @@
 
 .primaryBtn {
   color: #fff;
-  background: #11cdef;
+  background: #c9713f;
 }
 
 .dangerBtn {
@@ -146,6 +217,17 @@
 }
 
 @media (max-width: 991px) {
+  .roomSummaryCard {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .roomImageWrap {
+    width: 100%;
+    height: 180px;
+    flex-basis: auto;
+  }
+
   .actionGrid {
     grid-template-columns: 1fr;
   }

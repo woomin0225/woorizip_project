@@ -34,6 +34,10 @@ SearchFilterPanel.propTypes = {
     houseFemaleLimit: PropTypes.bool,
     houseParking: PropTypes.bool,
   }),
+  handleCondChange: PropTypes.func,
+  handleOptionsChange: PropTypes.func,
+  clickSearch: PropTypes.func,
+  resetFilters: PropTypes.func,
 };
 
 export default function SearchFilterPanel({
@@ -41,6 +45,7 @@ export default function SearchFilterPanel({
   handleCondChange,
   handleOptionsChange,
   clickSearch,
+  resetFilters,
 }) {
   const selectedSet = new Set(parseOptions(cond?.options));
 
@@ -49,12 +54,11 @@ export default function SearchFilterPanel({
     if (next.has(opt)) next.delete(opt);
     else next.add(opt);
 
-    const nextArr = Array.from(next);
-    const nextValue = nextArr.length ? nextArr.join(",") : null;
-
     handleOptionsChange({
-      ...cond,
-      options: nextValue,
+      target: {
+        value: opt,
+        checked: next.has(opt),
+      },
     });
   }
   
@@ -92,6 +96,9 @@ export default function SearchFilterPanel({
           <button className={styles.btn} type="submit">
             검색
           </button>
+          <button className={styles.btn} type="button" onClick={resetFilters}>
+            초기화
+          </button>
         </div>
 
         {/* 거래유형 */}
@@ -108,9 +115,9 @@ export default function SearchFilterPanel({
           </select>
         </div>
 
-        {/* 전세금 */}
+        {/* 보증금 */}
         <div className={styles.group}>
-          <label className={styles.label}>전세금</label>
+          <label className={styles.label}>보증금</label>
           <div className={styles.range}>
             <input
               className={styles.number}
@@ -132,31 +139,30 @@ export default function SearchFilterPanel({
           </div>
         </div>
 
-        {/* 월세 */}
-        <div className={styles.group}>
-          <label className={styles.label}>월세</label>
-          <div className={styles.range}>
-            <input
-              className={styles.number}
-              type="number"
-              name="minTax"
-              disabled={isJeonse}
-              value={cond.minTax ?? ""}
-              onChange={handleCondChange}
-              placeholder="최소"
-            />
-            <span className={styles.tilde}>~</span>
-            <input
-              className={styles.number}
-              type="number"
-              name="maxTax"
-              disabled={isJeonse}
-              value={cond.maxTax ?? ""}
-              onChange={handleCondChange}
-              placeholder="최대"
-            />
+        {!isJeonse && (
+          <div className={styles.group}>
+            <label className={styles.label}>월세</label>
+            <div className={styles.range}>
+              <input
+                className={styles.number}
+                type="number"
+                name="minTax"
+                value={cond.minTax ?? ""}
+                onChange={handleCondChange}
+                placeholder="최소"
+              />
+              <span className={styles.tilde}>~</span>
+              <input
+                className={styles.number}
+                type="number"
+                name="maxTax"
+                value={cond.maxTax ?? ""}
+                onChange={handleCondChange}
+                placeholder="최대"
+              />
+            </div>
           </div>
-        </div>
+        )}
 
         {/* 상세필터 토글 버튼 */}
         <button

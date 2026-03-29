@@ -78,6 +78,20 @@ public class RoomRepositoryCustomImpl implements RoomRepositoryCustom {
 		return new SliceImpl<>(rows, pageable, hasNext);
 	}
 	
+	@Override
+	public long countSearchRooms(RoomSearchCondition cond) {
+		BooleanBuilder where = getWhere(cond);
+		
+		Long totalCount = queryFactory
+							.select(qroomEntity.count())
+							.from(qroomEntity)
+							.join(qhouseEntity).on(qroomEntity.houseNo.eq(qhouseEntity.houseNo))
+							.where(where)
+							.fetchOne();
+		
+		return totalCount == null ? 0L : totalCount;
+	}
+	
 	// 정렬기준 설정 메소드
 	private OrderSpecifier<?> getOrder(SearchCriterion criterion, QRoomEntity qroomEntity, RoomType method){
 		switch (criterion) {

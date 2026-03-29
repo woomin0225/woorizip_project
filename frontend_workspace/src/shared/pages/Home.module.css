@@ -1,4 +1,4 @@
-.heroSection :global(.bg-gradient-info) {
+﻿.heroSection :global(.bg-gradient-info) {
   background: linear-gradient(
     135deg,
     #d37a3d 0%,
@@ -31,23 +31,22 @@
 .bannerFrame {
   position: relative;
   width: min(1100px, 92vw);
-  height: 130%;
+  aspect-ratio: 1100 / 340;
+  height: auto;
   margin: 0 auto;
   border-radius: 16px;
   overflow: hidden;
   box-shadow: 0 20px 40px rgba(15, 23, 42, 0.28);
-  background: #fff;
+  background: transparent;
 }
 
-.numberSlide {
+.bannerImage {
   width: 100%;
   height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #111827;
-  font-size: clamp(72px, 16vw, 220px);
-  font-weight: 800;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+  background: transparent;
 }
 
 .bannerNav {
@@ -97,6 +96,63 @@
   background: #fff;
 }
 
+.boardCard {
+  border: 1px solid #eedccf;
+  border-radius: 18px;
+  overflow: hidden;
+  background: linear-gradient(180deg, #fffdfb 0%, #fff8f3 100%);
+  box-shadow: 0 14px 30px rgba(108, 74, 48, 0.08);
+}
+
+.boardCardHeader {
+  padding-bottom: 0 !important;
+  background: transparent !important;
+}
+
+.noticeTitle,
+.eventTitle,
+.infoTitle {
+  margin-bottom: 0;
+  font-weight: 800;
+}
+
+.noticeTitle {
+  color: #b96332;
+}
+
+.eventTitle {
+  color: #c7714b;
+}
+
+.infoTitle {
+  color: #8f5b3f;
+}
+
+.boardList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.boardItem {
+  margin-bottom: 10px;
+  font-size: 0.92rem;
+}
+
+.boardItem:last-child {
+  margin-bottom: 0;
+}
+
+.boardLink {
+  color: #6b584b;
+  text-decoration: none;
+}
+
+.boardLink:hover {
+  color: #b96332;
+  text-decoration: none;
+}
+
 .quickLinksWrapper {
   max-width: 450px;
   margin: 0 auto;
@@ -126,7 +182,8 @@
   }
 
   .bannerFrame {
-    height: 130%;
+    width: 94vw;
+    border-radius: 12px;
   }
 
   .bannerNav {

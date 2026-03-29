@@ -2,6 +2,8 @@ package org.team4p.woorizip.contract.jpa.repository;
 
 import java.util.Collection;
 import java.util.Date;
+import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -15,6 +17,24 @@ public interface ContractRepository extends JpaRepository<ContractEntity, String
     boolean existsByRoomNoAndMoveInDateAndStatusIn(
             String roomNo,
             Date moveInDate,
+            Collection<String> statuses
+    );
+
+    Optional<ContractEntity> findFirstByRoomNoAndMoveInDateAndStatusInAndUserNoOrderByContractNoDesc(
+            String roomNo,
+            Date moveInDate,
+            Collection<String> statuses,
+            String userNo
+    );
+
+    boolean existsByRoomNoAndUserNoAndStatusIn(
+            String roomNo,
+            String userNo,
+            Collection<String> statuses
+    );
+
+    List<ContractEntity> findByRoomNoAndStatusInOrderByMoveInDateAsc(
+            String roomNo,
             Collection<String> statuses
     );
 }

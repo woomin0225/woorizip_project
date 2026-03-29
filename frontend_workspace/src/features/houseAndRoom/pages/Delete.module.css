@@ -1,22 +1,26 @@
 .wrap {
-  padding: 16px;
+  width: min(1180px, 100%);
+  margin: 0 auto;
+  padding: 24px 16px 40px;
 }
 .title {
-  margin: 0 0 12px 0;
+  margin: 0 0 18px 0;
 }
 
 .layout {
   display: grid;
-  grid-template-columns: 260px 1fr;
-  gap: 14px;
+  grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
 }
 
 .left,
 .right {
   border: 1px solid #eee;
   border-radius: 12px;
-  padding: 12px;
+  padding: 14px;
   background: #fff;
+  min-width: 0;
 }
 
 .blockTitle {
@@ -54,6 +58,13 @@
   font-weight: 800;
 }
 
+.dangerBtn:disabled,
+.smallDangerBtn:disabled {
+  background: #f3f4f6;
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
 .roomList {
   display: grid;
   gap: 10px;
@@ -77,6 +88,12 @@
   margin-top: 4px;
 }
 
+.disabledHint {
+  margin-top: 6px;
+  color: #c2410c;
+  font-size: 12px;
+}
+
 .smallDangerBtn {
   border: none;
   background: #ffdddd;
@@ -94,4 +111,24 @@
 .loading {
   margin-top: 10px;
   color: #666;
+}
+
+@media (max-width: 960px) {
+  .wrap {
+    padding: 20px 12px 32px;
+  }
+
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .roomRow {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .smallDangerBtn,
+  .dangerBtn {
+    width: 100%;
+  }
 }

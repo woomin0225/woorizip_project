@@ -8,6 +8,7 @@ import org.team4p.woorizip.room.jpa.entity.RoomEntity;
 public interface RoomRepositoryCustom {
 	void softDeleteByHouseNo(String houseNo);
 	Slice<RoomEntity> searchRooms(RoomSearchCondition cond, Pageable pageable);
+	long countSearchRooms(RoomSearchCondition cond);
 	Slice<RoomEntity> searchRooms(RoomSearchCondition cond, Pageable pageable, String houseNo);
 	long softDeleteByRoomNo(String roomNo);
 }

@@ -2,7 +2,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQueryState } from '../../../shared/hooks/useQueryState';
 import { unwrapApi } from '../../../shared/utils/apiUnwrap';
-import { fetchEventList, searchEvent } from '../api/EventApi';
+import {
+  fetchAdminEventList,
+  fetchEventList,
+  searchAdminEvent,
+  searchEvent,
+  toggleEventVisibility,
+} from '../api/EventApi';
 import { useAuth } from '../../../app/providers/AuthProvider';
 
 const defaultQuerySchema = {
@@ -24,6 +30,7 @@ export function useEventList() {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState('');
   const [pageResponse, setPageResponse] = useState(null);
+  const [togglingPostNo, setTogglingPostNo] = useState(null);
 
   const content = useMemo(() => pageResponse?.content || [], [pageResponse]);
 
@@ -90,9 +97,13 @@ export function useEventList() {
           searchReq.keyword = query.keyword;
         }
 
-        resp = await searchEvent(searchReq);
+        resp = isAdmin
+          ? await searchAdminEvent(searchReq)
+          : await searchEvent(searchReq);
       } else {
-        resp = await fetchEventList(baseReq);
+        resp = isAdmin
+          ? await fetchAdminEventList(baseReq)
+          : await fetchEventList(baseReq);
       }
 
       const body = unwrapApi(resp);
@@ -116,6 +127,7 @@ export function useEventList() {
     query.type,
     query.sort,
     query.direct,
+    isAdmin,
   ]);
 
   // 검색 동작 =====================================
@@ -176,6 +188,21 @@ export function useEventList() {
     }
   };
 
+  const toggleVisibility = async (postNo) => {
+    if (!isAdmin) return;
+
+    try {
+      setTogglingPostNo(postNo);
+      await toggleEventVisibility(postNo);
+      await load();
+    } catch (error) {
+      console.error(error);
+      setErr('노출 상태 변경에 실패했습니다.');
+    } finally {
+      setTogglingPostNo(null);
+    }
+  };
+
   return {
     isAdmin,
 
@@ -186,6 +213,7 @@ export function useEventList() {
     content,
     loading,
     err,
+    togglingPostNo,
 
     setSearch,
     setPage,
@@ -193,5 +221,6 @@ export function useEventList() {
     onSubmitSearch,
     onReset,
     onChangeType,
+    toggleVisibility,
   };
 }

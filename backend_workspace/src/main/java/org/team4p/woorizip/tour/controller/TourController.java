@@ -1,26 +1,33 @@
 package org.team4p.woorizip.tour.controller;
 
+import java.util.Locale;
+import java.util.Map;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.team4p.woorizip.ai.config.AiServerProperties;
 import org.team4p.woorizip.auth.security.principal.CustomUserPrincipal;
 import org.team4p.woorizip.common.api.ApiResponse;
 import org.team4p.woorizip.common.api.PageResponse;
+import org.team4p.woorizip.tour.model.dto.InternalTourApplyRequest;
 import org.team4p.woorizip.tour.model.dto.TourDto;
 import org.team4p.woorizip.tour.model.service.TourService;
+import org.team4p.woorizip.user.jpa.entity.UserEntity;
+import org.team4p.woorizip.user.jpa.repository.UserRepository;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import java.util.Locale;
-import java.util.Map;
 
 @Slf4j
 @RestController
@@ -29,11 +36,9 @@ import java.util.Map;
 public class TourController {
 
     private final TourService tourService;
+    private final AiServerProperties aiServerProperties;
+    private final UserRepository userRepository;
 
-    /**
-     * 투어 단건 조회
-     * GET /api/tour/{tour_no}
-     */
     @GetMapping("/{tour_no}")
     public ResponseEntity<ApiResponse<TourDto>> selectTour(@PathVariable("tour_no") String tourNo) {
         TourDto tour = tourService.selectTour(tourNo);
@@ -44,10 +49,6 @@ public class TourController {
         return ResponseEntity.ok(ApiResponse.ok("투어 조회 성공", tour));
     }
 
-    /**
-     * 내 투어 목록 조회
-     * GET /api/tour/list/me
-     */
     @GetMapping("/list/me")
     public ResponseEntity<ApiResponse<PageResponse<TourDto>>> selectListTour(
             @AuthenticationPrincipal CustomUserPrincipal userPrincipal,
@@ -57,46 +58,113 @@ public class TourController {
         return ResponseEntity.ok(ApiResponse.ok("내 투어 목록 조회 성공", body));
     }
 
-    /**
-     * 임대인 투어 목록 조회
-     * GET /api/tour/list/owner
-     */
     @GetMapping("/list/owner")
     public ResponseEntity<ApiResponse<PageResponse<TourDto>>> selectOwnerListTour(
             @AuthenticationPrincipal CustomUserPrincipal userPrincipal,
             @RequestParam(name = "page", defaultValue = "1") int page,
             @RequestParam(name = "size", defaultValue = "8") int size) {
         PageResponse<TourDto> body = tourService.selectListTourByOwner(userPrincipal.getUserNo(), page, size);
-        return ResponseEntity.ok(ApiResponse.ok("임대인 투어 목록 조회 성공", body));
+        return ResponseEntity.ok(ApiResponse.ok("소유자 투어 목록 조회 성공", body));
     }
 
-    /**
-     * 투어 신청 등록
-     * POST /api/tour/insert/{roomNo}
-     */
     @PostMapping("/insert/{roomNo}")
     public ResponseEntity<ApiResponse<Void>> insertTour(
             @PathVariable("roomNo") String roomNo,
             @AuthenticationPrincipal CustomUserPrincipal userPrincipal,
             @RequestBody @Valid TourDto tourDto) {
+        try {
+            tourDto.setRoomNo(roomNo);
+            tourDto.setUserNo(userPrincipal.getUserNo());
 
-        tourDto.setRoomNo(roomNo);
-        tourDto.setUserNo(userPrincipal.getUserNo());
-
-        int result = tourService.insertTour(tourDto);
-        if (result == -1) {
-            return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body(ApiResponse.fail("이미 신청된 투어 시간입니다.", null));
+            int result = tourService.insertTour(tourDto);
+            if (result == -1) {
+                return ResponseEntity.status(HttpStatus.CONFLICT)
+                        .body(ApiResponse.fail("이미 요청된 투어 시간입니다.", null));
+            }
+            return result > 0
+                    ? ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok("투어 추가 성공", null))
+                    : ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.fail(e.getMessage(), null));
         }
-        return result > 0
-                ? ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok("투어 추가 성공", null))
-                : ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
     }
 
-    /**
-     * 투어 정보 수정
-     * POST /api/tour/update/{tourNo}
-     */
+    @PostMapping("/internal/insert/{roomNo}")
+    public ResponseEntity<ApiResponse<Void>> insertTourInternal(
+            @PathVariable("roomNo") String roomNo,
+            @RequestHeader(value = "X-API-KEY", required = false) String apiKey,
+            @RequestHeader(value = "X-User-Id", required = false) String userId,
+            @RequestBody @Valid InternalTourApplyRequest req) {
+        log.info(
+                "TOUR_INTERNAL_APPLY_REQUEST roomNo={} apiKeyPresent={} xUserIdPresent={} reqUserNamePresent={} reqUserPhonePresent={} visitDate={} visitTime={}",
+                roomNo,
+                StringUtils.hasText(apiKey),
+                StringUtils.hasText(userId),
+                StringUtils.hasText(req.getUserName()),
+                StringUtils.hasText(req.getUserPhone()),
+                req.getVisitDate(),
+                req.getVisitTime()
+        );
+
+        if (!StringUtils.hasText(apiKey) || !apiKey.trim().equals(resolveInternalApiKey())) {
+            log.warn("TOUR_INTERNAL_APPLY_UNAUTHORIZED roomNo={} apiKeyPresent={}", roomNo, StringUtils.hasText(apiKey));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.fail("내부 호출 인증에 실패했습니다.", null));
+        }
+
+        if (!StringUtils.hasText(roomNo) || "current".equalsIgnoreCase(roomNo.trim())) {
+            log.warn("TOUR_INTERNAL_APPLY_INVALID_ROOM roomNo={}", roomNo);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.fail("현재 방 정보를 확인할 수 없습니다.", null));
+        }
+
+        UserEntity user = resolveInternalRequestUser(userId, req);
+        if (user == null) {
+            log.warn(
+                    "TOUR_INTERNAL_APPLY_USER_NOT_FOUND roomNo={} xUserId={} reqUserName={} reqUserPhonePresent={}",
+                    roomNo,
+                    userId,
+                    req.getUserName(),
+                    StringUtils.hasText(req.getUserPhone())
+            );
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.fail("일치하는 사용자 정보를 찾을 수 없습니다.", null));
+        }
+
+        log.info(
+                "TOUR_INTERNAL_APPLY_USER_RESOLVED roomNo={} resolvedUserNo={} xUserId={} reqUserNamePresent={} reqUserPhonePresent={}",
+                roomNo,
+                user.getUserNo(),
+                userId,
+                StringUtils.hasText(req.getUserName()),
+                StringUtils.hasText(req.getUserPhone())
+        );
+
+        try {
+            TourDto tourDto = new TourDto();
+            tourDto.setRoomNo(roomNo);
+            tourDto.setUserNo(user.getUserNo());
+            tourDto.setVisitDate(req.getVisitDate());
+            tourDto.setVisitTime(req.getVisitTime());
+            tourDto.setMessage(req.getMessage());
+            tourDto.setStatus("PENDING");
+
+            int result = tourService.insertTour(tourDto);
+            if (result == -1) {
+                return ResponseEntity.status(HttpStatus.CONFLICT)
+                        .body(ApiResponse.fail("이미 요청된 투어 시간입니다.", null));
+            }
+            return result > 0
+                    ? ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok("투어 추가 성공", null))
+                    : ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                            .body(ApiResponse.fail("투어 요청 처리에 실패했습니다.", null));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.fail(e.getMessage(), null));
+        }
+    }
+
     @PostMapping("/update/{tourNo}")
     public ResponseEntity<ApiResponse<Void>> updateTour(
             @PathVariable("tourNo") String tourNo,
@@ -105,17 +173,13 @@ public class TourController {
         int result = tourService.updateTour(tourDto);
         if (result == -1) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body(ApiResponse.fail("이미 신청된 투어 시간입니다.", null));
+                    .body(ApiResponse.fail("이미 요청된 투어 시간입니다.", null));
         }
         return result > 0
                 ? ResponseEntity.ok(ApiResponse.ok("투어 수정 성공", null))
                 : ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
     }
 
-    /**
-     * 투어 승인/거절 처리
-     * POST /api/tour/decision/{tourNo}
-     */
     @PostMapping("/decision/{tourNo}")
     public ResponseEntity<ApiResponse<Void>> decideTour(
             @PathVariable("tourNo") String tourNo,
@@ -144,14 +208,52 @@ public class TourController {
             int result = tourService.updateTour(existing);
             if (result == -1) {
                 return ResponseEntity.status(HttpStatus.CONFLICT)
-                        .body(ApiResponse.fail("이미 신청된 투어 시간입니다.", null));
+                        .body(ApiResponse.fail("이미 요청된 투어 시간입니다.", null));
             }
             return result > 0
                     ? ResponseEntity.ok(ApiResponse.ok("투어 승인/거절 처리 성공", null))
-                    : ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.fail("투어 승인/거절 처리 실패", null));
+                    : ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                            .body(ApiResponse.fail("투어 승인/거절 처리 실패", null));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.fail("투어 승인/거절 처리 중 오류", null));
         }
+    }
+
+    private String resolveInternalApiKey() {
+        return StringUtils.hasText(aiServerProperties.getInternalApiKey())
+                ? aiServerProperties.getInternalApiKey().trim()
+                : "local-dev-key";
+    }
+
+    private UserEntity resolveInternalRequestUser(String userId, InternalTourApplyRequest req) {
+        if (StringUtils.hasText(userId)) {
+            UserEntity user = userRepository.findById(userId.trim()).orElse(null);
+            if (user != null) {
+                log.info("TOUR_INTERNAL_APPLY_USER_LOOKUP_BY_ID_SUCCESS userId={}", userId.trim());
+                return user;
+            }
+            log.warn("TOUR_INTERNAL_APPLY_USER_LOOKUP_BY_ID_MISS userId={}", userId.trim());
+        }
+        log.info(
+                "TOUR_INTERNAL_APPLY_USER_LOOKUP_BY_PROFILE namePresent={} phonePresent={}",
+                StringUtils.hasText(req.getUserName()),
+                StringUtils.hasText(req.getUserPhone())
+        );
+        return findUserByNameAndPhone(req.getUserName(), req.getUserPhone());
+    }
+
+    private UserEntity findUserByNameAndPhone(String name, String phone) {
+        String normalizedName = name != null ? name.trim() : "";
+        String normalizedPhone = phone != null ? phone.replaceAll("\\D", "") : "";
+        UserEntity user = userRepository.findByNameAndPhone(normalizedName, normalizedPhone);
+        if (user != null) {
+            return user;
+        }
+        String dashedPhone = normalizedPhone.replaceFirst("^(010)(\\d{4})(\\d{4})$", "$1-$2-$3");
+        if (!dashedPhone.equals(normalizedPhone)) {
+            return userRepository.findByNameAndPhone(normalizedName, dashedPhone);
+        }
+        return null;
     }
 }

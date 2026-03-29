@@ -2,12 +2,20 @@
 -- ==========================================================
 
 
--- 1. 회원 (임대인 1명, 임차인 2명, 관리자 1명)
+-- 1. 회원 (임대인 1명, 임차인 10명, 관리자 1명)
 INSERT INTO `tb_users` (`user_no`, `email_id`, `password`, `name`, `phone`, `gender`, `birth_date`, `type`, `role`, `deleted_yn`) 
 VALUES 
 ('lessor1', 'lessor@test.com', '$2a$10$cuSDGuEpLkxydGri9qhQcuWym4C8sEWca4j6ZglG7QmIgI.KHuNs.', '김임대', '010-1111-1111', 'M', '1980-01-01', 'LESSOR', 'USER', 'N'),
-('user1', 'user1@test.com', '$2a$10$cuSDGuEpLkxydGri9qhQcuWym4C8sEWca4j6ZglG7QmIgI.KHuNs.', '박일번', '010-2222-2222', 'F', '1995-05-05', 'USER', 'USER', 'N'),
-('user2', 'user2@test.com', '$2a$10$GVeykywuFavxmd8HHN.y7OznrDGyHuWiD/y2Uav3vuLgQjMgvKh4W', '이이번', '010-3333-3333', 'M', '1998-08-08', 'USER', 'USER', 'N'),
+('user1', 'user1@test.com', '$2y$10$yDo/X/eoLq/w.OlG/hxlOeEdYO8V5jqiNjfqgpcnkIeWz7TNmK2T.', '박일번', '010-2222-2222', 'F', '1995-05-05', 'USER', 'USER', 'N'),
+('user2', 'user2@test.com', '$2y$10$yDo/X/eoLq/w.OlG/hxlOeEdYO8V5jqiNjfqgpcnkIeWz7TNmK2T.', '이이번', '010-3333-3333', 'M', '1998-08-08', 'USER', 'USER', 'N'),
+('user3', 'user3@test.com', '$2y$10$yDo/X/eoLq/w.OlG/hxlOeEdYO8V5jqiNjfqgpcnkIeWz7TNmK2T.', '김서연', '010-5555-5555', 'F', '1996-03-14', 'USER', 'USER', 'N'),
+('user4', 'user4@test.com', '$2y$10$yDo/X/eoLq/w.OlG/hxlOeEdYO8V5jqiNjfqgpcnkIeWz7TNmK2T.', '정민호', '010-6666-6666', 'M', '1994-07-22', 'USER', 'USER', 'N'),
+('user5', 'user5@test.com', '$2y$10$yDo/X/eoLq/w.OlG/hxlOeEdYO8V5jqiNjfqgpcnkIeWz7TNmK2T.', '한지우', '010-7777-7777', 'F', '1999-11-03', 'USER', 'USER', 'N'),
+('user6', 'user6@test.com', '$2y$10$yDo/X/eoLq/w.OlG/hxlOeEdYO8V5jqiNjfqgpcnkIeWz7TNmK2T.', '윤도현', '010-8888-8888', 'M', '1997-01-19', 'USER', 'USER', 'N'),
+('user7', 'user7@test.com', '$2y$10$yDo/X/eoLq/w.OlG/hxlOeEdYO8V5jqiNjfqgpcnkIeWz7TNmK2T.', '송다은', '010-9999-9999', 'F', '2000-06-27', 'USER', 'USER', 'N'),
+('user8', 'user8@test.com', '$2y$10$yDo/X/eoLq/w.OlG/hxlOeEdYO8V5jqiNjfqgpcnkIeWz7TNmK2T.', '임현우', '010-1212-3434', 'M', '1998-09-11', 'USER', 'USER', 'N'),
+('user9', 'user9@test.com', '$2y$10$yDo/X/eoLq/w.OlG/hxlOeEdYO8V5jqiNjfqgpcnkIeWz7TNmK2T.', '오가은', '010-2323-4545', 'F', '1995-12-02', 'USER', 'USER', 'N'),
+('user10', 'user10@test.com', '$2y$10$yDo/X/eoLq/w.OlG/hxlOeEdYO8V5jqiNjfqgpcnkIeWz7TNmK2T.', '최유진', '010-3434-5656', 'F', '1993-10-08', 'USER', 'USER', 'N'),
 ('admin1', 'admin@test.com', '$2a$10$cuSDGuEpLkxydGri9qhQcuWym4C8sEWca4j6ZglG7QmIgI.KHuNs.', '최관리', '010-4444-4444', 'F', '1997-01-08', 'USER', 'ADMIN', 'N');
 
 -- 2. 건물 (모두 '김임대' 소유)
@@ -59,7 +67,7 @@ VALUES
 INSERT INTO `tb_rooms`
 (`room_no`, `room_name`, `house_no`, `user_no`, `room_created_at`, `room_updated_at`, `room_deposit`, `room_monthly`, `room_method`, `room_area`, `room_facing`, `room_available_date`, `room_abstract`, `room_room_count`, `room_bath_count`, `room_empty_yn`, `room_status`, `room_options`, `room_image_count`, `deleted`, `deleted_at`)
 VALUES
-('room1', '101호', 'house1', 'lessor1', '2026-02-10 14:05:00', '2026-02-27 09:00:00', 10000000, 500000, 'M', 30.50, '남향', '2026-01-01', '채광 좋은 남향 방', 1, 1, 1, 'ACTIVE', '에어컨,냉장고,세탁기', 8, 0, NULL),
+('room1', '101호', 'house1', 'lessor1', '2026-01-10 14:05:00', '2026-02-27 09:00:00', 10000000, 500000, 'M', 30.50, '남향', '2026-01-01', '채광 좋은 남향 방', 1, 1, 1, 'ACTIVE', '에어컨,냉장고,세탁기', 8, 0, NULL),
 ('room2', '102호', 'house1', 'lessor1', '2026-02-11 09:15:30', '2026-02-27 09:00:00', 15000000, 600000, 'M', 35.00, '동향', '2026-03-15', '넓은 원룸', 1, 1, 1, 'ACTIVE', '침대,책상,옷장,WiFi', 2, 0, NULL),
 ('room3', '201호', 'house2', 'lessor1', '2026-02-03 10:20:00', '2026-02-27 09:00:00', 50000000, NULL, 'L', 45.00, '남향', '2026-04-01', '전세 귀한 매물', 2, 1, 1, 'ACTIVE', '', 1, 0, NULL),
 ('room4', '301호', 'house3', 'lessor1', '2026-02-25 19:10:00', '2026-02-27 09:00:00', 10000000, 650000, 'M', 22.50, '남향', '2026-03-03', '강서 네스트, 채광 좋은 남향 원룸', 1, 1, 1, 'ACTIVE', '에어컨,냉장고,세탁기', 6, 0, NULL),
@@ -2187,9 +2195,9 @@ VALUES
 (1, 2, 'lessor1', '안녕하세요, 마이페이지의 계약 상세에서 연장 신청 버튼을 눌러주시면 됩니다.');
 
 -- 13. 첨부파일 (tb_files)
-INSERT INTO `tb_files` (`file_no`, `post_no`, `original_file_name`, `updated_file_name`) 
-VALUES 
-(1, 1, '공사안내문.pdf', 'uuid-file-1.pdf');
+-- INSERT INTO `tb_files` (`file_no`, `post_no`, `original_file_name`, `updated_file_name`) 
+-- VALUES 
+-- (1, 1, '공사안내문.pdf', 'uuid-file-1.pdf');
 
 -- 14. 배너 이미지 (tb_banner_images)
 INSERT INTO `tb_banner_images` (`banner_image_no`, `post_no`, `original_file_name`, `updated_file_name`) 
@@ -2378,9 +2386,6 @@ VALUES
 ('fac_house_s030_9', 'house_s030', 9, '카페 라운지', '{"coffeeMachine": true, "snacks": true, "wifi": true, "charging": true}', 8, '00:00:00', '23:59:00', 'AVAILABLE', 0, NULL, NULL, NULL, NOW(), 22);
 
 -- 17. 부대시설 사진 (tb_fm_images)
-INSERT INTO `tb_fm_images` (`facility_image_no`, `facility_no`, `facility_original_image_name`, `facility_stored_image_name`) 
-VALUES 
-(1, 'fac1', 'gym_main.jpg', 'uuid-fac1-img1.jpg');
 INSERT INTO `tb_fm_images` (`facility_no`, `facility_original_image_name`, `facility_stored_image_name`)
 VALUES
 ('fac1', 'facility_3_운동시설.png', '1231f10f-2b8c-455c-a2e7-58694f239f16.png'),
@@ -2550,4 +2555,4 @@ VALUES
 -- 18. 부대시설 예약 (tb_fm_rsvn)
 INSERT INTO `tb_fm_rsvn` (`rsvn_no`, `facility_no`, `user_no`, `rsvn_name`, `rsvn_phone`, `rsvn_date`, `rsvn_start_time`, `rsvn_end_time`, `rsvn_status`, `rsvn_created_at`) 
 VALUES 
-('rsvn1', 'fac1', 'user1', '박일번', '010-2222-2222', '2026-02-27', '19:00:00', '21:00:00', 'APPROVED', '2026-02-10 00:00:01');
+('rsvn1', 'fac_house1_6', 'user1', '박일번', '010-2222-2222', '2026-02-27', '19:00:00', '21:00:00', 'APPROVED', '2026-02-10 00:00:01');

@@ -37,8 +37,8 @@
   border-color: #0078ff;
 }
 
-.fileInput {
-  margin-top: 6px;
+.hiddenFileInput {
+  display: none;
 }
 
 .newFileList {
@@ -64,6 +64,26 @@
   margin-top: 10px;
 }
 
+.fileSelectBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  padding: 0 14px;
+  border: 1px solid #c9713f;
+  background: #c9713f;
+  color: #fff;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 800;
+  font-size: 14px;
+}
+
+.fileSelectBtn:hover {
+  border-color: #b86334;
+  background: #b86334;
+}
+
 .buttonGroup {
   display: flex;
   justify-content: center;
@@ -72,25 +92,40 @@
 }
 
 .primaryBtn {
-  padding: 10px 20px;
-  font-size: 15px;
-  border: none;
-  border-radius: 8px;
-  background-color: #0078ff;
-  color: #ffffff;
+  height: 36px;
+  padding: 0 14px;
+  font-size: 14px;
+  font-weight: 800;
+  border: 1px solid #c9713f;
+  border-radius: 10px;
+  background: #c9713f;
+  color: #fff;
   cursor: pointer;
-  transition: background 0.2s ease;
 }
 
 .primaryBtn:hover {
-  background-color: #005ed6;
+  border-color: #b86334;
+  background: #b86334;
 }
 
 .secondaryBtn {
-  padding: 10px 20px;
-  font-size: 15px;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  background-color: #ffffff;
+  height: 36px;
+  padding: 0 14px;
+  font-size: 14px;
+  font-weight: 800;
+  border: 1px solid #e5c4ad;
+  border-radius: 10px;
+  background: #fff6ee;
+  color: #8a4c2d;
   cursor: pointer;
+}
+
+.secondaryBtn:hover {
+  background: #faece0;
+  color: #7a4125;
+}
+
+.disabledBtn {
+  opacity: 0.6;
+  pointer-events: none;
 }

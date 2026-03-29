@@ -37,15 +37,48 @@
   text-overflow: ellipsis;
 }
 
+.roomCell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.roomThumb,
+.roomThumbPlaceholder {
+  width: 42px;
+  height: 42px;
+  border-radius: 8px;
+  flex: 0 0 42px;
+}
+
+.roomThumb {
+  object-fit: cover;
+  border: 1px solid #e9ecef;
+  background: #fff;
+}
+
+.roomThumbPlaceholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed #dfe4ea;
+  background: #f8f9fe;
+  color: #8898aa;
+  font-size: 0.55rem;
+  text-align: center;
+  line-height: 1.1;
+}
+
 .smallBtn {
   width: 100%;
-  border: 1px solid #11cdef;
+  border: 1px solid #c9713f;
   border-radius: 6px;
   padding: 3px 0;
   font-size: 0.74rem;
   line-height: 1.2;
   font-weight: 700;
-  color: #11cdef;
+  color: #c9713f;
   background: #fff;
 }
 
@@ -80,6 +113,83 @@
   cursor: not-allowed;
 }
 
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 1050;
+}
+
+.modalCard {
+  width: min(720px, 100%);
+  background: #fff;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 24px 64px rgba(15, 23, 42, 0.24);
+}
+
+.modalTitle {
+  margin: 0 0 8px;
+  font-size: 1.15rem;
+  color: #172b4d;
+}
+
+.modalDesc {
+  margin: 0 0 16px;
+  color: #525f7f;
+  font-size: 0.95rem;
+}
+
+.modalLabel {
+  display: block;
+  margin-bottom: 8px;
+  color: #344767;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.modalInput {
+  width: 100%;
+  border: 1px solid #dfe4ea;
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 16px;
+  font-size: 0.92rem;
+}
+
+.signatureWrap {
+  border: 1px solid #dfe4ea;
+  border-radius: 12px;
+  background: #f8fafc;
+  padding: 12px;
+}
+
+.signatureCanvas {
+  width: 100%;
+  height: 180px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 10px;
+  background: #fff;
+  touch-action: none;
+}
+
+.signatureActions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
+}
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+
 @media (max-width: 991px) {
   .listHeader {
     display: none;
@@ -100,5 +210,13 @@
 
   .oneLine {
     white-space: normal;
+  }
+
+  .roomCell {
+    align-items: flex-start;
+  }
+
+  .modalCard {
+    padding: 16px;
   }
 }

@@ -5,7 +5,6 @@ import java.util.List;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Slice;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -27,13 +26,22 @@ import org.team4p.woorizip.common.config.UploadProperties;
 import org.team4p.woorizip.room.dto.RoomDto;
 import org.team4p.woorizip.room.dto.request.RoomSearchCondition;
 import org.team4p.woorizip.room.dto.response.ReviewRankingResponse;
+import org.team4p.woorizip.room.dto.response.RoomAiAnalyzeResponse;
+import org.team4p.woorizip.room.dto.response.RoomRagSearchResult;
 import org.team4p.woorizip.room.dto.response.RoomSearchResponse;
+import org.team4p.woorizip.room.dto.response.RoomSearchSliceResponse;
 import org.team4p.woorizip.room.dto.response.ViewsRankingResponse;
 import org.team4p.woorizip.room.dto.response.WishRankingResponse;
 import org.team4p.woorizip.room.image.dto.RoomImageDto;
+import org.team4p.woorizip.room.image.jpa.entity.RoomImageSummaryEntity;
 import org.team4p.woorizip.room.image.service.RoomImageService;
+import org.team4p.woorizip.room.image.service.RoomImageSummaryService;
+import org.team4p.woorizip.room.jpa.entity.RoomFinalSummaryEntity;
 import org.team4p.woorizip.room.review.dto.ReviewDto;
+import org.team4p.woorizip.room.review.jpa.entity.ReviewSummaryEntity;
 import org.team4p.woorizip.room.review.service.ReviewService;
+import org.team4p.woorizip.room.review.service.ReviewSummaryService;
+import org.team4p.woorizip.room.service.RoomAiService;
 import org.team4p.woorizip.room.service.RoomService;
 import org.team4p.woorizip.room.view.service.RoomViewService;
 
@@ -52,11 +60,14 @@ public class RoomController {
 	private final UploadProperties uploadProperties;
 	private final ReviewService reviewService;
 	private final RoomViewService rvService;
+	private final RoomAiService roomAiService;
+	private final ReviewSummaryService reviewSummaryService;
+	private final RoomImageSummaryService roomImageSummaryService;
 	
 	@GetMapping("/search")
-	public ResponseEntity<ApiResponse<Slice<RoomSearchResponse>>> searchRooms(@Valid @ModelAttribute RoomSearchCondition cond, Pageable pageable) {
+	public ResponseEntity<ApiResponse<RoomSearchSliceResponse>> searchRooms(@Valid @ModelAttribute RoomSearchCondition cond, Pageable pageable) {
 		// 방 검색 결과 조회
-		Slice<RoomSearchResponse> slice = roomService.selectRoomSearch(cond, pageable);
+		RoomSearchSliceResponse slice = roomService.selectRoomSearch(cond, pageable);
 		
 		return ResponseEntity.status(200).body(ApiResponse.ok("검색 성공", slice));
 	}
@@ -257,4 +268,55 @@ public class RoomController {
 		return ResponseEntity.status(200).body(ApiResponse.ok("위시갯수기준 랭킹 조회 완료("+limit+"개)", list));
 	}
 	
+	@PostMapping(value = "/ai/analyze/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	public ResponseEntity<ApiResponse<RoomAiAnalyzeResponse>> analyzeRoomImages(
+			@RequestPart("images") List<MultipartFile> images
+			) {
+		RoomAiAnalyzeResponse result = roomAiService.analyzeRoomImages(images);
+		return ResponseEntity.status(200).body(ApiResponse.ok("방 이미지 AI 분석 성공", result));
+	}
+
+	@PostMapping("/rag/room")
+	public ResponseEntity<ApiResponse<RoomRagSearchResult>> ragSearchRooms(@RequestBody String text){
+		RoomRagSearchResult result = roomService.selectRoomRag(text);
+		
+		return ResponseEntity.status(200).body(ApiResponse.ok("방 rag 검색 성공", result));
+	}
+
+	@PostMapping("/rag/room/explanation")
+	public ResponseEntity<ApiResponse<String>> ragSearchRoomExplanation(@RequestBody String text){
+		String explanation = roomService.selectRoomRagExplanation(text);
+		
+		return ResponseEntity.status(200).body(ApiResponse.ok("방 rag 설명 생성 성공", explanation));
+	}
+	
+	@GetMapping("/{roomNo}/summarized_review")
+	public ResponseEntity<ApiResponse<ReviewSummaryEntity>> callSummarizedReviews(@PathVariable("roomNo") String roomNo){
+		var result = reviewSummaryService.selectSummarizedReview(roomNo);
+		
+		return ResponseEntity.status(200).body(ApiResponse.ok("방 리뷰 요약 결과 불러오기 성공", result)); 
+	}
+	
+	@GetMapping("/{roomNo}/summarized_image")
+	public ResponseEntity<ApiResponse<RoomImageSummaryEntity>> callSummarizedImageCaptions(@PathVariable("roomNo") String roomNo){
+		var result = roomImageSummaryService.selectSummarizedImageCaption(roomNo);
+		
+		return ResponseEntity.status(200).body(ApiResponse.ok("방 사진분석 요약 결과 불러오기 성공", result));
+	}
+	
+	@GetMapping("/{roomNo}/summarized_room")
+	public ResponseEntity<ApiResponse<RoomFinalSummaryEntity>> callSummarizedRoom(@PathVariable("roomNo") String roomNo){
+		RoomFinalSummaryEntity result = roomAiService.selectSummarizedRoom(roomNo);
+		// Polling this status endpoint must not enqueue new work, or duplicate summary workers get created.
+		
+		return ResponseEntity.status(200).body(ApiResponse.ok("방 종합 요약 상태 조회 성공", result));
+	}
+
+	@PostMapping("/{roomNo}/summarized_room/request")
+	public ResponseEntity<ApiResponse<RoomFinalSummaryEntity>> requestSummarizedRoom(@PathVariable("roomNo") String roomNo){
+		RoomFinalSummaryEntity result = roomAiService.requestSummarizedRoom(roomNo);
+		roomAiService.startSummarizedRoomAsync(roomNo);
+		
+		return ResponseEntity.status(202).body(ApiResponse.ok("방 종합 요약 생성 요청 성공", result));
+	}
 }

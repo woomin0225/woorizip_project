@@ -31,4 +31,12 @@ public interface ReviewRepository extends JpaRepository<ReviewEntity, Integer>, 
 			ORDER BY avgRating DESC, j.sumViews DESC
 			""", nativeQuery=true)
 	List<ReviewRankingResponse> findPopularSince(@Param("cutoff") LocalDateTime cutoff, Pageable pageable);
+	
+	@Query(value="""
+			SELECT rr.review_content
+			FROM tb_reviews AS rr
+			WHERE rr.room_no = :roomNo
+			ORDER BY rr.review_created_at DESC
+			""", nativeQuery=true)
+	List<String> findAllReviewContentsByRoomNo(@Param("roomNo") String roomNo);	// AI 서버로 요약 요청 보내기 위해 해당 방의 리뷰 전체 조회
 }

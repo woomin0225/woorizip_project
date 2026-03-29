@@ -3,13 +3,20 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Container, Row, Col, Card, CardBody } from 'reactstrap';
 import MyPageSideNav from '../../user/components/MyPageSideNav';
 import { getTour, updateTour } from '../api/tourAPI';
-import { cancelContract, getContract, requestContractAmendment } from '../../contract/api/contractAPI';
+import { cancelContract, getContract } from '../../contract/api/contractAPI';
 import { getMyInfo, isLessorType } from '../../user/api/userAPI';
-import { getRoom } from '../../houseAndRoom/api/roomApi';
+import { getRoom, getRoomImages } from '../../houseAndRoom/api/roomApi';
 import { getHouse } from '../../houseAndRoom/api/houseApi';
+import {
+  pickRepresentativeRoomImageName,
+  toRoomImageUrl,
+} from '../../houseAndRoom/utils/roomImage';
 import InlineCalendar from '../../../shared/components/InlineCalendar';
+import { getApiBaseUrl } from '../../../app/config/env';
 import layoutStyles from '../../../app/layouts/MyPageLayout.module.css';
 import styles from './ApplicationDetail.module.css';
+
+const API_BASE_URL = getApiBaseUrl();
 
 function statusLabel(status) {
   switch (String(status || '').toUpperCase()) {
@@ -19,6 +26,9 @@ function statusLabel(status) {
       return '승인됨';
     case 'REJECTED':
       return '취소/거절';
+    case 'CANCELED':
+    case 'CANCELLED':
+      return '자동취소';
     case 'APPLIED':
       return '신청됨';
     case 'ACTIVE':
@@ -51,13 +61,6 @@ function getTodayLocalIso() {
   return `${y}-${m}-${d}`;
 }
 
-function normalizeIsoDate(value) {
-  if (!value) return '';
-  const s = String(value).trim();
-  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s);
-  return m ? `${m[1]}-${m[2]}-${m[3]}` : '';
-}
-
 function toSqlDateTimeString(d) {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, '0');
@@ -85,6 +88,17 @@ function getRoomName(item, displayName = '') {
   return item?.roomName || item?.room_name || item?.roomNo || '-';
 }
 
+function resolveContractUrl(url) {
+  if (!url) return '';
+  const s = String(url).trim();
+  if (!s) return '';
+  if (s.startsWith('http://') || s.startsWith('https://') || s.startsWith('data:')) {
+    return s;
+  }
+  if (s.startsWith('/')) return `${API_BASE_URL}${s}`;
+  return `${API_BASE_URL}/${s}`;
+}
+
 export default function ApplicationDetail() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -105,25 +119,17 @@ export default function ApplicationDetail() {
   const [tourReason, setTourReason] = useState('');
   const [tourCancelReason, setTourCancelReason] = useState('');
 
-  const [contractDate, setContractDate] = useState('');
-  const [contractTerm, setContractTerm] = useState('12');
-  const [contractReason, setContractReason] = useState('');
   const [contractCancelReason, setContractCancelReason] = useState('');
   const todayIso = useMemo(() => getTodayLocalIso(), []);
-  const [roomAvailableDateIso, setRoomAvailableDateIso] = useState('');
+  const [roomThumb, setRoomThumb] = useState('');
   const [, setRoomDisplayName] = useState('');
   const minDate = todayIso;
-  const contractMinDate = useMemo(() => {
-    if (!roomAvailableDateIso) return todayIso;
-    return roomAvailableDateIso > todayIso ? roomAvailableDateIso : todayIso;
-  }, [roomAvailableDateIso, todayIso]);
 
   const canRender = isTour || isContract;
   const tourStatus = String(item?.status || '').toUpperCase();
   const contractStatus = String(item?.status || '').toUpperCase();
   const canEditTour = isTour && ['PENDING'].includes(tourStatus);
   const canCancelTour = isTour && ['PENDING'].includes(tourStatus);
-  const canEditContract = isContract && ['APPLIED', 'APPROVED'].includes(contractStatus);
   const canCancelContract = isContract && ['APPLIED', 'APPROVED', 'AMENDMENT_REQUESTED'].includes(contractStatus);
 
   const loadDetail = useCallback(async () => {
@@ -176,34 +182,9 @@ export default function ApplicationDetail() {
       setTourReason('');
       setTourCancelReason(item.canceledReason || '');
     } else if (isContract) {
-      const nextContractDate = fmtDate(item.moveInDate);
-      setContractDate(nextContractDate === '-' ? '' : nextContractDate);
-      setContractTerm(String(item.termMonths || 12));
-      setContractReason('');
       setContractCancelReason('');
     }
   }, [item, isContract, isTour]);
-
-  useEffect(() => {
-    if (!isContract || !item?.roomNo) {
-      setRoomAvailableDateIso('');
-      return;
-    }
-    let mounted = true;
-    (async () => {
-      try {
-        const room = await getRoom(item.roomNo);
-        if (!mounted) return;
-        setRoomAvailableDateIso(normalizeIsoDate(room?.roomAvailableDate));
-      } catch {
-        if (!mounted) return;
-        setRoomAvailableDateIso('');
-      }
-    })();
-    return () => {
-      mounted = false;
-    };
-  }, [isContract, item?.roomNo]);
 
   const roomNoForDisplay = item?.roomNo;
   const itemRoomName = (item?.roomName || item?.room_name || '').toString().trim();
@@ -287,11 +268,28 @@ export default function ApplicationDetail() {
   }, [roomNoForDisplay, itemRoomName, itemRoomAbstract, itemHouseName, itemHouseNo, fallbackRoomNameFromItem]);
 
   useEffect(() => {
-    if (!isContract || !contractDate || !contractMinDate) return;
-    if (contractDate < contractMinDate) {
-      setContractDate(contractMinDate);
+    if (!roomNoForDisplay) {
+      setRoomThumb('');
+      return;
     }
-  }, [contractDate, contractMinDate, isContract]);
+    let mounted = true;
+    (async () => {
+      try {
+        const images = await getRoomImages(roomNoForDisplay);
+        if (!mounted) return;
+        const imageName = Array.isArray(images) && images.length > 0
+          ? pickRepresentativeRoomImageName(images[0])
+          : null;
+        setRoomThumb(toRoomImageUrl(imageName) || '');
+      } catch {
+        if (!mounted) return;
+        setRoomThumb('');
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, [roomNoForDisplay]);
 
   const detailRows = useMemo(() => {
     if (!item) return [];
@@ -371,37 +369,6 @@ export default function ApplicationDetail() {
     }
   };
 
-  const onContractUpdate = async () => {
-    if (!canEditContract) {
-      setError('현재 상태에서는 수정 요청이 불가능합니다.');
-      return;
-    }
-    if (!item?.contractNo || !contractDate) {
-      setError('입주 희망일을 확인해 주세요.');
-      return;
-    }
-    if (contractDate < contractMinDate) {
-      setError(`입주 희망일은 ${contractMinDate} 이후로만 선택할 수 있습니다.`);
-      return;
-    }
-    try {
-      setError('');
-      setNotice('');
-      await requestContractAmendment(item.contractNo, {
-        userNo: item.userNo,
-        roomNo: item.roomNo,
-        moveInDate: contractDate,
-        termMonths: Number(contractTerm || 12),
-        contractUrl: item.contractUrl || '',
-        rejectionReason: (contractReason || '').trim(),
-      });
-      setNotice('입주 신청 수정 요청이 완료되었습니다.');
-      await loadDetail();
-    } catch (e) {
-      setError(e.message || '수정 요청 실패');
-    }
-  };
-
   const onContractCancel = async () => {
     if (!canCancelContract) {
       setError('현재 상태에서는 취소 요청이 불가능합니다.');
@@ -471,6 +438,26 @@ export default function ApplicationDetail() {
 
                   {!loading && canRender && item && (
                     <>
+                      <div className={styles.roomSummaryCard}>
+                        <div className={styles.roomImageWrap}>
+                          {roomThumb ? (
+                            <img
+                              className={styles.roomImage}
+                              src={roomThumb}
+                              alt="방 대표 이미지"
+                            />
+                          ) : (
+                            <div className={styles.noImage}>대표 이미지 없음</div>
+                          )}
+                        </div>
+                        <div className={styles.roomSummaryInfo}>
+                          <h4 className={styles.roomTitle}>{getRoomName(item)}</h4>
+                          <p className={styles.roomSubtitle}>
+                            {isTour ? '투어 신청 내역입니다.' : '입주 신청 내역입니다.'}
+                          </p>
+                        </div>
+                      </div>
+
                       <div className={styles.detailCard}>
                         {detailRows.map((row) => (
                           <div key={row.label} className={styles.detailRow}>
@@ -479,6 +466,21 @@ export default function ApplicationDetail() {
                           </div>
                         ))}
                       </div>
+
+                      {isContract && (
+                        <div className={styles.contractPreviewCard}>
+                          <h4 className={styles.cardTitle}>계약서 미리보기</h4>
+                          {item?.contractUrl ? (
+                            <iframe
+                              title="contract-preview-detail"
+                              src={resolveContractUrl(item.contractUrl)}
+                              className={styles.contractFrame}
+                            />
+                          ) : (
+                            <p className={styles.hint}>아직 생성된 계약서가 없습니다.</p>
+                          )}
+                        </div>
+                      )}
 
                       {isTour && !isLessor && (
                         <>
@@ -552,61 +554,26 @@ export default function ApplicationDetail() {
 
                       {isContract && !isLessor && (
                         <>
-                          <div className={styles.actionGrid}>
-                            <div className={styles.actionCard}>
-                              <h4 className={styles.cardTitle}>수정 요청</h4>
-                              <label className={styles.formLabel}>입주 희망일</label>
-                              <InlineCalendar value={contractDate} minDate={contractMinDate} onChange={setContractDate} />
-                              <p className={styles.datePreview}>
-                                선택 날짜: {contractDate || '날짜를 선택해 주세요.'}
-                              </p>
-                              <p className={styles.datePreview}>입주 가능일(최소): {contractMinDate}</p>
-                              <label className={styles.formLabel}>계약 기간(개월)</label>
-                              <input
-                                className={styles.input}
-                                type="number"
-                                min="1"
-                                value={contractTerm}
-                                onChange={(e) => setContractTerm(e.target.value)}
-                              />
-                              <label className={styles.formLabel}>수정 사유</label>
-                              <textarea
-                                className={styles.textarea}
-                                value={contractReason}
-                                onChange={(e) => setContractReason(e.target.value)}
-                                placeholder="수정 요청 사유를 입력해 주세요."
-                              />
-                              <button
-                                type="button"
-                                className={styles.primaryBtn}
-                                onClick={onContractUpdate}
-                                disabled={!canEditContract}
-                              >
-                                수정 요청
-                              </button>
-                            </div>
-
-                            <div className={styles.actionCard}>
-                              <h4 className={styles.cardTitle}>취소</h4>
-                              <label className={styles.formLabel}>취소 사유</label>
-                              <textarea
-                                className={styles.textarea}
-                                value={contractCancelReason}
-                                onChange={(e) => setContractCancelReason(e.target.value)}
-                                placeholder="취소 사유를 입력해 주세요."
-                              />
-                              <button
-                                type="button"
-                                className={styles.dangerBtn}
-                                onClick={onContractCancel}
-                                disabled={!canCancelContract}
-                              >
-                                취소 요청
-                              </button>
-                            </div>
+                          <div className={styles.actionCard}>
+                            <h4 className={styles.cardTitle}>취소</h4>
+                            <label className={styles.formLabel}>취소 사유</label>
+                            <textarea
+                              className={styles.textarea}
+                              value={contractCancelReason}
+                              onChange={(e) => setContractCancelReason(e.target.value)}
+                              placeholder="취소 사유를 입력해 주세요."
+                            />
+                            <button
+                              type="button"
+                              className={styles.dangerBtn}
+                              onClick={onContractCancel}
+                              disabled={!canCancelContract}
+                            >
+                              취소 요청
+                            </button>
                           </div>
-                          {!canEditContract && !canCancelContract && (
-                            <p className={styles.hint}>현재 상태에서는 수정/취소가 불가능합니다.</p>
+                          {!canCancelContract && (
+                            <p className={styles.hint}>현재 상태에서는 취소가 불가능합니다.</p>
                           )}
                         </>
                       )}

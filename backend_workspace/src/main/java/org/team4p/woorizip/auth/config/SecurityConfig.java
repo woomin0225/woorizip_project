@@ -61,6 +61,9 @@ public class SecurityConfig {
         http.csrf(csrf -> csrf.disable())
             .formLogin(form -> form.disable())
             .httpBasic(basic -> basic.disable())
+            .headers(headers -> headers
+                .frameOptions(frame -> frame.disable())
+            )
 
             .oauth2Login(oauth2 -> oauth2
                     .authorizationEndpoint(endpoint -> endpoint.baseUri("/oauth2/authorization"))
@@ -109,6 +112,8 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, EndpointPolicy.FACILITY_LOGIN).hasAnyRole("USER", "ADMIN")
                 .requestMatchers(HttpMethod.PATCH, EndpointPolicy.FACILITY_LOGIN).hasAnyRole("USER", "ADMIN")
                 .requestMatchers(HttpMethod.GET, EndpointPolicy.FACILITY_LOGIN_GET).hasAnyRole("USER", "ADMIN")
+
+                .requestMatchers(HttpMethod.GET, EndpointPolicy.ADMIN_EVENT_GET).hasRole("ADMIN")
                 
                 // PUBLIC GET
                 .requestMatchers(HttpMethod.GET, EndpointPolicy.PUBLIC_GET).permitAll()

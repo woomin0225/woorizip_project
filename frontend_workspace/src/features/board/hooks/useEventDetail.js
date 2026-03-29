@@ -1,7 +1,8 @@
 // src/features/board/hooks/useEventDetail.js
-import { useEffect, useState, useRef } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { unwrapApi } from '../../../shared/utils/apiUnwrap';
 import {
+  fetchAdminEventDetail,
   fetchEventDetail,
   deleteEvent,
   increaseEventView,
@@ -16,15 +17,35 @@ export function useEventDetail({ postNo, nav }) {
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState('');
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
-      await increaseEventView(postNo); // ① 조회수 증가
-
-      const resp = await fetchEventDetail(postNo); // ② 상세조회
+      const resp = isAdmin
+        ? await fetchAdminEventDetail(postNo)
+        : await fetchEventDetail(postNo);
       const dto = unwrapApi(resp);
-      setEvent(dto || null);
+
+      if (!dto) {
+        setEvent(null);
+        return;
+      }
+
+      setEvent(dto);
+
+      try {
+        await increaseEventView(postNo);
+        setEvent((prev) =>
+          prev
+            ? {
+                ...prev,
+                postViewCount: (prev.postViewCount ?? 0) + 1,
+              }
+            : prev
+        );
+      } catch (viewError) {
+        console.error(viewError);
+      }
     } catch (e) {
       console.error(e);
       setError('이벤트 게시글 상세보기를 불러오지 못했습니다.');
@@ -32,17 +53,11 @@ export function useEventDetail({ postNo, nav }) {
     } finally {
       setLoading(false);
     }
-  };
-
-  const mountedRef = useRef(false);
+  }, [isAdmin, postNo]);
 
   useEffect(() => {
-    if (mountedRef.current) return;
-    mountedRef.current = true;
-
     load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [postNo]);
+  }, [load]);
 
   const handleDelete = async () => {
     const ok = window.confirm('정말 삭제하시겠습니까?');

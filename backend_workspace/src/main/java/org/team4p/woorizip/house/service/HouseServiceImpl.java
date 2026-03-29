@@ -29,7 +29,9 @@ import org.team4p.woorizip.house.kakaoAPI.KakaoGeocodingResponse;
 import org.team4p.woorizip.house.view.jpa.repository.HouseViewRepository;
 import org.team4p.woorizip.house.view.service.HouseViewService;
 import org.team4p.woorizip.room.dto.request.RoomSearchCondition;
+import org.team4p.woorizip.room.jpa.entity.RoomEntity;
 import org.team4p.woorizip.room.jpa.repository.RoomRepository;
+import org.team4p.woorizip.room.service.RoomAvailabilityPolicyService;
 import org.team4p.woorizip.user.jpa.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -47,6 +49,7 @@ public class HouseServiceImpl implements HouseService {
 	private final HouseViewService hvService;
 	private final HouseViewRepository hvRepository;
 	private final HouseImageRepository hiRepository;
+	private final RoomAvailabilityPolicyService roomAvailabilityPolicyService;
 	private @Value("${kakao.geocoding.api.uri}") String geoCodingApiUri;
 	
 	@Override
@@ -86,13 +89,30 @@ public class HouseServiceImpl implements HouseService {
 	}
 
 	@Override
-	public List<HouseDto> selectHousesByOwnerNo(String currentUser) {
+	public List<HouseDto> selectHousesByOwnerNo(String currentUser, String targetUserNo) {
 		// 임대인 회원 건물 목록 조회
-		String userNo = userRepository.findUserNoByEmailId(currentUser);
+		String userNo = resolveHouseOwnerUserNo(currentUser, targetUserNo);
 		List<HouseEntity> rows = houseRepository.findAllByUserNoAndDeletedFalseOrderByHouseName(userNo);
 		List<HouseDto> list = new ArrayList<>();
 		rows.forEach(entity->list.add(entity.toDto()));
 		return list;
+	}
+
+	private String resolveHouseOwnerUserNo(String currentUser, String targetUserNo) {
+		String currentUserNo = userRepository.findUserNoByEmailId(currentUser);
+		if (currentUserNo == null || currentUserNo.isBlank()) {
+			throw new NotFoundException("사용자 정보를 찾을 수 없습니다.");
+		}
+
+		if (targetUserNo == null || targetUserNo.isBlank()) {
+			return currentUserNo;
+		}
+
+		String currentRole = userRepository.findById(currentUserNo)
+				.map(user -> user.getRole())
+				.orElse(null);
+
+		return "ADMIN".equalsIgnoreCase(currentRole) ? targetUserNo : currentUserNo;
 	}
 
 	private HouseDto selectHouseCore(String houseNo) {
@@ -250,6 +270,14 @@ public class HouseServiceImpl implements HouseService {
 		}
 		
 		// 소유권 검사 통과하면 건물 소프트삭제 수행
+		List<RoomEntity> rooms = roomRepository.findAllByHouseNoAndDeletedFalseOrderByRoomName(houseNo);
+		long occupiedRoomCount = rooms.stream()
+				.filter(room -> roomAvailabilityPolicyService.hasCurrentOccupancy(room.getRoomNo()))
+				.count();
+		if (occupiedRoomCount > 0) {
+			throw new IllegalArgumentException("현재 거주중인 방이 있는 건물은 삭제할 수 없습니다.");
+		}
+
 		long houseResult = houseRepository.softDeleteByHouseNo(houseNo);
 		if (houseResult != 1L) throw new IllegalStateException("건물 정보 삭제 실패");
 		

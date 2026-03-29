@@ -1,13 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useLocation } from 'react-router-dom';
 import { axiosInstance } from '../../../../app/http/axiosInstance';
+import { tokenStore } from '../../../../app/http/tokenStore';
 import ReservationList from '../../components/list/ReservationList';
 import styles from './ReservationPage.module.css';
 
 export default function ReservationViewPage() {
-  const { facilityNo } = useParams(); 
+  const { facilityNo } = useParams();
+  const location = useLocation();
+  const targetUserNo = location.state?.targetUserNo || null;
+  const refreshKey = location.state?.refreshKey || null;
+
   const [isLessor, setIsLessor] = useState(null);
-  const token = localStorage.getItem('accessToken');
+  const token = tokenStore.getAccess();
 
   useEffect(() => {
     const checkUser = async () => {
@@ -18,10 +23,12 @@ export default function ReservationViewPage() {
       try {
         const payload = JSON.parse(atob(token.split('.')[1]));
         const emailId = payload.emailId || payload.sub;
-        
-        const res = await axiosInstance.get(`/api/user/${encodeURIComponent(emailId)}`);
+
+        const res = await axiosInstance.get(
+          `/api/user/${encodeURIComponent(emailId)}`
+        );
         const userType = res?.data?.data?.type;
-        console.log("유저 타입 확인:", userType);
+        console.log('유저 타입 확인:', userType);
         setIsLessor(userType === 'LESSOR');
       } catch (e) {
         console.error('사용자 권한 체크 에러:', e);
@@ -38,8 +45,10 @@ export default function ReservationViewPage() {
   return (
     <div className={styles.contentSection}>
       <div className="container">
-        <ReservationList 
-          facilityNo={isLessor ? (facilityNo || null) : null} 
+        <ReservationList
+          facilityNo={isLessor ? facilityNo || null : null}
+          targetUserNo={!isLessor ? targetUserNo || null : null}
+          refreshKey={refreshKey}
         />
       </div>
     </div>

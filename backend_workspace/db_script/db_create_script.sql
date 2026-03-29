@@ -15,6 +15,7 @@ DROP TABLE IF EXISTS `tb_reviews`;
 DROP TABLE IF EXISTS `tb_tours`;
 DROP TABLE IF EXISTS `tb_contracts`;
 
+DROP TABLE IF EXISTS `tb_rooms_image_analysis`;
 DROP TABLE IF EXISTS `tb_rooms_images`;
 DROP TABLE IF EXISTS `tb_rooms`;
 
@@ -23,10 +24,9 @@ DROP TABLE IF EXISTS `tb_houses`;
 
 DROP TABLE IF EXISTS `tb_files`;
 DROP TABLE IF EXISTS `tb_comments`;
+DROP TABLE IF EXISTS `tb_banner_images`;
 DROP TABLE IF EXISTS `tb_posts`;
 DROP TABLE IF EXISTS `tb_board_type`;
-
-DROP TABLE IF EXISTS `tb_banner_images`;
 
 DROP TABLE IF EXISTS `tb_refresh_tokens`;
 DROP TABLE IF EXISTS `tb_users`;
@@ -329,6 +329,15 @@ ALTER TABLE `tb_contracts`
 
 ALTER TABLE tb_posts
   ADD COLUMN post_pinned_yn TINYINT(1) DEFAULT 0;
+  
+  ALTER TABLE `tb_contracts`
+  MODIFY COLUMN `status`
+  ENUM('APPLIED', 'APPROVED', 'PAID', 'ACTIVE', 'AMENDMENT_REQUESTED', 'ENDED', 'REJECTED')
+  NOT NULL
+  DEFAULT 'APPLIED'
+  COMMENT '계약상태(APPLIED, APPROVED, PAID, ACTIVE, AMENDMENT_REQUESTED, ENDED, REJECTED)';
+
+
 
 -- desc `tb_user`;
 -- desc `tb_contracts`;

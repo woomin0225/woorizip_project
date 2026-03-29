@@ -1,11 +1,15 @@
 // src/features/facility/hooks/category/useCategoryForm.js
 import { useState, useEffect, useCallback } from 'react';
-import { createFacilityCategory, modifyFacilityCategory, getFacilityCategories } from '../../api/facilityApi';
-import { unwrapApi } from '../../../../shared/utils/apiUnwrap';
+import {
+  createFacilityCategory,
+  modifyFacilityCategory,
+  getFacilityCategories,
+} from '../../api/facilityApi';
+import { normalizeApiError } from '../../../../app/http/errorMapper';
 
 const schema = {
   facilityType: '',
-  facilityOptions: ''
+  facilityOptions: '',
 };
 
 export function useCategoryForm(facilityCode = null) {
@@ -20,21 +24,21 @@ export function useCategoryForm(facilityCode = null) {
       const loadData = async () => {
         setLoading(true);
         try {
-          const response = await getFacilityCategories(); 
-          const dataList = unwrapApi(response);
-          const data = dataList.find(c => c.facilityCode === facilityCode);
-
+          const response = await getFacilityCategories();
+          const dataList = response?.data || response;
+          const data = dataList.find((c) => c.facilityCode === facilityCode);
           if (data) {
             setValues({
               facilityType: data.facilityType,
-              facilityOptions: Array.isArray(data.facilityOptions) 
-                ? data.facilityOptions.join(', ') 
-                : data.facilityOptions || ''
+              facilityOptions: Array.isArray(data.facilityOptions)
+                ? data.facilityOptions.join(',')
+                : data.facilityOptions || '',
             });
           }
         } catch (err) {
-          setError(err);
-          console.error(err.message);
+          const apiError = normalizeApiError(err);
+          setError(apiError);
+          console.error(apiError.message);
         } finally {
           setLoading(false);
         }
@@ -56,28 +60,40 @@ export function useCategoryForm(facilityCode = null) {
     setSubmitting(true);
 
     const optionArray = values.facilityOptions
-      ? values.facilityOptions.split(',').map(opt => opt.trim()).filter(opt => opt !== '')
+      ? values.facilityOptions
+          .split(',')
+          .map((opt) => opt.trim())
+          .filter((opt) => opt !== '')
       : [];
 
     const payload = {
       facilityType: values.facilityType,
-      facilityOptions: optionArray
+      facilityOptions: optionArray,
     };
 
     try {
       const response = updateMode
         ? await modifyFacilityCategory(facilityCode, payload)
         : await createFacilityCategory(payload);
-      
+
       alert(response.message);
-      navigate('/admin/category'); 
+      navigate('/admin/category');
     } catch (err) {
-      setError(err);
-      alert(err.message);
+      const apiError = normalizeApiError(err);
+      setError(apiError);
+      alert(apiError.message);
     } finally {
       setSubmitting(false);
     }
   };
 
-  return { values, handleChange, onSubmit, loading, submitting, error, updateMode };
+  return {
+    values,
+    handleChange,
+    onSubmit,
+    loading,
+    submitting,
+    error,
+    updateMode,
+  };
 }

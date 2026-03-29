@@ -5,6 +5,7 @@ import {
   getFacilityDetail,
   getFacilityCategories,
 } from '../../api/facilityApi';
+import { normalizeApiError } from '../../../../app/http/errorMapper';
 
 const schema = {
   houseNo: '',
@@ -43,8 +44,9 @@ export function useFacilityForm(houseNo, facilityNo = null) {
         const data = response?.data || response || [];
         setCategories(data);
       } catch (err) {
-        setError(err);
-        console.error('카테고리 로드 실패:', err.message);
+        const apiError = normalizeApiError(err);
+        setError(apiError);
+        console.error('카테고리 로드 실패:', apiError.message);
       }
     };
     fetchCategories();
@@ -76,8 +78,9 @@ export function useFacilityForm(houseNo, facilityNo = null) {
           setExistingImages(data.images || data.facilityImages || []);
           setDeleteImageNos([]);
         } catch (err) {
-          setError(err);
-          console.error('상세 정보 로드 실패:', err.message);
+          const apiError = normalizeApiError(err);
+          setError(apiError);
+          console.error('상세 정보 로드 실패:', apiError.message);
         } finally {
           setLoading(false);
         }
@@ -153,27 +156,20 @@ export function useFacilityForm(houseNo, facilityNo = null) {
 
     const currentValues = manualValues || values;
     const formData = new FormData();
+
     const truncateToHour = (dateTimeStr) => {
       if (!dateTimeStr) return null;
-      return dateTimeStr.split(':')[0] + ':00:00';
+      const [date, time] = dateTimeStr.split('T');
+      if (!time) return dateTimeStr;
+      const hour = time.split(':')[0];
+      return `${date}T${hour}:00:00`;
     };
 
     const dtoData = {
-      ...(updateMode ? { deleteImageNos } : { houseNo: values.houseNo }),
       facilityCode: Number(currentValues.facilityCode),
       facilityName: currentValues.facilityName,
       facilityOptionInfo: currentValues.facilityOptionInfo,
       facilityLocation: String(currentValues.facilityLocation) || '0',
-      facilityStatus:
-        currentValues.facilityStatus || (updateMode ? undefined : 'AVAILABLE'),
-      blockedStartTime:
-        currentValues.facilityStatus === 'UNAVAILABLE'
-          ? truncateToHour(currentValues.blockedStartTime)
-          : null,
-      blockedEndTime:
-        currentValues.facilityStatus === 'UNAVAILABLE'
-          ? truncateToHour(currentValues.blockedEndTime)
-          : null,
       facilityCapacity: Number(currentValues.facilityCapacity) || 0,
       facilityOpenTime: currentValues.facilityOpenTime,
       facilityCloseTime: currentValues.facilityCloseTime,
@@ -188,6 +184,23 @@ export function useFacilityForm(houseNo, facilityNo = null) {
         ? Number(currentValues.facilityMaxDurationMinutes)
         : null,
     };
+
+    if (updateMode) {
+      dtoData.facilityStatus = currentValues.facilityStatus;
+      dtoData.deleteImageNos = deleteImageNos;
+      dtoData.blockedStartTime =
+        currentValues.facilityStatus === 'UNAVAILABLE'
+          ? truncateToHour(currentValues.blockedStartTime)
+          : null;
+      dtoData.blockedEndTime =
+        currentValues.facilityStatus === 'UNAVAILABLE'
+          ? truncateToHour(currentValues.blockedEndTime)
+          : null;
+    } else {
+      dtoData.houseNo = values.houseNo;
+    }
+
+    console.log('최종 전송 데이터:', dtoData);
 
     formData.append(
       'dto',
@@ -209,9 +222,10 @@ export function useFacilityForm(houseNo, facilityNo = null) {
       alert('성공적으로 저장되었습니다.');
       navigate(`/facility/view/${houseNo}`);
     } catch (err) {
-      setError(err);
-      console.error('제출 에러:', err.message);
-      alert('저장 실패', err.message);
+      const apiError = normalizeApiError(err);
+      setError(apiError);
+      console.error('제출 에러:', apiError.message);
+      alert(apiError.message || '저장에 실패했습니다.');
     } finally {
       setSubmitting(false);
     }

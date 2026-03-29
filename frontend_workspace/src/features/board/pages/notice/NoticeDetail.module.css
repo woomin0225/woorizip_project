@@ -1,65 +1,254 @@
-/* src/features/board/pages/notice/NoticeDetail.module.css */
+.page {
+  background: #f5f5f5;
+  min-height: 100vh;
+  padding: 28px 16px 56px;
+}
+
 .container {
-  padding: 20px;
-  max-width: 800px;
+  max-width: 1100px;
   margin: 0 auto;
-  background-color: #fdfdfd;
-  border: 1px solid #ddd;
-  border-radius: 8px;
 }
 
-.title {
-  font-size: 1.8rem;
-  color: #2db400;
-  margin-bottom: 20px;
-  text-align: center;
+.card {
+  background: #fff;
+  border-radius: 24px;
+  padding: 32px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+  min-width: 0;
 }
 
-.table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-bottom: 20px;
+.postTitle {
+  margin: 0;
+  font-size: 30px;
+  font-weight: 800;
+  color: #2b2b2b;
+  line-height: 1.45;
 }
 
-.table th,
-.table td {
-  border: 1px solid #ddd;
-  padding: 10px;
-  text-align: left;
-  vertical-align: top;
+.metaRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid #ead7c8;
+  color: #666;
+  font-size: 14px;
 }
 
-.table th {
-  width: 25%;
-  background-color: #a8a5a52e;
-  font-weight: bold;
+.metaItem {
+  line-height: 1.5;
+}
+
+.divider {
+  color: #c8b3a2;
+}
+
+.section {
+  margin-top: 26px;
+}
+
+.sectionTitle {
+  margin: 0 0 12px;
+  font-size: 18px;
+  font-weight: 800;
+  color: #8a4c2d;
+}
+
+.sectionBox {
+  padding: 16px;
+  border: 1px solid #ead7c8;
+  border-radius: 12px;
+  background: #fffaf6;
+}
+
+.fileList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.fileItem {
+  display: flex;
+  align-items: center;
+}
+
+.emptyText {
+  color: #888;
+  font-size: 14px;
+}
+
+.contentBox {
+  padding: 20px;
+  border: 1px solid #ead7c8;
+  border-radius: 12px;
+  background: #fff;
+  min-height: 260px;
+}
+
+.imageList {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.contentImage {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border-radius: 12px;
+}
+
+.content {
+  color: #333;
+  font-size: 15px;
+  line-height: 1.8;
+  word-break: break-word;
+}
+
+.content p,
+.content ul,
+.content ol {
+  margin: 0 0 16px;
+}
+
+.content p:last-child,
+.content ul:last-child,
+.content ol:last-child {
+  margin-bottom: 0;
+}
+
+.content ul,
+.content ol {
+  padding-left: 20px;
+}
+
+.content li + li {
+  margin-top: 6px;
+}
+
+.content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 12px;
+}
+
+.summaryWrap {
+  margin-top: 26px;
 }
 
 .buttonGroup {
   display: flex;
-  justify-content: center; /* 수평 가운데 정렬 */
-  margin-top: 20px;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 28px;
+  flex-wrap: wrap;
 }
 
 .button {
-  background-color: #2db4005a;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  font-size: 1rem;
-  border-radius: 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid #c9713f;
+  border-radius: 10px;
+  background: #c9713f;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.35;
+  font-family: inherit;
+  appearance: none;
   cursor: pointer;
-  margin-right: 10px;
+  text-decoration: none;
+}
+
+.button,
+.button:visited,
+.button:hover,
+.button:active {
+  color: #fff;
+  text-decoration: none;
 }
 
 .button:hover {
-  background-color: #239400;
+  border-color: #b86334;
+  background: #b86334;
+}
+
+.button:disabled {
+  opacity: 0.6;
+  cursor: default;
 }
 
 .loading,
 .error {
   text-align: center;
-  font-size: 1.2rem;
+  font-size: 18px;
   margin-top: 50px;
   color: #555;
+}
+
+@media (max-width: 1200px) {
+  .container {
+    max-width: 1100px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .container {
+    max-width: 1100px;
+  }
+}
+
+@media (max-width: 900px) {
+  .page {
+    padding: 20px 12px 40px;
+  }
+
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .card {
+    padding: 22px;
+  }
+
+  .postTitle {
+    font-size: 24px;
+  }
+}
+
+.fileButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid #c9713f;
+  border-radius: 10px;
+  background: #c9713f;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.fileButton:hover {
+  border-color: #b86334;
+  background: #b86334;
+  color: #fff;
+  text-decoration: none;
+}
+
+.fileButton:visited,
+.fileButton:active {
+  color: #fff;
+  text-decoration: none;
 }

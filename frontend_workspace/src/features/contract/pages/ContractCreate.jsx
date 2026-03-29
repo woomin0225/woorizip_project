@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+﻿import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Container, Row, Col, Card, CardBody } from 'reactstrap';
 import {
@@ -7,6 +7,10 @@ import {
   verifyElectronicSignature,
 } from '../api/contractAPI';
 import { getRoom, getRoomImages } from '../../houseAndRoom/api/roomApi';
+import {
+  pickRepresentativeRoomImageName,
+  toRoomImageUrl,
+} from '../../houseAndRoom/utils/roomImage';
 import { getHouse } from '../../houseAndRoom/api/houseApi';
 import { getMyInfo, getUserByUserNo } from '../../user/api/userAPI';
 import InlineCalendar from '../../../shared/components/InlineCalendar';
@@ -44,12 +48,6 @@ function normalizeIsoDate(value) {
   const s = String(value).trim();
   const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s);
   return m ? `${m[1]}-${m[2]}-${m[3]}` : '';
-}
-
-function pickImageName(x) {
-  if (!x) return null;
-  if (typeof x === 'string') return x;
-  return x.imageName || x.storedImageName || x.fileName || x.roomImageName || x.name || null;
 }
 
 function addMonthsIso(dateString, months) {
@@ -219,10 +217,10 @@ export default function ContractCreate() {
     updateSignatureDataUrl();
   }, [updateSignatureDataUrl]);
 
-  const buildLeasePreviewDataUrl = () => {
+  const buildLeasePreviewHtml = () => {
     const contractWrittenDate = getTodayLocalIso();
     const specialTerms = (amendReason || '').trim() || '특약 없음';
-    const html = `<!doctype html>
+    return `<!doctype html>
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
@@ -279,8 +277,9 @@ export default function ContractCreate() {
   </table>
 </body>
 </html>`;
-    return toDataUrlHtml(html);
   };
+
+  const buildLeasePreviewDataUrl = () => toDataUrlHtml(buildLeasePreviewHtml());
 
   const loadTossPaymentsSdk = () =>
     new Promise((resolve, reject) => {
@@ -376,13 +375,15 @@ export default function ContractCreate() {
       try {
         const images = await getRoomImages(routeRoomNo);
         const firstImageName =
-          Array.isArray(images) && images.length > 0 ? pickImageName(images[0]) : null;
-        setThumb(firstImageName ? `/upload_files/room_image/${firstImageName}` : '');
+          Array.isArray(images) && images.length > 0
+            ? pickRepresentativeRoomImageName(images[0])
+            : pickRepresentativeRoomImageName(room);
+        setThumb(toRoomImageUrl(firstImageName) || '');
       } catch {
         setThumb('');
       }
     })();
-  }, [routeRoomNo]);
+  }, [room, routeRoomNo]);
 
   useEffect(() => {
     (async () => {
@@ -475,21 +476,37 @@ export default function ContractCreate() {
 
     try {
       setIsProcessing(true);
-      const ensuredContractNo = await ensureContractCreated();
+      let ensuredContractNo = null;
+      try {
+        ensuredContractNo = await ensureContractCreated();
+      } catch (stageError) {
+        throw new Error(stageError?.message || '입주 신청 생성 중 오류가 발생했습니다.');
+      }
       if (!ensuredContractNo) {
         throw new Error('계약번호 생성에 실패했습니다.');
       }
-      const eContractRes = await createElectronicContract(ensuredContractNo, {
-        roomNo: routeRoomNo,
-        moveInDate,
-        termMonths: Number(termMonths),
-        memo: amendReason.trim(),
-      });
-      const signRes = await verifyElectronicSignature(ensuredContractNo, {
-        signerName: (userInfo?.name || signatureName || '').trim(),
-        agreedAt: new Date().toISOString(),
-      });
-      const contractUrl = signRes?.contractUrl || eContractRes?.contractUrl || '';
+      let eContractRes = null;
+      try {
+        eContractRes = await createElectronicContract(ensuredContractNo, {
+          roomNo: routeRoomNo,
+          moveInDate,
+          termMonths: Number(termMonths),
+          memo: amendReason.trim(),
+          signatureDataUrl,
+        });
+      } catch (stageError) {
+        throw new Error(stageError?.message || '전자계약서 생성 중 오류가 발생했습니다.');
+      }
+      let signRes = null;
+      try {
+        signRes = await verifyElectronicSignature(ensuredContractNo, {
+          signerName: (userInfo?.name || signatureName || '').trim(),
+          agreedAt: new Date().toISOString(),
+        });
+      } catch (stageError) {
+        throw new Error(stageError?.message || '임차인 전자서명 확인 중 오류가 발생했습니다.');
+      }
+      const contractDocumentUrl = signRes?.contractUrl || eContractRes?.contractUrl || '';
       const orderId = createOrderId();
       const context = {
         contractNo: ensuredContractNo,
@@ -504,20 +521,24 @@ export default function ContractCreate() {
         monthlyPayment: totalMonthlyPayment,
         deposit,
         accessGuide: '관리사무소 또는 집주인과 입실 안내를 확인해 주세요.',
-        eformContractUrl: contractUrl,
+        contractDocumentUrl,
         paymentProvider: 'TOSS_TEST',
-        signProvider: 'EFORMSIGN_TEST',
+        signProvider: 'WOORIZIP_INTERNAL_SIGNATURE',
         orderId,
         customerName: who,
       };
       sessionStorage.setItem(PAYMENT_CONTEXT_KEY, JSON.stringify(context));
-      await requestTossPayment({
-        orderId,
-        amount: totalMonthlyPayment,
-        roomName: displayRoomName,
-        customerName: who,
-        method: paymentMethod,
-      });
+      try {
+        await requestTossPayment({
+          orderId,
+          amount: totalMonthlyPayment,
+          roomName: displayRoomName,
+          customerName: who,
+          method: paymentMethod,
+        });
+      } catch (stageError) {
+        throw new Error(stageError?.message || '결제창 호출 중 오류가 발생했습니다.');
+      }
     } catch (e2) {
       setError(e2.message || '결제 처리 중 오류가 발생했습니다.');
     } finally {
@@ -686,23 +707,27 @@ export default function ContractCreate() {
                           disabled
                         />
                         <span className={styles.checkText}>
-                          개인정보 수집 및 이용/제3자 제공에 동의합니다.
-                          {CONSENT_DOCS.personal.links.map((link) => (
-                            <button
-                              key={link.url}
-                              type="button"
-                              className={styles.linkBtn}
-                              onClick={() =>
-                                openDocModal(
-                                  'personal',
-                                  CONSENT_DOCS.personal.title,
-                                  [link.url, ...(CONSENT_DOCS.personal.extraUrls || [])]
-                                )
-                              }
-                            >
-                              {link.label}
-                            </button>
-                          ))}
+                          <span className={styles.checkLabelText}>
+                            개인정보 수집 및 이용/제3자 제공에 동의합니다.
+                          </span>
+                          <span className={styles.checkLinkRow}>
+                            {CONSENT_DOCS.personal.links.map((link) => (
+                              <button
+                                key={link.url}
+                                type="button"
+                                className={styles.linkBtn}
+                                onClick={() =>
+                                  openDocModal(
+                                    'personal',
+                                    CONSENT_DOCS.personal.title,
+                                    [link.url, ...(CONSENT_DOCS.personal.extraUrls || [])]
+                                  )
+                                }
+                              >
+                                {link.label}
+                              </button>
+                            ))}
+                          </span>
                         </span>
                       </label>
                       <label className={styles.checkRow}>
@@ -713,19 +738,23 @@ export default function ContractCreate() {
                           disabled
                         />
                         <span className={styles.checkText}>
-                          전자계약서 내용 확인 및 계약 진행에 동의합니다.
-                          {CONSENT_DOCS.contract.links.map((link) => (
-                            <button
-                              key={link.url}
-                              type="button"
-                              className={styles.linkBtn}
-                              onClick={() =>
-                                openDocModal('contract', CONSENT_DOCS.contract.title, [buildLeasePreviewDataUrl()])
-                              }
-                            >
-                              {link.label}
-                            </button>
-                          ))}
+                          <span className={styles.checkLabelText}>
+                            전자계약서 내용 확인 및 계약 진행에 동의합니다.
+                          </span>
+                          <span className={styles.checkLinkRow}>
+                            {CONSENT_DOCS.contract.links.map((link) => (
+                              <button
+                                key={link.url}
+                                type="button"
+                                className={styles.linkBtn}
+                                onClick={() =>
+                                  openDocModal('contract', CONSENT_DOCS.contract.title, [buildLeasePreviewDataUrl()])
+                                }
+                              >
+                                {link.label}
+                              </button>
+                            ))}
+                          </span>
                         </span>
                       </label>
                       <label className={styles.checkRow}>
@@ -736,17 +765,21 @@ export default function ContractCreate() {
                           disabled
                         />
                         <span className={styles.checkText}>
-                          전자문서 및 전자서명 이용에 동의합니다.
-                          {CONSENT_DOCS.sign.links.map((link) => (
-                            <button
-                              key={link.url}
-                              type="button"
-                              className={styles.linkBtn}
-                              onClick={() => openDocModal('sign', CONSENT_DOCS.sign.title, [link.url])}
-                            >
-                              {link.label}
-                            </button>
-                          ))}
+                          <span className={styles.checkLabelText}>
+                            전자문서 및 전자서명 이용에 동의합니다.
+                          </span>
+                          <span className={styles.checkLinkRow}>
+                            {CONSENT_DOCS.sign.links.map((link) => (
+                              <button
+                                key={link.url}
+                                type="button"
+                                className={styles.linkBtn}
+                                onClick={() => openDocModal('sign', CONSENT_DOCS.sign.title, [link.url])}
+                              >
+                                {link.label}
+                              </button>
+                            ))}
+                          </span>
                         </span>
                       </label>
                     </div>

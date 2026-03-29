@@ -27,7 +27,17 @@ public final class EndpointPolicy {
             "/api/user/password/send-code",
             "/api/user/password/verify-code",
             "/api/user/find-password",
-            "/auth/login"
+            "/api/agent/command",
+            "/api/orchestrate/command",
+            "/api/voice/tts",
+            "/api/voice/stt",
+             "/auth/login",
+             "/api/facilities/ai**",
+             "/api/rooms/rag/room",
+             "/api/rooms/rag/room/explanation",
+             "/api/rooms/*/summarized_room/request",
+             "/api/tour/internal/**",
+             "/auth/login"
     };
 
     // 공지사항, 정책・정보, 이벤트 : ADMIN만 (POST/PUT/DELETE)
@@ -35,6 +45,8 @@ public final class EndpointPolicy {
     		"/api/notice/**",
     		"/api/information/**",
     		"/api/event/**"};
+
+    public static final String[] ADMIN_EVENT_GET = { "/api/admin/event/**" };
 
     // 게시글: USER/ADMIN (POST/PUT/DELETE)
     public static final String[] QNA_WRITE = { "/api/qna/**" };
@@ -80,3 +92,4 @@ public final class EndpointPolicy {
     // 공용시설 예약
     public static final String RESERVATION_ALL = "/api/reservations/**";
 }
+

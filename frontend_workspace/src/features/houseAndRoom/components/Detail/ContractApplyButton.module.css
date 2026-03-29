@@ -1,2 +1,29 @@
-.btn { width:100%; border: none; border-radius: 12px; padding: 14px; background: #d8c5e5; cursor: pointer; font-weight: 700; }
-.link { text-decoration: none; }
+.btn {
+  width: 100%;
+  border: none;
+  border-radius: 12px;
+  padding: 14px;
+  background: #c9713f;
+  box-shadow: inset 0 0 0 1px #c9713f;
+  color: #fff;
+  cursor: pointer;
+  font-weight: 800;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease,
+    color 0.2s ease;
+}
+
+.btn:hover:not(:disabled) {
+  background: #b86334;
+  box-shadow: inset 0 0 0 1px #b86334;
+}
+
+.btn:disabled {
+  background: #f6ede7;
+  box-shadow: inset 0 0 0 1px #ead7c8;
+  color: #c7a892;
+  cursor: not-allowed;
+}
+
+.link {
+  text-decoration: none;
+}

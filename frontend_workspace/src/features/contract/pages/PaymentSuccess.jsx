@@ -70,10 +70,10 @@ export default function PaymentSuccess() {
             deposit: Number(ctx.deposit || 0),
             accessGuide: ctx.accessGuide,
             integrationPending: [],
-            eformContractUrl: ctx.eformContractUrl || '',
+            contractDocumentUrl: ctx.contractDocumentUrl || '',
             paymentStatus: paymentRes?.status || 'PAID',
             paymentProvider: 'TOSS_TEST',
-            signProvider: 'EFORMSIGN_TEST',
+            signProvider: 'WOORIZIP_INTERNAL_SIGNATURE',
           },
         });
       } catch (e) {
@@ -111,4 +111,3 @@ export default function PaymentSuccess() {
     </section>
   );
 }
-

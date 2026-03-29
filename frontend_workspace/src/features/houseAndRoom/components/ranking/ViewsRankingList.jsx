@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import { Card, CardBody, Row, Col } from 'reactstrap';
+import { buildUploadUrl } from '../../../../app/config/env';
 import styles from './ViewsRankingList.module.css';
 import woorizipLogo from '../../../../assets/images/logo-muted.png';
 import { getRoomReviews } from '../../api/roomApi';
@@ -121,9 +122,10 @@ export default function ViewsRankingList({ list = [], type }) {
           <div className={styles.empty}>No ranking data.</div>
         ) : (
           list.map((item, index) => {
-            const imageBase = type === 'room' ? 'room_image' : 'house_image';
+            const imageBase =
+              type === 'room' ? 'upload/room_image' : 'upload/house_image';
             const imageSrc = item?.repImageName
-              ? `http://localhost:8080/upload/${imageBase}/${item.repImageName}`
+              ? buildUploadUrl(imageBase, item.repImageName)
               : null;
             const reviews =
               type === 'room' ? reviewMap[item?.roomNo] || [] : [];
@@ -241,23 +243,26 @@ export default function ViewsRankingList({ list = [], type }) {
                   ) : (
                     <div className={styles.facilityWrap}>
                       <div className={styles.facilityList}>
-                      {visibleFacilities.map((facility) => {
-                        const name = facility?.facilityName || '시설';
-                        return (
-                          <span
-                            key={
-                              facility?.facilityNo || `${item?.houseNo}-${name}`
-                            }
-                            className={styles.facilityChip}
-                            title={name}
-                          >
-                            <span className={styles.facilityIcon}>
-                              {getFacilityIcon(name)}
+                        {visibleFacilities.map((facility) => {
+                          const name = facility?.facilityName || '시설';
+                          return (
+                            <span
+                              key={
+                                facility?.facilityNo ||
+                                `${item?.houseNo}-${name}`
+                              }
+                              className={styles.facilityChip}
+                              title={name}
+                            >
+                              <span className={styles.facilityIcon}>
+                                {getFacilityIcon(name)}
+                              </span>
+                              <span className={styles.facilityName}>
+                                {name}
+                              </span>
                             </span>
-                            <span className={styles.facilityName}>{name}</span>
-                          </span>
-                        );
-                      })}
+                          );
+                        })}
                         {facilities.length > FACILITY_LIMIT && (
                           <span className={styles.facilityMore}>
                             +{facilities.length - FACILITY_LIMIT}
@@ -281,7 +286,9 @@ export default function ViewsRankingList({ list = [], type }) {
                                   <span className={styles.facilityIcon}>
                                     {getFacilityIcon(name)}
                                   </span>
-                                  <span className={styles.facilityName}>{name}</span>
+                                  <span className={styles.facilityName}>
+                                    {name}
+                                  </span>
                                 </span>
                               );
                             })}

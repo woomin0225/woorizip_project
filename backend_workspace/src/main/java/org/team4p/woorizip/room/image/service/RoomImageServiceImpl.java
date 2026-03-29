@@ -12,9 +12,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import org.team4p.woorizip.common.config.UploadProperties;
+import org.team4p.woorizip.room.image.analyze.service.RoomImageAnalysisService;
 import org.team4p.woorizip.room.image.dto.RoomImageDto;
 import org.team4p.woorizip.room.image.jpa.entity.RoomImageEntity;
+import org.team4p.woorizip.room.image.jpa.entity.RoomImageSummaryEntity;
 import org.team4p.woorizip.room.image.jpa.repository.RoomImageRepository;
+import org.team4p.woorizip.room.image.jpa.repository.RoomImageSummaryRepository;
+import org.team4p.woorizip.room.jpa.entity.RoomEmbeddingEntity;
+import org.team4p.woorizip.room.jpa.entity.RoomEntity;
+import org.team4p.woorizip.room.jpa.repository.RoomEmbeddingRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -23,6 +29,9 @@ import lombok.RequiredArgsConstructor;
 public class RoomImageServiceImpl implements RoomImageService {
 	private final RoomImageRepository roomImageRepository;
 	private final UploadProperties uploadProperties;
+	private final RoomImageAnalysisService roomImageAnalysisService;
+	private final RoomImageSummaryRepository roomImageSummaryRepository;
+	private final RoomEmbeddingRepository roomEmbeddingRepository;
 	
 	@Override
 	public List<RoomImageDto> selectRoomImages(String roomNo) {
@@ -70,16 +79,41 @@ public class RoomImageServiceImpl implements RoomImageService {
 										            		.roomOriginalImageName(originalImageName)
 										            		.roomStoredImageName(storedImageName)
 										            		.build();
-            try {
-            		roomImageRepository.save(roomImageEntity);
-            } catch(Exception e) {
-            		// DB에 사진이름 저장 실패하면 저장소에서 파일 삭제
-            		try {
-					Files.deleteIfExists(saveFile.toPath());
-				} catch (IOException e2) {continue;}
-            		continue;
-            }
+            RoomImageEntity savedEntity;
+            	try {
+					savedEntity = roomImageRepository.save(roomImageEntity);
+				} catch (Exception e) {
+					try {
+						Files.deleteIfExists(saveFile.toPath());
+					} catch (IOException e2) { continue; }
+						continue;
+					}
+            	
+            	// 이미지 AI 분석결과 생성 및 저장
+            	try {
+					roomImageAnalysisService.analyzeAndSave(savedEntity);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 		}
+		// +AI: 사진분석 요약상태 PENDING으로 등록
+		roomImageSummaryRepository.save(
+				RoomImageSummaryEntity.builder()
+										.roomNo(roomNo)
+										.summaryStatus("PENDING")
+										.imageCount(0)
+										.retryCount(0)
+										.build()
+				);
+		
+		// 임베딩 위해 상태 갱신 (PENDING)
+		roomEmbeddingRepository.save(RoomEmbeddingEntity.builder()
+												.roomNo(roomNo)
+												.embeddingStatus("PENDING")
+												.retryCount(0)
+												.build()
+				);
+		
 		int imageCount = roomImageRepository.countByRoomNo(roomNo);
 		return imageCount;
 	}
@@ -100,6 +134,9 @@ public class RoomImageServiceImpl implements RoomImageService {
 			// DB에서 삭제
 			roomImageRepository.deleteById(deleteImageNo);
 			
+			// ai 이미지분석 db에서 삭제
+			roomImageAnalysisService.deleteAnalyzedOne(deleteImageNo);
+			
 			// entity로부터 사진 경로 구성
 			File targetFile = new File(uploadProperties.roomImageDir().toFile(), entity.getRoomStoredImageName());
 			// 파일저장소에서 삭제
@@ -107,6 +144,22 @@ public class RoomImageServiceImpl implements RoomImageService {
 				Files.deleteIfExists(targetFile.toPath());
 			} catch (IOException e) {continue;}
 		}
+		roomImageSummaryRepository.save(
+				RoomImageSummaryEntity.builder()
+										.roomNo(currentRoomNo)
+										.summaryStatus("PENDING")
+										.imageCount(0)
+										.retryCount(0)
+										.build()
+				);
+		
+		// 임베딩 위해 상태 갱신 (PENDING)
+		roomEmbeddingRepository.save(RoomEmbeddingEntity.builder()
+												.roomNo(currentRoomNo)
+												.embeddingStatus("PENDING")
+												.retryCount(0)
+												.build()
+				);
 		
 		int imageCount = roomImageRepository.countByRoomNo(currentRoomNo);
 		
@@ -119,7 +172,11 @@ public class RoomImageServiceImpl implements RoomImageService {
 		// 방 이미지 전부 삭제
 		List<RoomImageEntity> rows = roomImageRepository.findAllByRoomNoOrderByRoomImageNo(roomNo);
 		for(RoomImageEntity entity:rows) {
-			roomImageRepository.deleteById(entity.getRoomImageNo());
+			int deleteImageNo = entity.getRoomImageNo();
+			roomImageRepository.deleteById(deleteImageNo);
+			
+			// ai 이미지분석 db에서 삭제
+			roomImageAnalysisService.deleteAnalyzedOne(deleteImageNo);
 		}
 	}
 

@@ -23,7 +23,9 @@ import org.team4p.woorizip.reservation.dto.ReservationCreateRequestDTO;
 import org.team4p.woorizip.reservation.dto.ReservationDetailResponseDTO;
 import org.team4p.woorizip.reservation.dto.ReservationListResponseDTO;
 import org.team4p.woorizip.reservation.dto.ReservationModifyRequestDTO;
+import org.team4p.woorizip.reservation.dto.ReservationStatsDTO;
 import org.team4p.woorizip.reservation.service.ReservationService;
+import org.team4p.woorizip.user.jpa.repository.UserRepository;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -35,6 +37,7 @@ import lombok.extern.slf4j.Slf4j;
 public class ReservationController {
 
 	private final ReservationService reservationService;
+	private final UserRepository userRepository;
 
 	// 예약 신규 등록
 	@PostMapping("/api/facilities/{facilityNo}/reservations")
@@ -48,6 +51,18 @@ public class ReservationController {
 
 	}
 	
+	// 예약 신규 등록 for ai_server
+	@PostMapping("/api/facilities/aibook")
+	public ResponseEntity<ApiResponse<String>> createAiReservation(
+	        @RequestParam("userId") String userId,
+	        @RequestBody ReservationCreateRequestDTO dto,
+	        @RequestParam("facilityNo") String facilityNo) {
+	    String userNo = userRepository.findUserNoByEmailId(userId);
+	    reservationService.createReservation(dto, userNo, facilityNo);
+	    return ResponseEntity.ok(ApiResponse.ok("AI 예약 등록 성공", "success"));
+	}
+
+	// 일자별 예약 목록 조회
 	@GetMapping("/api/facilities/{facilityNo}/reservations/check")
 	public ResponseEntity<ApiResponse<List<ReservationListResponseDTO>>> getAvailability(
 	        @PathVariable("facilityNo") String facilityNo,
@@ -63,6 +78,7 @@ public class ReservationController {
             @RequestParam(name = "size", defaultValue = "10") int size,
             @RequestParam(name = "sort", defaultValue = "reservationDate,reservationStartTime") String sort,
             @RequestParam(name = "direct", defaultValue = "DESC") String direct,
+            @RequestParam(name = "targetUserNo", required = false) String targetUserNo,
 			@AuthenticationPrincipal CustomUserPrincipal principal,
 			@PathVariable(value = "facilityNo", required = false) String facilityNo) {
 		String currentUserNo = (principal != null) ? principal.getUserNo() : null;
@@ -74,10 +90,11 @@ public class ReservationController {
         String[] sortFields = sort.split(",");
         Pageable pageable = PageRequest.of(page - 1, size, direction, sortFields);
 
-        long totalElements = reservationService.selectListCount(currentUserNo, facilityNo);
+        long totalElements = reservationService.selectListCount(currentUserNo, facilityNo, targetUserNo);
         int totalPages = (totalElements == 0) ? 0 : (int) Math.ceil((double) totalElements / size);
 
-        List<ReservationListResponseDTO> list = reservationService.selectList(pageable, currentUserNo, facilityNo);
+        List<ReservationListResponseDTO> list = 
+        		reservationService.selectList(pageable, currentUserNo, facilityNo, targetUserNo);
 
         PageResponse<ReservationListResponseDTO> body = new PageResponse<>(list, page, size, totalElements, totalPages);
         return ResponseEntity.ok(ApiResponse.ok("예약 목록 조회 성공", body));
@@ -100,5 +117,13 @@ public class ReservationController {
 		String currentUserNo = (principal != null) ? principal.getUserNo() : null;
 		reservationService.modifyReservation(reservationNo, dto, currentUserNo);
 		return ResponseEntity.ok(ApiResponse.ok("예약 내용이 정상적으로 수정되었습니다.", "reservationModifySuccess"));
+	}
+	
+	// 시설 이용 통계 분석 데이터 조회 for ai_server
+	@GetMapping("/api/facilities/aiStats")
+	public ResponseEntity<ApiResponse<List<ReservationStatsDTO>>> analyzeReservation(
+			@RequestParam(name = "facilityNo") String facilityNo){
+		List<ReservationStatsDTO> body = reservationService.analyzeReservation(facilityNo);
+		return ResponseEntity.ok(ApiResponse.ok("사용 데이터 조회 성공", body));
 	}
 }

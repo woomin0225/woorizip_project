@@ -4,6 +4,7 @@ import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -78,6 +79,25 @@ public class ContractController {
      * 입주 신청 등록
      * POST /api/contract/insert/{roomNo}
      */
+    @GetMapping("/admin/all")
+    public ResponseEntity<ApiResponse<PageResponse<ContractDto>>> selectAllContractsForAdmin(
+            @AuthenticationPrincipal CustomUserPrincipal userPrincipal,
+            @RequestParam(name = "page", defaultValue = "1") int page,
+            @RequestParam(name = "size", defaultValue = "20") int size) {
+        boolean isAdmin = userPrincipal != null
+                && userPrincipal.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch("ROLE_ADMIN"::equals);
+
+        if (!isAdmin) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.fail("관리자만 전체 계약 내역을 조회할 수 있습니다.", null));
+        }
+
+        PageResponse<ContractDto> body = contractService.selectListAllContracts(page, size);
+        return ResponseEntity.ok(ApiResponse.ok("전체 계약 목록 조회 성공", body));
+    }
+
     @PostMapping("/insert/{roomNo}")
     public ResponseEntity<ApiResponse<ContractDto>> insertContract(
             @PathVariable("roomNo") String roomNo,
@@ -93,6 +113,13 @@ public class ContractController {
         } catch (IllegalStateException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body(ApiResponse.fail(e.getMessage(), null));
+        } catch (Exception e) {
+            log.error("입주 신청 등록 실패: roomNo={}, userNo={}", roomNo, userPrincipal.getUserNo(), e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.fail(
+                            e.getMessage() != null ? e.getMessage() : "입주 신청 처리 중 오류가 발생했습니다.",
+                            null
+                    ));
         }
     }
 
@@ -104,14 +131,25 @@ public class ContractController {
     public ResponseEntity<ApiResponse<Void>> requestAmendment(
             @PathVariable("originalContractNo") String originalNo,
             @RequestBody ContractDto amendmentDto) {
-        int result = contractService.requestAmendment(originalNo, amendmentDto);
-        if (result == -1) {
-            return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body(ApiResponse.fail("이미 진행 중인 수정 요청이 존재합니다.", null));
+        try {
+            int result = contractService.requestAmendment(originalNo, amendmentDto);
+            if (result == -1) {
+                return ResponseEntity.status(HttpStatus.CONFLICT)
+                        .body(ApiResponse.fail("이미 진행 중인 수정 요청이 존재합니다.", null));
+            }
+            if (result == 0) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(ApiResponse.fail("원본 계약 정보를 찾을 수 없습니다.", null));
+            }
+            return ResponseEntity.ok(ApiResponse.ok("수정 요청이 완료되었습니다.", null));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.fail(e.getMessage(), null));
+        } catch (Exception e) {
+            log.error("계약 수정 요청 처리 실패: originalNo={}", originalNo, e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.fail("수정 요청 처리 중 오류가 발생했습니다.", null));
         }
-        return result > 0
-                ? ResponseEntity.ok(ApiResponse.ok("수정 요청이 완료되었습니다.", null))
-                : ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
     }
 
     /**
@@ -225,7 +263,18 @@ public class ContractController {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.fail("지원하지 않는 상태값입니다.", null));
             }
 
-            int result = contractService.updateStatus(contractNo, normalizedStatus, reason);
+            String signerName = body != null ? body.get("signerName") : null;
+            String signatureDataUrl = body != null ? body.get("signatureDataUrl") : null;
+            String signedAt = body != null ? body.get("signedAt") : null;
+
+            int result = contractService.updateStatus(
+                    contractNo,
+                    normalizedStatus,
+                    reason,
+                    signerName,
+                    signatureDataUrl,
+                    signedAt
+            );
             return result > 0
                     ? ResponseEntity.ok(ApiResponse.ok("입주 신청 승인/거절 처리 완료", null))
                     : ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.fail("입주 신청 처리 실패", null));

@@ -39,6 +39,8 @@ public class QPostEntity extends EntityPathBase<PostEntity> {
 
     public final NumberPath<Integer> postViewCount = createNumber("postViewCount", Integer.class);
 
+    public final BooleanPath postVisibleYn = createBoolean("postVisibleYn");
+
     public final StringPath userNo = createString("userNo");
 
     public QPostEntity(String variable) {

@@ -29,33 +29,6 @@ export default function PostList({
 }) {
   return (
     <div className={styles.wrap}>
-      {title ? (
-        <div className={styles.header}>
-          <h2 className={styles.h2}>{title}</h2>
-          {(isAdmin || isAuthed) && (
-            <button
-              type="button"
-              className={styles.writeBtn}
-              onClick={onClickWrite}
-            >
-              글 등록
-            </button>
-          )}
-        </div>
-      ) : (
-        (isAdmin || isAuthed) && (
-          <div className={styles.headerOnlyBtn}>
-            <button
-              type="button"
-              className={styles.writeBtn}
-              onClick={onClickWrite}
-            >
-              글 등록
-            </button>
-          </div>
-        )
-      )}
-
       <PostSearchBar
         search={search}
         setSearch={setSearch}
@@ -121,11 +94,25 @@ export default function PostList({
         </table>
       </div>
 
-      {pageResponse && (
-        <div className={styles.paging}>
-          <PagingView pageResponse={pageResponse} onChangePage={setPage} />
-        </div>
-      )}
+      <div className={styles.footerRow}>
+        {pageResponse && (
+          <div className={styles.paging}>
+            <PagingView pageResponse={pageResponse} onChangePage={setPage} />
+          </div>
+        )}
+
+        {(isAdmin || isAuthed) && (
+          <div className={styles.bottomActions}>
+            <button
+              type="button"
+              className={styles.writeBtn}
+              onClick={onClickWrite}
+            >
+              글 등록
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

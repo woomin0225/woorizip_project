@@ -1,0 +1,154 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.46);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: calc(1.25rem * var(--app-space-scale));
+  z-index: 1400;
+  overscroll-behavior: contain;
+}
+
+.panel {
+  width: min(640px, 100%);
+  max-height: min(86vh, 780px);
+  overflow: hidden;
+  background: #fff;
+  border-radius: 24px;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.22);
+}
+
+.scrollArea {
+  max-height: min(86vh, 780px);
+  overflow-y: auto;
+  padding: calc(1.5rem * var(--app-space-scale));
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  overscroll-behavior: contain;
+}
+
+.scrollArea::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  gap: calc(1rem * var(--app-space-scale));
+  margin-bottom: calc(1.25rem * var(--app-space-scale));
+}
+
+.title {
+  margin: 0;
+  font-size: 1.4rem;
+  color: #1f2937;
+}
+
+.description {
+  margin: 8px 0 0;
+  color: #64748b;
+  line-height: 1.6;
+}
+
+.closeBtn {
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 12px;
+  background: #f1f5f9;
+  color: #334155;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+.section {
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  padding: calc(1.125rem * var(--app-space-scale));
+}
+
+.section + .section {
+  margin-top: calc(1rem * var(--app-space-scale));
+}
+
+.sectionTitle {
+  margin: 0 0 14px;
+  font-size: 1.05rem;
+  color: #0f172a;
+}
+
+.optionRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: calc(1rem * var(--app-space-scale));
+  margin-bottom: 14px;
+}
+
+.optionRow p {
+  margin: 6px 0 0;
+  color: #64748b;
+  font-size: 0.92rem;
+}
+
+.toggleBtn {
+  border: none;
+  border-radius: 999px;
+  min-width: 84px;
+  height: 38px;
+  padding: 0 14px;
+  background: #cbd5e1;
+  color: #0f172a;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.toggleOn {
+  background: #c9713f;
+  color: #fff;
+}
+
+.checkboxRow {
+  display: flex;
+  align-items: center;
+  gap: calc(0.625rem * var(--app-space-scale));
+  padding: calc(0.625rem * var(--app-space-scale)) 0;
+  color: #334155;
+}
+
+.controlBlock + .controlBlock {
+  margin-top: calc(1rem * var(--app-space-scale));
+}
+
+.controlLabel {
+  display: block;
+  margin-bottom: calc(0.625rem * var(--app-space-scale));
+  color: #334155;
+  font-weight: 700;
+}
+
+.choiceRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(0.625rem * var(--app-space-scale));
+}
+
+.choiceBtn {
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  background: #fff;
+  color: #334155;
+  min-height: 38px;
+  padding: 0 14px;
+  cursor: pointer;
+}
+
+.choiceActive {
+  border-color: #c9713f;
+  background: #fff7ed;
+  color: #9a3412;
+  font-weight: 700;
+}
+

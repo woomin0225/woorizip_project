@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import { useAuth } from '../../../app/providers/AuthProvider';
-import { fetchEventDetail, updateEvent } from '../api/EventApi';
+import { fetchAdminEventDetail, updateEvent } from '../api/EventApi';
 import { unwrapApi } from '../../../shared/utils/apiUnwrap';
 
 export function useEventUpdate({ postNo, navigate }) {
@@ -16,6 +16,7 @@ export function useEventUpdate({ postNo, navigate }) {
   const [form, setForm] = useState({
     postTitle: '',
     postContent: '',
+    postVisibleYn: true,
   });
 
   const [existingFiles, setExistingFiles] = useState([]);
@@ -35,7 +36,7 @@ export function useEventUpdate({ postNo, navigate }) {
 
     const load = async () => {
       try {
-        const resp = await fetchEventDetail(postNo);
+        const resp = await fetchAdminEventDetail(postNo);
         const dto = unwrapApi(resp);
 
         if (!dto) {
@@ -46,6 +47,7 @@ export function useEventUpdate({ postNo, navigate }) {
         setForm({
           postTitle: dto.postTitle || '',
           postContent: dto.postContent || '',
+          postVisibleYn: dto.postVisibleYn !== false,
         });
 
         setExistingFiles(dto.files || []);
@@ -64,10 +66,10 @@ export function useEventUpdate({ postNo, navigate }) {
      입력 변경
   ========================= */
   const onChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
     setForm((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: type === 'checkbox' ? checked : value,
     }));
   };
 
@@ -113,6 +115,7 @@ export function useEventUpdate({ postNo, navigate }) {
     const data = new FormData();
     data.append('postTitle', form.postTitle);
     data.append('postContent', form.postContent);
+    data.append('postVisibleYn', String(form.postVisibleYn));
 
     if (bannerFile) {
       data.append('bannerFile', bannerFile);

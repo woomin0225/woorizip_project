@@ -5,29 +5,41 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.team4p.woorizip.common.exception.ForbiddenException;
 import org.team4p.woorizip.common.exception.NotFoundException;
 import org.team4p.woorizip.house.jpa.entity.HouseEntity;
 import org.team4p.woorizip.house.jpa.repository.HouseRepository;
 import org.team4p.woorizip.room.dto.RoomDto;
+import org.team4p.woorizip.room.dto.ai.RoomRagResponse;
 import org.team4p.woorizip.room.dto.request.RoomSearchCondition;
 import org.team4p.woorizip.room.dto.response.ReviewRankingResponse;
+import org.team4p.woorizip.room.dto.response.RoomRagSearchResult;
 import org.team4p.woorizip.room.dto.response.RoomSearchResponse;
+import org.team4p.woorizip.room.dto.response.RoomSearchSliceResponse;
 import org.team4p.woorizip.room.dto.response.ViewsRankingResponse;
 import org.team4p.woorizip.room.dto.response.WishRankingResponse;
 import org.team4p.woorizip.room.image.dto.RoomImageDto;
 import org.team4p.woorizip.room.image.jpa.entity.RoomImageEntity;
 import org.team4p.woorizip.room.image.jpa.repository.RoomImageRepository;
 import org.team4p.woorizip.room.image.service.RoomImageService;
+import org.team4p.woorizip.room.jpa.entity.RoomEmbeddingEntity;
 import org.team4p.woorizip.room.jpa.entity.RoomEntity;
+import org.team4p.woorizip.room.jpa.repository.RoomEmbeddingRepository;
 import org.team4p.woorizip.room.jpa.repository.RoomRepository;
 import org.team4p.woorizip.room.review.jpa.repository.ReviewRepository;
 import org.team4p.woorizip.room.view.jpa.repository.RoomViewRepository;
@@ -36,6 +48,7 @@ import org.team4p.woorizip.user.jpa.repository.UserRepository;
 import org.team4p.woorizip.wishlist.jpa.repository.WishlistRepository;
 
 import lombok.RequiredArgsConstructor;
+import reactor.core.publisher.Mono;
 
 @Service
 @RequiredArgsConstructor
@@ -49,13 +62,20 @@ public class RoomServiceImpl implements RoomService {
 	private final RoomImageRepository riRepository;
 	private final ReviewRepository reviewRepository;
 	private final WishlistRepository wishlistRepository;
+	private final RoomEmbeddingRepository roomEmbeddingRepository;
+	private final RoomAvailabilityPolicyService roomAvailabilityPolicyService;
+	
+	private final WebClient.Builder webClientBuilder;
+	@Value("${ai.server.base-url}")
+	private String aiServerUri;
 	
 	@Override
-	public Slice<RoomSearchResponse> selectRoomSearch(RoomSearchCondition cond, Pageable pageable) {
+	public RoomSearchSliceResponse selectRoomSearch(RoomSearchCondition cond, Pageable pageable) {
 		// 방 검색
 		
 		// bbox 좌표 크기순서 보증
 		cond.adjustment();
+		long totalCount = roomRepository.countSearchRooms(cond);
 		
 		// 방 검색 결과 조회 -> 응답객체에 저장
 		Slice<RoomSearchResponse> slice = roomRepository.searchRooms(cond, pageable)
@@ -74,6 +94,10 @@ public class RoomServiceImpl implements RoomService {
 								.roomImageCount(entity.getRoomImageCount())
 								.build()
 		);
+
+		for (RoomSearchResponse item : slice.getContent()) {
+			applyAvailability(item, item.getRoomNo(), null, item.getRoomEmptyYn());
+		}
 		
 		// 주소 추가
 		for (RoomSearchResponse item : slice.getContent()) {
@@ -96,7 +120,24 @@ public class RoomServiceImpl implements RoomService {
 			}
 		}
 		
-		return slice;
+		return RoomSearchSliceResponse.from(slice, totalCount);
+	}
+
+	private RoomSearchResponse toRoomSearchResponse(RoomEntity entity) {
+		return RoomSearchResponse.builder()
+				.roomNo(entity.getRoomNo())
+				.roomName(entity.getRoomName())
+				.houseNo(entity.getHouseNo())
+				.roomUpdatedAt(entity.getRoomUpdatedAt())
+				.roomDeposit(entity.getRoomDeposit())
+				.roomMonthly(entity.getRoomMonthly())
+				.roomMethod(entity.getRoomMethod())
+				.roomArea(entity.getRoomArea())
+				.roomFacing(entity.getRoomFacing())
+				.roomRoomCount(entity.getRoomRoomCount())
+				.roomEmptyYn(entity.getRoomEmptyYn())
+				.roomImageCount(entity.getRoomImageCount())
+				.build();
 	}
 
 	@Override
@@ -119,9 +160,19 @@ public class RoomServiceImpl implements RoomService {
 		
 		// delete 기본값 설정
 		roomDto.setDeleted(false);
+		roomDto.setRoomMonthly(normalizeRoomMonthly(roomDto.getRoomMethod(), roomDto.getRoomMonthly()));
+		RoomEntity entity = roomRepository.save(roomDto.toEntity());
+
+		// 임베딩 위해 상태 추가 (PENDING)
+		roomEmbeddingRepository.save(RoomEmbeddingEntity.builder()
+												.roomNo(entity.getRoomNo())
+												.embeddingStatus("PENDING")
+												.retryCount(0)
+												.build()
+				);
 		
 		// DB에 저장
-		return roomRepository.save(roomDto.toEntity()).toDto();
+		return entity.toDto();
 	}
 
 	@Override
@@ -140,6 +191,10 @@ public class RoomServiceImpl implements RoomService {
 		}
 		
 		// 소유권 검사 통과하면 방 소프트삭제 수행
+		if (roomAvailabilityPolicyService.hasCurrentOccupancy(roomNo)) {
+			throw new IllegalArgumentException("현재 거주중인 방은 삭제할 수 없습니다.");
+		}
+
 		long roomResult = roomRepository.softDeleteByRoomNo(roomNo);
 		if (roomResult != 1L) throw new IllegalStateException("방 정보 삭제 실패");
 	}
@@ -152,6 +207,7 @@ public class RoomServiceImpl implements RoomService {
 		RoomEntity roomEntity = optional.get();
 		if(roomEntity == null) throw new NotFoundException("해당 방을 조회할 수 없습니다.");
 		RoomDto roomDto = roomEntity.toDto();
+		applyAvailability(roomDto, roomEntity);
 
 		return roomDto;
 	}
@@ -184,7 +240,11 @@ public class RoomServiceImpl implements RoomService {
 		// 건물 내 방 목록 조회
 		List<RoomEntity> rows = roomRepository.findAllByHouseNoAndDeletedFalseOrderByRoomName(houseNo);
 		List<RoomDto> list = new ArrayList<>();
-		rows.forEach(entity->list.add(entity.toDto()));
+		rows.forEach(entity -> {
+			RoomDto dto = entity.toDto();
+			applyAvailability(dto, entity);
+			list.add(dto);
+		});
 		return list;
 	}
 
@@ -205,7 +265,7 @@ public class RoomServiceImpl implements RoomService {
 		// userNo 조립
 		entity.setRoomName(roomDto.getRoomName());
 		entity.setRoomDeposit(roomDto.getRoomDeposit());
-		entity.setRoomMonthly(roomDto.getRoomMonthly());
+		entity.setRoomMonthly(normalizeRoomMonthly(roomDto.getRoomMethod(), roomDto.getRoomMonthly()));
 		entity.setRoomMethod(roomDto.getRoomMethod());
 		entity.setRoomArea(roomDto.getRoomArea());
 		entity.setRoomFacing(roomDto.getRoomFacing());
@@ -216,6 +276,14 @@ public class RoomServiceImpl implements RoomService {
 		entity.setRoomEmptyYn(roomDto.getRoomEmptyYn());
 		entity.setRoomStatus(roomDto.getRoomStatus());
 		entity.setRoomOptions(roomDto.getRoomOptions());
+		
+		// 임베딩 위해 상태 추가 (PENDING)
+		roomEmbeddingRepository.save(RoomEmbeddingEntity.builder()
+												.roomNo(entity.getRoomNo())
+												.embeddingStatus("PENDING")
+												.retryCount(0)
+												.build()
+				);
 		
 		return entity.toDto();
 	}
@@ -261,6 +329,10 @@ public class RoomServiceImpl implements RoomService {
 								.roomImageCount(entity.getRoomImageCount())
 								.build()
 		);
+
+		for (RoomSearchResponse item : slice.getContent()) {
+			applyAvailability(item, item.getRoomNo(), null, item.getRoomEmptyYn());
+		}
 		
 		// 사진 조회 -> 이름 추출 -> 응답에 저장
 		for (RoomSearchResponse item : slice.getContent()) {
@@ -352,5 +424,158 @@ public class RoomServiceImpl implements RoomService {
 		}
 		
 		return list;
+	}
+
+	@Override
+	public RoomRagSearchResult selectRoomRag(String text) {
+		// 이 메서드는 "자연어 문장 -> RAG 추천 방 목록" 흐름의 Spring 측 연결 지점입니다.
+		//
+		// 역할을 나누면:
+		// 1. FastAPI RAG 서버에 자연어 문장을 전달한다.
+		// 2. RAG 서버가 돌려준 roomNo 순위를 받는다.
+		// 3. DB에서 실제 RoomEntity를 조회해 프론트가 쓸 RoomDto로 바꾼다.
+		//
+		// 여기서 중요한 점:
+		// roomRepository.findAllById(...)는 "입력한 순서"를 보장하지 않을 수 있습니다.
+		// 그래서 아래에서 Map을 한 번 만든 뒤, roomNoList 순서대로 다시 dtoList를 조립합니다.
+		RoomRagResponse response = requestRoomRag(text, "/ai/rag/room");
+
+		// RAG 서버가 비어 있는 결과를 주면 바로 빈 리스트를 반환합니다.
+		// 프론트는 "추천 결과 없음"으로 자연스럽게 처리할 수 있습니다.
+		List<String> roomNoList = response != null ? response.getRoom_list() : null;
+		if (roomNoList == null || roomNoList.isEmpty()) {
+			return new RoomRagSearchResult(List.of(), "");
+		}
+
+		// DB 조회는 roomNo 기준으로 한 번에 처리해 성능을 아낍니다.
+		List<RoomEntity> entityList = roomRepository.findAllById(roomNoList);
+
+		// entityMap:
+		// roomNo -> RoomEntity 형태로 바꿔 두면
+		// 이후 roomNoList의 "RAG 추천 순서"를 그대로 복원하기 쉽습니다.
+		Map<String, RoomEntity> entityMap = new HashMap<>();
+		for (RoomEntity entity : entityList) {
+			entityMap.put(entity.getRoomNo(), entity);
+		}
+
+		// dtoList:
+		// 최종적으로 프론트에 내려줄 결과입니다.
+		// roomNoList 순서대로 다시 꺼내기 때문에 RAG 점수 순위가 유지됩니다.
+		List<RoomSearchResponse> dtoLists = new ArrayList<>();
+		for (String roomNo : roomNoList) {
+			RoomEntity entity = entityMap.get(roomNo);
+			if (entity != null) {
+				RoomSearchResponse item = RoomSearchResponse.builder()
+						.roomNo(entity.getRoomNo())
+						.roomName(entity.getRoomName())
+						.houseNo(entity.getHouseNo())
+						.roomUpdatedAt(entity.getRoomUpdatedAt())
+						.roomDeposit(entity.getRoomDeposit())
+						.roomMonthly(entity.getRoomMonthly())
+						.roomMethod(entity.getRoomMethod())
+						.roomArea(entity.getRoomArea())
+						.roomFacing(entity.getRoomFacing())
+						.roomRoomCount(entity.getRoomRoomCount())
+						.roomEmptyYn(entity.getRoomEmptyYn())
+						.roomImageCount(entity.getRoomImageCount())
+						.build();
+
+				HouseEntity house = houseRepository.findById(entity.getHouseNo()).orElse(null);
+				if (house != null) {
+					item.setHouseName(house.getHouseName());
+					item.setHouseAddress(house.getHouseAddress());
+					item.setHouseAddressDetail(house.getHouseAddressDetail());
+					item.setHouseLat(house.getHouseLat());
+					item.setHouseLng(house.getHouseLng());
+				}
+
+				List<RoomImageDto> images = roomImageService.selectRoomImages(entity.getRoomNo());
+				if (!images.isEmpty()) {
+					List<String> imageNames = new ArrayList<>();
+					for (RoomImageDto image : images) {
+						imageNames.add(image.getRoomStoredImageName());
+					}
+					item.setImageNames(imageNames);
+				}
+
+				dtoLists.add(item);
+			}
+		}
+		
+		return new RoomRagSearchResult(dtoLists, "");
+	}
+
+	@Override
+	public String selectRoomRagExplanation(String text) {
+		RoomRagResponse response = requestRoomRag(text, "/ai/rag/room/explanation");
+		if (response == null || response.getExplanation() == null) {
+			return "";
+		}
+		return response.getExplanation().trim();
+	}
+
+	private RoomRagResponse requestRoomRag(String text, String path) {
+		WebClient webClient = webClientBuilder.build();
+		
+		try {
+			Mono<RoomRagResponse> monoResponse = webClient.post()
+					.uri(aiServerUri.concat(path))
+					.contentType(MediaType.TEXT_PLAIN)
+					.bodyValue(text)
+					.retrieve()
+					.onStatus(HttpStatusCode::isError, clientResponse -> clientResponse.bodyToMono(String.class)
+							.defaultIfEmpty("")
+							.map(body -> new IllegalStateException("AI 방 검색 서버 오류(" + clientResponse.statusCode().value()
+									+ "): " + body)))
+					.bodyToMono(RoomRagResponse.class);
+			return monoResponse.block();
+		} catch (WebClientResponseException e) {
+			throw new IllegalStateException(
+					"AI 방 검색 서버 호출 실패(" + e.getStatusCode().value() + "): " + e.getResponseBodyAsString(),
+					e);
+		} catch (Exception e) {
+			throw new IllegalStateException("AI 방 검색 서버 호출 중 오류가 발생했습니다: " + e.getMessage(), e);
+		}
+	}
+
+	private void applyAvailability(RoomDto dto, RoomEntity entity) {
+		applyAvailability(dto, entity.getRoomNo(), entity.getRoomAvailableDate(), entity.getRoomEmptyYn());
+	}
+
+	private void applyAvailability(RoomDto dto, String roomNo, LocalDate fallbackAvailableDate, Boolean fallbackEmptyYn) {
+		RoomAvailabilityPolicyService.RoomAvailabilityPolicy policy = roomAvailabilityPolicyService.evaluate(
+				roomNo,
+				fallbackAvailableDate,
+				fallbackEmptyYn
+		);
+		dto.setRoomEmptyYn(policy.roomEmpty());
+		dto.setCanTourApply(policy.canTourApply());
+		dto.setCanContractApply(policy.canContractApply());
+		dto.setOccupancyEndDate(policy.occupancyEndDate());
+		if (policy.actualAvailableDate() != null) {
+			dto.setRoomAvailableDate(policy.actualAvailableDate());
+		}
+	}
+
+	private void applyAvailability(RoomSearchResponse dto, String roomNo, LocalDate fallbackAvailableDate, Boolean fallbackEmptyYn) {
+		RoomAvailabilityPolicyService.RoomAvailabilityPolicy policy = roomAvailabilityPolicyService.evaluate(
+				roomNo,
+				fallbackAvailableDate,
+				fallbackEmptyYn
+		);
+		dto.setRoomEmptyYn(policy.roomEmpty());
+		dto.setCanTourApply(policy.canTourApply());
+		dto.setCanContractApply(policy.canContractApply());
+		dto.setOccupancyEndDate(policy.occupancyEndDate());
+
+		if (policy.actualAvailableDate() != null) {
+			dto.setRoomAvailableDate(policy.actualAvailableDate());
+		}
+	}
+	private Long normalizeRoomMonthly(String roomMethod, Long roomMonthly) {
+		if ("L".equals(roomMethod) && roomMonthly == null) {
+			return 0L;
+		}
+		return roomMonthly;
 	}
 }

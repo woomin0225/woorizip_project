@@ -22,23 +22,24 @@
 }
 
 .writeBtn {
-  height: 28px;
-  padding: 0 10px;
-  border: 1px solid #666;
-  background: #f5f5f5;
-  color: #111;
-  border-radius: 2px;
+  height: 36px;
+  padding: 0 14px;
+  border: 1px solid #c9713f;
+  background: #c9713f;
+  color: #fff;
+  border-radius: 10px;
   cursor: pointer;
-  font-weight: 600;
+  font-weight: 800;
 }
 .writeBtn:hover {
-  background: #eee;
+  border-color: #b86334;
+  background: #b86334;
 }
 
 .tableWrap {
   margin-top: 14px;
-  border: 1px solid #999;
-  border-radius: 0;
+  border: 1px solid #e5c4ad;
+  border-radius: 12px;
   overflow: hidden;
   background: #fff;
 }
@@ -51,19 +52,19 @@
 }
 
 .th {
-  background: #efefef;
+  background: #faece0;
   padding: 10px 8px;
   font-size: 13px;
   font-weight: 700;
-  color: #111;
-  border: 1px solid #999;
+  color: #7a4125;
+  border: 1px solid #e5c4ad;
 }
 
 .td {
   padding: 10px 8px;
   font-size: 13px;
   color: #111;
-  border: 1px solid #999;
+  border: 1px solid #f0d8c7;
 }
 
 .center {
@@ -101,9 +102,25 @@
   color: crimson;
 }
 
+.footerRow {
+  position: relative;
+  margin-top: 18px;
+  min-height: 40px;
+}
+
 /* 페이징은 테이블 아래, 가운데 */
 .paging {
   display: flex;
   justify-content: center;
   margin-top: 10px;
+}
+
+.bottomActions {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
 }

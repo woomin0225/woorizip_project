@@ -9,4 +9,5 @@ public interface RoomImageRepository extends JpaRepository<RoomImageEntity, Inte
 	List<RoomImageEntity> findAllByRoomNoOrderByRoomImageNo(String roomNo);
 	int countByRoomNo(String roomNo);
 	RoomImageEntity findTop1ByRoomNoOrderByRoomImageNoAsc(String roomNo);
+	
 }

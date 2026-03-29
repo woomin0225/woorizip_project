@@ -1,7 +1,7 @@
 // src/features/facility/hooks/facility/useFacilityDetail.js
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { getFacilityDetail } from '../../api/facilityApi';
-import { unwrapApi } from '../../../../shared/utils/apiUnwrap';
+import { normalizeApiError } from '../../../../app/http/errorMapper';
 
 export const useFacilityDetail = (facilityNo) => {
   const [facilityDetails, setFacilityDetails] = useState(null);
@@ -16,11 +16,12 @@ export const useFacilityDetail = (facilityNo) => {
 
       const response = await getFacilityDetail(facilityNo);
       const actualData = response?.data || response;
-      console.log("상세 데이터 로드 성공:", actualData);
+      console.log('상세 데이터 로드 성공:', actualData);
       setFacilityDetails(actualData);
     } catch (err) {
-      setError(err);
-      console.error("데이터 로드 실패:", err.message);
+      const apiError = normalizeApiError(err);
+      setError(apiError);
+      console.error(apiError.message);
     } finally {
       setLoading(false);
     }
@@ -30,21 +31,24 @@ export const useFacilityDetail = (facilityNo) => {
     if (!facilityDetails) return null;
 
     const images = facilityDetails.images || [];
-    const sortedImages = images.length > 0 
-      ? [...images].sort((a, b) => a.facilityImageNo - b.facilityImageNo)
+    const sortedImages =
+      images.length > 0
+        ? [...images].sort((a, b) => a.facilityImageNo - b.facilityImageNo)
+        : [];
+
+    const rawOptions =
+      typeof facilityDetails.facilityOptionInfo === 'string'
+        ? JSON.parse(facilityDetails.facilityOptionInfo)
+        : facilityDetails.facilityOptionInfo;
+
+    const displayOptionList = rawOptions
+      ? Object.keys(rawOptions).filter((key) => rawOptions[key] === true)
       : [];
-
-    const rawOptions = typeof facilityDetails.facilityOptionInfo === 'string'
-      ? JSON.parse(facilityDetails.facilityOptionInfo)
-      : facilityDetails.facilityOptionInfo;
-
-    const displayOptionList = rawOptions 
-      ? Object.keys(rawOptions).filter(key => rawOptions[key] === true) : [];
 
     return {
       ...facilityDetails,
       images: sortedImages,
-      displayOptionList
+      displayOptionList,
     };
   }, [facilityDetails]);
 
@@ -52,5 +56,10 @@ export const useFacilityDetail = (facilityNo) => {
     loadFacilityDetails();
   }, [loadFacilityDetails]);
 
-  return { facilityDetails: sortedDetails, loading, error, refresh: loadFacilityDetails };
+  return {
+    facilityDetails: sortedDetails,
+    loading,
+    error,
+    refresh: loadFacilityDetails,
+  };
 };

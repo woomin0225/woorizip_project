@@ -24,6 +24,8 @@ public interface ContractService {
      */
     PageResponse<ContractDto> selectListContractByOwner(String ownerUserNo, int page, int size);
 
+    PageResponse<ContractDto> selectListAllContracts(int page, int size);
+
     /**
      * 계약 등록 (입주 신청)
      */
@@ -45,6 +47,13 @@ public interface ContractService {
 
     ContractDto requestContractPayment(String contractNo, ContractPaymentRequest request);
 
-    int updateStatus(String contractNo, String status, String reason);
+    int updateStatus(
+            String contractNo,
+            String status,
+            String reason,
+            String signerName,
+            String signatureDataUrl,
+            String signedAt
+    );
     
 }

@@ -52,6 +52,9 @@ public class PostEntity {
   @Column(name = "POST_PINNED_YN")
   private Boolean postPinnedYn = false;
 
+  @Column(name = "POST_VISIBLE_YN")
+  private Boolean postVisibleYn = true;
+
   //Insert 직전 기본값 세팅
   @PrePersist
   public void prePersist() {
@@ -68,6 +71,9 @@ public class PostEntity {
     }
     if (postFilesYn == null) {
         postFilesYn = false;
+    }
+    if (postVisibleYn == null) {
+        postVisibleYn = true;
     }
   }
 

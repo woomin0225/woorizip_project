@@ -1,4 +1,4 @@
-.heroSection {
+﻿.heroSection {
   position: fixed;
   inset: 0;
   min-height: 100vh;
@@ -50,25 +50,26 @@
   min-height: 74vh;
 }
 
-.menuTitle { margin: 0 0 14px; font-size: 1rem; font-weight: 700; color: #344767; }
+.menuTitle { margin: 0; font-size: 1.6rem; font-weight: 800; color: #c9713f; text-align: center; }
+.sideNavHeader {
+  margin-bottom: 14px;
+  padding: 6px 4px 12px;
+}
+.menuDivider {
+  width: 100%;
+  height: 1px;
+  margin-top: 12px;
+  background: #c9713f;
+}
 .sideNavWrap {
   min-height: 62vh;
   display: flex;
   flex-direction: column;
 }
 .menuList { display: flex; flex-direction: column; gap: 8px; }
-.menuItem { display: block; padding: 10px 12px; border-radius: 8px; color: #344767; font-weight: 600; text-decoration: none; background: #f8f9fe; }
-.menuItem:hover { background: #faeee4; text-decoration: none; }
-.menuLabelOnly {
-  display: block;
-  padding: 10px 12px;
-  border-radius: 8px;
-  color: #344767;
-  font-weight: 700;
-  background: #faeee4;
-  cursor: default;
-}
-.active { background: #c9713f; color: #fff; }
+.menuItem { display: block; padding: 11px 14px; border: 1px solid #ececec; border-radius: 10px; color: #5b4334; font-weight: 700; text-decoration: none; background: #fffaf6; transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease; }
+.menuItem:hover { background: #faeee4; border-color: #e7c4ab; color: #9b5a34; text-decoration: none; }
+.active { background: #c9713f; border-color: #c9713f; color: #fff; }
 .withdrawWrap {
   margin-top: auto;
   display: flex;
@@ -77,21 +78,21 @@
 }
 .withdrawItem {
   font-size: 0.8rem;
-  color: #8898aa;
+  color: #9b7a65;
   text-decoration: none;
 }
 .withdrawItem:hover {
-  color: #f5365c;
+  color: #c9713f;
   text-decoration: none;
 }
 .withdrawActive {
-  color: #f5365c;
+  color: #c9713f;
   font-weight: 700;
 }
 
 .headerRow { margin-bottom: 18px; }
-.title { margin: 0; font-size: 1.6rem; color: #32325d; }
-.subTitle { margin: 6px 0 0; color: #8898aa; }
+.title { margin: 0; font-size: 1.6rem; color: #1c1c1c; }
+.subTitle { margin: 6px 0 0; color: #6b7280; }
 
 .infoGrid { display: grid; grid-template-columns: 140px 1fr; gap: 10px 14px; align-items: center; }
 .infoGrid dt { margin: 0; font-weight: 700; color: #525f7f; }
@@ -124,9 +125,15 @@
   color: #c9713f;
   background: #fff;
 }
+.inlineBtnGroup {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
 .inlineBtnActive {
   color: #fff;
   background: #c9713f;
+  border-color: #c9713f;
 }
 .inlineBtn:hover {
   background: #fff5ec;
@@ -271,6 +278,53 @@
 .meta { margin: 8px 0 4px; font-size: 0.86rem; color: #b2673c; }
 .desc { margin: 0; font-size: 0.86rem; color: #525f7f; }
 
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(17, 24, 39, 0.44);
+  padding: 20px;
+}
+
+.modal {
+  width: min(700px, 100%);
+  max-height: 90vh;
+  overflow: auto;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 30px 70px rgba(15, 23, 42, 0.28);
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 18px;
+  border-bottom: 1px solid #f1e2d4;
+  font-size: 1rem;
+  font-weight: 800;
+  color: #9b5a34;
+}
+
+.closeBtn {
+  border: 0;
+  background: transparent;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #8b5e3c;
+  cursor: pointer;
+}
+
+.modalFooter {
+  display: flex;
+  justify-content: flex-end;
+  padding: 14px 18px 18px;
+  border-top: 1px solid #f1e2d4;
+}
+
 .sectionBlock {
   margin-top: 16px;
 }
@@ -344,6 +398,50 @@
   border-radius: 8px;
   background: #f8f9fe;
 }
+.adminTableWrap {
+  overflow-x: auto;
+  border: 1px solid #ecdcca;
+  border-radius: 14px;
+  background: #fffdfb;
+}
+.adminTable {
+  width: 100%;
+  min-width: 860px;
+  border-collapse: collapse;
+}
+.adminTable th,
+.adminTable td {
+  padding: 12px 14px;
+  border-bottom: 1px solid #f0e4d9;
+  text-align: left;
+  font-size: 0.9rem;
+  color: #4b3c33;
+  white-space: nowrap;
+}
+.adminTable thead th {
+  background: #fff5ec;
+}
+.adminTable tbody tr:hover {
+  background: #fffaf6;
+}
+.sortBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: #9b5a34;
+  font-size: 0.88rem;
+  font-weight: 800;
+}
+.sortBtn:hover {
+  color: #7f4726;
+}
+.emptyCell {
+  text-align: center !important;
+  color: #8a7768 !important;
+}
 
 @media (max-width: 991px) {
   .mainCard { min-height: 0; }
@@ -381,5 +479,3 @@
     min-height: 300px;
   }
 }
-
-

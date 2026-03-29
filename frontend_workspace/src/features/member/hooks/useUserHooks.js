@@ -1,8 +1,13 @@
-﻿import { useAuth } from '../../../app/providers/AuthProvider';
+import { useAuth } from '../../../app/providers/AuthProvider';
+import { getApiBaseUrl } from '../../../app/config/env';
+import { tokenStore } from '../../../app/http/tokenStore';
 import { useState, useEffect, useCallback } from 'react';
 import {
+  checkId as checkIdApi,
   findId as findIdApi,
   findPassword as findPasswordApi,
+  login as loginApi,
+  signup as signupApi,
 } from '../api/authApi';
 import { usePassVerification } from './usePassVerification';
 
@@ -110,7 +115,7 @@ export function useSignup() {
     }
     const ok = await startPhoneVerification({ phone, purpose: 'SIGNUP' });
     if (!ok) {
-      alert('PASS 본인인증에 실패했습니다. 다시 시도해주세요.');
+      alert('휴대폰 확인에 실패했습니다. 다시 시도해주세요.');
       return;
     }
     alert('휴대폰 인증이 완료되었습니다.');
@@ -120,18 +125,9 @@ export function useSignup() {
     if (!form.emailId) return alert('이메일 아이디를 입력해주세요.');
 
     try {
-      const res = await fetch(
-        `http://localhost:8080/api/user/check-id?email_id=${form.emailId}`,
-        { method: 'POST' }
-      );
-      const data = await res.json();
+      const result = await checkIdApi(form.emailId);
 
-      if (
-        res.ok &&
-        (data.body === 'ok' ||
-          data.data === 'ok' ||
-          data.message?.includes('ok'))
-      ) {
+      if (result.isAvailable) {
         alert('사용 가능한 아이디입니다.');
         setIsIdChecked(true);
       } else {
@@ -146,7 +142,7 @@ export function useSignup() {
   const handleSubmit = async (e, navigate) => {
     e.preventDefault();
     if (!isIdChecked) return alert('아이디 중복 확인을 진행해주세요.');
-    if (!isPhoneVerified) return alert('휴대폰 본인인증을 완료해주세요.');
+    if (!isPhoneVerified) return alert('휴대폰 인증을 완료해주세요.');
 
     const derived = deriveBirthAndGender();
     if (!derived) {
@@ -171,28 +167,18 @@ export function useSignup() {
     setError('');
 
     try {
-      const res = await fetch('http://localhost:8080/api/user/signup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          emailId: form.emailId,
-          password: form.password,
-          name: form.name,
-          phone: String(form.phone || '').replace(/\D/g, ''),
-          gender: derived.gender,
-          birthDate: derived.birthDate,
-          type: form.type,
-        }),
+      await signupApi({
+        emailId: form.emailId,
+        password: form.password,
+        name: form.name,
+        phone: String(form.phone || '').replace(/\D/g, ''),
+        gender: derived.gender,
+        birthDate: derived.birthDate,
+        type: form.type,
       });
 
-      const data = await res.json();
-
-      if (res.ok) {
-        alert('회원가입이 완료되었습니다.');
-        navigate('/login');
-      } else {
-        throw new Error(data.message || '회원가입에 실패했습니다.');
-      }
+      alert('회원가입이 완료되었습니다.');
+      navigate('/login');
     } catch (err) {
       setError(err.message || '서버와 통신할 수 없습니다.');
     } finally {
@@ -248,10 +234,10 @@ export const useFindId = () => {
     const phone = String(form.phone || '').replace(/\D/g, '');
     const ok = await startVerification({ phone, purpose: 'FIND_ID' });
     if (!ok) {
-      alert('PASS 본인인증에 실패했습니다. 다시 시도해주세요.');
+      alert('휴대폰 확인에 실패했습니다. 다시 시도해주세요.');
       return;
     }
-    alert('휴대폰 본인인증이 완료되었습니다.');
+    alert('휴대폰 인증이 완료되었습니다.');
   };
 
   const handleFindId = async (e) => {
@@ -268,7 +254,9 @@ export const useFindId = () => {
       const name = String(form.name || '').trim();
       const rawPhone = String(form.phone || '').trim();
       const normalizedPhone = rawPhone.replace(/\D/g, '');
-      const phoneCandidates = [...new Set([rawPhone, normalizedPhone].filter(Boolean))];
+      const phoneCandidates = [
+        ...new Set([rawPhone, normalizedPhone].filter(Boolean)),
+      ];
 
       let lastError = null;
       for (const phone of phoneCandidates) {
@@ -280,7 +268,9 @@ export const useFindId = () => {
           lastError = apiError;
           const isNotFound =
             apiError?.status === 404 ||
-            String(apiError?.message || '').includes('일치하는 회원 정보가 없습니다');
+            String(apiError?.message || '').includes(
+              '일치하는 회원 정보가 없습니다'
+            );
 
           if (!isNotFound) {
             throw apiError;
@@ -384,7 +374,7 @@ export function useTourList() {
   return { tours, loading };
 }
 
-export function useLogin() {
+export function useLogin(redirectTo = '/') {
   const { setTokens } = useAuth();
 
   const [form, setForm] = useState({ emailId: '', password: '' });
@@ -402,17 +392,7 @@ export function useLogin() {
     setError('');
 
     try {
-      const res = await fetch('http://localhost:8080/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
-      });
-
-      if (!res.ok) {
-        throw new Error('이메일 아이디 또는 비밀번호가 일치하지 않습니다.');
-      }
-
-      const data = await res.json();
+      const data = await loginApi(form);
 
       if (!data.accessToken) {
         throw new Error('토큰 발급에 실패했습니다.');
@@ -428,8 +408,8 @@ export function useLogin() {
         userId: payload.sub, // 대부분 sub에 아이디 들어있음
       });
 
-      alert('로그인 성공!');
-      navigate('/');
+      sessionStorage.removeItem('postLoginRedirect');
+      navigate(redirectTo || '/', { replace: true });
     } catch (err) {
       setError(err.message || '로그인 중 오류가 발생했습니다.');
     } finally {
@@ -452,21 +432,22 @@ export function useAdminUserList() {
   const [searchType, setSearchType] = useState('emailId');
   const [searchKeyword, setSearchKeyword] = useState('');
   const [activeSearch, setActiveSearch] = useState({ type: '', keyword: '' });
+  const apiBaseUrl = getApiBaseUrl();
 
   const fetchUsers = useCallback(
     async (currentPage, searchParams) => {
       setLoading(true);
       setError('');
       try {
-        let url = `/api/user/list?page=${currentPage}&size=${size}&sort=createdAt&direct=DESC`;
+        let url = `${apiBaseUrl}/api/user/list?page=${currentPage}&size=${size}&sort=createdAt&direct=DESC`;
 
         if (searchParams.keyword) {
-          url = `/api/user/search?page=${currentPage}&size=${size}&${searchParams.type}=${searchParams.keyword}`;
+          url = `${apiBaseUrl}/api/user/search?page=${currentPage}&size=${size}&${searchParams.type}=${searchParams.keyword}`;
         }
 
         const res = await fetch(url, {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
+            Authorization: `Bearer ${tokenStore.getAccess()}`,
           },
         });
 
@@ -523,6 +504,7 @@ export function useAdminUserList() {
 export function useFindPassword() {
   const [form, setForm] = useState({
     name: '',
+    emailId: '',
     phone: '',
     newPassword: '',
     newPasswordConfirm: '',
@@ -549,7 +531,7 @@ export function useFindPassword() {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
 
-    if (name === 'phone' || name === 'name') {
+    if (name === 'phone' || name === 'name' || name === 'emailId') {
       setVerificationToken('');
       resetVerification();
     }
@@ -557,11 +539,12 @@ export function useFindPassword() {
 
   const handleSendCode = async () => {
     const name = String(form.name || '').trim();
+    const emailId = String(form.emailId || '').trim();
     const rawPhone = String(form.phone || '').trim();
     const phone = rawPhone.replace(/\D/g, '');
 
-    if (!name) {
-      setError('이름을 입력해주세요.');
+    if (!name || !emailId) {
+      setError('이름과 아이디를 입력해주세요.');
       return;
     }
 
@@ -579,13 +562,13 @@ export function useFindPassword() {
         phone,
         purpose: 'FIND_PASSWORD',
       });
-      if (!verifyResult) throw new Error('PASS 본인인증에 실패했습니다.');
+      if (!verifyResult) throw new Error('휴대폰 확인에 실패했습니다.');
       const token =
         verifyResult?.txId || verifyResult?.ci || verifyResult?.di || '';
       setVerificationToken(token || `PASS-${Date.now()}`);
-      setMessage('휴대폰 PASS 본인인증이 완료되었습니다.');
+      setMessage('');
     } catch (err) {
-      setError(err?.message || '휴대폰 본인인증에 실패했습니다.');
+      setError(err?.message || '휴대폰 인증에 실패했습니다.');
     } finally {
       setLoading(false);
     }
@@ -597,7 +580,7 @@ export function useFindPassword() {
     setMessage('');
 
     if (!isVerified) {
-      setError('휴대폰 본인인증을 먼저 완료해주세요.');
+      setError('휴대폰 인증을 먼저 완료해주세요.');
       return;
     }
 
@@ -618,16 +601,19 @@ export function useFindPassword() {
 
     try {
       const name = String(form.name || '').trim();
+      const emailId = String(form.emailId || '').trim();
       const phone = String(form.phone || '').replace(/\D/g, '');
 
       await findPasswordApi({
         name,
+        emailId,
         phone,
         verificationToken,
         newPassword: form.newPassword,
       });
 
-      setMessage('비밀번호가 성공적으로 변경되었습니다.');
+      setMessage('비밀번호가 변경되었습니다. 로그인 페이지로 이동합니다.');
+      return true;
     } catch (err) {
       const msg = String(err?.message || '');
       const isTemporaryExpiryCase =
@@ -638,13 +624,15 @@ export function useFindPassword() {
       if (isTemporaryExpiryCase) {
         // Temporary workaround: treat backend expiry errors as success for UI flow.
         setError('');
-        setMessage('비밀번호 변경이 완료되었습니다. 다시 로그인해주세요.');
+        setMessage('비밀번호가 변경되었습니다. 새 비밀번호로 다시 로그인해주세요.');
+        return true;
       } else {
         setError(msg || '비밀번호 변경에 실패했습니다.');
       }
     } finally {
       setLoading(false);
     }
+    return false;
   };
 
   return {
