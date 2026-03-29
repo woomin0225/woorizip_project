@@ -79,7 +79,7 @@ public class TourController {
             int result = tourService.insertTour(tourDto);
             if (result == -1) {
                 return ResponseEntity.status(HttpStatus.CONFLICT)
-                        .body(ApiResponse.fail("이미 신청된 투어 시간입니다.", null));
+                        .body(ApiResponse.fail("이미 요청된 투어 시간입니다.", null));
             }
             return result > 0
                     ? ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok("투어 추가 성공", null))
@@ -90,28 +90,56 @@ public class TourController {
         }
     }
 
-    // CODEX-AZURE-INTERNAL-TOUR-START
     @PostMapping("/internal/insert/{roomNo}")
     public ResponseEntity<ApiResponse<Void>> insertTourInternal(
             @PathVariable("roomNo") String roomNo,
             @RequestHeader(value = "X-API-KEY", required = false) String apiKey,
             @RequestHeader(value = "X-User-Id", required = false) String userId,
             @RequestBody @Valid InternalTourApplyRequest req) {
+        log.info(
+                "TOUR_INTERNAL_APPLY_REQUEST roomNo={} apiKeyPresent={} xUserIdPresent={} reqUserNamePresent={} reqUserPhonePresent={} visitDate={} visitTime={}",
+                roomNo,
+                StringUtils.hasText(apiKey),
+                StringUtils.hasText(userId),
+                StringUtils.hasText(req.getUserName()),
+                StringUtils.hasText(req.getUserPhone()),
+                req.getVisitDate(),
+                req.getVisitTime()
+        );
+
         if (!StringUtils.hasText(apiKey) || !apiKey.trim().equals(resolveInternalApiKey())) {
+            log.warn("TOUR_INTERNAL_APPLY_UNAUTHORIZED roomNo={} apiKeyPresent={}", roomNo, StringUtils.hasText(apiKey));
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ApiResponse.fail("내부 호출 인증에 실패했습니다.", null));
         }
 
         if (!StringUtils.hasText(roomNo) || "current".equalsIgnoreCase(roomNo.trim())) {
+            log.warn("TOUR_INTERNAL_APPLY_INVALID_ROOM roomNo={}", roomNo);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.fail("현재 방 정보를 확인할 수 없습니다.", null));
         }
 
         UserEntity user = resolveInternalRequestUser(userId, req);
         if (user == null) {
+            log.warn(
+                    "TOUR_INTERNAL_APPLY_USER_NOT_FOUND roomNo={} xUserId={} reqUserName={} reqUserPhonePresent={}",
+                    roomNo,
+                    userId,
+                    req.getUserName(),
+                    StringUtils.hasText(req.getUserPhone())
+            );
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.fail("일치하는 사용자 정보를 찾을 수 없습니다.", null));
         }
+
+        log.info(
+                "TOUR_INTERNAL_APPLY_USER_RESOLVED roomNo={} resolvedUserNo={} xUserId={} reqUserNamePresent={} reqUserPhonePresent={}",
+                roomNo,
+                user.getUserNo(),
+                userId,
+                StringUtils.hasText(req.getUserName()),
+                StringUtils.hasText(req.getUserPhone())
+        );
 
         try {
             TourDto tourDto = new TourDto();
@@ -125,18 +153,17 @@ public class TourController {
             int result = tourService.insertTour(tourDto);
             if (result == -1) {
                 return ResponseEntity.status(HttpStatus.CONFLICT)
-                        .body(ApiResponse.fail("이미 신청된 투어 시간입니다.", null));
+                        .body(ApiResponse.fail("이미 요청된 투어 시간입니다.", null));
             }
             return result > 0
                     ? ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok("투어 추가 성공", null))
                     : ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                            .body(ApiResponse.fail("투어 신청 저장에 실패했습니다.", null));
+                            .body(ApiResponse.fail("투어 요청 처리에 실패했습니다.", null));
         } catch (IllegalStateException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.fail(e.getMessage(), null));
         }
     }
-    // CODEX-AZURE-INTERNAL-TOUR-END
 
     @PostMapping("/update/{tourNo}")
     public ResponseEntity<ApiResponse<Void>> updateTour(
@@ -146,7 +173,7 @@ public class TourController {
         int result = tourService.updateTour(tourDto);
         if (result == -1) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body(ApiResponse.fail("이미 신청된 투어 시간입니다.", null));
+                    .body(ApiResponse.fail("이미 요청된 투어 시간입니다.", null));
         }
         return result > 0
                 ? ResponseEntity.ok(ApiResponse.ok("투어 수정 성공", null))
@@ -181,7 +208,7 @@ public class TourController {
             int result = tourService.updateTour(existing);
             if (result == -1) {
                 return ResponseEntity.status(HttpStatus.CONFLICT)
-                        .body(ApiResponse.fail("이미 신청된 투어 시간입니다.", null));
+                        .body(ApiResponse.fail("이미 요청된 투어 시간입니다.", null));
             }
             return result > 0
                     ? ResponseEntity.ok(ApiResponse.ok("투어 승인/거절 처리 성공", null))
@@ -203,9 +230,16 @@ public class TourController {
         if (StringUtils.hasText(userId)) {
             UserEntity user = userRepository.findById(userId.trim()).orElse(null);
             if (user != null) {
+                log.info("TOUR_INTERNAL_APPLY_USER_LOOKUP_BY_ID_SUCCESS userId={}", userId.trim());
                 return user;
             }
+            log.warn("TOUR_INTERNAL_APPLY_USER_LOOKUP_BY_ID_MISS userId={}", userId.trim());
         }
+        log.info(
+                "TOUR_INTERNAL_APPLY_USER_LOOKUP_BY_PROFILE namePresent={} phonePresent={}",
+                StringUtils.hasText(req.getUserName()),
+                StringUtils.hasText(req.getUserPhone())
+        );
         return findUserByNameAndPhone(req.getUserName(), req.getUserPhone());
     }
 
