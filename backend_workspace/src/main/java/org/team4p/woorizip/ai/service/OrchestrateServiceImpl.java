@@ -112,16 +112,20 @@ public class OrchestrateServiceImpl implements OrchestrateService {
             return;
         }
 
-        headers.put("X-User-Id", authentication.getName());
-
-        if (authentication.getPrincipal() instanceof CustomUserPrincipal principal
-                && StringUtils.hasText(principal.getName())) {
-            headers.put("X-User-Name", principal.getName());
+        String forwardedUserId = authentication.getName();
+        if (authentication.getPrincipal() instanceof CustomUserPrincipal principal) {
+            if (StringUtils.hasText(principal.getUserNo())) {
+                forwardedUserId = principal.getUserNo();
+            }
+            if (StringUtils.hasText(principal.getName())) {
+                headers.put("X-User-Name", principal.getName());
+            }
             userRepository.findById(principal.getUserNo())
                     .map(UserEntity::getPhone)
                     .filter(StringUtils::hasText)
                     .ifPresent(phone -> headers.put("X-User-Phone", phone));
         }
+        headers.put("X-User-Id", forwardedUserId);
 
         String roles = authentication.getAuthorities().stream()
                 .map(grantedAuthority -> grantedAuthority.getAuthority())
@@ -132,8 +136,9 @@ public class OrchestrateServiceImpl implements OrchestrateService {
         }
 
         log.info(
-                "ORCHESTRATE_SECURITY_CONTEXT_RESOLVED userId={} principalClass={} roles={} userNamePresent={} userPhonePresent={}",
+                "ORCHESTRATE_SECURITY_CONTEXT_RESOLVED authName={} forwardedUserId={} principalClass={} roles={} userNamePresent={} userPhonePresent={}",
                 authentication.getName(),
+                headers.get("X-User-Id"),
                 authentication.getPrincipal() != null ? authentication.getPrincipal().getClass().getName() : "null",
                 roles,
                 StringUtils.hasText(headers.get("X-User-Name")),
