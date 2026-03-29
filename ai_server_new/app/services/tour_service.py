@@ -177,9 +177,13 @@ class TourService:
             )
             room_name = (request.roomName or '').strip()
             room_label = room_name or '현재 보고 계신 방'
+            formatted_visit_at = self._format_visit_datetime(
+                apply_result['visitDate'],
+                apply_result['visitTime'],
+            )
             reply = (
                 f"{room_label} 투어 신청이 완료되었습니다. "
-                f"방문 일정은 {apply_result['visitDate']} {apply_result['visitTime']}입니다. "
+                f"방문 일정은 {formatted_visit_at}입니다. "
                 "추후 문자로 추가 안내 드리겠습니다."
             )
             return {
@@ -362,6 +366,21 @@ class TourService:
                 'clientRequestId': request.clientRequestId,
                 'raw': {'error': str(exc)},
             }
+
+    def _format_visit_datetime(self, visit_date: str, visit_time: str) -> str:
+        try:
+            date_value = datetime.strptime((visit_date or '').strip(), '%Y-%m-%d')
+            time_value = datetime.strptime((visit_time or '').strip(), '%H:%M:%S')
+        except ValueError:
+            return f'{visit_date} {visit_time}'.strip()
+
+        hour = time_value.hour
+        meridiem = '오전' if hour < 12 else '오후'
+        display_hour = hour % 12 or 12
+        return (
+            f'{date_value.year}년 {date_value.month}월 {date_value.day}일 '
+            f'{meridiem} {display_hour}시'
+        )
 
     def _is_schedule_error(self, error_message: str) -> bool:
         lowered = (error_message or '').lower()
