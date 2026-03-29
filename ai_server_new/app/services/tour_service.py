@@ -52,11 +52,14 @@ class TourService:
 
         # CODEX-AZURE-TRACE-START
         logger.info(
-            "TOUR_SPRING_APPLY_REQUEST roomNo=%s visitDate=%s visitTime=%s accessTokenPresent=%s",
+            "TOUR_SPRING_APPLY_REQUEST roomNo=%s visitDate=%s visitTime=%s accessTokenPresent=%s userIdPresent=%s userNamePresent=%s userPhonePresent=%s",
             normalized_request.roomNo,
             normalized_request.visitDate,
             payload['visitTime'],
             bool(access_token),
+            bool((user_id or '').strip()),
+            bool(normalized_request.userName),
+            bool(normalized_request.userPhone),
         )
         # CODEX-AZURE-TRACE-END
 

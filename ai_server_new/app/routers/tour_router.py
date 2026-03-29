@@ -42,13 +42,14 @@ async def apply_tour_from_workflow(
 ):
     # CODEX-AZURE-TRACE-START
     logger.info(
-        "TOUR_WORKFLOW_APPLY_RECEIVED sessionId=%s roomNo=%s roomName=%s visitDate=%s visitTime=%s preferredVisitAt=%s userNamePresent=%s userPhonePresent=%s",
+        "TOUR_WORKFLOW_APPLY_RECEIVED sessionId=%s roomNo=%s roomName=%s visitDate=%s visitTime=%s preferredVisitAt=%s userIdPresent=%s userNamePresent=%s userPhonePresent=%s",
         req.sessionId,
         req.roomNo,
         req.roomName,
         req.visitDate,
         req.visitTime,
         req.preferredVisitAt,
+        bool(ctx.get('user_id')),
         bool(req.userName or ctx.get('user_name')),
         bool(req.userPhone or ctx.get('user_phone')),
     )
