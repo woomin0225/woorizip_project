@@ -27,17 +27,22 @@ export function formatMoneyKRW(value) {
   return `${Math.round(n / MAN)}만`;
 }
 
-function priceText(room) {
+function priceLines(room) {
   const method = room?.roomMethod;
   const deposit = formatMoneyKRW(room?.roomDeposit);
   const monthly = formatMoneyKRW(room?.roomMonthly);
   const depositText = deposit ? `${deposit} 원` : '';
   const monthlyText = monthly ? `${monthly} 원` : '';
 
-  if (method === 'M')
-    return `보증금 ${depositText}${monthlyText ? ` / 월세 ${monthlyText}` : ''}`;
-  if (method === 'L') return `전세 ${depositText}`;
-  return [depositText, monthlyText].filter(Boolean).join(' / ');
+  if (method === 'M') {
+    return [
+      depositText ? `보증금 ${depositText}` : '',
+      monthlyText ? `월세 ${monthlyText}` : '',
+    ].filter(Boolean);
+  }
+
+  if (method === 'L') return depositText ? [`전세 ${depositText}`] : [];
+  return [depositText, monthlyText].filter(Boolean);
 }
 
 function occupancyLabel(roomCount) {
@@ -63,6 +68,7 @@ export default function ResultItem({
 
   const houseName = room.houseName;
   const houseAddress = room.houseAddress;
+  const prices = priceLines(room);
 
   // ✅ images도 안전하게 (null/undefined 대비)
   const images = useMemo(
@@ -165,7 +171,13 @@ export default function ResultItem({
             <span className={styles.method}>
               {methodLabel(room.roomMethod)}
             </span>
-            <span>{priceText(room)}</span>
+            <div className={styles.priceLines}>
+              {prices.map((priceLine) => (
+                <span key={priceLine} className={styles.priceLine}>
+                  {priceLine}
+                </span>
+              ))}
+            </div>
           </div>
           <div className={styles.metaRow}>
             <span>{room.roomArea}㎡</span>

@@ -148,10 +148,26 @@
   display: flex;
   gap: 10px;
   font-size: 14px;
+  align-items: flex-start;
 }
 
 .method {
   font-weight: 600;
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+
+.priceLines {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.priceLine {
+  display: block;
+  line-height: 1.4;
+  word-break: keep-all;
 }
 
 .metaRow {
