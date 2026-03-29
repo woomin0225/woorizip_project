@@ -67,6 +67,16 @@ class AssistantService:
                 settings.AI_AGENT_BASE_INFO,
             )
 
+        # Keep tour apply on the server-side agent path so authenticated user
+        # context and session state do not get lost in the external tool callback.
+        if self.tour_apply_agent.should_handle(payload):
+            logger.info(
+                "TOUR_APPLY_AGENT_PRIMARY_USED sessionId=%s text=%s",
+                payload.get("sessionId"),
+                str(payload.get("text") or "")[:120],
+            )
+            return await self.tour_apply_agent.run(payload)
+
         # CODEX-AZURE-WORKFLOW-ROUTE-START
         # Tour apply intent is routed to Azure workflow first.
         # Delete only this marked block to remove the new route.
@@ -102,18 +112,6 @@ class AssistantService:
                 # CODEX-AZURE-TRACE-END
                 pass
         # CODEX-AZURE-WORKFLOW-ROUTE-END
-
-        # CODEX-AZURE-WORKFLOW-LEGACY-FALLBACK-START
-        if self.tour_apply_agent.should_handle(payload):
-            # CODEX-AZURE-TRACE-START
-            logger.info(
-                "TOUR_APPLY_AGENT_FALLBACK_USED sessionId=%s text=%s",
-                payload.get("sessionId"),
-                str(payload.get("text") or "")[:120],
-            )
-            # CODEX-AZURE-TRACE-END
-            return await self.tour_apply_agent.run(payload)
-        # CODEX-AZURE-WORKFLOW-LEGACY-FALLBACK-END
 
         if self.room_registration_agent.should_handle(payload):
             return await self.room_registration_agent.run(payload)

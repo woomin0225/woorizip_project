@@ -152,12 +152,14 @@ class TourApplyAgent:
                 self.store.set(session_id, session_state)
                 return self._build_collecting_response(payload, session_state)
 
-        if not session_state.get("userName"):
+        has_user_id = bool(_compact_text(session_state.get("userId")))
+
+        if not has_user_id and not session_state.get("userName"):
             session_state["stage"] = "awaiting_user_name"
             self.store.set(session_id, session_state)
             return self._build_collect_name_response(payload, session_state)
 
-        if not session_state.get("userPhone"):
+        if not has_user_id and not session_state.get("userPhone"):
             session_state["stage"] = "awaiting_user_phone"
             self.store.set(session_id, session_state)
             return self._build_collect_phone_response(payload, session_state)
@@ -177,6 +179,7 @@ class TourApplyAgent:
                     userPhone=session_state.get("userPhone"),
                 ),
                 access_token=str(payload.get("accessToken") or "").strip() or None,
+                default_user_id=session_state.get("userId"),
                 default_user_name=session_state.get("userName"),
                 default_user_phone=session_state.get("userPhone"),
             )
@@ -203,6 +206,7 @@ class TourApplyAgent:
             "intent": TOUR_APPLY_INTENT,
             "roomNo": "",
             "roomName": "",
+            "userId": "",
             "userName": "",
             "userPhone": "",
             "visitDate": "",
@@ -217,14 +221,20 @@ class TourApplyAgent:
         payload: dict[str, Any],
     ) -> dict[str, Any]:
         next_state = deepcopy(session_state)
+        payload_user_id = _compact_text(payload.get("userId"))
+        if payload_user_id:
+            next_state["userId"] = payload_user_id
         context = payload.get("context")
         if isinstance(context, dict):
             room_no = _compact_text(context.get("roomNo"))
             room_name = _compact_text(context.get("roomName"))
+            context_user_id = _compact_text(context.get("userId"))
             if room_no:
                 next_state["roomNo"] = room_no
             if room_name:
                 next_state["roomName"] = room_name
+            if context_user_id:
+                next_state["userId"] = context_user_id
 
             user_profile = context.get("userProfile")
             if isinstance(user_profile, dict):
