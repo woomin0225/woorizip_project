@@ -135,6 +135,7 @@ class AzureTourWorkflowService:
             next_payload["instruction"] = build_instruction(
                 str(next_payload.get("text") or ""),
                 merged_context,
+                next_payload,
             )
 
         # CODEX-AZURE-TRACE-START

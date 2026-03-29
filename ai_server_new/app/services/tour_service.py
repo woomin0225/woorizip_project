@@ -119,6 +119,7 @@ class TourService:
             resolved_user_phone = self._resolve_optional_user_phone(
                 request.userPhone or default_user_phone
             )
+            resolved_user_id = (request.userId or default_user_id or '').strip() or None
             normalized_room_no = self._normalize_room_no(request.roomNo)
             # CODEX-AZURE-TRACE-START
             logger.info(
@@ -127,7 +128,7 @@ class TourService:
                 normalized_room_no,
                 visit_date,
                 visit_time,
-                bool((default_user_id or '').strip()),
+                bool(resolved_user_id),
                 bool(resolved_user_name),
                 bool(resolved_user_phone),
             )
@@ -173,7 +174,7 @@ class TourService:
                     inquiry=request.inquiry,
                 ),
                 access_token=None,
-                user_id=(default_user_id or '').strip() or None,
+                user_id=resolved_user_id,
             )
             room_name = (request.roomName or '').strip()
             room_label = room_name or '현재 보고 계신 방'

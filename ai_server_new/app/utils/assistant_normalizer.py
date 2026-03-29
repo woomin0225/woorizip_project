@@ -212,10 +212,15 @@ def should_include_navigation_context(text: str) -> bool:
     return any(keyword.replace(' ', '') in compact for keyword in PAGE_NAVIGATION_KEYWORDS)
 
 
-def build_instruction(text: str, context: dict[str, Any]) -> str:
+def build_instruction(
+    text: str,
+    context: dict[str, Any],
+    request_meta: dict[str, Any] | None = None,
+) -> str:
     user_text = compact_text(text, MAX_TEXT_LENGTH)
     if not context:
         context = {}
+    request_meta = request_meta or {}
 
     parts = [user_text]
     compact = user_text.lower().replace(' ', '')
@@ -248,6 +253,32 @@ def build_instruction(text: str, context: dict[str, Any]) -> str:
                     ]
                 )
             )
+
+        session_id = compact_text(request_meta.get('sessionId'), 120)
+        client_request_id = compact_text(request_meta.get('clientRequestId'), 120)
+        user_id = compact_text(request_meta.get('userId') or context.get('userId'), 120)
+        user_profile = context.get('userProfile') or {}
+        user_name = compact_text(user_profile.get('userName'), 80)
+        user_phone = compact_text(user_profile.get('userPhone'), 40)
+        tool_context_lines = [
+            '[TOOL_CALL_CONTEXT]',
+            'target_tool: tour_apply_api',
+            'instruction: tour_apply_api를 호출할 때 roomNo와 preferredVisitAt는 반드시 포함하세요.',
+            'instruction: sessionId가 주어지면 반드시 sessionId도 함께 포함하세요. 절대 생략하지 마세요.',
+            'instruction: userId, userName, userPhone 값이 주어지면 가능한 한 그대로 함께 포함하세요.',
+        ]
+        if session_id:
+            tool_context_lines.append(f'session_id: {session_id}')
+        if client_request_id:
+            tool_context_lines.append(f'client_request_id: {client_request_id}')
+        if user_id:
+            tool_context_lines.append(f'user_id: {user_id}')
+        if user_name:
+            tool_context_lines.append(f'user_name: {user_name}')
+        if user_phone:
+            tool_context_lines.append(f'user_phone: {user_phone}')
+        tool_context_lines.append('[/TOOL_CALL_CONTEXT]')
+        parts.append('\n'.join(tool_context_lines))
 
     site_profile = context.get('siteProfile') or {}
     if site_profile:
@@ -342,7 +373,7 @@ def normalize_assistant_payload(payload: dict[str, Any]) -> dict[str, Any]:
         'userId': compact_text(payload.get('userId'), 120) or None,
         'text': text,
         'context': context,
-        'instruction': build_instruction(text, context),
+        'instruction': build_instruction(text, context, payload),
         'workflowHint': 'TOUR_APPLY'
         if any(keyword.replace(' ', '') in text.lower().replace(' ', '') for keyword in TOUR_APPLY_KEYWORDS)
         else None,

@@ -43,7 +43,7 @@ async def apply_tour_from_workflow(
 ):
     session_state = shared_azure_workflow_session_store.get(req.sessionId or '')
     session_user_profile = session_state.get('userProfile') if isinstance(session_state.get('userProfile'), dict) else {}
-    resolved_user_id = ctx.get('user_id') or session_state.get('userId')
+    resolved_user_id = req.userId or ctx.get('user_id') or session_state.get('userId')
     resolved_user_name = req.userName or ctx.get('user_name') or session_user_profile.get('userName')
     resolved_user_phone = req.userPhone or ctx.get('user_phone') or session_user_profile.get('userPhone')
     # CODEX-AZURE-TRACE-START

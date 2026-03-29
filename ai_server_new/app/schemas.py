@@ -271,6 +271,7 @@ class TourWorkflowApplyReq(BaseModel):
     visitDate: str | None = None
     visitTime: str | None = None
     preferredVisitAt: str | None = None
+    userId: str | None = None
     userName: str | None = None
     userPhone: str | None = None
     inquiry: str | None = None
