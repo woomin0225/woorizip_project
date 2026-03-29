@@ -28,3 +28,6 @@ class AzureWorkflowSessionStore:
             return
         with self._lock:
             self._items.pop(session_id, None)
+
+
+shared_azure_workflow_session_store = AzureWorkflowSessionStore()
