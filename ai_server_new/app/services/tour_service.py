@@ -52,11 +52,14 @@ class TourService:
 
         # CODEX-AZURE-TRACE-START
         logger.info(
-            "TOUR_SPRING_APPLY_REQUEST roomNo=%s visitDate=%s visitTime=%s accessTokenPresent=%s",
+            "TOUR_SPRING_APPLY_REQUEST roomNo=%s visitDate=%s visitTime=%s accessTokenPresent=%s userIdPresent=%s userNamePresent=%s userPhonePresent=%s",
             normalized_request.roomNo,
             normalized_request.visitDate,
             payload['visitTime'],
             bool(access_token),
+            bool((user_id or '').strip()),
+            bool(normalized_request.userName),
+            bool(normalized_request.userPhone),
         )
         # CODEX-AZURE-TRACE-END
 
@@ -116,6 +119,7 @@ class TourService:
             resolved_user_phone = self._resolve_optional_user_phone(
                 request.userPhone or default_user_phone
             )
+            resolved_user_id = (request.userId or default_user_id or '').strip() or None
             normalized_room_no = self._normalize_room_no(request.roomNo)
             # CODEX-AZURE-TRACE-START
             logger.info(
@@ -124,7 +128,7 @@ class TourService:
                 normalized_room_no,
                 visit_date,
                 visit_time,
-                bool((default_user_id or '').strip()),
+                bool(resolved_user_id),
                 bool(resolved_user_name),
                 bool(resolved_user_phone),
             )
@@ -170,13 +174,17 @@ class TourService:
                     inquiry=request.inquiry,
                 ),
                 access_token=None,
-                user_id=(default_user_id or '').strip() or None,
+                user_id=resolved_user_id,
             )
             room_name = (request.roomName or '').strip()
             room_label = room_name or '현재 보고 계신 방'
+            formatted_visit_at = self._format_visit_datetime(
+                apply_result['visitDate'],
+                apply_result['visitTime'],
+            )
             reply = (
                 f"{room_label} 투어 신청이 완료되었습니다. "
-                f"방문 일정은 {apply_result['visitDate']} {apply_result['visitTime']}입니다. "
+                f"방문 일정은 {formatted_visit_at}입니다. "
                 "추후 문자로 추가 안내 드리겠습니다."
             )
             return {
@@ -359,6 +367,21 @@ class TourService:
                 'clientRequestId': request.clientRequestId,
                 'raw': {'error': str(exc)},
             }
+
+    def _format_visit_datetime(self, visit_date: str, visit_time: str) -> str:
+        try:
+            date_value = datetime.strptime((visit_date or '').strip(), '%Y-%m-%d')
+            time_value = datetime.strptime((visit_time or '').strip(), '%H:%M:%S')
+        except ValueError:
+            return f'{visit_date} {visit_time}'.strip()
+
+        hour = time_value.hour
+        meridiem = '오전' if hour < 12 else '오후'
+        display_hour = hour % 12 or 12
+        return (
+            f'{date_value.year}년 {date_value.month}월 {date_value.day}일 '
+            f'{meridiem} {display_hour}시'
+        )
 
     def _is_schedule_error(self, error_message: str) -> bool:
         lowered = (error_message or '').lower()

@@ -59,11 +59,12 @@ class SpringTourClient:
         try:
             # CODEX-AZURE-TRACE-START
             logger.info(
-                "SPRING_TOUR_HTTP_REQUEST url=%s payload=%s authorization=%s apiKey=%s",
+                "SPRING_TOUR_HTTP_REQUEST url=%s payload=%s authorization=%s apiKey=%s xUserIdPresent=%s",
                 url,
                 payload,
                 bool(access_token),
                 bool(settings.SPRING_INTERNAL_API_KEY),
+                bool(user_id),
             )
             # CODEX-AZURE-TRACE-END
             with request.urlopen(req, timeout=15) as resp:

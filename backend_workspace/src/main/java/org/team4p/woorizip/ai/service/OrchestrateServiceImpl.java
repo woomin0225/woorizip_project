@@ -15,7 +15,9 @@ import org.team4p.woorizip.user.jpa.entity.UserEntity;
 import org.team4p.woorizip.user.jpa.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class OrchestrateServiceImpl implements OrchestrateService {
@@ -50,6 +52,15 @@ public class OrchestrateServiceImpl implements OrchestrateService {
             extraHeaders.put("Authorization", token);
         }
         appendUserContextHeaders(extraHeaders);
+        log.info(
+                "ORCHESTRATE_AUTH_CONTEXT authorizationHeaderPresent={} requestAccessTokenPresent={} xUserIdPresent={} xUserNamePresent={} xUserPhonePresent={} sessionId={}",
+                StringUtils.hasText(authorization),
+                StringUtils.hasText(request.accessToken()),
+                StringUtils.hasText(extraHeaders.get("X-User-Id")),
+                StringUtils.hasText(extraHeaders.get("X-User-Name")),
+                StringUtils.hasText(extraHeaders.get("X-User-Phone")),
+                request.sessionId()
+        );
 
         Map<String, Object> raw = aiServerClient.post("/ai/assistant/run", payload, extraHeaders);
 
@@ -90,19 +101,31 @@ public class OrchestrateServiceImpl implements OrchestrateService {
     private void appendUserContextHeaders(Map<String, String> headers) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !StringUtils.hasText(authentication.getName())) {
+            log.warn(
+                    "ORCHESTRATE_SECURITY_CONTEXT_MISSING authenticationPresent={} principalClass={} authenticated={}",
+                    authentication != null,
+                    authentication != null && authentication.getPrincipal() != null
+                            ? authentication.getPrincipal().getClass().getName()
+                            : "null",
+                    authentication != null && authentication.isAuthenticated()
+            );
             return;
         }
 
-        headers.put("X-User-Id", authentication.getName());
-
-        if (authentication.getPrincipal() instanceof CustomUserPrincipal principal
-                && StringUtils.hasText(principal.getName())) {
-            headers.put("X-User-Name", principal.getName());
+        String forwardedUserId = authentication.getName();
+        if (authentication.getPrincipal() instanceof CustomUserPrincipal principal) {
+            if (StringUtils.hasText(principal.getUserNo())) {
+                forwardedUserId = principal.getUserNo();
+            }
+            if (StringUtils.hasText(principal.getName())) {
+                headers.put("X-User-Name", principal.getName());
+            }
             userRepository.findById(principal.getUserNo())
                     .map(UserEntity::getPhone)
                     .filter(StringUtils::hasText)
                     .ifPresent(phone -> headers.put("X-User-Phone", phone));
         }
+        headers.put("X-User-Id", forwardedUserId);
 
         String roles = authentication.getAuthorities().stream()
                 .map(grantedAuthority -> grantedAuthority.getAuthority())
@@ -111,5 +134,15 @@ public class OrchestrateServiceImpl implements OrchestrateService {
         if (StringUtils.hasText(roles)) {
             headers.put("X-Roles", roles);
         }
+
+        log.info(
+                "ORCHESTRATE_SECURITY_CONTEXT_RESOLVED authName={} forwardedUserId={} principalClass={} roles={} userNamePresent={} userPhonePresent={}",
+                authentication.getName(),
+                headers.get("X-User-Id"),
+                authentication.getPrincipal() != null ? authentication.getPrincipal().getClass().getName() : "null",
+                roles,
+                StringUtils.hasText(headers.get("X-User-Name")),
+                StringUtils.hasText(headers.get("X-User-Phone"))
+        );
     }
 }

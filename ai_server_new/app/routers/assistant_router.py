@@ -35,6 +35,9 @@ async def run_assistant(
         access_token = str(req.accessToken).strip() or None
 
     next_context = dict(req.context or {})
+    resolved_user_id = req.userId or ctx.get('user_id')
+    if resolved_user_id:
+        next_context['userId'] = resolved_user_id
     user_profile = dict(next_context.get('userProfile') or {})
     if ctx.get('user_name'):
         user_profile['userName'] = ctx.get('user_name')
@@ -45,7 +48,7 @@ async def run_assistant(
 
     request = req.model_copy(
         update={
-            'userId': req.userId or ctx.get('user_id'),
+            'userId': resolved_user_id,
             'context': next_context,
             'accessToken': access_token,
         }

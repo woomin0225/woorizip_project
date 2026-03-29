@@ -3,7 +3,10 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from app.agent.azure_workflow_session_store import AzureWorkflowSessionStore
+from app.agent.azure_workflow_session_store import (
+    AzureWorkflowSessionStore,
+    shared_azure_workflow_session_store,
+)
 from app.clients.openai_agent_client import OpenAIAgentClient
 from app.core.config import settings
 from app.utils.assistant_normalizer import build_instruction
@@ -35,7 +38,7 @@ class AzureTourWorkflowService:
         store: AzureWorkflowSessionStore | None = None,
     ) -> None:
         self.client = client
-        self.store = store or AzureWorkflowSessionStore()
+        self.store = store or shared_azure_workflow_session_store
 
     def should_handle(self, payload: dict[str, Any]) -> bool:
         if not self._has_workflow_application_config():
@@ -65,6 +68,7 @@ class AzureTourWorkflowService:
         self._update_session_state(
             session_id,
             raw,
+            next_payload,
             next_payload.get("context"),
         )
         return raw
@@ -73,6 +77,7 @@ class AzureTourWorkflowService:
         self,
         session_id: str,
         raw: dict[str, Any],
+        payload: dict[str, Any] | None = None,
         context: dict[str, Any] | None = None,
     ) -> None:
         if not session_id:
@@ -88,7 +93,7 @@ class AzureTourWorkflowService:
 
         next_state = {
             "previousResponseId": response_id,
-            **self._extract_context_state(context),
+            **self._extract_context_state(context, payload),
         }
         self.store.set(session_id, next_state)
 
@@ -130,6 +135,7 @@ class AzureTourWorkflowService:
             next_payload["instruction"] = build_instruction(
                 str(next_payload.get("text") or ""),
                 merged_context,
+                next_payload,
             )
 
         # CODEX-AZURE-TRACE-START
@@ -143,15 +149,23 @@ class AzureTourWorkflowService:
         # CODEX-AZURE-TRACE-END
         return next_payload
 
-    def _extract_context_state(self, context: dict[str, Any] | None) -> dict[str, Any]:
+    def _extract_context_state(
+        self,
+        context: dict[str, Any] | None,
+        payload: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
         context = context or {}
+        payload = payload or {}
         state: dict[str, Any] = {}
         room_no = str(context.get("roomNo") or "").strip()
         room_name = str(context.get("roomName") or "").strip()
+        user_id = str(payload.get("userId") or context.get("userId") or "").strip()
         if room_no:
             state["roomNo"] = room_no
         if room_name:
             state["roomName"] = room_name
+        if user_id:
+            state["userId"] = user_id
         current_room_resolved = context.get("currentRoomResolved")
         if isinstance(current_room_resolved, bool):
             state["currentRoomResolved"] = current_room_resolved
